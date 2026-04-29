@@ -104,7 +104,7 @@ packages/
 "dev": "astro dev --port 3002"
 
 # 2. Create root .env.local
-DATABASE_URL=postgresql://...
+DATABASE_URL="postgresql://postgres:password@localhost:5432/pmg-tracker-360"
 
 # 3. Verify
 bun run dev  # Should start all 3 apps on correct ports
