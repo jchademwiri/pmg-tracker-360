@@ -1,0 +1,30 @@
+{
+  "name": "@pmg/db",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "push": "drizzle-kit push",
+    "studio": "drizzle-kit studio",
+    "dev": "drizzle-kit studio",
+    "db:reset": "bun scripts/reset-db.ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.0",
+    "@neondatabase/serverless": "^0.9.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/node": "^22.15.3",
+    "drizzle-kit": "^0.31.10",
+    "typescript": "5.9.2"
+  }
+}
