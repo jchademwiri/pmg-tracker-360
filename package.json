@@ -1,5 +1,5 @@
 {
-  "name": "tender-track-360-apps",
+  "name": "tracker-360-apps",
   "private": true,
   "scripts": {
     "build": "turbo run build",
