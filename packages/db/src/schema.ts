@@ -5,8 +5,8 @@ import {
   timestamp,
   boolean,
   pgEnum,
-  primaryKey,
   unique,
+  index,
 } from 'drizzle-orm/pg-core';
 
 /* =========================
@@ -287,81 +287,116 @@ export const supportTickets = pgTable('support_tickets', {
 ========================= */
 
 // Client table with embedded contact fields
-export const client = pgTable('client', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  notes: text('notes'),
-  // Embedded contact fields
-  contactName: text('contact_name'),
-  contactEmail: text('contact_email'),
-  contactPhone: text('contact_phone'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft deletion
-});
+export const client = pgTable(
+  'client',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    notes: text('notes'),
+    // Embedded contact fields
+    contactName: text('contact_name'),
+    contactEmail: text('contact_email'),
+    contactPhone: text('contact_phone'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'), // Soft deletion
+  },
+  (table) => ({
+    orgIdx: index('client_organization_id_idx').on(table.organizationId),
+    deletedAtIdx: index('client_deleted_at_idx').on(table.deletedAt),
+  })
+);
 
 // Tender table with unique tender numbers
-export const tender = pgTable('tender', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  tenderNumber: text('tender_number').notNull().unique(), // User-input unique identifier
-  description: text('description'),
-  clientId: text('client_id')
-    .notNull()
-    .references(() => client.id, { onDelete: 'cascade' }),
-  submissionDate: timestamp('submission_date'),
-  value: text('value'), // String for currency formatting
-  status: text('status').default('draft').notNull(), // draft, submitted, won, lost, pending
-  evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft deletion
-});
+export const tender = pgTable(
+  'tender',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    tenderNumber: text('tender_number').notNull().unique(), // User-input unique identifier
+    description: text('description'),
+    clientId: text('client_id')
+      .notNull()
+      .references(() => client.id, { onDelete: 'cascade' }),
+    submissionDate: timestamp('submission_date'),
+    value: text('value'), // String for currency formatting
+    status: text('status').default('draft').notNull(), // draft, submitted, won, lost, pending
+    evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'), // Soft deletion
+  },
+  (table) => ({
+    orgIdx: index('tender_organization_id_idx').on(table.organizationId),
+    statusIdx: index('tender_status_idx').on(table.status),
+    submissionDateIdx: index('tender_submission_date_idx').on(table.submissionDate),
+    evaluationDateIdx: index('tender_evaluation_date_idx').on(table.evaluationDate),
+    deletedAtIdx: index('tender_deleted_at_idx').on(table.deletedAt),
+  })
+);
 
 // Project table with tender inheritance support
-export const project = pgTable('project', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectNumber: text('project_number').notNull(), // Inherited from tender or custom
-  description: text('description'), // Inherited from tender or custom
-  tenderId: text('tender_id').references(() => tender.id), // Optional link to originating tender
-  clientId: text('client_id').references(() => client.id), // Inherited from tender or custom
-  status: text('status').default('active').notNull(), // active, completed, cancelled
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft deletion
-});
+export const project = pgTable(
+  'project',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    projectNumber: text('project_number').notNull(), // Inherited from tender or custom
+    description: text('description'), // Inherited from tender or custom
+    tenderId: text('tender_id').references(() => tender.id), // Optional link to originating tender
+    clientId: text('client_id').references(() => client.id), // Inherited from tender or custom
+    status: text('status').default('active').notNull(), // active, completed, cancelled
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'), // Soft deletion
+  },
+  (table) => ({
+    orgIdx: index('project_organization_id_idx').on(table.organizationId),
+    statusIdx: index('project_status_idx').on(table.status),
+    tenderIdIdx: index('project_tender_id_idx').on(table.tenderId),
+    deletedAtIdx: index('project_deleted_at_idx').on(table.deletedAt),
+  })
+);
 
 // Purchase Order table with project relationships
-export const purchaseOrder = pgTable('purchase_order', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('project_id')
-    .notNull()
-    .references(() => project.id, { onDelete: 'cascade' }),
-  poNumber: text('po_number').notNull().unique(), // Unique PO number
-  supplierName: text('supplier_name'), // Optional supplier name
-  description: text('description').notNull(),
-  totalAmount: text('total_amount').notNull(), // String for currency
-  status: text('status').default('draft').notNull(), // draft, sent, delivered
-  // Calendar-related dates
-  poDate: timestamp('po_date'), // Purchase order date
-  expectedDeliveryDate: timestamp('expected_delivery_date'),
-  deliveredAt: timestamp('delivered_at'),
-  deliveryAddress: text('delivery_address'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft deletion
-});
+export const purchaseOrder = pgTable(
+  'purchase_order',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    poNumber: text('po_number').notNull().unique(), // Unique PO number
+    supplierName: text('supplier_name'), // Optional supplier name
+    description: text('description').notNull(),
+    totalAmount: text('total_amount').notNull(), // String for currency
+    status: text('status').default('draft').notNull(), // draft, sent, delivered
+    // Calendar-related dates
+    poDate: timestamp('po_date'), // Purchase order date
+    expectedDeliveryDate: timestamp('expected_delivery_date'),
+    deliveredAt: timestamp('delivered_at'),
+    deliveryAddress: text('delivery_address'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'), // Soft deletion
+  },
+  (table) => ({
+    orgIdx: index('purchase_order_organization_id_idx').on(table.organizationId),
+    projectIdIdx: index('purchase_order_project_id_idx').on(table.projectId),
+    statusIdx: index('purchase_order_status_idx').on(table.status),
+    deletedAtIdx: index('purchase_order_deleted_at_idx').on(table.deletedAt),
+  })
+);
 
 // Tender Extension table (replacing Follow-up)
 export const tenderExtension = pgTable('tender_extension', {
