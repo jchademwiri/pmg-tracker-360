@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronDown, Settings } from 'lucide-react';
 import { NavBar } from '@pmg/ui/components/shared/nav-bar';
 import { cn } from '@pmg/ui/lib/utils';
@@ -20,27 +20,33 @@ const mobileNavItems = dashboadLinks.navMain.flatMap((item) =>
 function SidebarNav() {
   const pathname = usePathname();
 
-  // Track which groups are open — default open if any child is active
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
+  // Which groups are manually toggled — null means "follow pathname"
+  const [manualOverrides, setManualOverrides] = useState<Record<string, boolean>>({});
+
+  // Derive open state from pathname, overridden by manual toggles
+  const openGroups = useMemo(() => {
+    const result: Record<string, boolean> = {};
     dashboadLinks.navMain.forEach((item) => {
-      if (item.items) {
-        const hasActive = item.items.some((sub) => {
-          const isOverview = sub.title === 'Overview';
-          return isOverview
-            ? pathname === sub.url
-            : pathname === sub.url || pathname.startsWith(sub.url + '/');
-        });
-        // Also open if we're on the parent URL itself (e.g. /dashboard/tenders)
-        const onParent = item.url !== '#' && (pathname === item.url || pathname.startsWith(item.url + '/'));
-        initial[item.title] = hasActive || onParent;
+      if (!item.items) return;
+      if (item.title in manualOverrides) {
+        result[item.title] = manualOverrides[item.title]!;
+        return;
       }
+      const hasActive = item.items.some((sub) =>
+        sub.title === 'Overview'
+          ? pathname === sub.url
+          : pathname === sub.url || pathname.startsWith(sub.url + '/')
+      );
+      const onParent =
+        item.url !== '#' &&
+        (pathname === item.url || pathname.startsWith(item.url + '/'));
+      result[item.title] = hasActive || onParent;
     });
-    return initial;
-  });
+    return result;
+  }, [pathname, manualOverrides]);
 
   const toggle = (title: string) =>
-    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+    setManualOverrides((prev) => ({ ...prev, [title]: !openGroups[title] }));
 
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col bg-(--sidebar) text-(--sidebar-foreground) border-r border-(--sidebar-border)">
@@ -87,6 +93,7 @@ function SidebarNav() {
           return (
             <div key={item.title}>
               <button
+                type="button"
                 onClick={() => toggle(item.title)}
                 className={cn(
                   'w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
