@@ -2,11 +2,8 @@
 
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
-  Sparkles,
   Settings2,
   Building2,
 } from 'lucide-react';
@@ -99,18 +96,6 @@ export function NavUser({ user }: { user: User }) {
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/dashboard/settings/notifications"
-                  className="cursor-pointer"
-                >
-                  <Bell />
-                  Notifications
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem
