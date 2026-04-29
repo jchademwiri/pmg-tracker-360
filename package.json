@@ -9,9 +9,15 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "drizzle-orm": "^0.38.0",
     "prettier": "^3.7.4",
+    "react-hook-form": "^7.74.0",
     "turbo": "^2.9.6",
     "typescript": "5.9.2"
+  },
+  "overrides": {
+    "drizzle-orm": "^0.38.0",
+    "react-hook-form": "^7.74.0"
   },
   "engines": {
     "node": ">=18"
