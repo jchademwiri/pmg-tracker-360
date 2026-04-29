@@ -1,50 +1,36 @@
 "use client";
 
 import * as React from "react";
+import { ErrorState } from "./error-state";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ReactNode | ((props: { error: Error; resetError: () => void }) => React.ReactNode);
+  fallback?: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
 }
 
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("ErrorBoundary caught:", error, info);
   }
 
-  resetError = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
   render() {
-    if (this.state.hasError && this.state.error) {
-      if (typeof this.props.fallback === "function") {
-        return this.props.fallback({
-          error: this.state.error,
-          resetError: this.resetError,
-        });
-      }
+    if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="p-4 text-destructive">
-          <p>Something went wrong.</p>
-          <button onClick={this.resetError} className="underline">
-            Try again
-          </button>
-        </div>
+        <ErrorState title="Something went wrong" message={this.state.error?.message} />
       );
     }
     return this.props.children;

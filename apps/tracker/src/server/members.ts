@@ -1,10 +1,10 @@
 ﻿'use server';
 
 import { db } from '@pmg/db';
-import { member } from '../../docs/schema/auth';
+import { member } from '@pmg/db/schema';
 import { auth } from '@/lib/auth';
-import { Role } from '@pmg/db';
-import { eq } from 'drizzle-orm/sql/expressions/conditions';
+import type { Role } from '@pmg/db/schema';
+import { eq } from 'drizzle-orm';
 import { checkIfAdmin } from '@/server';
 
 export const addMember = async (

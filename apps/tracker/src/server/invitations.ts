@@ -1,15 +1,23 @@
 ﻿'use server';
 
 import { db } from '@pmg/db';
-import { invitation, member, organization, user } from '@pmg/db';
-import type { Role } from '@pmg/db';
+import { invitation, member, organization, user } from '@pmg/db/schema';
+import type { Role } from '@pmg/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { getCurrentUser } from './users';
 import { getUserOrganizationMembership } from './organizations';
 import { revalidatePath } from 'next/cache';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
-import OrganizationInvitation from '@/emails/organization-invitation';
+// Email stub — replace with real email templates in Phase 4
+const OrganizationInvitation = (props: {
+  email: string;
+  invitedByUsername: string;
+  invitedByEmail: string;
+  teamName: string;
+  inviteLink: string;
+}) =>
+  `<p>You've been invited to join <strong>${props.teamName}</strong> by ${props.invitedByUsername}. <a href="${props.inviteLink}">Accept invitation</a></p>` as any;
 
 // Server Action Result type for consistent error handling
 export interface ServerActionResult<T = unknown> {

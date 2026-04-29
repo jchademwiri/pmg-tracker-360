@@ -14,6 +14,12 @@ import { Button } from "./button";
 interface ConfirmationDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  // Legacy aliases used by tracker app
+  isOpen?: boolean;
+  onClose?: () => void;
+  // Extra context props passed by tracker (ignored in render, just accepted)
+  email?: string;
+  memberName?: string;
   title?: string;
   description?: string;
   confirmLabel?: string;
@@ -27,6 +33,8 @@ interface ConfirmationDialogProps {
 export function ConfirmationDialog({
   open,
   onOpenChange,
+  isOpen,
+  onClose,
   title = "Are you sure?",
   description,
   confirmLabel = "Confirm",
@@ -35,8 +43,14 @@ export function ConfirmationDialog({
   onCancel,
   variant = "default",
 }: ConfirmationDialogProps) {
+  // Support both open/onOpenChange and isOpen/onClose patterns
+  const isDialogOpen = open ?? isOpen;
+  const handleOpenChange = (val: boolean) => {
+    onOpenChange?.(val);
+    if (!val) onClose?.();
+  };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -49,7 +63,7 @@ export function ConfirmationDialog({
             variant="outline"
             onClick={() => {
               onCancel?.();
-              onOpenChange?.(false);
+              handleOpenChange(false);
             }}
           >
             {cancelLabel}
@@ -58,7 +72,7 @@ export function ConfirmationDialog({
             variant={variant === "destructive" ? "destructive" : "default"}
             onClick={() => {
               onConfirm?.();
-              onOpenChange?.(false);
+              handleOpenChange(false);
             }}
           >
             {confirmLabel}
@@ -66,5 +80,30 @@ export function ConfirmationDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Named variants used by the tracker app
+export function RemoveMemberConfirmationDialog(props: ConfirmationDialogProps) {
+  return (
+    <ConfirmationDialog
+      title="Remove member?"
+      description="This member will lose access to the organization."
+      confirmLabel="Remove"
+      variant="destructive"
+      {...props}
+    />
+  );
+}
+
+export function CancelInvitationConfirmationDialog(props: ConfirmationDialogProps) {
+  return (
+    <ConfirmationDialog
+      title="Cancel invitation?"
+      description="The invitation link will no longer be valid."
+      confirmLabel="Cancel invitation"
+      variant="destructive"
+      {...props}
+    />
   );
 }

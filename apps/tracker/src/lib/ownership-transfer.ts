@@ -5,10 +5,18 @@ import {
   user,
   member,
   type Role,
-} from '@pmg/db';
+} from '@pmg/db/schema';
 import { eq, and, desc, lt, or } from 'drizzle-orm';
 import { Resend } from 'resend';
-import OwnershipTransferEmail from '@/emails/ownership-transfer';
+// Email stub — replace with real template in Phase 4
+const OwnershipTransferEmail = (props: {
+  toEmail: string;
+  fromUserName: string;
+  organizationName: string;
+  acceptLink: string;
+  expiresInHours: number;
+}) =>
+  `<p>${props.fromUserName} wants to transfer ownership of <strong>${props.organizationName}</strong> to you. <a href="${props.acceptLink}">Accept transfer</a> (expires in ${props.expiresInHours}h)</p>` as any;
 import { env } from '@/env';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
