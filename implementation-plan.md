@@ -1,74 +1,69 @@
 # Monorepo Implementation Plan
 
-## Recommendations
+## Current Status ✅
 
-### Documentation App (/docs)
-- Astro Starlight is recommended for the /docs app if you want a modern, feature-rich documentation site with built-in navigation, search, and markdown support. It is ideal for user guides and technical documentation.
-- If you prefer a minimal setup, plain Astro or Next.js can be used, but Starlight is purpose-built for documentation and offers a better out-of-the-box experience.
+### Apps (Complete)
+- **`apps/docs`** - Astro Starlight documentation site
+- **`apps/tracker`** - Next.js 16 app for tender and PO management
+- **`apps/admin`** - Next.js 16 admin dashboard
 
-### Web App (tracker)
-- If you want to preserve any code or history from the current `web` app, rename it to `tracker` and refactor as needed.
-- If you want a clean slate, delete the `web` app and scaffold a new `tracker` app from scratch.
-
-## Goals
-- Restructure apps: remove/rename `web`, add `admin` and `tracker`, keep `docs`.
-- `docs`: Documentation for tracker users (consider Starlight or Astro).
-- `admin`: Admin dashboard for system owners.
-- `tracker`: Public-facing app for tender and PO management (migrate https://www.tendertrack360.co.za/).
-- Packages: add `db` and update `ui` to use shadcn components as shared UI; consider shared or per-app `auth`.
-
-## Steps
-
-### 1. App Structure
-- Remove or rename `web` app.
-- Create new apps: `admin` and `tracker` under `apps/`.
-- Ensure `apps/docs` remains for documentation.
-
-### 2. Packages
-- Add `db` package for shared database logic.
-- Update `ui` package to use shadcn components; add shadcn components as needed.
-- Consider if `auth` should be a shared package or per-app (pending decision).
-
-### 3. Docs App
-- Decide between Starlight or Astro for documentation.
-- Scaffold and configure chosen framework in `apps/docs`.
-
-### 4. Tracker App
-- Scaffold Next.js app in `apps/tracker`.
-- Migrate code and features from https://www.tendertrack360.co.za/.
-- Integrate shared `ui` and `db` packages.
-- Implement or integrate authentication (shared or per-app).
-
-### 5. Admin App
-- Scaffold Next.js app in `apps/admin`.
-- Build admin features for system owners.
-- Integrate shared `ui` and `db` packages.
-- Implement or integrate authentication (shared or per-app).
-
-### 6. Monorepo Config
-- Update `turbo.json` to include new apps and packages.
-- Ensure all apps use shared TypeScript and ESLint configs from `packages/`.
-
-### 7. Shadcn Integration
-- Set up shadcn in `packages/ui` for shared components.
-- Document usage for all apps.
-
-### 8. Auth Strategy
-- Decide on shared vs per-app auth implementation.
-- Implement accordingly and document the approach.
-
-### 9. Documentation
-- Use `apps/docs` to document usage, setup, and architecture for all apps and packages.
+### Packages (Existing)
+- **`packages/ui`** - Shared UI components (button, card, code)
+- **`packages/eslint-config`** - Shared ESLint configuration
+- **`packages/typescript-config`** - Shared TypeScript configuration
 
 ---
 
-**Next Steps:**
-1. Remove/rename `web` app.
-2. Scaffold `admin` and `tracker` apps.
-3. Add `db` package.
-4. Update `ui` package for shadcn.
-5. Decide on docs framework and auth strategy.
-6. Migrate tracker app code.
-7. Build admin features.
-8. Update monorepo configs.
-9. Document everything in `docs`.
+## Remaining Tasks
+
+### 1. Database Package
+- Add `packages/db` for shared database logic (drizzel-orm, Drizzle, or similar)
+- Configure database client and schema
+
+### 2. UI Package Enhancement
+- Set up shadcn/ui in `packages/ui`
+- Add common components (forms, tables, dialogs, etc.)
+- Document usage for all apps
+
+### 3. Authentication
+- Decide: shared `auth` package vs per-app auth
+- Implement Better Auth or NextAuth
+- Configure for both tracker and admin apps
+
+### 4. Tracker App Features
+- Migrate code from https://www.tendertrack360.co.za/
+- Implement tender and PO management features
+- Connect to database
+- Add authentication
+
+### 5. Admin App Features
+- Build admin dashboard features
+- User management
+- System configuration
+- Connect to database
+
+### 6. Documentation
+- Document usage, setup, and architecture
+- Add guides for developers
+- Document API endpoints and data models
+
+---
+
+## Tech Stack Decisions
+
+| Component | Recommended | Notes |
+|-----------|-------------|-------|
+| Database | drizzel-orm | Easy to use with TypeScript |
+| Auth | Better Auth | Modern, TypeScript-first |
+| UI | shadcn/ui | Accessible, customizable |
+| Docs | Astro Starlight | ✅ Already implemented |
+
+---
+
+## Next Steps
+1. Add `packages/db` with drizzel-orm
+2. Set up shadcn/ui in `packages/ui`
+3. Implement authentication
+4. Build tracker app features
+5. Build admin app features
+6. Document everything in `apps/docs`
