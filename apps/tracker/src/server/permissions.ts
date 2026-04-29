@@ -1,31 +1,9 @@
 ﻿'use server';
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+// Auth stub — all permission checks return true until Phase 4
+export const checkIfAdmin = async () => true;
 
-export const checkIfAdmin = async () => {
-  try {
-    const { success, error } = await auth.api.hasPermission({
-      headers: await headers(),
-      body: {
-        permissions: {
-          project: ['create', 'delete', 'update'],
-        },
-      },
-    });
-
-    if (error) {
-      return {
-        success: false,
-        error: error || 'Failed to check permissions',
-      };
-    }
-
-    return success;
-  } catch (error) {
-    return {
-      success: false,
-      error: error || 'Failed to check permissions',
-    };
-  }
-};
+export const checkPermission = async (
+  _resource: string,
+  _action: string
+): Promise<boolean> => true;

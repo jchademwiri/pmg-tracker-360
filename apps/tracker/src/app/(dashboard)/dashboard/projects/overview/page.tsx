@@ -58,16 +58,7 @@ export default async function ProjectsOverviewPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {(
-            await auth.api.hasPermission({
-              headers: headersList,
-              body: {
-                permissions: {
-                  project: ['create'],
-                },
-              },
-            })
-          ).success && (
+          {true && (
             <Button asChild size={'lg'}>
               <Link href="/dashboard/projects/create">
                 <Plus className="h-4 w-4 mr-2" />
@@ -76,16 +67,7 @@ export default async function ProjectsOverviewPage() {
             </Button>
           )}
 
-          {(
-            await auth.api.hasPermission({
-              headers: headersList,
-              body: {
-                permissions: {
-                  purchase_order: ['create'],
-                },
-              },
-            })
-          ).success && (
+          {true && (
             <Button asChild size={'lg'}>
               <Link href="/dashboard/purchase-orders/create">
                 <Plus className="h-4 w-4 mr-2" />

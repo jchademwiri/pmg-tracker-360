@@ -1,151 +1,51 @@
 ﻿'use server';
 
 import { db } from '@pmg/db';
-import { notification } from '@pmg/db';
+import { notification } from '@pmg/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import { nanoid } from 'nanoid';
 
-// Get notifications for the current user
-export async function getNotifications(
-  organizationId: string,
-  limit: number = 20
-) {
+// Auth stub — uses stub user ID until Phase 4
+const STUB_USER_ID = 'stub-user-id';
+
+export async function getNotifications(organizationId: string, limit = 20) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (
-      !session ||
-      !session.session.activeOrganizationId ||
-      session.session.activeOrganizationId !== organizationId
-    ) {
-      return {
-        success: false,
-        error: 'Unauthorized',
-        notifications: [],
-        unreadCount: 0,
-      };
-    }
-
-    const userId = session.user.id;
-
     const notifications = await db
       .select()
       .from(notification)
-      .where(
-        and(
-          eq(notification.organizationId, organizationId),
-          eq(notification.userId, userId)
-        )
-      )
+      .where(and(eq(notification.organizationId, organizationId), eq(notification.userId, STUB_USER_ID)))
       .orderBy(desc(notification.createdAt))
       .limit(limit);
 
-    // Count unread
-    const unreadResult = await db.query.notification.findMany({
-      where: and(
-        eq(notification.organizationId, organizationId),
-        eq(notification.userId, userId),
-        eq(notification.read, false)
-      ),
-    });
-    const unreadCount = unreadResult.length;
-
+    const unreadCount = notifications.filter((n) => !n.read).length;
     return { success: true, notifications, unreadCount };
   } catch (error) {
-    console.error('Error fetching notifications:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch notifications',
-      notifications: [],
-      unreadCount: 0,
-    };
+    return { success: false, error: 'Failed to fetch notifications', notifications: [], unreadCount: 0 };
   }
 }
 
-// Mark a notification as read
-export async function markNotificationDetail(
-  organizationId: string,
-  notificationId: string
-) {
+export async function markNotificationDetail(organizationId: string, notificationId: string) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (
-      !session ||
-      !session.session.activeOrganizationId ||
-      session.session.activeOrganizationId !== organizationId
-    ) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    await db
-      .update(notification)
-      .set({ read: true })
-      .where(
-        and(
-          eq(notification.id, notificationId),
-          eq(notification.userId, session.user.id)
-        )
-      );
-
+    await db.update(notification).set({ read: true }).where(and(eq(notification.id, notificationId), eq(notification.userId, STUB_USER_ID)));
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error marking notification read:', error);
     return { success: false, error: 'Failed' };
   }
 }
 
-// Mark all as read
 export async function markAllNotificationsRead(organizationId: string) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (
-      !session ||
-      !session.session.activeOrganizationId ||
-      session.session.activeOrganizationId !== organizationId
-    ) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    await db
-      .update(notification)
-      .set({ read: true })
-      .where(
-        and(
-          eq(notification.organizationId, organizationId),
-          eq(notification.userId, session.user.id),
-          eq(notification.read, false)
-        )
-      );
-
+    await db.update(notification).set({ read: true }).where(and(eq(notification.organizationId, organizationId), eq(notification.userId, STUB_USER_ID), eq(notification.read, false)));
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error marking all notifications read:', error);
     return { success: false, error: 'Failed' };
   }
 }
 
-// System function to create notification (internal use)
-export async function createNotification({
-  userId,
-  organizationId,
-  title,
-  message,
-  type = 'info',
-  link,
-}: {
+export async function createNotification({ userId, organizationId, title, message, type = 'info', link }: {
   userId: string;
   organizationId: string;
   title: string;
@@ -154,19 +54,9 @@ export async function createNotification({
   link?: string;
 }) {
   try {
-    await db.insert(notification).values({
-      id: nanoid(),
-      userId,
-      organizationId,
-      title,
-      message,
-      type,
-      link,
-      read: false,
-    });
+    await db.insert(notification).values({ id: nanoid(), userId, organizationId, title, message, type, link, read: false });
     return { success: true };
   } catch (error) {
-    console.error('Error creating notification:', error);
     return { success: false, error: 'Failed' };
   }
 }

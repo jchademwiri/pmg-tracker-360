@@ -1,14 +1,8 @@
-import { checkUserSession } from '@/lib/session-check';
-import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await checkUserSession();
-
-  if (!session.hasSession) redirect('/login');
-  if (!session.hasOrganization) redirect('/onboarding');
-
+// Auth stub — layout is open until Phase 4 wires in real session checks
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return <DashboardShell>{children}</DashboardShell>;
 }

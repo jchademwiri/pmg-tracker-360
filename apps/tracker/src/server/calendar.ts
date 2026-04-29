@@ -1,10 +1,8 @@
 ﻿'use server';
 
 import { db } from '@pmg/db';
-import { tender, purchaseOrder, client } from '@pmg/db';
+import { tender, purchaseOrder, client } from '@pmg/db/schema';
 import { and, eq, gte, isNull, lte, inArray } from 'drizzle-orm';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
 import { getUserOrganizationMembership } from '@/server/organizations';
 
 type CalendarEventType =
@@ -48,18 +46,11 @@ function clampRange(start: Date, end: Date) {
 export async function getCalendarEvents(
   params: GetCalendarEventsParams
 ): Promise<CalendarEventItem[]> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
-    return [];
-  }
-
-  const membership = await getUserOrganizationMembership(
-    session.user.id,
-    session.session.activeOrganizationId as string
-  );
-  if (!membership) {
-    return [];
-  }
+  // Auth stub — use stub org membership
+  const organizationId = 'stub-org-id';
+  const membership = await getUserOrganizationMembership('stub-user-id', organizationId);
+  // If no real org exists yet, return empty
+  if (!membership) return [];
 
   const startDate = new Date(params.start);
   const endDate = new Date(params.end);

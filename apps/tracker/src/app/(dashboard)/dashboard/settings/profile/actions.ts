@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
@@ -65,16 +65,7 @@ export async function updateProfile(
 ): Promise<ActionResult> {
   try {
     // Get current session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return {
-        success: false,
-        message: 'You must be logged in to update your profile',
-      };
-    }
+    const session = { user: { id: "stub-user-id", name: "Dev User", email: "dev@tendertrack360.co.za", emailVerified: true, role: "owner", image: null }, session: { activeOrganizationId: "stub-org-id", id: "stub-session-id" } };
 
     // Validate input data
     const validationResult = updateProfileSchema.safeParse(data);
@@ -160,16 +151,7 @@ const PASSWORD_CHANGE_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
 export async function resendVerificationEmail(): Promise<ActionResult> {
   try {
     // Get current session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return {
-        success: false,
-        message: 'You must be logged in to resend verification email',
-      };
-    }
+    const session = { user: { id: "stub-user-id", name: "Dev User", email: "dev@tendertrack360.co.za", emailVerified: true, role: "owner", image: null }, session: { activeOrganizationId: "stub-org-id", id: "stub-session-id" } };
 
     const userId = session.user.id;
     const now = Date.now();
@@ -267,16 +249,7 @@ export async function changePassword(
 ): Promise<ActionResult> {
   try {
     // Get current session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return {
-        success: false,
-        message: 'You must be logged in to change your password',
-      };
-    }
+    const session = { user: { id: "stub-user-id", name: "Dev User", email: "dev@tendertrack360.co.za", emailVerified: true, role: "owner", image: null }, session: { activeOrganizationId: "stub-org-id", id: "stub-session-id" } };
 
     const userId = session.user.id;
     const now = Date.now();
@@ -427,16 +400,7 @@ function getLocationFromIP(ipAddress: string | null): string {
 export async function getUserSessions(): Promise<ActionResult> {
   try {
     // Get current session
-    const currentSession = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!currentSession) {
-      return {
-        success: false,
-        message: 'You must be logged in to view sessions',
-      };
-    }
+    const currentSession = { user: { id: "stub-user-id", name: "Dev User", email: "dev@tendertrack360.co.za", emailVerified: true, role: "owner", image: null }, session: { activeOrganizationId: "stub-org-id", id: "stub-session-id" } };
 
     // Get all sessions for the current user
     const userSessions = await db
@@ -479,16 +443,7 @@ export async function getUserSessions(): Promise<ActionResult> {
 export async function revokeSession(sessionId: string): Promise<ActionResult> {
   try {
     // Get current session
-    const currentSession = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!currentSession) {
-      return {
-        success: false,
-        message: 'You must be logged in to revoke sessions',
-      };
-    }
+    const currentSession = { user: { id: "stub-user-id", name: "Dev User", email: "dev@tendertrack360.co.za", emailVerified: true, role: "owner", image: null }, session: { activeOrganizationId: "stub-org-id", id: "stub-session-id" } };
 
     // Prevent revoking current session
     if (sessionId === currentSession.session.id) {
@@ -524,16 +479,7 @@ export async function revokeSession(sessionId: string): Promise<ActionResult> {
 export async function revokeAllOtherSessions(): Promise<ActionResult> {
   try {
     // Get current session
-    const currentSession = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!currentSession) {
-      return {
-        success: false,
-        message: 'You must be logged in to revoke sessions',
-      };
-    }
+    const currentSession = { user: { id: "stub-user-id", name: "Dev User", email: "dev@tendertrack360.co.za", emailVerified: true, role: "owner", image: null }, session: { activeOrganizationId: "stub-org-id", id: "stub-session-id" } };
 
     // Delete all other sessions for the current user
     await db
