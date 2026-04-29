@@ -1,6 +1,6 @@
 # Tracker 360 Monorepo - Integrated Implementation Plan
 
-**Status:** Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phases 3-8 Ready to Execute  
+**Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 🔄 In Progress | Phases 4-8 🔲  
 **Duration:** 3-4 weeks to production-ready  
 **Last Updated:** April 29, 2026
 
@@ -40,7 +40,7 @@ Shared Auth (@pmg/auth) ← Uses users table from @pmg/db
 - **Provider:** Better Auth (TypeScript-first, modern)
 - **Session Storage:** Database (@pmg/db - users table)
 - **Tokens:** JWT + HTTP-only cookies
-- **RBAC:** Role-based via database (system_admin, user, manager, operator)
+- **RBAC:** Role-based via database (owner, admin, manager, member)
 
 **Rejected Alternative: Per-App Auth**
 - ❌ Duplicate authentication logic
@@ -50,38 +50,41 @@ Shared Auth (@pmg/auth) ← Uses users table from @pmg/db
 
 ---
 
-## Current State ✅
+## Current State
 
 ### Apps Layer
 ```
 apps/
-├── docs/                    ✅ Astro Starlight
-├── admin/                   ✅ Next.js 16.2.4 (needs --port 3001)
-└── tracker/                 ✅ Next.js 16.2.4 (needs --port 3000)
+├── docs/                    ✅ Astro Starlight (port 3002)
+├── admin/                   ✅ Next.js 16.2.4 (port 3001) + @pmg/ui + slate theme
+└── tracker/                 ✅ Next.js 16.2.4 (port 3000) + @pmg/ui + navy theme
 ```
 
 ### Packages Layer
 ```
 packages/
-├── ui/                      ✅ Basic components (upgrading to shadcn)
+├── db/                      ✅ @pmg/db — Drizzle ORM + Neon PostgreSQL (21 tables)
+├── ui/                      🔄 @pmg/ui — 11 shadcn components, brand CSS, in progress
 ├── eslint-config/           ✅ @repo/eslint-config
 └── typescript-config/       ✅ @repo/typescript-config
 ```
 
 ### Tech Stack (Confirmed)
-- **Package Manager:** Bun 1.3.5
+- **Package Manager:** Bun 1.3.11
 - **Monorepo Tool:** Turbo 2.9.6
 - **Framework:** Next.js 16.2.4, React 19.2.4, Astro 6.1.9
-- **CSS:** Tailwind CSS 4 + @tailwindcss/postcss
+- **CSS:** Tailwind CSS 4 + @tailwindcss/postcss (CSS-first, no tailwind.config.ts)
 - **TypeScript:** 5.9.2 (strict mode)
-- **Database:** Neon PostgreSQL (free tier)
+- **Database:** Neon PostgreSQL (21 tables live)
 
 ---
 
 ## 8-Phase Implementation Roadmap
 
+---
+
 ### Phase 1: Foundation ✅ COMPLETE
-**Duration:** ~1 day (Already Done)
+**Duration:** ~1 day  
 **Status:** ✅ Verified
 
 #### Deliverables
@@ -90,656 +93,213 @@ packages/
 - [x] Turborepo workspace configured
 - [x] ESLint & TypeScript configs in place
 - [x] All apps use Next.js 16 + React 19 + Tailwind 4
-
-#### Immediate Quick Fixes (< 1 hour)
-```bash
-# 1. Update app dev ports
-# apps/admin/package.json
-"dev": "next dev --port 3001"
-
-# apps/tracker/package.json
-"dev": "next dev --port 3000"
-
-# apps/docs/package.json
-"dev": "astro dev --port 3002"
-
-# 2. Create root .env.local
-DATABASE_URL="postgresql://postgres:password@localhost:5432/pmg-tracker-360"
-
-# 3. Verify
-bun run dev  # Should start all 3 apps on correct ports
-```
+- [x] Dev ports set: tracker=3000, admin=3001, docs=3002
 
 ---
 
-### Phase 2: Database Package (`@pmg/db`) 🔲
+### Phase 2: Database Package (`@pmg/db`) ✅ COMPLETE
 **Duration:** 2-3 days  
-**Priority:** CRITICAL (blocks phases 3-7)
+**Status:** ✅ Complete — all 21 tables live in Neon
 
-#### Goals
-- Create `packages/db` with Drizzle ORM
-- Define all schemas (users, tenders, POs, invoices, audit logs)
-- Test Neon PostgreSQL connection
-- Generate & push migrations
+#### What Was Built
+- Drizzle ORM + `@neondatabase/serverless` client
+- 21 tables pushed to Neon PostgreSQL
+- Migrations generated and in sync
+- Drizzle Studio wired to `dev` script (runs on port 4983)
+- `db:reset` script for development resets
 
-#### Deliverables
-
-**Package Structure:**
+#### Package Structure
 ```
 packages/db/
 ├── src/
-│   ├── schema.ts       # All table definitions
-│   ├── client.ts       # Neon + Drizzle client
-│   └── index.ts        # Exports
-├── drizzle.config.ts   # Drizzle Kit config
-├── migrations/         # Generated SQL files
-├── package.json
-├── tsconfig.json
-└── .env.example
+│   ├── schema.ts       ✅ 21 tables + relations
+│   ├── client.ts       ✅ Neon + Drizzle client
+│   └── index.ts        ✅ Exports
+├── scripts/
+│   └── reset-db.ts     ✅ Dev reset utility
+├── migrations/         ✅ 0000 + 0001 generated
+├── drizzle.config.ts   ✅ Configured
+├── package.json        ✅ @pmg/db
+└── tsconfig.json       ✅
 ```
 
-**Complete `package.json`:**
-```json
-{
-  "name": "@pmg/db",
-  "version": "0.1.0",
-  "type": "module",
-  "private": true,
-  "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./schema": "./src/schema.ts"
-  },
-  "scripts": {
-    "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
-    "push": "drizzle-kit push:neon",
-    "studio": "drizzle-kit studio",
-    "check-types": "tsc --noEmit"
-  },
-  "dependencies": {
-    "drizzle-orm": "^0.38.0",
-    "@neondatabase/serverless": "^0.9.0"
-  },
-  "devDependencies": {
-    "@repo/typescript-config": "*",
-    "drizzle-kit": "^0.24.0",
-    "typescript": "5.9.2",
-    "@types/node": "^22.15.3"
-  }
-}
+#### Tables in Neon (21 total)
+**Auth & Users:** `user`, `session`, `account`, `verification`  
+**Organisations:** `organization`, `member`, `invitation`  
+**Notifications:** `notification`, `notification_preferences`  
+**Security:** `security_audit_log`, `session_tracking`, `ownership_transfer`  
+**Tender Management:** `tender`, `client`, `project`, `purchase_order`, `tender_extension`, `document`  
+**Other:** `waitlist`, `feedback`, `support_tickets`
+
+#### Indexes Added
+- `client` — `organization_id`, `deleted_at`
+- `tender` — `organization_id`, `status`, `submission_date`, `evaluation_date`, `deleted_at`
+- `project` — `organization_id`, `status`, `tender_id`, `deleted_at`
+- `purchase_order` — `organization_id`, `project_id`, `status`, `deleted_at`
+
+#### Scripts
+```bash
+bun run generate    # Generate migration from schema changes
+bun run migrate     # Apply migrations
+bun run push        # Push schema directly to Neon (dev)
+bun run studio      # Open Drizzle Studio
+bun run dev         # Alias for studio (runs in turbo dev)
+bun run db:reset    # ⚠️ Drop all tables (dev only)
+bun run check-types # TypeScript check
 ```
-
-**Database Schema (`src/schema.ts`):**
-```typescript
-import { 
-  pgTable, uuid, varchar, text, timestamp, pgEnum, 
-  decimal, integer, boolean, index
-} from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
-
-// ===== ENUMS =====
-export const roleEnum = pgEnum('role', ['system_admin', 'admin', 'manager', 'user']);
-export const statusEnum = pgEnum('status', ['draft', 'open', 'closed', 'awarded', 'cancelled']);
-export const invoiceStatusEnum = pgEnum('invoice_status', ['draft', 'sent', 'paid', 'overdue', 'cancelled']);
-
-// ===== CORE TABLES =====
-
-// Users (shared across all apps)
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }).notNull(),
-  passwordHash: varchar('password_hash', { length: 255 }), // For Better Auth
-  role: roleEnum('role').notNull().default('user'),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  emailIdx: index('users_email_idx').on(table.email),
-  roleIdx: index('users_role_idx').on(table.role),
-}));
-
-// Sessions (for Better Auth)
-export const sessions = pgTable('sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  token: varchar('token', { length: 255 }).notNull().unique(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('sessions_user_id_idx').on(table.userId),
-  tokenIdx: index('sessions_token_idx').on(table.token),
-}));
-
-// ===== ADMIN APP TABLES =====
-
-// System settings
-export const systemSettings = pgTable('system_settings', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  key: varchar('key', { length: 255 }).notNull().unique(),
-  value: text('value').notNull(),
-  description: text('description'),
-  updatedBy: uuid('updated_by').references(() => users.id),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
-
-// Audit logs
-export const auditLogs = pgTable('audit_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id),
-  action: varchar('action', { length: 255 }).notNull(),
-  resource: varchar('resource', { length: 255 }).notNull(),
-  resourceId: uuid('resource_id'),
-  details: text('details'),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => ({
-  userIdIdx: index('audit_logs_user_id_idx').on(table.userId),
-  createdAtIdx: index('audit_logs_created_at_idx').on(table.createdAt),
-}));
-
-// ===== TRACKER APP TABLES =====
-
-// Tenders
-export const tenders = pgTable('tenders', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  title: varchar('title', { length: 512 }).notNull(),
-  description: text('description'),
-  department: varchar('department', { length: 255 }).notNull(),
-  closingDate: timestamp('closing_date').notNull(),
-  budget: decimal('budget', { precision: 15, scale: 2 }),
-  estimatedValue: decimal('estimated_value', { precision: 15, scale: 2 }),
-  status: statusEnum('status').notNull().default('draft'),
-  reference: varchar('reference', { length: 255 }).unique(),
-  source: varchar('source', { length: 255 }), // e.g., Ekurhuleni, Msunduzi
-  createdBy: uuid('created_by').notNull().references(() => users.id),
-  updatedBy: uuid('updated_by').references(() => users.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  statusIdx: index('tenders_status_idx').on(table.status),
-  closingDateIdx: index('tenders_closing_date_idx').on(table.closingDate),
-  createdByIdx: index('tenders_created_by_idx').on(table.createdBy),
-}));
-
-// Purchase Orders
-export const purchaseOrders = pgTable('purchase_orders', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  poNumber: varchar('po_number', { length: 255 }).notNull().unique(),
-  vendorId: uuid('vendor_id'),
-  amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
-  status: varchar('status', { length: 50 }).notNull().default('pending'),
-  description: text('description'),
-  issueDate: timestamp('issue_date').notNull(),
-  dueDate: timestamp('due_date'),
-  createdBy: uuid('created_by').notNull().references(() => users.id),
-  updatedBy: uuid('updated_by').references(() => users.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  statusIdx: index('purchase_orders_status_idx').on(table.status),
-  poNumberIdx: index('purchase_orders_po_number_idx').on(table.poNumber),
-}));
-
-// Invoices
-export const invoices = pgTable('invoices', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  invoiceNumber: varchar('invoice_number', { length: 255 }).notNull().unique(),
-  poId: uuid('po_id').references(() => purchaseOrders.id),
-  tenderId: uuid('tender_id').references(() => tenders.id),
-  amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
-  taxAmount: decimal('tax_amount', { precision: 15, scale: 2 }).default('0'),
-  status: invoiceStatusEnum('status').notNull().default('draft'),
-  issueDate: timestamp('issue_date').notNull(),
-  dueDate: timestamp('due_date'),
-  paidDate: timestamp('paid_date'),
-  notes: text('notes'),
-  createdBy: uuid('created_by').notNull().references(() => users.id),
-  updatedBy: uuid('updated_by').references(() => users.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => ({
-  statusIdx: index('invoices_status_idx').on(table.status),
-  poIdIdx: index('invoices_po_id_idx').on(table.poId),
-}));
-
-// ===== RELATIONS =====
-
-export const usersRelations = relations(users, ({ many }) => ({
-  sessions: many(sessions),
-  auditLogs: many(auditLogs),
-  tenders: many(tenders),
-  purchaseOrders: many(purchaseOrders),
-  invoices: many(invoices),
-}));
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, { fields: [sessions.userId], references: [users.id] }),
-}));
-
-export const tendersRelations = relations(tenders, ({ one, many }) => ({
-  creator: one(users, { fields: [tenders.createdBy], references: [users.id] }),
-  invoices: many(invoices),
-}));
-
-export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
-  creator: one(users, { fields: [purchaseOrders.createdBy], references: [users.id] }),
-  invoices: many(invoices),
-}));
-
-export const invoicesRelations = relations(invoices, ({ one }) => ({
-  po: one(purchaseOrders, { fields: [invoices.poId], references: [purchaseOrders.id] }),
-  tender: one(tenders, { fields: [invoices.tenderId], references: [tenders.id] }),
-  creator: one(users, { fields: [invoices.createdBy], references: [users.id] }),
-}));
-
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
-  user: one(users, { fields: [auditLogs.userId], references: [users.id] }),
-}));
-```
-
-**Client (`src/client.ts`):**
-```typescript
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import * as schema from "./schema";
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is required");
-}
-
-const sql = neon(process.env.DATABASE_URL);
-export const db = drizzle(sql, { schema });
-
-export type Database = typeof db;
-```
-
-**Export (`src/index.ts`):**
-```typescript
-export * from "./client";
-export * from "./schema";
-export type { Database } from "./client";
-```
-
-**Drizzle Config (`drizzle.config.ts`):**
-```typescript
-import type { Config } from "drizzle-kit";
-
-export default {
-  dialect: "postgresql",
-  schema: "./src/schema.ts",
-  out: "./migrations",
-  dbCredentials: {
-    url: process.env.DATABASE_URL!,
-  },
-} satisfies Config;
-```
-
-#### Tasks
-- [ ] Create `packages/db/` directory & files
-- [ ] Setup Neon PostgreSQL (free tier at neon.tech)
-- [ ] Create `.env.local` with `DATABASE_URL`
-- [ ] Run `bun install`
-- [ ] Generate migrations: `bun run -w db generate`
-- [ ] Push schema: `bun run -w db push`
-- [ ] Test connection with Drizzle Studio: `bun run -w db studio`
-- [ ] Verify all tables created in Neon console
 
 ---
 
-### Phase 3: UI Package (`@pmg/ui`) 🔲
+### Phase 3: UI Package (`@pmg/ui`) 🔄 IN PROGRESS
 **Duration:** 2-3 days  
 **Depends On:** Phase 2 ✅  
 **Blocks:** Phases 5-6 (apps need components)
 
-#### Goals
-- Rename `packages/ui` to `@pmg/ui`
-- Initialize shadcn/ui with monorepo support (radix-nova style, neutral base)
-- Add 15+ reusable shadcn components
-- Implement navy-gold brand theme via CSS `@theme` (Tailwind v4 — no `tailwind.config.ts`)
-- Shared `globals.css` in `@pmg/ui` — both apps import it
-- OS-based dark mode with optional theme toggle component
-
-#### Key Decisions
-- **No `tailwind.config.ts`** — Tailwind v4 is CSS-first; all theming via `@theme` in CSS
-- **shadcn style:** `radix-nova`
+#### Key Decisions (Confirmed)
+- **No `tailwind.config.ts`** — Tailwind v4 is CSS-first; all theming via `@theme` and CSS variables
+- **shadcn style:** `default` (base)
 - **Base color:** `neutral`
-- **Dark mode:** OS default (`prefers-color-scheme`) + optional `ThemeToggle` component using `next-themes`
-- **Package name:** `@pmg/ui` (consistent with `@pmg/db`, `@pmg/auth`)
+- **Dark mode:** OS default (`prefers-color-scheme`) + optional `ThemeToggle` via `next-themes`
+- **Package name:** `@pmg/ui`
+- **Per-app theming:** Each app has its own `globals.css` that imports `@pmg/ui/styles/globals.css` and overrides only what it needs
+- **`@plugin "tailwindcss-animate"`** lives in each app's `globals.css` (not in the shared base) to ensure local resolution by Turbopack
 
-#### Folder Structure
+#### What's Done ✅
+- [x] Package renamed `@repo/ui` → `@pmg/ui`
+- [x] `src/styles/globals.css` — shared base: `@theme` brand tokens + shadcn CSS vars + OS dark mode + `.dark`/`.light` class overrides
+- [x] `src/lib/utils.ts` — `cn()` helper
+- [x] `src/components/ui/button.tsx`
+- [x] `src/components/ui/input.tsx`
+- [x] `src/components/ui/label.tsx`
+- [x] `src/components/ui/card.tsx`
+- [x] `src/components/ui/badge.tsx`
+- [x] `src/components/ui/separator.tsx`
+- [x] `src/components/ui/skeleton.tsx`
+- [x] `src/components/ui/avatar.tsx`
+- [x] `src/components/ui/dialog.tsx`
+- [x] `src/components/ui/dropdown-menu.tsx`
+- [x] `src/components/ui/select.tsx`
+- [x] `src/components/shared/logo.tsx` — Tracker 360 brand mark, 3 sizes
+- [x] `src/components/shared/page-header.tsx` — title + description + action slot
+- [x] `apps/tracker/src/app/globals.css` — navy-gold theme (imports base, overrides primary/accent/sidebar)
+- [x] `apps/admin/src/app/globals.css` — slate-gold theme (imports base, overrides primary/accent/sidebar)
+- [x] `@pmg/ui` added as dependency in both apps
+- [x] `tailwindcss-animate` installed in `@pmg/ui`, `apps/tracker`, `apps/admin`
+- [x] TypeScript check passes (`tsc --noEmit` clean)
+
+#### Still To Do 🔲
+- [ ] `src/components/ui/table.tsx`
+- [ ] `src/components/ui/tabs.tsx`
+- [ ] `src/components/ui/alert.tsx`
+- [ ] `src/components/ui/sheet.tsx`
+- [ ] `src/components/ui/tooltip.tsx`
+- [ ] `src/components/ui/sonner.tsx` (toast notifications)
+- [ ] `src/components/ui/form.tsx` (react-hook-form integration)
+- [ ] `src/hooks/use-mobile.ts` — responsive hook
+- [ ] `src/components/shared/theme-toggle.tsx` — Sun/Moon/System using `next-themes`
+- [ ] `src/components/shared/sidebar.tsx` — collapsible nav, Sheet on mobile
+- [ ] `src/components/shared/nav-bar.tsx` — top nav with logo, links, user menu, ThemeToggle
+- [ ] Wire `next-themes` `ThemeProvider` into both app root layouts
+- [ ] `components.json` in `packages/ui`, `apps/tracker`, `apps/admin`
+- [ ] Test all component imports in apps
+- [ ] Run `bun run check-types` across all packages
+
+#### Folder Structure (Target)
 ```
 packages/ui/
 ├── src/
 │   ├── components/
-│   │   ├── ui/              # shadcn components (installed by CLI)
-│   │   │   ├── button.tsx
-│   │   │   ├── input.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── form.tsx
-│   │   │   ├── dialog.tsx
-│   │   │   ├── dropdown-menu.tsx
-│   │   │   ├── table.tsx
-│   │   │   ├── tabs.tsx
-│   │   │   ├── select.tsx
-│   │   │   ├── badge.tsx
-│   │   │   ├── alert.tsx
-│   │   │   ├── avatar.tsx
-│   │   │   ├── separator.tsx
-│   │   │   ├── sheet.tsx
-│   │   │   ├── skeleton.tsx
-│   │   │   ├── sonner.tsx   # toast notifications
-│   │   │   └── tooltip.tsx
-│   │   └── shared/          # brand-specific components
-│   │       ├── logo.tsx
-│   │       ├── page-header.tsx
-│   │       ├── sidebar.tsx
-│   │       ├── nav-bar.tsx
-│   │       └── theme-toggle.tsx
+│   │   ├── ui/              # shadcn components
+│   │   │   ├── alert.tsx         🔲
+│   │   │   ├── avatar.tsx        ✅
+│   │   │   ├── badge.tsx         ✅
+│   │   │   ├── button.tsx        ✅
+│   │   │   ├── card.tsx          ✅
+│   │   │   ├── dialog.tsx        ✅
+│   │   │   ├── dropdown-menu.tsx ✅
+│   │   │   ├── form.tsx          🔲
+│   │   │   ├── input.tsx         ✅
+│   │   │   ├── label.tsx         ✅
+│   │   │   ├── select.tsx        ✅
+│   │   │   ├── separator.tsx     ✅
+│   │   │   ├── sheet.tsx         🔲
+│   │   │   ├── skeleton.tsx      ✅
+│   │   │   ├── sonner.tsx        🔲
+│   │   │   ├── table.tsx         🔲
+│   │   │   ├── tabs.tsx          🔲
+│   │   │   └── tooltip.tsx       🔲
+│   │   └── shared/
+│   │       ├── logo.tsx          ✅
+│   │       ├── nav-bar.tsx       🔲
+│   │       ├── page-header.tsx   ✅
+│   │       ├── sidebar.tsx       🔲
+│   │       └── theme-toggle.tsx  🔲
 │   ├── hooks/
-│   │   └── use-mobile.ts    # responsive hook
+│   │   └── use-mobile.ts         🔲
 │   ├── lib/
-│   │   └── utils.ts         # cn() helper
+│   │   └── utils.ts              ✅
 │   └── styles/
-│       └── globals.css      # @theme brand tokens + shadcn CSS vars
-├── components.json          # shadcn config for this package
-├── package.json             # name: @pmg/ui
-└── tsconfig.json
+│       └── globals.css           ✅
+├── package.json                  ✅ @pmg/ui
+└── tsconfig.json                 ✅
 ```
 
-#### `package.json`
-```json
-{
-  "name": "@pmg/ui",
-  "version": "0.1.0",
-  "private": true,
-  "exports": {
-    "./components/*": "./src/components/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts",
-    "./lib/*": "./src/lib/*.ts",
-    "./styles/globals.css": "./src/styles/globals.css"
-  },
-  "scripts": {
-    "lint": "eslint . --max-warnings 0",
-    "check-types": "tsc --noEmit"
-  },
-  "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "next-themes": "^0.4.6",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.0.0",
-    "lucide-react": "^0.511.0"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "tailwindcss": "^4",
-    "typescript": "5.9.2"
-  }
-}
-```
-> Radix UI primitives are added automatically by the shadcn CLI — do not add them manually.
+#### Per-App Theming (Implemented)
+Each app imports the shared base then overrides only its CSS variables. To change a theme, edit only the app's `globals.css` — nothing else.
 
-#### `components.json` (packages/ui)
-```json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "radix-nova",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "",
-    "css": "src/styles/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true
-  },
-  "iconLibrary": "lucide",
-  "aliases": {
-    "components": "@pmg/ui/components",
-    "utils": "@pmg/ui/lib/utils",
-    "hooks": "@pmg/ui/hooks",
-    "lib": "@pmg/ui/lib",
-    "ui": "@pmg/ui/components/ui"
-  }
-}
+```
+@pmg/ui/src/styles/globals.css     ← shared base (brand @theme + neutral shadcn tokens)
+    ↓ @import
+apps/tracker/src/app/globals.css   ← navy primary, gold accent, navy sidebar
+apps/admin/src/app/globals.css     ← slate primary, gold accent, dark slate sidebar
 ```
 
-#### `components.json` (apps/tracker & apps/admin)
-```json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "radix-nova",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "",
-    "css": "../../packages/ui/src/styles/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true
-  },
-  "iconLibrary": "lucide",
-  "aliases": {
-    "components": "@/components",
-    "hooks": "@/hooks",
-    "lib": "@/lib",
-    "utils": "@pmg/ui/lib/utils",
-    "ui": "@pmg/ui/components/ui"
-  }
-}
-```
-
-#### Brand Theme (`src/styles/globals.css`)
-```css
-@import "tailwindcss";
-@plugin "tailwindcss-animate";
-
-/* ===== BRAND TOKENS ===== */
-@theme {
-  /* Brand colors — available as bg-brand-navy, text-brand-gold, etc. */
-  --color-brand-navy: #1a3a52;
-  --color-brand-gold: #d4af37;
-  --color-brand-dark: #0f1419;
-  --color-brand-light: #f8f9fa;
-
-  /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-/* ===== SHADCN CSS VARIABLES (light) ===== */
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
-}
-
-/* ===== SHADCN CSS VARIABLES (dark) ===== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-  }
-}
-
-/* ===== OPTIONAL THEME TOGGLE (class-based override) ===== */
-/* When ThemeToggle forces dark, .dark class on <html> overrides OS preference */
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-}
-
-.light {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-}
-```
-
-#### Theme Toggle Setup
-- `next-themes` provider wraps each app's root layout with `attribute="class"` and `defaultTheme="system"`
-- `ThemeToggle` component in `@pmg/ui/components/shared/theme-toggle.tsx` cycles light → dark → system
-- OS preference is always the default; the toggle is purely optional for users
-
-#### Per-App Theming
-Each app imports the shared base from `@pmg/ui` then overrides only the CSS variables it needs. No config files — just CSS.
-
-**`apps/tracker/src/app/globals.css`** — Navy-gold public brand
-- Light: navy primary, gold accent, warm neutral background
-- Dark: deep navy background, gold flips to primary
-- Sidebar: navy with gold highlights
-
-**`apps/admin/src/app/globals.css`** — Slate-grey internal tool
-- Light: deep slate primary, gold accent, cool neutral background
-- Dark: very dark slate background, gold flips to primary
-- Sidebar: dark slate with gold highlights
-
-To change a theme, edit only the CSS variables in the relevant app's `globals.css` — nothing else needs to change.
-
-```css
-/* Pattern: import base, then override */
-@import "@pmg/ui/styles/globals.css";
-
-:root {
-  --primary: oklch(...);   /* change this */
-  --accent:  oklch(...);   /* change this */
-  /* everything else inherits from @pmg/ui */
-}
-```
-
-#### shadcn Components to Install (via CLI in each app)
-```bash
-# Run from apps/tracker or apps/admin
-npx shadcn@latest add button input card form dialog dropdown-menu \
-  table tabs select badge alert avatar separator sheet skeleton \
-  sonner tooltip
-```
-
-#### Brand Components (`src/components/shared/`)
-
-**`logo.tsx`** — Tracker 360 brand mark, 3 sizes  
-**`page-header.tsx`** — Title + description + optional action slot  
-**`sidebar.tsx`** — Collapsible nav sidebar using shadcn Sheet on mobile  
-**`nav-bar.tsx`** — Top nav with logo, links, user menu, ThemeToggle  
-**`theme-toggle.tsx`** — Sun/Moon/System icon button using `next-themes`
-
-#### Tasks
-- [ ] Rename package: `@repo/ui` → `@pmg/ui` in `package.json`
-- [ ] Update all workspace references from `@repo/ui` to `@pmg/ui`
-- [ ] Initialize shadcn in `packages/ui`: `npx shadcn@latest init`
-- [ ] Create `components.json` in `packages/ui`, `apps/tracker`, `apps/admin`
-- [ ] Create `src/styles/globals.css` with brand `@theme` tokens + shadcn CSS vars
-- [ ] Update each app's `globals.css` to `@import "@pmg/ui/styles/globals.css"`
-- [ ] Add `next-themes` to `@pmg/ui` dependencies
-- [ ] Install 15+ shadcn components via CLI
-- [ ] Build brand components (logo, page-header, sidebar, nav-bar, theme-toggle)
-- [ ] Create `src/lib/utils.ts` with `cn()` helper
-- [ ] Update `package.json` exports to expose components, hooks, lib, styles
-- [ ] Test imports in apps: `import { Button } from "@pmg/ui/components/ui/button"`
-- [ ] Verify dark mode: OS default works, toggle overrides correctly
-- [ ] Run `bun run check-types` across all packages
+To change admin theme: open `apps/admin/src/app/globals.css`, change the `oklch()` hue value in `:root`. That's it.
 
 ---
 
 ### Phase 4: Authentication Package (`@pmg/auth`) 🔲
 **Duration:** 2-3 days  
-**Depends On:** Phase 2 (database/users table)  
+**Depends On:** Phase 2 ✅, Phase 3 🔄  
 **Blocks:** Phases 5-6 (apps need auth)
 
 #### Goals
 - Create shared auth package using Better Auth
-- Implement login/register flows
-- Configure JWT + HTTP-only cookies
-- Setup role-based access control (RBAC)
-- Create auth middleware for both apps
+- Implement email/password login + registration
+- Configure HTTP-only cookie sessions
+- Setup role-based access control (RBAC) using `member.role` enum
+- Create Next.js middleware for route protection in both apps
 
-#### Deliverables
-
-**Folder Structure:**
+#### Folder Structure
 ```
 packages/auth/
 ├── src/
-│   ├── client.ts           # Client-side utilities
-│   ├── server.ts           # Server-side utilities
-│   ├── hooks.ts            # React hooks
-│   ├── middleware.ts       # Next.js middleware
-│   ├── rbac.ts            # Role-based access
-│   ├── types.ts           # TypeScript types
+│   ├── server.ts           # Better Auth instance + Drizzle adapter
+│   ├── client.ts           # Client-side auth helpers
+│   ├── middleware.ts       # Next.js route protection
+│   ├── rbac.ts             # Role/permission helpers
+│   ├── types.ts            # Shared types
 │   └── index.ts
-├── package.json
+├── package.json            # @pmg/auth
 ├── tsconfig.json
 └── .env.example
 ```
 
-**`package.json`:**
+#### `package.json`
 ```json
 {
   "name": "@pmg/auth",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
-    "./hooks": "./src/hooks.ts",
     "./middleware": "./src/middleware.ts"
   },
   "dependencies": {
-    "better-auth": "^0.8.0",
+    "better-auth": "^1.2.0",
     "@pmg/db": "*",
-    "jose": "^5.0.0",
     "next": "^16.0.0"
   },
   "devDependencies": {
@@ -749,25 +309,31 @@ packages/auth/
 }
 ```
 
-**Better Auth Setup (`src/server.ts`):**
+#### Better Auth Setup (`src/server.ts`)
 ```typescript
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@pmg/db";
+import { organization } from "better-auth/plugins";
+import { db, schema } from "@pmg/db";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "postgresql",
+    provider: "pg",
+    schema: {
+      user: schema.user,
+      session: schema.session,
+      account: schema.account,
+      verification: schema.verification,
+    },
   }),
-  emailAndPassword: {
-    enabled: true,
-    minPasswordLength: 8,
-  },
+  plugins: [organization()],
+  emailAndPassword: { enabled: true, minPasswordLength: 8 },
   appName: "Tracker 360",
   secret: process.env.BETTER_AUTH_SECRET,
   basePath: "/api/auth",
   trustedOrigins: [
-    process.env.NEXTAUTH_URL || "http://localhost:3000",
+    process.env.TRACKER_URL ?? "http://localhost:3000",
+    process.env.ADMIN_URL ?? "http://localhost:3001",
   ],
 });
 
@@ -775,109 +341,31 @@ export type Session = typeof auth.$Infer.Session;
 export type User = typeof auth.$Infer.User;
 ```
 
-**Types (`src/types.ts`):**
-```typescript
-export type UserRole = "system_admin" | "admin" | "manager" | "user";
-
-export const PERMISSIONS = {
-  system_admin: {
-    users: ["create", "read", "update", "delete"],
-    settings: ["create", "read", "update", "delete"],
-    audits: ["read"],
-    system: ["manage"],
-  },
-  admin: {
-    tenders: ["create", "read", "update", "delete"],
-    pos: ["create", "read", "update", "delete"],
-    invoices: ["read"],
-  },
-  manager: {
-    tenders: ["read", "create", "update"],
-    pos: ["read"],
-    invoices: ["read"],
-  },
-  user: {
-    tenders: ["read"],
-    profile: ["update"],
-  },
-} as const;
-
-export interface AuthSession {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: UserRole;
-  };
-  expires: string;
-}
-```
-
-**Client Hooks (`src/hooks.ts`):**
-```typescript
-"use client";
-
-import { useContext } from "react";
-import { AuthContext } from "./context";
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
-}
-
-export function useIsAuthorized(action: string) {
-  const { user } = useAuth();
-  if (!user) return false;
-  
-  const role = user.role as UserRole;
-  // Check permissions...
-}
-```
-
-**Middleware (`src/middleware.ts`):**
-```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "./server";
-
-export async function withAuth(request: NextRequest) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  
-  if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  request.headers.set("x-user-id", session.user.id);
-  request.headers.set("x-user-role", session.user.role);
-  
-  return NextResponse.next({ request });
-}
-```
+#### RBAC (`src/rbac.ts`)
+Roles from `member.role` enum: `owner`, `admin`, `manager`, `member`
 
 #### Tasks
-- [ ] Create `packages/auth/` directory
-- [ ] Setup Better Auth with Drizzle adapter
-- [ ] Configure JWT + HTTP-only cookies
-- [ ] Create hooks (useAuth, useIsAuthorized)
-- [ ] Setup RBAC system
-- [ ] Create middleware for route protection
-- [ ] Test auth flow (register → login → session)
-- [ ] Integrate into both apps (tracker & admin)
+- [ ] Create `packages/auth/` directory & files
+- [ ] Install Better Auth + configure Drizzle adapter
+- [ ] Wire `user`, `session`, `account`, `verification` tables from `@pmg/db`
+- [ ] Enable `organization` plugin (maps to existing `organization`/`member` tables)
+- [ ] Create RBAC helpers
+- [ ] Create Next.js middleware for both apps
+- [ ] Add `BETTER_AUTH_SECRET` to `.env.local`
+- [ ] Test: register → login → session → logout
+- [ ] Integrate into both apps
 
 ---
 
 ### Phase 5: Tracker App Features 🔲
 **Duration:** 4-5 days  
-**Depends On:** Phases 2-4 (DB, UI, Auth)
+**Depends On:** Phases 2 ✅, 3 🔄, 4 🔲
 
 #### Goals
-- Migrate existing TenderTrack360 code
-- Implement tender management (list, detail, create)
-- Implement PO management
-- Implement invoice tracking
-- Connect all to shared database & auth
+- Build tender management (list, detail, create, edit)
+- Build project & PO management
+- Build invoice tracking
+- Connect to `@pmg/db` and `@pmg/auth`
 
 #### Folder Structure
 ```
@@ -888,79 +376,55 @@ apps/tracker/src/
 │   │   ├── register/page.tsx
 │   │   └── layout.tsx
 │   ├── (public)/
-│   │   ├── page.tsx              # Home
-│   │   ├── tenders/page.tsx       # List
-│   │   ├── tenders/[id]/page.tsx  # Detail
-│   │   └── pos/page.tsx
+│   │   ├── page.tsx
+│   │   └── tenders/
+│   │       ├── page.tsx
+│   │       └── [id]/page.tsx
 │   ├── (protected)/
 │   │   ├── dashboard/page.tsx
-│   │   ├── tenders/page.tsx       # My tenders
-│   │   ├── submissions/page.tsx
+│   │   ├── tenders/page.tsx
+│   │   ├── projects/page.tsx
+│   │   ├── purchase-orders/page.tsx
 │   │   ├── invoices/page.tsx
 │   │   ├── settings/page.tsx
 │   │   └── layout.tsx
 │   ├── api/
-│   │   ├── auth/[...auth]/route.ts
-│   │   ├── tenders/route.ts
-│   │   ├── pos/route.ts
-│   │   └── invoices/route.ts
+│   │   └── auth/[...auth]/route.ts
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
-│   ├── TenderCard.tsx
-│   ├── TenderFilter.tsx
-│   ├── TenderForm.tsx
-│   ├── DashboardLayout.tsx
-│   └── ...
 ├── lib/
-│   ├── actions.ts          # Server actions
-│   ├── queries.ts          # Database queries
-│   └── utils.ts
+│   ├── actions.ts
+│   └── queries.ts
 ├── middleware.ts
 └── types.ts
 ```
 
-**Migration Strategy:**
-1. Copy existing tracker code to `apps/tracker/src/`
-2. Replace database imports: `@/lib/db` → `@pmg/db`
-3. Replace UI imports: `@/components/ui` → `@repo/ui`
-4. Integrate authentication via `@pmg/auth`
-5. Update API routes to use Server Actions (Next.js 16 best practice)
-6. Test all features end-to-end
-
-#### Key Pages
-- `/` - Public home with featured tenders
-- `/tenders` - Searchable tender listings
-- `/tenders/[id]` - Tender detail page
-- `/dashboard` - User dashboard (protected)
-- `/dashboard/tenders` - User's tenders
-- `/dashboard/invoices` - Invoice tracking
-
 #### Tasks
-- [ ] Export existing TenderTrack360 codebase
-- [ ] Copy into `apps/tracker/src/`
-- [ ] Update imports (DB, UI, types)
-- [ ] Integrate Better Auth
-- [ ] Implement tender CRUD
-- [ ] Implement PO CRUD
-- [ ] Implement invoice tracking
-- [ ] Setup Neon indexes for performance
-- [ ] Add form validation (Zod)
-- [ ] Test all features
-- [ ] Add error handling & logging
+- [ ] Setup auth API route (`/api/auth/[...auth]`)
+- [ ] Add `ThemeProvider` to root layout
+- [ ] Build login/register pages using `@pmg/ui` components
+- [ ] Build dashboard page
+- [ ] Build tender list + detail pages
+- [ ] Build project management pages
+- [ ] Build PO management pages
+- [ ] Build invoice tracking pages
+- [ ] Add Zod form validation
+- [ ] Add error handling & loading states
+- [ ] Test all flows end-to-end
 
 ---
 
 ### Phase 6: Admin App Features 🔲
 **Duration:** 3-4 days  
-**Depends On:** Phases 2-4 (DB, UI, Auth)
+**Depends On:** Phases 2 ✅, 3 🔄, 4 🔲
 
 #### Goals
-- Build admin dashboard MVP
-- User management (CRUD)
-- System settings configuration
+- Build admin dashboard (stats, overview)
+- User & organisation management
 - Audit log viewer
-- Restrict to system_admin role only
+- System settings
+- Restrict to `owner`/`admin` roles only
 
 #### Folder Structure
 ```
@@ -970,28 +434,19 @@ apps/admin/src/
 │   │   ├── login/page.tsx
 │   │   └── layout.tsx
 │   ├── (protected)/
-│   │   ├── dashboard/page.tsx     # Stats, overview
-│   │   ├── users/page.tsx         # User management
-│   │   ├── users/[id]/page.tsx    # User detail
-│   │   ├── settings/page.tsx      # System config
-│   │   ├── logs/page.tsx          # Audit logs
-│   │   ├── reports/page.tsx       # Analytics
-│   │   └── layout.tsx             # Sidebar nav
+│   │   ├── dashboard/page.tsx
+│   │   ├── users/page.tsx
+│   │   ├── users/[id]/page.tsx
+│   │   ├── organisations/page.tsx
+│   │   ├── settings/page.tsx
+│   │   ├── logs/page.tsx
+│   │   ├── reports/page.tsx
+│   │   └── layout.tsx
 │   ├── api/
-│   │   ├── auth/[...auth]/route.ts
-│   │   └── admin/
-│   │       ├── users/route.ts
-│   │       ├── settings/route.ts
-│   │       └── stats/route.ts
+│   │   └── auth/[...auth]/route.ts
 │   ├── layout.tsx
-│   └── page.tsx                   # Redirect to dashboard
+│   └── page.tsx
 ├── components/
-│   ├── AdminLayout.tsx
-│   ├── Sidebar.tsx
-│   ├── UserTable.tsx
-│   ├── SettingsForm.tsx
-│   ├── StatsCard.tsx
-│   └── ...
 ├── lib/
 │   ├── actions.ts
 │   ├── queries.ts
@@ -1000,109 +455,71 @@ apps/admin/src/
 └── types.ts
 ```
 
-**Pages to Build:**
-
-1. **Dashboard** (`/dashboard`)
-   - Total users, tenders, invoices stats
-   - Recent activity
-   - System health checks
-
-2. **Users** (`/users`)
-   - Table of all users (pagination, search, filter)
-   - Bulk actions (activate, deactivate, role change)
-   - Detail page (edit role, view history)
-   - Create new user
-
-3. **Settings** (`/settings`)
-   - System configuration form
-   - Email settings
-   - Payment settings
-   - Notification preferences
-
-4. **Audit Logs** (`/logs`)
-   - Table of all actions (create, update, delete)
-   - Filters: date range, user, action type
-   - Export to CSV
-
-5. **Reports** (`/reports`)
-   - Tender statistics
-   - Invoice reports
-   - User activity
+#### Pages to Build
+1. **Dashboard** — stats cards, recent activity, system health
+2. **Users** — table with pagination/search, bulk actions, role management
+3. **Organisations** — list, detail, member management
+4. **Settings** — system config, email, notifications
+5. **Audit Logs** — filterable table, CSV export
+6. **Reports** — tender stats, invoice reports, user activity
 
 #### Tasks
-- [ ] Setup auth with system_admin role check
+- [ ] Setup auth API route + `owner`/`admin` role guard middleware
+- [ ] Add `ThemeProvider` to root layout
+- [ ] Build login page
 - [ ] Build dashboard with stats cards
 - [ ] Build users CRUD with data table
+- [ ] Build organisations management
 - [ ] Build settings form
-- [ ] Build audit log viewer
-- [ ] Add role-based page access
-- [ ] Setup notifications (optional)
-- [ ] Add data export functionality
-- [ ] Test all flows as admin
-- [ ] Add breadcrumbs & navigation
+- [ ] Build audit log viewer with filters
+- [ ] Add data export (CSV)
+- [ ] Test all flows as admin/owner
 
 ---
 
 ### Phase 7: Documentation (`apps/docs`) 🔲
 **Duration:** 2-3 days  
-**Depends On:** All features complete  
-**Blocks:** Nothing (final phase)
-
-#### Goals
-- Document user guides (tracker app)
-- Document admin guide
-- Document API endpoints
-- Document developer setup
-- Create architecture diagrams
+**Depends On:** Phases 5-6 complete
 
 #### Content Structure
 ```
 src/content/docs/
-├── index.mdx                  # Home
+├── index.mdx
 ├── getting-started/
 │   ├── setup.mdx
 │   ├── first-login.mdx
 │   └── account-management.mdx
 ├── tracker-app/
 │   ├── searching-tenders.mdx
-│   ├── applying-tenders.mdx
 │   ├── managing-submissions.mdx
+│   ├── projects-and-pos.mdx
 │   ├── invoice-tracking.mdx
 │   └── faq.mdx
 ├── admin-dashboard/
 │   ├── user-management.mdx
+│   ├── organisation-management.mdx
 │   ├── system-settings.mdx
 │   ├── audit-logs.mdx
 │   └── reports.mdx
 ├── api/
 │   ├── authentication.mdx
 │   ├── tenders.mdx
-│   ├── pos.mdx
-│   └── invoices.mdx
-├── development/
-│   ├── architecture.mdx
-│   ├── setup.mdx
-│   ├── database.mdx
-│   └── deployment.mdx
-└── support.mdx
+│   ├── projects.mdx
+│   └── purchase-orders.mdx
+└── development/
+    ├── architecture.mdx
+    ├── setup.mdx
+    ├── database.mdx
+    └── deployment.mdx
 ```
-
-#### Key Sections
-1. **User Guide** - How to use tracker app
-2. **Admin Guide** - How to use admin dashboard
-3. **API Reference** - All endpoints & schemas
-4. **Developer Guide** - Setup, architecture, deployment
-5. **FAQ** - Common questions & troubleshooting
 
 #### Tasks
 - [ ] Write tracker user guide
 - [ ] Write admin dashboard guide
-- [ ] Document all API endpoints
+- [ ] Document API endpoints
+- [ ] Write developer setup guide
 - [ ] Create architecture diagrams
-- [ ] Write deployment guide
-- [ ] Add code examples
-- [ ] Add troubleshooting section
-- [ ] Configure search in Starlight
+- [ ] Configure Starlight search
 - [ ] Test all links
 - [ ] Deploy to docs.tendertrack360.co.za
 
@@ -1110,53 +527,42 @@ src/content/docs/
 
 ### Phase 8: Testing & Deployment 🔲
 **Duration:** 2-3 days  
-**Depends On:** All phases complete  
-**Blocks:** Nothing (final)
-
-#### Goals
-- End-to-end testing
-- Performance optimization
-- Security hardening
-- Deploy to Vercel (3 projects)
+**Depends On:** All phases complete
 
 #### Testing Checklist
-- [ ] Auth flow (register → login → session)
-- [ ] Tender CRUD (create, read, update, delete)
-- [ ] PO CRUD operations
-- [ ] Invoice generation & tracking
+- [ ] Auth flow (register → login → session → logout)
+- [ ] Tender CRUD
+- [ ] Project & PO CRUD
+- [ ] Invoice tracking
 - [ ] Admin user management
 - [ ] Audit logging
-- [ ] Database migrations
-- [ ] Error handling
 - [ ] Mobile responsiveness
 - [ ] Accessibility (a11y)
 
-#### Performance Optimization
-- [ ] Database query optimization (indexes created)
+#### Security Checklist
+- [ ] Environment variables secured (not in git)
+- [ ] SQL injection prevention (Drizzle ORM ✅)
+- [ ] CSRF protection
+- [ ] Rate limiting on auth endpoints
+- [ ] HTTPS enforced
+- [ ] Security headers (CSP, X-Frame-Options, etc.)
+
+#### Performance
+- [ ] Database indexes verified ✅ (done in Phase 2)
 - [ ] API response caching
 - [ ] Image optimization
 - [ ] Bundle size analysis
 - [ ] Lighthouse scores > 90
 
-#### Security Checklist
-- [ ] Environment variables secured
-- [ ] SQL injection prevention (Drizzle ORM)
-- [ ] CSRF protection
-- [ ] Rate limiting on auth endpoints
-- [ ] HTTPS enforced
-- [ ] Headers configured (CSP, X-Frame-Options, etc.)
-- [ ] Secrets not in version control
-
 #### Deployment
 - [ ] Create 3 Vercel projects:
-  - `tendertrack360.co.za` (tracker)
-  - `admin.tendertrack360.co.za` (admin)
-  - `docs.tendertrack360.co.za` (docs)
-- [ ] Configure environment variables
+  - `tendertrack360.co.za` (tracker — port 3000)
+  - `admin.tendertrack360.co.za` (admin — port 3001)
+  - `docs.tendertrack360.co.za` (docs — port 3002)
+- [ ] Configure `DATABASE_URL` + `BETTER_AUTH_SECRET` env vars in Vercel
 - [ ] Setup auto-deploy from GitHub
 - [ ] Configure preview environments
 - [ ] Setup monitoring & alerts
-- [ ] Create deployment documentation
 
 ---
 
@@ -1164,49 +570,27 @@ src/content/docs/
 
 ### Daily Development
 ```bash
-# Start all apps
 bun run dev
-
-# Apps run on:
-# - Tracker: http://localhost:3000
-# - Admin: http://localhost:3001
-# - Docs: http://localhost:3002
+# Tracker:       http://localhost:3000
+# Admin:         http://localhost:3001
+# Docs:          http://localhost:3002
+# Drizzle Studio: http://localhost:4983
 ```
 
 ### Database Operations
 ```bash
-# Generate migrations
-bun run db:generate
-
-# Push to Neon
-bun run db:push
-
-# Open Drizzle Studio
-bun run db:studio
-
-# View schema changes
-bun run db:migrate
+bun run generate    # Generate migration from schema changes
+bun run push        # Push schema to Neon (dev)
+bun run migrate     # Apply pending migrations
+bun run studio      # Open Drizzle Studio at :4983
+bun run db:reset    # ⚠️ Drop all tables (dev only)
 ```
 
-### Linting & Types
+### Type Checking & Linting
 ```bash
-# Lint all
-bun run lint
-
-# Type check all
-bun run check-types
-
-# Format
-bun run format
-```
-
-### Building for Production
-```bash
-# Build all apps
-bun run build
-
-# Test production build locally
-bun run start
+bun run check-types   # Type check all packages
+bun run lint          # Lint all
+bun run format        # Prettier format
 ```
 
 ---
@@ -1215,32 +599,22 @@ bun run start
 
 ### Root `.env.local`
 ```bash
-# Database (REQUIRED)
-DATABASE_URL=postgresql://user:password@neon.tech/dbname
+# Database (Neon — pooled)
+DATABASE_URL=postgresql://...@neon.tech/neondb?sslmode=require
 
-# Authentication (REQUIRED for phases 4+)
-BETTER_AUTH_SECRET=your-secret-key-min-32-chars
-NEXTAUTH_URL_TRACKER=http://localhost:3000
-NEXTAUTH_URL_ADMIN=http://localhost:3001
-
-# Optional
-SENDGRID_API_KEY=...
-STRIPE_API_KEY=...
+# Database (Neon — direct, for migrations)
+DATABASE_URL_UNPOOLED=postgresql://...@neon.tech/neondb?sslmode=require
 ```
 
-### App-Specific `.env.local`
-
-**apps/tracker/.env.local**
+### App-Specific (Phase 4+)
 ```bash
-DATABASE_URL=postgresql://...
-BETTER_AUTH_SECRET=...
+# Both apps
+BETTER_AUTH_SECRET=your-secret-min-32-chars
+
+# apps/tracker/.env.local
 NEXTAUTH_URL=http://localhost:3000
-```
 
-**apps/admin/.env.local**
-```bash
-DATABASE_URL=postgresql://...
-BETTER_AUTH_SECRET=...
+# apps/admin/.env.local
 NEXTAUTH_URL=http://localhost:3001
 ```
 
@@ -1250,158 +624,92 @@ NEXTAUTH_URL=http://localhost:3001
 
 | Phase | Task | Duration | Status |
 |-------|------|----------|--------|
-| 1 | Foundation (apps, remove web) | ~1 day | ✅ COMPLETE |
-| 2 | Database package (@pmg/db) | 2-3 days | 🔲 NEXT |
-| 3 | UI package (shadcn/ui) | 2-3 days | 🔲 Then |
-| 4 | Auth (@pmg/auth + Better Auth) | 2-3 days | 🔲 Then |
-| 5 | Tracker features (CRUD, dashboard) | 4-5 days | 🔲 Then |
-| 6 | Admin features (users, settings) | 3-4 days | 🔲 Then |
-| 7 | Documentation (Starlight) | 2-3 days | 🔲 Then |
-| 8 | Testing & deployment (Vercel) | 2-3 days | 🔲 Last |
-| **TOTAL** | **All phases** | **3-4 weeks** | — |
+| 1 | Foundation | ~1 day | ✅ Complete |
+| 2 | Database (`@pmg/db`) | 2-3 days | ✅ Complete |
+| 3 | UI Package (`@pmg/ui`) | 2-3 days | 🔄 In Progress |
+| 4 | Auth (`@pmg/auth`) | 2-3 days | 🔲 Next |
+| 5 | Tracker features | 4-5 days | 🔲 |
+| 6 | Admin features | 3-4 days | 🔲 |
+| 7 | Documentation | 2-3 days | 🔲 |
+| 8 | Testing & Deployment | 2-3 days | 🔲 |
+| **Total** | | **~3-4 weeks** | |
 
 ---
 
 ## Key Decisions
 
-| Decision | Recommendation | Rationale |
-|----------|-----------------|-----------|
-| **Auth Approach** | **✅ Shared `@pmg/auth`** | Single source of truth, consistent UX, easier maintenance |
-| **Auth Provider** | **✅ Better Auth** | TypeScript-first, modern, Drizzle-compatible |
-| **Database** | **✅ Neon PostgreSQL** | Serverless, free tier, great DX |
-| **ORM** | **✅ Drizzle ORM** | Type-safe, excellent TS support |
-| **UI Library** | **✅ shadcn/ui** | Accessible, customizable, component-driven |
-| **Styling** | **✅ Tailwind CSS 4** | Utility-first, navy-gold theme ready |
-| **Docs** | **✅ Astro Starlight** | Optimized for docs, searchable, fast |
-| **Deployment** | **✅ Vercel** | Next.js first, global CDN, easy setup |
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Auth approach | Shared `@pmg/auth` | Single source of truth, consistent UX |
+| Auth provider | Better Auth | TypeScript-first, Drizzle-compatible, org support |
+| Database | Neon PostgreSQL | Serverless, free tier, great DX |
+| ORM | Drizzle ORM | Type-safe, excellent TS support |
+| UI library | shadcn/ui (base style) | Accessible, customizable, no config file |
+| Styling | Tailwind CSS v4 | CSS-first, no tailwind.config.ts needed |
+| Theming | Per-app CSS variables | Each app overrides only what it needs |
+| Dark mode | OS preference + optional toggle | `next-themes` with `defaultTheme="system"` |
+| Docs | Astro Starlight | Optimized for docs, searchable, fast |
+| Deployment | Vercel | Next.js-first, global CDN |
 
 ---
 
 ## Success Criteria
 
-### Phase 1 ✅
-- [x] Web app removed
-- [x] 3 apps created with correct frameworks
-- [x] Turbo configured
-- [x] All packages in place
-
-### Phase 2
-- [ ] Database schema created & tested
-- [ ] All tables in Neon with correct relationships
-- [ ] Drizzle queries work in both apps
-- [ ] Indexes created for performance
-
-### Phase 3
-- [ ] shadcn/ui setup complete
-- [ ] 15+ components imported in apps
-- [ ] Navy-gold theme applied globally
-- [ ] Components documented
-
-### Phase 4
-- [ ] Better Auth configured
-- [ ] Login/register working
-- [ ] Sessions persisting
-- [ ] RBAC system functional
-
-### Phase 5
-- [ ] TenderTrack360 code migrated
-- [ ] All CRUD operations work
-- [ ] Data displays correctly
-- [ ] Forms validated & functional
-
-### Phase 6
-- [ ] Admin dashboard accessible
-- [ ] User management working
-- [ ] Audit logs recording
-- [ ] Settings saving correctly
-
-### Phase 7
-- [ ] All docs written & published
-- [ ] Code examples working
-- [ ] Search functional
-- [ ] No broken links
-
-### Phase 8
-- [ ] All tests passing
-- [ ] Lighthouse score > 90
-- [ ] Security audit passed
-- [ ] Deployed to production
+| Phase | Criteria | Status |
+|-------|----------|--------|
+| 1 | 3 apps running, turbo configured | ✅ |
+| 2 | 21 tables in Neon, Drizzle queries work, indexes in place | ✅ |
+| 3 | 15+ components, themes working in both apps, dark mode functional | 🔄 |
+| 4 | Login/register working, sessions persisting, RBAC functional | 🔲 |
+| 5 | Tender/project/PO/invoice CRUD working end-to-end | 🔲 |
+| 6 | Admin dashboard, user management, audit logs working | 🔲 |
+| 7 | All docs written, search functional, no broken links | 🔲 |
+| 8 | Lighthouse > 90, security audit passed, deployed to production | 🔲 |
 
 ---
 
-## Important Notes
+## Dependency Graph
 
-### Dependency Graph
 ```
-Phase 1 (Foundation)
+Phase 1 (Foundation) ✅
     ↓
-Phase 2 (Database) ← CRITICAL PATH
+Phase 2 (Database) ✅
     ↓
-Phase 3 (UI) ← Can start before Phase 2 ends
+Phase 3 (UI) 🔄 ←── finish remaining components
     ↓
-Phase 4 (Auth) ← Depends on Phase 2
+Phase 4 (Auth) 🔲 ←── depends on Phase 2 ✅
     ↓
-Phase 5 & 6 (Features) ← Depend on 2-4
+Phase 5 & 6 (Features) 🔲 ←── depend on 2 ✅ + 3 + 4
     ↓
-Phase 7 (Docs) ← Can start early, needs Phase 5-6
+Phase 7 (Docs) 🔲
     ↓
-Phase 8 (Deployment) ← Last
+Phase 8 (Deployment) 🔲
 ```
 
-### Risk Mitigation
-- **Database schema changes:** Use Drizzle migrations, test locally first
-- **Auth inconsistency:** Shared package prevents duplication
-- **Performance issues:** Add database indexes early (in Phase 2)
-- **Team knowledge gaps:** Good documentation (Phase 7) prevents confusion
-- **Deployment issues:** Test on Vercel preview before production
+---
 
-### Post-Launch Roadmap (Future Phases 9+)
-- [ ] Payment integration (Stripe)
-- [ ] Email notifications (SendGrid)
-- [ ] SMS alerts
-- [ ] Advanced reporting
-- [ ] Mobile app (React Native)
-- [ ] Real-time notifications (WebSockets)
-- [ ] Marketplace for vendors
+## Next Actions
+
+### Finish Phase 3 (remaining UI components)
+```
+table, tabs, alert, sheet, tooltip, sonner, form
+theme-toggle, sidebar, nav-bar
+use-mobile hook
+ThemeProvider in both app layouts
+components.json files
+```
+
+### Then Phase 4 (Auth)
+```
+packages/auth/ → Better Auth + Drizzle adapter
+RBAC using member.role (owner/admin/manager/member)
+Middleware for both apps
+```
 
 ---
 
-## Contact & Support
-
-**For questions during implementation:**
-- Database schema: Reference Phase 2 docs & Drizzle docs
-- Authentication: Better Auth docs & examples
-- UI components: shadcn/ui official components
-- Deployment: Vercel documentation
-
-**Emergency contacts:**
-- Database issues: Neon support
-- Vercel issues: Vercel support dashboard
-- TypeScript issues: TypeScript docs
-
----
-
-**Document Version:** 3.0 (Integrated)  
-**Status:** Ready to Execute  
+**Document Version:** 4.0  
+**Owner:** Jacob (PMG)  
 **Start Date:** April 29, 2026  
 **Expected Completion:** Late May 2026  
-**Owner:** Jacob (PMG)  
 **Last Updated:** April 29, 2026
-
----
-
-## Next Action
-
-🎯 **START PHASE 2 NOW:**
-
-1. Create `packages/db/` directory structure
-2. Create `package.json` with Drizzle dependencies
-3. Setup Neon PostgreSQL (free tier)
-4. Create `.env.local` with `DATABASE_URL`
-5. Create schema with all tables
-6. Run `bun install && bun run db:push`
-7. Verify tables in Neon console
-
-Estimated time: **2-3 hours**
-
-After Phase 2 complete → **START PHASE 3 (UI Package)**
