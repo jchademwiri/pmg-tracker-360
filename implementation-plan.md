@@ -1,6 +1,6 @@
 # Tracker 360 Monorepo - Integrated Implementation Plan
 
-**Status:** Phase 1 Complete ✅ | Phases 2-8 Ready to Execute  
+**Status:** Phase 1 Complete ✅ | Phase 2 Complete ✅ | Phases 3-8 Ready to Execute  
 **Duration:** 3-4 weeks to production-ready  
 **Last Updated:** April 29, 2026
 
@@ -390,23 +390,30 @@ export default {
 
 ### Phase 3: UI Package (`@pmg/ui`) 🔲
 **Duration:** 2-3 days  
-**Depends On:** Phase 2 (database available)  
+**Depends On:** Phase 2 ✅  
 **Blocks:** Phases 5-6 (apps need components)
 
 #### Goals
-- Upgrade `packages/ui` with shadcn/ui
-- Add 15+ reusable components
-- Implement navy-gold brand theme
-- Document component usage
+- Rename `packages/ui` to `@pmg/ui`
+- Initialize shadcn/ui with monorepo support (radix-nova style, neutral base)
+- Add 15+ reusable shadcn components
+- Implement navy-gold brand theme via CSS `@theme` (Tailwind v4 — no `tailwind.config.ts`)
+- Shared `globals.css` in `@pmg/ui` — both apps import it
+- OS-based dark mode with optional theme toggle component
 
-#### Deliverables
+#### Key Decisions
+- **No `tailwind.config.ts`** — Tailwind v4 is CSS-first; all theming via `@theme` in CSS
+- **shadcn style:** `radix-nova`
+- **Base color:** `neutral`
+- **Dark mode:** OS default (`prefers-color-scheme`) + optional `ThemeToggle` component using `next-themes`
+- **Package name:** `@pmg/ui` (consistent with `@pmg/db`, `@pmg/auth`)
 
-**Folder Structure:**
+#### Folder Structure
 ```
 packages/ui/
 ├── src/
 │   ├── components/
-│   │   ├── ui/              # shadcn components
+│   │   ├── ui/              # shadcn components (installed by CLI)
 │   │   │   ├── button.tsx
 │   │   │   ├── input.tsx
 │   │   │   ├── card.tsx
@@ -418,151 +425,252 @@ packages/ui/
 │   │   │   ├── select.tsx
 │   │   │   ├── badge.tsx
 │   │   │   ├── alert.tsx
-│   │   │   └── ... (15+ total)
-│   │   ├── shared/
-│   │   │   ├── logo.tsx
-│   │   │   ├── page-header.tsx
-│   │   │   ├── sidebar.tsx
-│   │   │   └── nav-bar.tsx
-│   │   └── index.ts
+│   │   │   ├── avatar.tsx
+│   │   │   ├── separator.tsx
+│   │   │   ├── sheet.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── sonner.tsx   # toast notifications
+│   │   │   └── tooltip.tsx
+│   │   └── shared/          # brand-specific components
+│   │       ├── logo.tsx
+│   │       ├── page-header.tsx
+│   │       ├── sidebar.tsx
+│   │       ├── nav-bar.tsx
+│   │       └── theme-toggle.tsx
+│   ├── hooks/
+│   │   └── use-mobile.ts    # responsive hook
 │   ├── lib/
-│   │   ├── utils.ts         # cn() helper
-│   │   └── constants.ts
-│   └── index.ts
-├── tailwind.config.ts       # Navy-gold theme
-├── components.json          # shadcn config
-├── package.json
-├── tsconfig.json
-└── .env.example
+│   │   └── utils.ts         # cn() helper
+│   └── styles/
+│       └── globals.css      # @theme brand tokens + shadcn CSS vars
+├── components.json          # shadcn config for this package
+├── package.json             # name: @pmg/ui
+└── tsconfig.json
 ```
 
-**Updated `package.json`:**
+#### `package.json`
 ```json
 {
-  "name": "@repo/ui",
+  "name": "@pmg/ui",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./components": "./src/components",
-    "./lib": "./src/lib"
+    "./components/*": "./src/components/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./lib/*": "./src/lib/*.ts",
+    "./styles/globals.css": "./src/styles/globals.css"
   },
   "scripts": {
-    "add": "shadcn-ui add",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@radix-ui/react-dialog": "^1.1.1",
-    "@radix-ui/react-dropdown-menu": "^2.0.5",
-    "@radix-ui/react-tabs": "^1.0.4",
-    "@radix-ui/react-slot": "^2.0.2",
-    "@radix-ui/react-popover": "^1.0.7",
-    "@radix-ui/react-alert-dialog": "^1.0.5",
+    "next-themes": "^0.4.6",
     "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
-    "tailwind-merge": "^2.2.0",
-    "lucide-react": "^0.348.0"
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.0.0",
+    "lucide-react": "^0.511.0"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4",
     "typescript": "5.9.2"
   }
 }
 ```
+> Radix UI primitives are added automatically by the shadcn CLI — do not add them manually.
 
-**Tailwind Config with Navy-Gold Theme (`tailwind.config.ts`):**
-```typescript
-import type { Config } from "tailwindcss";
-
-const config: Config = {
-  darkMode: ["class"],
-  content: [
-    "./src/components/**/*.{js,ts,jsx,tsx}",
-    "../../apps/*/src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {
-      colors: {
-        brand: {
-          navy: "#1a3a52",
-          gold: "#d4af37",
-          dark: "#0f1419",
-          light: "#f8f9fa",
-        },
-      },
-      fontFamily: {
-        sans: ["var(--font-geist-sans)"],
-        mono: ["var(--font-geist-mono)"],
-      },
-    },
+#### `components.json` (packages/ui)
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "radix-nova",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true
   },
-  plugins: [require("tailwindcss-animate")],
-};
-
-export default config;
-```
-
-**Brand Components:**
-
-`src/components/shared/logo.tsx`:
-```typescript
-export function Logo({ size = "default" }: { size?: "sm" | "default" | "lg" }) {
-  const sizeClasses = {
-    sm: "w-6 h-6 text-xs",
-    default: "w-8 h-8 text-sm",
-    lg: "w-12 h-12 text-base",
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`${sizeClasses[size]} bg-gradient-to-br from-brand-navy to-brand-gold rounded-md flex items-center justify-center`}>
-        <span className="text-white font-bold">T</span>
-      </div>
-      <span className="font-bold text-brand-navy dark:text-white">Tracker 360</span>
-    </div>
-  );
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@pmg/ui/components",
+    "utils": "@pmg/ui/lib/utils",
+    "hooks": "@pmg/ui/hooks",
+    "lib": "@pmg/ui/lib",
+    "ui": "@pmg/ui/components/ui"
+  }
 }
 ```
 
-`src/components/shared/page-header.tsx`:
-```typescript
-interface PageHeaderProps {
-  title: string;
-  description?: string;
-  action?: React.ReactNode;
-}
-
-export function PageHeader({ title, description, action }: PageHeaderProps) {
-  return (
-    <div className="flex items-start justify-between mb-8 border-b border-gray-200 dark:border-gray-800 pb-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{title}</h1>
-        {description && (
-          <p className="text-gray-600 dark:text-gray-400 mt-2">{description}</p>
-        )}
-      </div>
-      {action && <div>{action}</div>}
-    </div>
-  );
+#### `components.json` (apps/tracker & apps/admin)
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "radix-nova",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "../../packages/ui/src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/components",
+    "hooks": "@/hooks",
+    "lib": "@/lib",
+    "utils": "@pmg/ui/lib/utils",
+    "ui": "@pmg/ui/components/ui"
+  }
 }
 ```
+
+#### Brand Theme (`src/styles/globals.css`)
+```css
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+/* ===== BRAND TOKENS ===== */
+@theme {
+  /* Brand colors — available as bg-brand-navy, text-brand-gold, etc. */
+  --color-brand-navy: #1a3a52;
+  --color-brand-gold: #d4af37;
+  --color-brand-dark: #0f1419;
+  --color-brand-light: #f8f9fa;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ===== SHADCN CSS VARIABLES (light) ===== */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+}
+
+/* ===== SHADCN CSS VARIABLES (dark) ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.985 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+  }
+}
+
+/* ===== OPTIONAL THEME TOGGLE (class-based override) ===== */
+/* When ThemeToggle forces dark, .dark class on <html> overrides OS preference */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+.light {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+}
+```
+
+#### Theme Toggle Setup
+- `next-themes` provider wraps each app's root layout with `attribute="class"` and `defaultTheme="system"`
+- `ThemeToggle` component in `@pmg/ui/components/shared/theme-toggle.tsx` cycles light → dark → system
+- OS preference is always the default; the toggle is purely optional for users
+
+#### Each App's `globals.css`
+```css
+/* Import shared brand theme + shadcn tokens from @pmg/ui */
+@import "@pmg/ui/styles/globals.css";
+
+/* App-specific overrides only below this line */
+```
+
+#### shadcn Components to Install (via CLI in each app)
+```bash
+# Run from apps/tracker or apps/admin
+npx shadcn@latest add button input card form dialog dropdown-menu \
+  table tabs select badge alert avatar separator sheet skeleton \
+  sonner tooltip
+```
+
+#### Brand Components (`src/components/shared/`)
+
+**`logo.tsx`** — Tracker 360 brand mark, 3 sizes  
+**`page-header.tsx`** — Title + description + optional action slot  
+**`sidebar.tsx`** — Collapsible nav sidebar using shadcn Sheet on mobile  
+**`nav-bar.tsx`** — Top nav with logo, links, user menu, ThemeToggle  
+**`theme-toggle.tsx`** — Sun/Moon/System icon button using `next-themes`
 
 #### Tasks
-- [ ] Update `packages/ui/package.json` with shadcn dependencies
-- [ ] Initialize shadcn: `npx shadcn-ui@latest init -d --yes`
-- [ ] Add 15+ components (button, input, form, table, dialog, etc.)
-- [ ] Create custom brand components (logo, page-header, sidebar)
-- [ ] Update tailwind.config with navy-gold colors
-- [ ] Update `src/index.ts` with exports
-- [ ] Test imports in apps: `import { Button } from "@repo/ui"`
-- [ ] Document component usage in `apps/docs`
+- [ ] Rename package: `@repo/ui` → `@pmg/ui` in `package.json`
+- [ ] Update all workspace references from `@repo/ui` to `@pmg/ui`
+- [ ] Initialize shadcn in `packages/ui`: `npx shadcn@latest init`
+- [ ] Create `components.json` in `packages/ui`, `apps/tracker`, `apps/admin`
+- [ ] Create `src/styles/globals.css` with brand `@theme` tokens + shadcn CSS vars
+- [ ] Update each app's `globals.css` to `@import "@pmg/ui/styles/globals.css"`
+- [ ] Add `next-themes` to `@pmg/ui` dependencies
+- [ ] Install 15+ shadcn components via CLI
+- [ ] Build brand components (logo, page-header, sidebar, nav-bar, theme-toggle)
+- [ ] Create `src/lib/utils.ts` with `cn()` helper
+- [ ] Update `package.json` exports to expose components, hooks, lib, styles
+- [ ] Test imports in apps: `import { Button } from "@pmg/ui/components/ui/button"`
+- [ ] Verify dark mode: OS default works, toggle overrides correctly
+- [ ] Run `bun run check-types` across all packages
 
 ---
 
