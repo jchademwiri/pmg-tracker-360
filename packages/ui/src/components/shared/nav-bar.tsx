@@ -74,6 +74,8 @@ interface NavBarProps {
   user?: UserMenuProps;
   /** Extra items in the right side of the bar */
   actions?: React.ReactNode;
+  /** Breadcrumb component rendered in the center of the bar (desktop only) */
+  breadcrumbs?: React.ReactNode;
   /** Full logo src (with text) */
   logoSrc?: string;
   /** Icon-only logo src */
@@ -81,7 +83,7 @@ interface NavBarProps {
   className?: string;
 }
 
-export function NavBar({ groups, user, actions, logoSrc, logoIconSrc, className }: NavBarProps) {
+export function NavBar({ groups, user, actions, breadcrumbs, logoSrc, logoIconSrc, className }: NavBarProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   return (
@@ -111,7 +113,7 @@ export function NavBar({ groups, user, actions, logoSrc, logoIconSrc, className 
               </SheetHeader>
               <div className="flex h-full flex-col">
                 <div className="flex h-14 items-center border-b border-[var(--sidebar-border)] px-4">
-                  <Logo />
+                  <Logo src={logoSrc} iconSrc={logoIconSrc} showText={!!logoSrc} />
                 </div>
                 <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                   {groups.flatMap((g) => g.items).map((item) => (
@@ -132,13 +134,20 @@ export function NavBar({ groups, user, actions, logoSrc, logoIconSrc, className 
         </>
       )}
 
-      {/* Logo */}
-      <Link href="/" className="hidden md:flex">
-        <Logo src={logoSrc} iconSrc={logoIconSrc} showText={!!logoSrc} />
+      {/* Mobile-only logo (sidebar is hidden on mobile) */}
+      <Link href="/dashboard" className="md:hidden">
+        <Logo iconSrc={logoIconSrc} showText={false} />
       </Link>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+      {/* Breadcrumbs — desktop only (sidebar already shows the logo) */}
+      {breadcrumbs && (
+        <div className="hidden md:flex flex-1 items-center">
+          {breadcrumbs}
+        </div>
+      )}
+
+      {/* Spacer when no breadcrumbs */}
+      {!breadcrumbs && <div className="flex-1" />}
 
       {/* Right side actions */}
       <div className="flex items-center gap-2">

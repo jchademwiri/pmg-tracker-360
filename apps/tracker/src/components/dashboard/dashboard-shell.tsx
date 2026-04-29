@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { NavBar } from '@pmg/ui/components/shared/nav-bar';
 import { cn } from '@pmg/ui/lib/utils';
+import { DynamicBreadcrumb } from '@/components/dynamic-breadcrumb';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -75,6 +76,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           user={{ name: 'Dev User', email: 'dev@tendertrack360.co.za' }}
           logoSrc="/logo.svg"
           logoIconSrc="/logo-icon.svg"
+          breadcrumbs={<DynamicBreadcrumb />}
         />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
