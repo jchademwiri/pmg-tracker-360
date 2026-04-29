@@ -1,5 +1,5 @@
 {
-  "name": "tracker-360-apps",
+  "name": "pmg-tracker-360",
   "private": true,
   "scripts": {
     "build": "turbo run build",
