@@ -74,10 +74,14 @@ interface NavBarProps {
   user?: UserMenuProps;
   /** Extra items in the right side of the bar */
   actions?: React.ReactNode;
+  /** Full logo src (with text) */
+  logoSrc?: string;
+  /** Icon-only logo src */
+  logoIconSrc?: string;
   className?: string;
 }
 
-export function NavBar({ groups, user, actions, className }: NavBarProps) {
+export function NavBar({ groups, user, actions, logoSrc, logoIconSrc, className }: NavBarProps) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   return (
@@ -130,7 +134,7 @@ export function NavBar({ groups, user, actions, className }: NavBarProps) {
 
       {/* Logo */}
       <Link href="/" className="hidden md:flex">
-        <Logo />
+        <Logo src={logoSrc} iconSrc={logoIconSrc} showText={!!logoSrc} />
       </Link>
 
       {/* Spacer */}

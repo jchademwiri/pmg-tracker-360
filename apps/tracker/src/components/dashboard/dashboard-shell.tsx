@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -27,8 +28,8 @@ function SidebarNav() {
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] border-r border-[var(--sidebar-border)]">
       <div className="flex h-14 items-center px-4 border-b border-[var(--sidebar-border)]">
-        <Link href="/dashboard" className="font-bold text-lg text-[var(--sidebar-foreground)]">
-          Tracker 360
+        <Link href="/dashboard" className="flex items-center">
+          <Image src="/logo.svg" alt="Tracker 360" width={140} height={32} priority />
         </Link>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -72,6 +73,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <NavBar
           groups={[{ items: navItems }]}
           user={{ name: 'Dev User', email: 'dev@tendertrack360.co.za' }}
+          logoSrc="/logo.svg"
+          logoIconSrc="/logo-icon.svg"
         />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
