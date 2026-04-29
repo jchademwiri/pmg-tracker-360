@@ -1,12 +1,12 @@
 import { getCurrentUser } from '@/server';
-import { getTenderById } from '@/server/tenders';
-import { TenderForm } from '@/components/tenders/tender-form';
+import { getProjectById } from '@/server/projects';
+import { ProjectForm } from '@/components/projects/project-form';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Edit Tender' };
+export const metadata = { title: 'Edit Project' };
 
-export default async function EditTenderPage({
+export default async function EditProjectPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -15,16 +15,16 @@ export default async function EditTenderPage({
   const { id } = await params;
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 
-  const result = await getTenderById(organizationId, id);
+  const result = await getProjectById(organizationId, id);
 
-  if (!result.success || !result.tender) {
+  if (!result.success || !result.project) {
     notFound();
   }
 
   return (
-    <TenderForm
+    <ProjectForm
       organizationId={organizationId}
-      tender={result.tender as any}
+      project={result.project as any}
       mode="edit"
     />
   );
