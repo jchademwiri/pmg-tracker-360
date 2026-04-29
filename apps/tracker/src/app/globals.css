@@ -3,6 +3,7 @@
    Base tokens come from @pmg/ui. Override only what differs.
    ============================================================ */
 @import "@pmg/ui/styles/globals.css";
+@plugin "tailwindcss-animate";
 
 /* ============================================================
    TRACKER LIGHT THEME
