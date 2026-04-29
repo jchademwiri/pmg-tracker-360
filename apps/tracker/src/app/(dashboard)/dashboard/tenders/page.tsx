@@ -1,47 +1,136 @@
-﻿import { checkUserSession } from '@/lib/session-check';
-import { redirect } from 'next/navigation';
-import { getTenders } from '@/server/tenders';
-import { TendersTable } from '@/components/tenders/tenders-table';
+﻿import { getCurrentUser } from '@/server';
+import {
+  getTenderStats,
+  getRecentActivity,
+  getUpcomingDeadlines,
+  getTendersOverview,
+} from '@/server/tenders';
+import { getClients } from '@/server/clients';
+import { Card, CardContent, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
+import { FileText, Clock, TrendingUp, AlertTriangle, Plus } from 'lucide-react';
+import { RecentActivity } from '@/components/tenders/recent-activity';
+import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
+import { TendersOverviewClient } from './client-wrapper';
 import { Button } from '@pmg/ui/components/ui/button';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Tenders' };
 
-export default async function TendersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ search?: string; status?: string; page?: string }>;
-}) {
-  const session = await checkUserSession();
-  if (!session.hasSession) redirect('/login');
+export default async function TendersPage() {
+  const { session } = await getCurrentUser();
+  const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 
-  const params = await searchParams;
-  const organizationId = session.activeOrganizationId!;
-  const page = parseInt(params.page ?? '1');
+  const [statsResult, activityResult, deadlinesResult, clientsResult, tendersResult] =
+    await Promise.all([
+      getTenderStats(organizationId),
+      getRecentActivity(organizationId, 3),
+      getUpcomingDeadlines(organizationId, 3),
+      getClients(organizationId),
+      getTendersOverview(organizationId, {}, 1, 20),
+    ]);
 
-  const result = await getTenders(organizationId, params.search, page, 10, params.status);
+  const stats = statsResult.success
+    ? statsResult.stats
+    : { totalTenders: 0, statusCounts: { draft: 0, submitted: 0, won: 0, lost: 0, pending: 0 }, totalValue: 0, winRate: 0, averageValue: 0, upcomingDeadlines: 0, overdueCount: 0 };
+
+  const activity = activityResult.success
+    ? activityResult.activity
+    : { recentTenders: [], recentChanges: [] };
+
+  const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
+  const clients = clientsResult.clients.map((c) => ({ id: c.id, name: c.name }));
+  const tendersData = tendersResult.success
+    ? tendersResult
+    : { tenders: [], totalCount: 0, currentPage: 1, totalPages: 0 };
+
+  const activeCount = stats.statusCounts.draft + stats.statusCounts.submitted + stats.statusCounts.pending;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Tenders</h1>
-          <p className="text-muted-foreground">Manage and track your tender submissions.</p>
+          <p className="text-muted-foreground">
+            Manage your tender applications and track submission progress.
+          </p>
         </div>
         <Button asChild>
           <Link href="/dashboard/tenders/create">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
             New Tender
           </Link>
         </Button>
+      </header>
+
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalTenders}</div>
+            <p className="text-xs text-muted-foreground">All tenders</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <Clock className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{activeCount}</div>
+            <p className="text-xs text-muted-foreground">In progress</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{Math.round(stats.winRate * 100)}%</div>
+            <p className="text-xs text-muted-foreground">Success rate</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">R {stats.totalValue.toLocaleString('en-ZA')}</div>
+            <p className="text-xs text-muted-foreground">Combined value</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.overdueCount}</div>
+            <p className="text-xs text-muted-foreground">Past due date</p>
+          </CardContent>
+        </Card>
       </div>
-      <TendersTable
-        tenders={result.tenders}
-        totalCount={result.totalCount}
-        currentPage={result.currentPage}
-        totalPages={result.totalPages}
+
+      {/* Deadlines + Activity */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <UpcomingDeadlines deadlines={deadlines} />
+        <RecentActivity recentTenders={activity.recentTenders} recentChanges={activity.recentChanges} />
+      </div>
+
+      {/* Full table with search/filter */}
+      <TendersOverviewClient
+        initialTenders={tendersData.tenders}
+        initialTotalCount={tendersData.totalCount}
+        initialCurrentPage={tendersData.currentPage}
+        initialTotalPages={tendersData.totalPages}
+        clients={clients}
+        organizationId={organizationId}
       />
     </div>
   );

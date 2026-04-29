@@ -25,10 +25,15 @@ function SidebarNav() {
     const initial: Record<string, boolean> = {};
     dashboadLinks.navMain.forEach((item) => {
       if (item.items) {
-        const hasActive = item.items.some(
-          (sub) => pathname === sub.url || pathname.startsWith(sub.url + '/')
-        );
-        initial[item.title] = hasActive;
+        const hasActive = item.items.some((sub) => {
+          const isOverview = sub.title === 'Overview';
+          return isOverview
+            ? pathname === sub.url
+            : pathname === sub.url || pathname.startsWith(sub.url + '/');
+        });
+        // Also open if we're on the parent URL itself (e.g. /dashboard/tenders)
+        const onParent = item.url !== '#' && (pathname === item.url || pathname.startsWith(item.url + '/'));
+        initial[item.title] = hasActive || onParent;
       }
     });
     return initial;
@@ -104,8 +109,12 @@ function SidebarNav() {
               {isOpen && (
                 <div className="ml-7 mt-0.5 space-y-0.5 border-l border-(--sidebar-border) pl-3">
                   {item.items.map((sub) => {
-                    const isActive =
-                      pathname === sub.url || pathname.startsWith(sub.url + '/');
+                    // "Overview" sub-items share the parent URL — only exact match
+                    // Other sub-items use startsWith so child routes stay highlighted
+                    const isOverview = sub.title === 'Overview';
+                    const isActive = isOverview
+                      ? pathname === sub.url
+                      : pathname === sub.url || pathname.startsWith(sub.url + '/');
                     return (
                       <Link
                         key={sub.url}
