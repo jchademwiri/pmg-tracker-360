@@ -3,60 +3,141 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  FileText,
-  Users,
-  FolderOpen,
-  ShoppingCart,
-  Settings,
-} from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Settings } from 'lucide-react';
 import { NavBar } from '@pmg/ui/components/shared/nav-bar';
 import { cn } from '@pmg/ui/lib/utils';
 import { DynamicBreadcrumb } from '@/components/dynamic-breadcrumb';
+import { dashboadLinks } from '@/data/dashboad-links';
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
-  { href: '/dashboard/tenders', label: 'Tenders', icon: <FileText /> },
-  { href: '/dashboard/clients', label: 'Clients', icon: <Users /> },
-  { href: '/dashboard/projects', label: 'Projects', icon: <FolderOpen /> },
-  { href: '/dashboard/purchase-orders', label: 'Purchase Orders', icon: <ShoppingCart /> },
-];
+// Mobile nav items (flat list for the sheet)
+const mobileNavItems = dashboadLinks.navMain.flatMap((item) =>
+  item.items
+    ? item.items.map((sub) => ({ href: sub.url, label: sub.title, icon: null }))
+    : [{ href: item.url, label: item.title, icon: null }]
+);
 
 function SidebarNav() {
   const pathname = usePathname();
 
+  // Track which groups are open — default open if any child is active
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    dashboadLinks.navMain.forEach((item) => {
+      if (item.items) {
+        const hasActive = item.items.some(
+          (sub) => pathname === sub.url || pathname.startsWith(sub.url + '/')
+        );
+        initial[item.title] = hasActive;
+      }
+    });
+    return initial;
+  });
+
+  const toggle = (title: string) =>
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+
   return (
-    <aside className="hidden md:flex w-60 shrink-0 flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] border-r border-[var(--sidebar-border)]">
-      <div className="flex h-14 items-center px-4 border-b border-[var(--sidebar-border)]">
+    <aside className="hidden md:flex w-60 shrink-0 flex-col bg-(--sidebar) text-(--sidebar-foreground) border-r border-(--sidebar-border)">
+      {/* Logo */}
+      <div className="flex h-14 items-center px-4 border-b border-(--sidebar-border)">
         <Link href="/dashboard" className="flex items-center">
           <Image src="/logo.svg" alt="Tracker 360" width={140} height={32} priority />
         </Link>
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+        {dashboadLinks.navMain.map((item) => {
+          const Icon = item.icon;
+          const isGroupActive =
+            item.items?.some(
+              (sub) => pathname === sub.url || pathname.startsWith(sub.url + '/')
+            ) ?? false;
+          const isSingleActive =
+            !item.items &&
+            (pathname === item.url || (item.url !== '/dashboard' && pathname.startsWith(item.url + '/')));
+
+          // Single link
+          if (!item.items) {
+            return (
+              <Link
+                key={item.url}
+                href={item.url}
+                className={cn(
+                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  isSingleActive
+                    ? 'bg-(--sidebar-primary) text-(--sidebar-primary-foreground)'
+                    : 'hover:bg-(--sidebar-accent) hover:text-(--sidebar-accent-foreground)'
+                )}
+              >
+                {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                {item.title}
+              </Link>
+            );
+          }
+
+          // Collapsible group
+          const isOpen = openGroups[item.title] ?? false;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)]'
-                  : 'hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]'
+            <div key={item.title}>
+              <button
+                onClick={() => toggle(item.title)}
+                className={cn(
+                  'w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  isGroupActive
+                    ? 'text-(--sidebar-foreground)'
+                    : 'hover:bg-(--sidebar-accent) hover:text-(--sidebar-accent-foreground)'
+                )}
+              >
+                {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                <span className="flex-1 text-left">{item.title}</span>
+                <ChevronDown
+                  className={cn(
+                    'h-3.5 w-3.5 shrink-0 transition-transform duration-200 opacity-60',
+                    isOpen && 'rotate-180'
+                  )}
+                />
+              </button>
+
+              {/* Sub-items */}
+              {isOpen && (
+                <div className="ml-7 mt-0.5 space-y-0.5 border-l border-(--sidebar-border) pl-3">
+                  {item.items.map((sub) => {
+                    const isActive =
+                      pathname === sub.url || pathname.startsWith(sub.url + '/');
+                    return (
+                      <Link
+                        key={sub.url}
+                        href={sub.url}
+                        className={cn(
+                          'block rounded-md px-3 py-1.5 text-sm transition-colors',
+                          isActive
+                            ? 'bg-(--sidebar-primary) text-(--sidebar-primary-foreground) font-medium'
+                            : 'text-(--sidebar-foreground)/70 hover:bg-(--sidebar-accent) hover:text-(--sidebar-accent-foreground)'
+                        )}
+                      >
+                        {sub.title}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <span className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">{item.icon}</span>
-              {item.label}
-            </Link>
+            </div>
           );
         })}
       </nav>
-      <div className="border-t border-[var(--sidebar-border)] p-3">
+
+      {/* Settings */}
+      <div className="border-t border-(--sidebar-border) p-3">
         <Link
           href="/dashboard/settings"
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-[var(--sidebar-accent)] transition-colors"
+          className={cn(
+            'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+            pathname.startsWith('/dashboard/settings')
+              ? 'bg-(--sidebar-primary) text-(--sidebar-primary-foreground)'
+              : 'hover:bg-(--sidebar-accent) hover:text-(--sidebar-accent-foreground)'
+          )}
         >
           <Settings className="h-4 w-4" />
           Settings
@@ -72,7 +153,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <SidebarNav />
       <div className="flex flex-1 flex-col overflow-hidden">
         <NavBar
-          groups={[{ items: navItems }]}
+          groups={[{ items: mobileNavItems }]}
           user={{ name: 'Dev User', email: 'dev@tendertrack360.co.za' }}
           logoSrc="/logo.svg"
           logoIconSrc="/logo-icon.svg"

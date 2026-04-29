@@ -27,10 +27,6 @@ export function DynamicBreadcrumb() {
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        <BreadcrumbItem className="hidden md:block">
-          <BreadcrumbLink href="/">Home</BreadcrumbLink>
-        </BreadcrumbItem>
-
         {pathSegments.map((segment, index) => {
           const isLast = index === pathSegments.length - 1;
           const href = `/${pathSegments.slice(0, index + 1).join('/')}`;
@@ -38,7 +34,7 @@ export function DynamicBreadcrumb() {
 
           return (
             <div key={segment} className="flex items-center">
-              <BreadcrumbSeparator className="hidden md:block" />
+              {index > 0 && <BreadcrumbSeparator className="hidden md:block" />}
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{displayName}</BreadcrumbPage>
