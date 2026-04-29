@@ -1,4 +1,4 @@
-﻿import { checkUserSession } from '@/lib/session-check';
+import { checkUserSession } from '@/lib/session-check';
 import { redirect } from 'next/navigation';
 import { getPurchaseOrders } from '@/server/purchase-orders';
 import { PurchaseOrdersTable } from '@/components/purchase-orders/purchase-orders-table';
@@ -31,7 +31,7 @@ export default async function PurchaseOrdersPage({
           <p className="text-muted-foreground">Track purchase orders across all projects.</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/projects/purchase-orders/create">
+          <Link href="/dashboard/purchase-orders/create">
             <Plus className="mr-2 h-4 w-4" />
             New PO
           </Link>

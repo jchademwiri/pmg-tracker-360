@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { db } from '@pmg/db';
 import {
@@ -115,7 +115,7 @@ export async function createTenderExtension(
       return {
         success: false,
         error: 'Validation failed',
-        details: error.errors,
+        details: error.issues,
       };
     }
     return { success: false, error: 'Failed to create extension' };

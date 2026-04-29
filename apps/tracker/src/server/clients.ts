@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { db } from '@pmg/db';
 import { client, tender } from '@pmg/db/schema';
@@ -83,7 +83,7 @@ export async function createClient(
     return { success: true, client: newClient[0] };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: 'Invalid input data', details: error.errors };
+      return { success: false, error: 'Invalid input data', details: error.issues };
     }
     return { success: false, error: 'Failed to create client' };
   }
@@ -137,7 +137,7 @@ export async function updateClient(
     return { success: true, client: updatedClient[0] };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: 'Invalid input data', details: error.errors };
+      return { success: false, error: 'Invalid input data', details: error.issues };
     }
     return { success: false, error: 'Failed to update client' };
   }
@@ -198,5 +198,25 @@ export async function searchClients(organizationId: string, query: string, limit
     return { success: true, clients };
   } catch (error) {
     return { success: false, error: 'Failed to search clients', clients: [] };
+  }
+}
+
+export async function getClientStats(organizationId: string) {
+  try {
+    const result = await getClients(organizationId, undefined, 1, 1000);
+    return {
+      success: true,
+      stats: {
+        totalClients: result.totalCount,
+        clientsWithContact: result.clients.filter((c) => c.contactEmail).length,
+        clientsWithoutContact: result.clients.filter((c) => !c.contactEmail).length,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch client statistics',
+      stats: { totalClients: 0, clientsWithContact: 0, clientsWithoutContact: 0 },
+    };
   }
 }

@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { db } from '@pmg/db';
 import {
@@ -167,7 +167,7 @@ export async function uploadDocument(
     } else if (linkedEntity?.purchaseOrderId) {
       // Assuming route for PO details
       revalidatePath(
-        `/dashboard/projects/purchase-orders/${linkedEntity.purchaseOrderId}`
+        `/dashboard/purchase-orders/${linkedEntity.purchaseOrderId}`
       );
     }
 

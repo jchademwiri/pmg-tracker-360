@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -132,7 +132,7 @@ export function POForm({
             if (onSuccess) {
               onSuccess();
             } else {
-              router.push('/dashboard/projects/purchase-orders');
+              router.push('/dashboard/purchase-orders');
             }
           } else {
             alert(result.error || 'Failed to update purchase order');
@@ -144,7 +144,7 @@ export function POForm({
             if (onSuccess) {
               onSuccess();
             } else {
-              router.push('/dashboard/projects/purchase-orders');
+              router.push('/dashboard/purchase-orders');
             }
           } else {
             alert(result.error || 'Failed to create purchase order');

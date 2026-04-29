@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { db } from '@pmg/db';
 import { purchaseOrder, project, client } from '@pmg/db/schema';
@@ -81,11 +81,11 @@ export async function createPurchaseOrder(organizationId: string, data: Purchase
 
     const newPurchaseOrder = await db.insert(purchaseOrder).values({ id: crypto.randomUUID(), organizationId, ...validatedData }).returning();
 
-    revalidatePath('/dashboard/projects/purchase-orders');
+    revalidatePath('/dashboard/purchase-orders');
     revalidatePath(`/dashboard/projects/${validatedData.projectId}`);
     return { success: true, purchaseOrder: newPurchaseOrder[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to create purchase order' };
   }
 }
@@ -134,11 +134,11 @@ export async function updatePurchaseOrder(organizationId: string, poId: string, 
 
     const updatedPO = await db.update(purchaseOrder).set({ ...validatedData, updatedAt: new Date() }).where(eq(purchaseOrder.id, poId)).returning();
 
-    revalidatePath('/dashboard/projects/purchase-orders');
-    revalidatePath(`/dashboard/projects/purchase-orders/${poId}`);
+    revalidatePath('/dashboard/purchase-orders');
+    revalidatePath(`/dashboard/purchase-orders/${poId}`);
     return { success: true, purchaseOrder: updatedPO[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to update purchase order' };
   }
 }
@@ -158,11 +158,11 @@ export async function updatePurchaseOrderStatus(organizationId: string, poId: st
       .where(eq(purchaseOrder.id, poId))
       .returning();
 
-    revalidatePath('/dashboard/projects/purchase-orders');
-    revalidatePath(`/dashboard/projects/purchase-orders/${poId}`);
+    revalidatePath('/dashboard/purchase-orders');
+    revalidatePath(`/dashboard/purchase-orders/${poId}`);
     return { success: true, purchaseOrder: updatedPO[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to update purchase order status' };
   }
 }
@@ -174,7 +174,7 @@ export async function deletePurchaseOrder(organizationId: string, poId: string) 
 
     await db.update(purchaseOrder).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(purchaseOrder.id, poId));
 
-    revalidatePath('/dashboard/projects/purchase-orders');
+    revalidatePath('/dashboard/purchase-orders');
     return { success: true, message: 'Purchase order deleted successfully' };
   } catch (error) {
     return { success: false, error: 'Failed to delete purchase order' };

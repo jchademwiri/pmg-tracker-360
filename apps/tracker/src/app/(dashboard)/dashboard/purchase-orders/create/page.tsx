@@ -1,4 +1,4 @@
-﻿import { getCurrentUser } from '@/server';
+import { getCurrentUser } from '@/server';
 import { POForm } from '@/components/purchase-orders/po-form';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -20,7 +20,7 @@ export default async function NewPurchaseOrderPage() {
   });
 
   if (!hasPermission) {
-    redirect('/dashboard/projects/purchase-orders'); // Or just /dashboard if they cant see list
+    redirect('/dashboard/purchase-orders'); // Or just /dashboard if they cant see list
   }
 
   if (!session.activeOrganizationId) {

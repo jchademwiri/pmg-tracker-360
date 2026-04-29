@@ -18,7 +18,7 @@ const navItems = [
   { href: '/dashboard/tenders', label: 'Tenders', icon: <FileText /> },
   { href: '/dashboard/clients', label: 'Clients', icon: <Users /> },
   { href: '/dashboard/projects', label: 'Projects', icon: <FolderOpen /> },
-  { href: '/dashboard/projects/purchase-orders', label: 'Purchase Orders', icon: <ShoppingCart /> },
+  { href: '/dashboard/purchase-orders', label: 'Purchase Orders', icon: <ShoppingCart /> },
 ];
 
 function SidebarNav() {

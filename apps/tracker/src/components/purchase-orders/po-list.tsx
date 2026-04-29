@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -249,7 +249,7 @@ export function POList({
             </p>
             {!searchQuery && statusFilter === 'all' && (
               <Button asChild size={'lg'}>
-                <Link href="/dashboard/projects/purchase-orders/create">
+                <Link href="/dashboard/purchase-orders/create">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Purchase Order
                 </Link>
@@ -280,7 +280,7 @@ export function POList({
                       className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
                       onClick={() =>
                         router.push(
-                          `/dashboard/projects/purchase-orders/${po.id}`
+                          `/dashboard/purchase-orders/${po.id}`
                         )
                       }
                     >
@@ -339,7 +339,7 @@ export function POList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/dashboard/projects/purchase-orders/${po.id}`
+                                  `/dashboard/purchase-orders/${po.id}`
                                 );
                               }}
                             >
@@ -349,7 +349,7 @@ export function POList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/dashboard/projects/purchase-orders/${po.id}/edit`
+                                  `/dashboard/purchase-orders/${po.id}/edit`
                                 );
                               }}
                             >
@@ -381,7 +381,7 @@ export function POList({
                   key={po.id}
                   className="cursor-pointer hover:bg-accent transition-colors duration-200 group rounded-lg border hover:ring-1 hover:ring-ring"
                   onClick={() =>
-                    router.push(`/dashboard/projects/purchase-orders/${po.id}`)
+                    router.push(`/dashboard/purchase-orders/${po.id}`)
                   }
                 >
                   <CardContent className="p-4">
@@ -458,7 +458,7 @@ export function POList({
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(
-                                `/dashboard/projects/purchase-orders/${po.id}`
+                                `/dashboard/purchase-orders/${po.id}`
                               );
                             }}
                           >
@@ -468,7 +468,7 @@ export function POList({
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(
-                                `/dashboard/projects/purchase-orders/${po.id}/edit`
+                                `/dashboard/purchase-orders/${po.id}/edit`
                               );
                             }}
                           >

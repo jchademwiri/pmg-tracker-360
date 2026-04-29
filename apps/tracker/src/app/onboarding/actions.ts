@@ -35,7 +35,7 @@ export async function createOrganization(
   // Validate input
   const parsed = createOrganizationFormSchema.safeParse(form);
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message };
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid input' };
   }
   const { name, slug, logo } = parsed.data;
 

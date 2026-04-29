@@ -87,7 +87,7 @@ export default async function DashboardPage() {
                   { href: '/dashboard/tenders', label: 'View all tenders' },
                   { href: '/dashboard/clients', label: 'Manage clients' },
                   { href: '/dashboard/projects', label: 'View projects' },
-                  { href: '/dashboard/projects/purchase-orders', label: 'Purchase orders' },
+                  { href: '/dashboard/purchase-orders', label: 'Purchase orders' },
                 ].map(link => (
                   <Link key={link.href} href={link.href} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                     → {link.label}

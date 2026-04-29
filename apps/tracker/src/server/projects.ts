@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { db } from '@pmg/db';
 import { project, client, tender, purchaseOrder } from '@pmg/db/schema';
@@ -93,7 +93,7 @@ export async function createProject(organizationId: string, data: ProjectCreateI
     revalidatePath('/dashboard/projects');
     return { success: true, project: newProject[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to create project' };
   }
 }
@@ -146,7 +146,7 @@ export async function updateProject(organizationId: string, projectId: string, d
     revalidatePath(`/dashboard/projects/${projectId}`);
     return { success: true, project: updatedProject[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to update project' };
   }
 }
@@ -163,7 +163,7 @@ export async function updateProjectStatus(organizationId: string, projectId: str
     revalidatePath(`/dashboard/projects/${projectId}`);
     return { success: true, project: updatedProject[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to update project status' };
   }
 }
@@ -219,8 +219,16 @@ export async function getProjectStats(organizationId: string) {
   }
 }
 
-// Alias used by overview page
+// Alias used by overview page — returns properly shaped RecentActivity[]
 export const getRecentProjectActivities = async (organizationId: string, limit = 10) => {
   const result = await getProjects(organizationId, undefined, 1, limit);
-  return result.projects ?? [];
+  return (result.projects ?? []).map((p) => ({
+    id: p.id,
+    organizationId,
+    organizationName: '',
+    type: 'project_created' as const,
+    description: `Project ${p.projectNumber} — ${p.status}`,
+    timestamp: p.createdAt,
+    metadata: { projectId: p.id, projectNumber: p.projectNumber },
+  }));
 };

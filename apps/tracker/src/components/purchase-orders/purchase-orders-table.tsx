@@ -36,7 +36,7 @@ export function PurchaseOrdersTable({ purchaseOrders, totalCount, currentPage, t
       <div className="rounded-xl border bg-card p-12 text-center">
         <p className="text-muted-foreground">No purchase orders found.</p>
         <Button asChild className="mt-4">
-          <Link href="/dashboard/projects/purchase-orders/create">Create your first PO</Link>
+          <Link href="/dashboard/purchase-orders/create">Create your first PO</Link>
         </Button>
       </div>
     );
@@ -72,7 +72,7 @@ export function PurchaseOrdersTable({ purchaseOrders, totalCount, currentPage, t
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/dashboard/projects/purchase-orders/${po.id}`}>View</Link>
+                    <Link href={`/dashboard/purchase-orders/${po.id}`}>View</Link>
                   </Button>
                 </TableCell>
               </TableRow>

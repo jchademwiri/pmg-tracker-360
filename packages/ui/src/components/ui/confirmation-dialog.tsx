@@ -17,10 +17,14 @@ interface ConfirmationDialogProps {
   // Legacy aliases used by tracker app
   isOpen?: boolean;
   onClose?: () => void;
-  // Extra context props passed by tracker (ignored in render, just accepted)
+  // Extra context props passed by tracker (accepted but not rendered)
   email?: string;
   memberName?: string;
+  confirmText?: string;  // alias for confirmLabel
+  icon?: string;
   title?: string;
+  // Allow any additional props the old app passes
+  [key: string]: unknown;
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -37,12 +41,14 @@ export function ConfirmationDialog({
   onClose,
   title = "Are you sure?",
   description,
-  confirmLabel = "Confirm",
+  confirmLabel,
+  confirmText,
   cancelLabel = "Cancel",
   onConfirm,
   onCancel,
   variant = "default",
 }: ConfirmationDialogProps) {
+  const resolvedConfirmLabel = confirmLabel ?? confirmText ?? "Confirm";
   // Support both open/onOpenChange and isOpen/onClose patterns
   const isDialogOpen = open ?? isOpen;
   const handleOpenChange = (val: boolean) => {
@@ -75,7 +81,7 @@ export function ConfirmationDialog({
               handleOpenChange(false);
             }}
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

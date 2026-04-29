@@ -1,4 +1,4 @@
-﻿import { getCurrentUser } from '@/server';
+import { getCurrentUser } from '@/server';
 import { getProjectStats, getRecentProjectActivities } from '@/server/projects';
 import { RecentActivitySection } from '@/components/recent-activity-section';
 import { Card, CardContent, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
@@ -87,7 +87,7 @@ export default async function ProjectsOverviewPage() {
             })
           ).success && (
             <Button asChild size={'lg'}>
-              <Link href="/dashboard/projects/purchase-orders/create">
+              <Link href="/dashboard/purchase-orders/create">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Purchase Order
               </Link>

@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { db } from '@pmg/db';
 import { tender, client, project } from '@pmg/db/schema';
@@ -93,7 +93,7 @@ export async function createTender(organizationId: string, data: TenderCreateInp
     revalidatePath('/dashboard/tenders');
     return { success: true, tender: newTender[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to create tender' };
   }
 }
@@ -160,7 +160,7 @@ export async function updateTender(organizationId: string, tenderId: string, dat
     revalidatePath(`/dashboard/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to update tender' };
   }
 }
@@ -178,7 +178,7 @@ export async function updateTenderStatus(organizationId: string, tenderId: strin
     revalidatePath(`/dashboard/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0] };
   } catch (error) {
-    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.errors };
+    if (error instanceof z.ZodError) return { success: false, error: 'Invalid input data', details: error.issues };
     return { success: false, error: 'Failed to update tender status' };
   }
 }
@@ -260,11 +260,38 @@ export async function getUpcomingDeadlines(organizationId: string, limit: number
 
 // Aliases used by overview/submitted pages
 export const getRecentActivity = async (organizationId: string, limit = 10) => {
-  return getTenders(organizationId, undefined, 1, limit);
+  const result = await getTenders(organizationId, undefined, 1, limit);
+  return {
+    success: true,
+    activity: {
+      recentTenders: result.tenders,
+      recentChanges: result.tenders,
+    },
+  };
 };
 
-export const getTendersOverview = getTenders;
-export const getTendersWithCustomSorting = getTenders;
+export const getTendersOverview = async (
+  organizationId: string,
+  filters: { search?: string; status?: string; clientId?: string; sortBy?: string; sortOrder?: string } | string = {},
+  page = 1,
+  limit = 20
+) => {
+  const search = typeof filters === 'string' ? filters : filters.search;
+  const status = typeof filters === 'string' ? undefined : filters.status;
+  const result = await getTenders(organizationId, search, page, limit, status);
+  return { success: true, ...result };
+};
+
+export const getTendersWithCustomSorting = async (
+  organizationId: string,
+  page = 1,
+  limit = 10,
+  search?: string
+) => {
+  const result = await getTenders(organizationId, search, page, limit);
+  return { success: true, ...result };
+};
+
 export const getAvailableTendersForProjects = async (
   organizationId: string,
   _clientId?: string,

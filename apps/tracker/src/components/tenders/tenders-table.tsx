@@ -28,9 +28,14 @@ interface TendersTableProps {
   totalCount: number;
   currentPage: number;
   totalPages: number;
+  onPageChange?: (page: number) => void;
+  onViewTender?: (id: string) => void;
+  onEditTender?: (id: string) => void;
+  onDeleteTender?: (id: string) => void;
+  onRowClick?: (id: string) => void;
 }
 
-export function TendersTable({ tenders, totalCount, currentPage, totalPages }: TendersTableProps) {
+export function TendersTable({ tenders, totalCount, currentPage, totalPages, onPageChange, onViewTender, onRowClick }: TendersTableProps) {
   if (tenders.length === 0) {
     return (
       <div className="rounded-xl border bg-card p-12 text-center">

@@ -1,4 +1,4 @@
-﻿import {
+import {
   Calendar,
   ClipboardList,
   FolderKanban,
@@ -57,7 +57,7 @@ export const dashboadLinks = {
         },
         {
           title: 'Purchase Orders', // Can not be visible to the role of member
-          url: '/dashboard/projects/purchase-orders',
+          url: '/dashboard/purchase-orders',
         },
         // {
         //   title: 'Contracts', // Can not be visible to the role of member
