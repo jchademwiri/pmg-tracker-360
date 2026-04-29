@@ -1,26 +1,132 @@
-@import "tailwindcss";
+/* ============================================================
+   ADMIN APP — Theme
+   Base tokens come from @pmg/ui. Override only what differs.
+   ============================================================ */
+@import "@pmg/ui/styles/globals.css";
 
+/* ============================================================
+   ADMIN LIGHT THEME
+   Slate-grey + gold — internal tool, authoritative, clean
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary action = deep slate */
+  --primary: oklch(0.28 0.02 255);
+  /* deep slate-blue */
+  --primary-foreground: oklch(0.985 0 0);
+  /* white */
+
+  /* Accent = brand gold */
+  --accent: oklch(0.78 0.12 85);
+  /* #d4af37 gold */
+  --accent-foreground: oklch(0.145 0 0);
+
+  /* Slightly cooler background */
+  --background: oklch(0.98 0.005 255);
+  --foreground: oklch(0.13 0.01 255);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.01 255);
+
+  --muted: oklch(0.94 0.005 255);
+  --muted-foreground: oklch(0.50 0.01 255);
+
+  --border: oklch(0.88 0.005 255);
+  --input: oklch(0.88 0.005 255);
+  --ring: oklch(0.28 0.02 255);
+
+  /* Sidebar = dark slate */
+  --sidebar: oklch(0.20 0.02 255);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.78 0.12 85);
+  /* gold highlight */
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.28 0.02 255);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.28 0.02 255);
+  --sidebar-ring: oklch(0.78 0.12 85);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* ============================================================
+   ADMIN DARK THEME
+   Very dark slate, gold accents
+   ============================================================ */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: oklch(0.12 0.015 255);
+    /* very dark slate */
+    --foreground: oklch(0.95 0 0);
+
+    --card: oklch(0.17 0.015 255);
+    --card-foreground: oklch(0.95 0 0);
+
+    --primary: oklch(0.78 0.12 85);
+    /* gold as primary in dark */
+    --primary-foreground: oklch(0.145 0 0);
+
+    --accent: oklch(0.25 0.02 255);
+    --accent-foreground: oklch(0.95 0 0);
+
+    --muted: oklch(0.20 0.015 255);
+    --muted-foreground: oklch(0.60 0.01 255);
+
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 12%);
+    --ring: oklch(0.78 0.12 85);
+
+    --sidebar: oklch(0.14 0.015 255);
+    --sidebar-foreground: oklch(0.95 0 0);
+    --sidebar-primary: oklch(0.78 0.12 85);
+    --sidebar-primary-foreground: oklch(0.145 0 0);
+    --sidebar-accent: oklch(0.20 0.02 255);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.78 0.12 85);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Class-based overrides for ThemeToggle */
+.dark {
+  --background: oklch(0.12 0.015 255);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.17 0.015 255);
+  --card-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.78 0.12 85);
+  --primary-foreground: oklch(0.145 0 0);
+  --accent: oklch(0.25 0.02 255);
+  --accent-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.20 0.015 255);
+  --muted-foreground: oklch(0.60 0.01 255);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.78 0.12 85);
+  --sidebar: oklch(0.14 0.015 255);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.78 0.12 85);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.20 0.02 255);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0.12 85);
+}
+
+.light {
+  --primary: oklch(0.28 0.02 255);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.78 0.12 85);
+  --accent-foreground: oklch(0.145 0 0);
+  --background: oklch(0.98 0.005 255);
+  --foreground: oklch(0.13 0.01 255);
+  --muted: oklch(0.94 0.005 255);
+  --muted-foreground: oklch(0.50 0.01 255);
+  --border: oklch(0.88 0.005 255);
+  --input: oklch(0.88 0.005 255);
+  --ring: oklch(0.28 0.02 255);
+  --sidebar: oklch(0.20 0.02 255);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.78 0.12 85);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.28 0.02 255);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.28 0.02 255);
+  --sidebar-ring: oklch(0.78 0.12 85);
 }

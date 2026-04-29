@@ -1,26 +1,115 @@
-@import "tailwindcss";
+/* ============================================================
+   TRACKER APP — Theme
+   Base tokens come from @pmg/ui. Override only what differs.
+   ============================================================ */
+@import "@pmg/ui/styles/globals.css";
 
+/* ============================================================
+   TRACKER LIGHT THEME
+   Navy-gold public brand — warm, professional, trustworthy
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary action = brand navy */
+  --primary: oklch(0.24 0.06 230);
+  /* #1a3a52 navy */
+  --primary-foreground: oklch(0.985 0 0);
+  /* white */
+
+  /* Accent = brand gold */
+  --accent: oklch(0.78 0.12 85);
+  /* #d4af37 gold */
+  --accent-foreground: oklch(0.145 0 0);
+  /* near-black */
+
+  /* Ring uses gold for focus states */
+  --ring: oklch(0.78 0.12 85);
+
+  /* Sidebar uses navy */
+  --sidebar: oklch(0.24 0.06 230);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.78 0.12 85);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.30 0.06 230);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.30 0.06 230);
+  --sidebar-ring: oklch(0.78 0.12 85);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* ============================================================
+   TRACKER DARK THEME
+   Deeper navy background, gold accents remain
+   ============================================================ */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: oklch(0.13 0.04 230);
+    /* deep navy-dark */
+    --foreground: oklch(0.95 0 0);
+
+    --card: oklch(0.18 0.04 230);
+    --card-foreground: oklch(0.95 0 0);
+
+    --primary: oklch(0.78 0.12 85);
+    /* gold becomes primary in dark */
+    --primary-foreground: oklch(0.145 0 0);
+
+    --accent: oklch(0.30 0.06 230);
+    --accent-foreground: oklch(0.95 0 0);
+
+    --muted: oklch(0.22 0.04 230);
+    --muted-foreground: oklch(0.65 0 0);
+
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.78 0.12 85);
+
+    --sidebar: oklch(0.16 0.04 230);
+    --sidebar-foreground: oklch(0.95 0 0);
+    --sidebar-primary: oklch(0.78 0.12 85);
+    --sidebar-primary-foreground: oklch(0.145 0 0);
+    --sidebar-accent: oklch(0.22 0.04 230);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.78 0.12 85);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Class-based overrides for ThemeToggle */
+.dark {
+  --background: oklch(0.13 0.04 230);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.18 0.04 230);
+  --card-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.78 0.12 85);
+  --primary-foreground: oklch(0.145 0 0);
+  --accent: oklch(0.30 0.06 230);
+  --accent-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.22 0.04 230);
+  --muted-foreground: oklch(0.65 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.78 0.12 85);
+  --sidebar: oklch(0.16 0.04 230);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.78 0.12 85);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.22 0.04 230);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.78 0.12 85);
+}
+
+.light {
+  --primary: oklch(0.24 0.06 230);
+  --primary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.78 0.12 85);
+  --accent-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.78 0.12 85);
+  --sidebar: oklch(0.24 0.06 230);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.78 0.12 85);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.30 0.06 230);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.30 0.06 230);
+  --sidebar-ring: oklch(0.78 0.12 85);
 }

@@ -632,12 +632,30 @@ packages/ui/
 - `ThemeToggle` component in `@pmg/ui/components/shared/theme-toggle.tsx` cycles light → dark → system
 - OS preference is always the default; the toggle is purely optional for users
 
-#### Each App's `globals.css`
+#### Per-App Theming
+Each app imports the shared base from `@pmg/ui` then overrides only the CSS variables it needs. No config files — just CSS.
+
+**`apps/tracker/src/app/globals.css`** — Navy-gold public brand
+- Light: navy primary, gold accent, warm neutral background
+- Dark: deep navy background, gold flips to primary
+- Sidebar: navy with gold highlights
+
+**`apps/admin/src/app/globals.css`** — Slate-grey internal tool
+- Light: deep slate primary, gold accent, cool neutral background
+- Dark: very dark slate background, gold flips to primary
+- Sidebar: dark slate with gold highlights
+
+To change a theme, edit only the CSS variables in the relevant app's `globals.css` — nothing else needs to change.
+
 ```css
-/* Import shared brand theme + shadcn tokens from @pmg/ui */
+/* Pattern: import base, then override */
 @import "@pmg/ui/styles/globals.css";
 
-/* App-specific overrides only below this line */
+:root {
+  --primary: oklch(...);   /* change this */
+  --accent:  oklch(...);   /* change this */
+  /* everything else inherits from @pmg/ui */
+}
 ```
 
 #### shadcn Components to Install (via CLI in each app)
