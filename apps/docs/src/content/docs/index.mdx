@@ -1,40 +1,33 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: Tracker 360 Documentation
+description: Learn how to use the Tracker app for day-to-day tender and project work.
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
-  image:
-    file: ../../assets/houston.webp
+  tagline: Practical guides for PMG teams using Tracker 360.
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: Start with Quick Start
+      link: /getting-started/quick-start/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
-      icon: external
+    - text: View Core Workflows
+      link: /workflows/manage-tenders/
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+## What you will find here
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+	<Card title="Quick onboarding" icon="open-book">
+		Set up access, understand navigation, and start using Tracker confidently.
 	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
+	<Card title="Daily workflows" icon="seti:todo-list">
+		Step-by-step flows for tenders, projects, and purchase orders.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Team operations" icon="user">
+		Guidance for invitations, roles, and cross-team collaboration.
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Troubleshooting help" icon="warning">
+		Common issues, likely causes, and what to check first.
 	</Card>
 </CardGrid>
