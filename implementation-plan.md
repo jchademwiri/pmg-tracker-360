@@ -1,713 +1,396 @@
-# Tracker 360 Monorepo - Integrated Implementation Plan
+# Tracker 360 Monorepo v1 Implementation Plan (Next.js 16)
 
-**Status:** Phase 1 ✅ | Phase 2 ✅ | Phase 3 ✅ | Phase 5 ✅ (tracker migrated) | Phase 4 🔲 Next | Phases 6-8 🔲  
-**Duration:** 3-4 weeks to production-ready  
-**Last Updated:** April 29, 2026
-
----
-
-## Executive Summary
-
-Your monorepo foundation is solid. This integrated plan consolidates all tasks into 8 executable phases with clear dependencies, deliverables, and decision points.
-
-**Critical Path:** Database → UI Package → Auth → Features → Deployment
+**Owner:** Jacob (PMG)  
+**Plan Type:** Detailed phased migration plan to v1  
+**Stack:** Bun + Turborepo + Next.js 16 App Router + React 19 + Tailwind v4 + Drizzle + Neon  
+**Apps:** `apps/tracker` (3000), `apps/admin` (3001), `apps/docs` (3002)  
+**Last Updated:** April 30, 2026
 
 ---
 
-## Auth Recommendation: 🎯 SHARED AUTH PACKAGE
+## 1) v1 Objective
 
-### Why Shared Auth (Not Per-App)
+Deliver a production-ready v1 where tracker and admin run on shared packages, real auth/RBAC is enforced, docs are complete, and CI/deployment are reliable.
 
-**✅ Recommended: `@pmg/auth` Package**
-- **Single source of truth** for user sessions, roles, permissions
-- **Consistent UX** - users authenticate once, access both tracker & admin
-- **Easier maintenance** - one auth system, not two
-- **Better security** - centralized token validation, revocation
-- **South African compliance** - single audit trail
-- **Tracker 360 brand** - seamless experience across properties
+### v1 Success Criteria
 
-**Implementation:**
-```
-Shared Database (@pmg/db)
-    ↓
-Shared Auth (@pmg/auth) ← Uses users table from @pmg/db
-    ↓
-    ├→ apps/tracker (uses @pmg/auth)
-    └→ apps/admin (uses @pmg/auth)
-```
-
-**Tech Stack:**
-- **Provider:** Better Auth (TypeScript-first, modern)
-- **Session Storage:** Database (@pmg/db - users table)
-- **Tokens:** JWT + HTTP-only cookies
-- **RBAC:** Role-based via database (owner, admin, manager, member)
-
-**Rejected Alternative: Per-App Auth**
-- ❌ Duplicate authentication logic
-- ❌ User friction (login twice?)
-- ❌ Session sync complexity
-- ❌ Hard to enforce consistent roles
+- Shared auth package (`@pmg/auth`) implemented and used by tracker + admin.
+- Tracker core modules work end-to-end under real auth.
+- Admin app supports owner/admin operations.
+- `apps/docs` contains real product + developer documentation.
+- Lint/typecheck/tests pass in CI, and deployment runbook is verified.
 
 ---
 
-## Current State
+## 2) Current State (Done vs Pending)
 
-### Apps Layer
-```
-apps/
-├── docs/                    ✅ Astro Starlight (port 3002)
-├── admin/                   ✅ Next.js 16.2.4 (port 3001) + @pmg/ui + slate theme
-└── tracker/                 ✅ Next.js 16.2.4 (port 3000) + @pmg/ui + navy theme
-```
+### Done
 
-### Packages Layer
-```
-packages/
-├── db/                      ✅ @pmg/db — Drizzle ORM + Neon PostgreSQL (21 tables)
-├── ui/                      🔄 @pmg/ui — 11 shadcn components, brand CSS, in progress
-├── eslint-config/           ✅ @repo/eslint-config
-└── typescript-config/       ✅ @repo/typescript-config
-```
+- [x] Monorepo foundation is in place.
+- [x] `@pmg/db` with schema/migrations is in place.
+- [x] `@pmg/ui` exists with a substantial component library.
+- [x] Large portion of tracker routes/components/server modules already migrated.
 
-### Tech Stack (Confirmed)
-- **Package Manager:** Bun 1.3.11
-- **Monorepo Tool:** Turbo 2.9.6
-- **Framework:** Next.js 16.2.4, React 19.2.4, Astro 6.1.9
-- **CSS:** Tailwind CSS 4 + @tailwindcss/postcss (CSS-first, no tailwind.config.ts)
-- **TypeScript:** 5.9.2 (strict mode)
-- **Database:** Neon PostgreSQL (21 tables live)
+### Pending / Blockers
+
+- [ ] `@pmg/ui` dependency/type setup still fails workspace `check-types`.
+- [ ] `components.json` missing in `packages/ui`, `apps/tracker`, `apps/admin`.
+- [ ] Shared auth package `@pmg/auth` not created yet.
+- [ ] Tracker still contains auth/session/proxy stubs.
+- [ ] Admin app is still mostly starter scaffold.
+- [ ] Docs app still mostly placeholder content.
+- [ ] Tests/security hardening/deployment validation incomplete.
 
 ---
 
-## 8-Phase Implementation Roadmap
+## 3) Missing Imports From Old Repo (Must Track)
+
+Source repo: `https://github.com/jchademwiri/tender-track-360.git`
+
+### Critical Imports
+
+- [ ] Auth route logic:
+  - old: `src/app/api/auth/[...all]/route.ts`
+  - target: `apps/tracker/src/app/api/auth/[...auth]/route.ts` and admin equivalent
+- [ ] Invitation acceptance route (if required):
+  - old: `src/app/api/accept-invitation/[invitationId]/route.ts`
+- [ ] Admin route tree:
+  - old: `src/app/(admin)/admin/*`
+  - target: `apps/admin/src/app/(protected)/*`
+- [ ] Admin shell/navigation components:
+  - old: `src/components/admin/*`
+
+### Feature Imports (Decide/Adapt)
+
+- [ ] Billing routes: `src/app/(dashboard)/billing/*`
+- [ ] Project overview route: `.../projects/overview/page.tsx`
+- [ ] Transfer ownership settings flow under organization settings
+- [ ] Extra profile/settings subcomponents (activity/email/preferences/privacy)
+- [ ] Tenders overview split route (if still needed)
+
+### Product Decision Imports
+
+- [ ] Public pages: `about`, `blog`, `careers`, `contact`, `help`, `privacy`, `terms`, `training`, `waitlist`, `modules`
+- [ ] Decide destination: tracker, docs, or separate marketing app
+
+### Test Imports
+
+- [ ] `src/server/__tests__/*`
+- [ ] `src/lib/auth/permissions.test.ts`
+- [ ] selected component tests worth carrying forward
 
 ---
 
-### Phase 1: Foundation ✅ COMPLETE
-**Duration:** ~1 day  
-**Status:** ✅ Verified
+## 4) Implementation Principles
 
-#### Deliverables
-- [x] Web app removed
-- [x] 3 apps created (docs, admin, tracker)
-- [x] Turborepo workspace configured
-- [x] ESLint & TypeScript configs in place
-- [x] All apps use Next.js 16 + React 19 + Tailwind 4
-- [x] Dev ports set: tracker=3000, admin=3001, docs=3002
+- Do not blindly copy; adapt old code to monorepo boundaries.
+- Shared concerns belong in packages (`@pmg/db`, `@pmg/ui`, `@pmg/auth`).
+- Keep Next.js 16 App Router boundaries strict (server-only vs client).
+- Deny-by-default auth policy for protected routes/actions.
+- Deliver in vertical slices with acceptance checks per phase.
 
 ---
 
-### Phase 2: Database Package (`@pmg/db`) ✅ COMPLETE
-**Duration:** 2-3 days  
-**Status:** ✅ Complete — all 21 tables live in Neon
+## 5) Phased Execution Plan
 
-#### What Was Built
-- Drizzle ORM + `@neondatabase/serverless` client
-- 21 tables pushed to Neon PostgreSQL
-- Migrations generated and in sync
-- Drizzle Studio wired to `dev` script (runs on port 4983)
-- `db:reset` script for development resets
+## Phase 0 - Baseline and Alignment (0.5-1 day)
 
-#### Package Structure
-```
-packages/db/
-├── src/
-│   ├── schema.ts       ✅ 21 tables + relations
-│   ├── client.ts       ✅ Neon + Drizzle client
-│   └── index.ts        ✅ Exports
-├── scripts/
-│   └── reset-db.ts     ✅ Dev reset utility
-├── migrations/         ✅ 0000 + 0001 generated
-├── drizzle.config.ts   ✅ Configured
-├── package.json        ✅ @pmg/db
-└── tsconfig.json       ✅
-```
+### Goal
+Create a clear baseline and prevent hidden regressions.
 
-#### Tables in Neon (21 total)
-**Auth & Users:** `user`, `session`, `account`, `verification`  
-**Organisations:** `organization`, `member`, `invitation`  
-**Notifications:** `notification`, `notification_preferences`  
-**Security:** `security_audit_log`, `session_tracking`, `ownership_transfer`  
-**Tender Management:** `tender`, `client`, `project`, `purchase_order`, `tender_extension`, `document`  
-**Other:** `waitlist`, `feedback`, `support_tickets`
+### Tasks
 
-#### Indexes Added
-- `client` — `organization_id`, `deleted_at`
-- `tender` — `organization_id`, `status`, `submission_date`, `evaluation_date`, `deleted_at`
-- `project` — `organization_id`, `status`, `tender_id`, `deleted_at`
-- `purchase_order` — `organization_id`, `project_id`, `status`, `deleted_at`
+- [ ] Run and record baseline checks: `bun run dev`, `bun run lint`, `bun run check-types`.
+- [ ] Record current known failures and root causes.
+- [ ] Confirm v1 scope list (must-have vs post-v1).
+- [ ] Lock migration order and branch strategy.
 
-#### Scripts
-```bash
-bun run generate    # Generate migration from schema changes
-bun run migrate     # Apply migrations
-bun run push        # Push schema directly to Neon (dev)
-bun run studio      # Open Drizzle Studio
-bun run dev         # Alias for studio (runs in turbo dev)
-bun run db:reset    # ⚠️ Drop all tables (dev only)
-bun run check-types # TypeScript check
-```
+### Exit Criteria
+
+- [ ] Baseline report documented.
+- [ ] Scope and sequence agreed.
 
 ---
 
-### Phase 3: UI Package (`@pmg/ui`) ✅ COMPLETE
-**Duration:** 2-3 days  
-**Depends On:** Phase 2 ✅  
-**Blocks:** Phases 5-6 (apps need components)
+## Phase 1 - Stabilize `@pmg/ui` (1-2 days)
 
-#### Key Decisions (Confirmed)
-- **No `tailwind.config.ts`** — Tailwind v4 is CSS-first; all theming via `@theme` and CSS variables
-- **shadcn style:** `default` (base)
-- **Base color:** `neutral`
-- **Dark mode:** OS default (`prefers-color-scheme`) + optional `ThemeToggle` via `next-themes`
-- **Package name:** `@pmg/ui`
-- **Per-app theming:** Each app has its own `globals.css` that imports `@pmg/ui/styles/globals.css` and overrides only what it needs
-- **`@plugin "tailwindcss-animate"`** lives in each app's `globals.css` (not in the shared base) to ensure local resolution by Turbopack
+### Goal
+Make shared UI package clean and reusable by both apps.
 
-#### What's Done ✅
-- [x] Package renamed `@repo/ui` → `@pmg/ui`
-- [x] `src/styles/globals.css` — shared base: `@theme` brand tokens + shadcn CSS vars + OS dark mode + `.dark`/`.light` class overrides
-- [x] `src/lib/utils.ts` — `cn()` helper
-- [x] `src/components/ui/button.tsx`
-- [x] `src/components/ui/input.tsx`
-- [x] `src/components/ui/label.tsx`
-- [x] `src/components/ui/card.tsx`
-- [x] `src/components/ui/badge.tsx`
-- [x] `src/components/ui/separator.tsx`
-- [x] `src/components/ui/skeleton.tsx`
-- [x] `src/components/ui/avatar.tsx`
-- [x] `src/components/ui/dialog.tsx`
-- [x] `src/components/ui/dropdown-menu.tsx`
-- [x] `src/components/ui/select.tsx`
-- [x] `src/components/shared/logo.tsx` — Tracker 360 brand mark, 3 sizes
-- [x] `src/components/shared/page-header.tsx` — title + description + action slot
-- [x] `apps/tracker/src/app/globals.css` — navy-gold theme (imports base, overrides primary/accent/sidebar)
-- [x] `apps/admin/src/app/globals.css` — slate-gold theme (imports base, overrides primary/accent/sidebar)
-- [x] `@pmg/ui` added as dependency in both apps
-- [x] `tailwindcss-animate` installed in `@pmg/ui`, `apps/tracker`, `apps/admin`
-- [x] `src/components/ui/table.tsx`
-- [x] `src/components/ui/tabs.tsx`
-- [x] `src/components/ui/alert.tsx`
-- [x] `src/components/ui/sheet.tsx`
-- [x] `src/components/ui/tooltip.tsx`
-- [x] `src/components/ui/sonner.tsx`
-- [x] `src/components/ui/form.tsx` (react-hook-form integration)
-- [x] `src/hooks/use-mobile.ts`
-- [x] `src/components/shared/theme-toggle.tsx` — Sun/Moon/System using `next-themes`
-- [x] `src/components/shared/sidebar.tsx` — collapsible nav, Sheet on mobile
-- [x] `src/components/shared/nav-bar.tsx` — top nav with logo, links, user menu, ThemeToggle
-- [x] TypeScript check passes (`tsc --noEmit` clean)
+### Tasks
 
-#### Still To Do 🔲
-- [ ] Wire `next-themes` `ThemeProvider` into both app root layouts
-- [ ] `components.json` in `packages/ui`, `apps/tracker`, `apps/admin`
+- [ ] Fix `packages/ui` dependency strategy so types resolve in monorepo.
+- [ ] Validate and complete export map for all imported subpaths.
+- [ ] Add `components.json` to:
+  - [ ] `packages/ui`
+  - [ ] `apps/tracker`
+  - [ ] `apps/admin`
+- [ ] Remove duplicated local UI primitives that should come from `@pmg/ui`.
+- [ ] Verify theme behavior parity between tracker/admin.
 
-#### Folder Structure (Final)
-```
-packages/ui/
-├── src/
-│   ├── components/
-│   │   ├── ui/
-│   │   │   ├── alert.tsx         ✅
-│   │   │   ├── avatar.tsx        ✅
-│   │   │   ├── badge.tsx         ✅
-│   │   │   ├── button.tsx        ✅
-│   │   │   ├── card.tsx          ✅
-│   │   │   ├── dialog.tsx        ✅
-│   │   │   ├── dropdown-menu.tsx ✅
-│   │   │   ├── form.tsx          ✅
-│   │   │   ├── input.tsx         ✅
-│   │   │   ├── label.tsx         ✅
-│   │   │   ├── select.tsx        ✅
-│   │   │   ├── separator.tsx     ✅
-│   │   │   ├── sheet.tsx         ✅
-│   │   │   ├── skeleton.tsx      ✅
-│   │   │   ├── sonner.tsx        ✅
-│   │   │   ├── table.tsx         ✅
-│   │   │   ├── tabs.tsx          ✅
-│   │   │   └── tooltip.tsx       ✅
-│   │   └── shared/
-│   │       ├── logo.tsx          ✅
-│   │       ├── nav-bar.tsx       ✅
-│   │       ├── page-header.tsx   ✅
-│   │       ├── sidebar.tsx       ✅
-│   │       └── theme-toggle.tsx  ✅
-│   ├── hooks/
-│   │   └── use-mobile.ts         ✅
-│   ├── lib/
-│   │   └── utils.ts              ✅
-│   └── styles/
-│       └── globals.css           ✅
-├── package.json                  ✅ @pmg/ui
-└── tsconfig.json                 ✅
-```
+### Code/Logic Improvements
 
-#### Per-App Theming (Implemented)
-Each app imports the shared base then overrides only its CSS variables. To change a theme, edit only the app's `globals.css` — nothing else.
+- [ ] Standardize component API contracts (variant/size props).
+- [ ] Keep app-specific components in apps; only reusable primitives in `@pmg/ui`.
+- [ ] Add a simple UI smoke page in each app for fast visual checks.
 
-```
-@pmg/ui/src/styles/globals.css     ← shared base (brand @theme + neutral shadcn tokens)
-    ↓ @import
-apps/tracker/src/app/globals.css   ← navy primary, gold accent, navy sidebar
-apps/admin/src/app/globals.css     ← slate primary, gold accent, dark slate sidebar
-```
+### Exit Criteria
 
-To change admin theme: open `apps/admin/src/app/globals.css`, change the `oklch()` hue value in `:root`. That's it.
+- [ ] `bun run check-types` no longer fails because of `@pmg/ui`.
+- [ ] Both apps start and render shared UI components correctly.
 
 ---
 
-### Phase 4: Authentication Package (`@pmg/auth`) 🔲
-**Duration:** 2-3 days  
-**Depends On:** Phase 2 ✅, Phase 3 🔄  
-**Blocks:** Phases 5-6 (apps need auth)
+## Phase 2 - Build Shared Auth Package `@pmg/auth` (2-3 days)
 
-#### Goals
-- Create shared auth package using Better Auth
-- Implement email/password login + registration
-- Configure HTTP-only cookie sessions
-- Setup role-based access control (RBAC) using `member.role` enum
-- Create Next.js middleware for route protection in both apps
+### Goal
+Implement real auth + RBAC once for all apps.
 
-#### Folder Structure
+### Target Package Structure
+
 ```
 packages/auth/
 ├── src/
-│   ├── server.ts           # Better Auth instance + Drizzle adapter
-│   ├── client.ts           # Client-side auth helpers
-│   ├── middleware.ts       # Next.js route protection
-│   ├── rbac.ts             # Role/permission helpers
-│   ├── types.ts            # Shared types
+│   ├── server.ts
+│   ├── client.ts
+│   ├── middleware.ts
+│   ├── rbac.ts
+│   ├── types.ts
 │   └── index.ts
-├── package.json            # @pmg/auth
+├── package.json
 ├── tsconfig.json
 └── .env.example
 ```
 
-#### `package.json`
-```json
-{
-  "name": "@pmg/auth",
-  "version": "0.1.0",
-  "private": true,
-  "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./middleware": "./src/middleware.ts"
-  },
-  "dependencies": {
-    "better-auth": "^1.2.0",
-    "@pmg/db": "*",
-    "next": "^16.0.0"
-  },
-  "devDependencies": {
-    "@repo/typescript-config": "*",
-    "typescript": "5.9.2"
-  }
-}
-```
+### Tasks
 
-#### Better Auth Setup (`src/server.ts`)
-```typescript
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization } from "better-auth/plugins";
-import { db, schema } from "@pmg/db";
+- [ ] Create `packages/auth` and configure exports.
+- [ ] Configure Better Auth + Drizzle adapter to `@pmg/db`.
+- [ ] Wire tables: `user`, `session`, `account`, `verification`.
+- [ ] Add organization-aware behavior using existing org/member tables.
+- [ ] Implement RBAC helpers for `owner`, `admin`, `manager`, `member`.
+- [ ] Define env contract (`BETTER_AUTH_SECRET`, trusted origins, app URLs).
+- [ ] Add typed server/client helper utilities.
 
-export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: {
-      user: schema.user,
-      session: schema.session,
-      account: schema.account,
-      verification: schema.verification,
-    },
-  }),
-  plugins: [organization()],
-  emailAndPassword: { enabled: true, minPasswordLength: 8 },
-  appName: "Tracker 360",
-  secret: process.env.BETTER_AUTH_SECRET,
-  basePath: "/api/auth",
-  trustedOrigins: [
-    process.env.TRACKER_URL ?? "http://localhost:3000",
-    process.env.ADMIN_URL ?? "http://localhost:3001",
-  ],
-});
+### Code/Logic Improvements
 
-export type Session = typeof auth.$Infer.Session;
-export type User = typeof auth.$Infer.User;
-```
+- [ ] Remove fallback auth secret behavior in app runtime paths.
+- [ ] Introduce consistent auth error model: unauthenticated vs unauthorized.
+- [ ] Centralize session fetch helper for server actions/routes.
 
-#### RBAC (`src/rbac.ts`)
-Roles from `member.role` enum: `owner`, `admin`, `manager`, `member`
+### Exit Criteria
 
-#### Tasks
-- [ ] Create `packages/auth/` directory & files
-- [ ] Install Better Auth + configure Drizzle adapter
-- [ ] Wire `user`, `session`, `account`, `verification` tables from `@pmg/db`
-- [ ] Enable `organization` plugin (maps to existing `organization`/`member` tables)
-- [ ] Create RBAC helpers
-- [ ] Create Next.js middleware for both apps
-- [ ] Add `BETTER_AUTH_SECRET` to `.env.local`
-- [ ] Test: register → login → session → logout
-- [ ] Integrate into both apps
+- [ ] Register/login/logout/session flow works end-to-end.
+- [ ] Role checks are reusable from tracker and admin.
 
 ---
 
-### Phase 5: Tracker App Features 🔲
-**Duration:** 4-5 days  
-**Depends On:** Phases 2 ✅, 3 🔄, 4 🔲
+## Phase 3 - Integrate Auth in Tracker and Remove Stubs (1-2 days)
 
-#### Goals
-- Build tender management (list, detail, create, edit)
-- Build project & PO management
-- Build invoice tracking
-- Connect to `@pmg/db` and `@pmg/auth`
+### Goal
+Replace temporary tracker auth logic with real shared auth.
 
-#### Folder Structure
-```
-apps/tracker/src/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/page.tsx
-│   │   ├── register/page.tsx
-│   │   └── layout.tsx
-│   ├── (public)/
-│   │   ├── page.tsx
-│   │   └── tenders/
-│   │       ├── page.tsx
-│   │       └── [id]/page.tsx
-│   ├── (protected)/
-│   │   ├── dashboard/page.tsx
-│   │   ├── tenders/page.tsx
-│   │   ├── projects/page.tsx
-│   │   ├── purchase-orders/page.tsx
-│   │   ├── invoices/page.tsx
-│   │   ├── settings/page.tsx
-│   │   └── layout.tsx
-│   ├── api/
-│   │   └── auth/[...auth]/route.ts
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-├── lib/
-│   ├── actions.ts
-│   └── queries.ts
-├── middleware.ts
-└── types.ts
-```
+### Tasks
 
-#### Tasks
-- [ ] Setup auth API route (`/api/auth/[...auth]`)
-- [ ] Add `ThemeProvider` to root layout
-- [ ] Build login/register pages using `@pmg/ui` components
-- [ ] Build dashboard page
-- [ ] Build tender list + detail pages
-- [ ] Build project management pages
-- [ ] Build PO management pages
-- [ ] Build invoice tracking pages
-- [ ] Add Zod form validation
-- [ ] Add error handling & loading states
-- [ ] Test all flows end-to-end
+- [ ] Replace/remove stubs in tracker:
+  - [ ] `src/lib/auth.ts`
+  - [ ] `src/lib/session-check.ts`
+  - [ ] `src/proxy.ts`
+- [ ] Add tracker auth route handler:
+  - [ ] `src/app/api/auth/[...auth]/route.ts`
+- [ ] Add protected-route enforcement for dashboard/module routes.
+- [ ] Verify login/signup/reset flows under real session state.
+- [ ] Verify organization-aware behavior after login.
+
+### Code/Logic Improvements
+
+- [ ] Apply deny-by-default access for protected areas.
+- [ ] Standardize unauthenticated redirects.
+- [ ] Add server action guards to avoid auth bypass.
+
+### Exit Criteria
+
+- [ ] Tracker has no auth stubs.
+- [ ] Protected pages/actions require valid session and role.
 
 ---
 
-### Phase 6: Admin App Features 🔲
-**Duration:** 3-4 days  
-**Depends On:** Phases 2 ✅, 3 🔄, 4 🔲
+## Phase 4 - Complete Tracker v1 Feature Gaps (2-4 days)
 
-#### Goals
-- Build admin dashboard (stats, overview)
-- User & organisation management
-- Audit log viewer
-- System settings
-- Restrict to `owner`/`admin` roles only
+### Goal
+Close remaining tracker gaps and ensure feature completeness.
 
-#### Folder Structure
-```
-apps/admin/src/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/page.tsx
-│   │   └── layout.tsx
-│   ├── (protected)/
-│   │   ├── dashboard/page.tsx
-│   │   ├── users/page.tsx
-│   │   ├── users/[id]/page.tsx
-│   │   ├── organisations/page.tsx
-│   │   ├── settings/page.tsx
-│   │   ├── logs/page.tsx
-│   │   ├── reports/page.tsx
-│   │   └── layout.tsx
-│   ├── api/
-│   │   └── auth/[...auth]/route.ts
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-├── lib/
-│   ├── actions.ts
-│   ├── queries.ts
-│   └── permissions.ts
-├── middleware.ts
-└── types.ts
-```
+### Tasks
 
-#### Pages to Build
-1. **Dashboard** — stats cards, recent activity, system health
-2. **Users** — table with pagination/search, bulk actions, role management
-3. **Organisations** — list, detail, member management
-4. **Settings** — system config, email, notifications
-5. **Audit Logs** — filterable table, CSV export
-6. **Reports** — tender stats, invoice reports, user activity
+- [ ] Implement invoices module/pages (list/detail/create/edit).
+- [ ] Reconcile missing routes imported from old repo where still needed.
+- [ ] Complete transfer ownership flow if in v1 scope.
+- [ ] Ensure consistent loading/error empty states across modules.
+- [ ] Confirm document/file flows respect permissions and org boundaries.
 
-#### Tasks
-- [ ] Setup auth API route + `owner`/`admin` role guard middleware
-- [ ] Add `ThemeProvider` to root layout
-- [ ] Build login page
-- [ ] Build dashboard with stats cards
-- [ ] Build users CRUD with data table
-- [ ] Build organisations management
-- [ ] Build settings form
-- [ ] Build audit log viewer with filters
-- [ ] Add data export (CSV)
-- [ ] Test all flows as admin/owner
+### Code/Logic Improvements
+
+- [ ] Standardize Zod validation usage for actions/forms.
+- [ ] Standardize server-action error handling format.
+- [ ] Audit heavy list queries and indexing strategy.
+
+### Exit Criteria
+
+- [ ] Tracker v1 modules pass smoke tests with real auth:
+  - tenders, projects, purchase orders, invoices, org/member flows.
 
 ---
 
-### Phase 7: Documentation (`apps/docs`) 🔲
-**Duration:** 2-3 days  
-**Depends On:** Phases 5-6 complete
+## Phase 5 - Build Admin App v1 (3-5 days)
 
-#### Content Structure
-```
-src/content/docs/
-├── index.mdx
-├── getting-started/
-│   ├── setup.mdx
-│   ├── first-login.mdx
-│   └── account-management.mdx
-├── tracker-app/
-│   ├── searching-tenders.mdx
-│   ├── managing-submissions.mdx
-│   ├── projects-and-pos.mdx
-│   ├── invoice-tracking.mdx
-│   └── faq.mdx
-├── admin-dashboard/
-│   ├── user-management.mdx
-│   ├── organisation-management.mdx
-│   ├── system-settings.mdx
-│   ├── audit-logs.mdx
-│   └── reports.mdx
-├── api/
-│   ├── authentication.mdx
-│   ├── tenders.mdx
-│   ├── projects.mdx
-│   └── purchase-orders.mdx
-└── development/
-    ├── architecture.mdx
-    ├── setup.mdx
-    ├── database.mdx
-    └── deployment.mdx
-```
+### Goal
+Move admin from starter scaffold to operational console.
 
-#### Tasks
-- [ ] Write tracker user guide
-- [ ] Write admin dashboard guide
-- [ ] Document API endpoints
-- [ ] Write developer setup guide
-- [ ] Create architecture diagrams
-- [ ] Configure Starlight search
-- [ ] Test all links
-- [ ] Deploy to docs.tendertrack360.co.za
+### Tasks
+
+- [ ] Add admin auth route handler + protected layout.
+- [ ] Enforce owner/admin-only role checks.
+- [ ] Build routes and screens:
+  - [ ] dashboard
+  - [ ] users
+  - [ ] organizations
+  - [ ] settings
+  - [ ] logs
+  - [ ] reports
+- [ ] Implement data table experiences (search/filter/pagination/sort).
+- [ ] Implement CSV export where needed.
+- [ ] Add audit logging for sensitive admin actions.
+
+### Code/Logic Improvements
+
+- [ ] Keep business logic in server modules/actions, not page components.
+- [ ] Centralize admin permission checks.
+- [ ] Use optimistic UI only where consistency guarantees are clear.
+
+### Exit Criteria
+
+- [ ] Admin app supports core owner/admin workflows end-to-end.
 
 ---
 
-### Phase 8: Testing & Deployment 🔲
-**Duration:** 2-3 days  
-**Depends On:** All phases complete
+## Phase 6 - Docs Completion (`apps/docs`) (1-2 days)
 
-#### Testing Checklist
-- [ ] Auth flow (register → login → session → logout)
-- [ ] Tender CRUD
-- [ ] Project & PO CRUD
-- [ ] Invoice tracking
-- [ ] Admin user management
-- [ ] Audit logging
-- [ ] Mobile responsiveness
-- [ ] Accessibility (a11y)
+### Goal
+Replace placeholder docs with migration and product docs.
 
-#### Security Checklist
-- [ ] Environment variables secured (not in git)
-- [ ] SQL injection prevention (Drizzle ORM ✅)
-- [ ] CSRF protection
-- [ ] Rate limiting on auth endpoints
-- [ ] HTTPS enforced
-- [ ] Security headers (CSP, X-Frame-Options, etc.)
+### Tasks
 
-#### Performance
-- [ ] Database indexes verified ✅ (done in Phase 2)
-- [ ] API response caching
-- [ ] Image optimization
-- [ ] Bundle size analysis
-- [ ] Lighthouse scores > 90
+- [ ] Add getting started docs:
+  - local setup
+  - env vars
+  - run commands
+- [ ] Add tracker user guides.
+- [ ] Add admin user guides.
+- [ ] Add architecture + package boundary documentation.
+- [ ] Add operational docs (deploy, rollback, troubleshooting).
+- [ ] Validate links/navigation/search.
 
-#### Deployment
-- [ ] Create 3 Vercel projects:
-  - `tendertrack360.co.za` (tracker — port 3000)
-  - `admin.tendertrack360.co.za` (admin — port 3001)
-  - `docs.tendertrack360.co.za` (docs — port 3002)
-- [ ] Configure `DATABASE_URL` + `BETTER_AUTH_SECRET` env vars in Vercel
-- [ ] Setup auto-deploy from GitHub
-- [ ] Configure preview environments
-- [ ] Setup monitoring & alerts
+### Exit Criteria
+
+- [ ] Docs are usable as onboarding and operations reference.
 
 ---
 
-## Development Workflow
+## Phase 7 - Testing, Security, and Deployment Hardening (2-4 days)
 
-### Daily Development
-```bash
-bun run dev
-# Tracker:       http://localhost:3000
-# Admin:         http://localhost:3001
-# Docs:          http://localhost:3002
-# Drizzle Studio: http://localhost:4983
-```
+### Goal
+Make v1 safe and repeatable in production.
 
-### Database Operations
-```bash
-bun run generate    # Generate migration from schema changes
-bun run push        # Push schema to Neon (dev)
-bun run migrate     # Apply pending migrations
-bun run studio      # Open Drizzle Studio at :4983
-bun run db:reset    # ⚠️ Drop all tables (dev only)
-```
+### Testing Tasks
 
-### Type Checking & Linting
-```bash
-bun run check-types   # Type check all packages
-bun run lint          # Lint all
-bun run format        # Prettier format
-```
+- [ ] Add tests for auth/session/RBAC.
+- [ ] Add tests for core tracker/admin server logic.
+- [ ] Add smoke/integration tests for critical user journeys.
+- [ ] Add CI gates for lint + typecheck + tests.
 
----
+### Security Tasks
 
-## Environment Variables
+- [ ] Harden env secret handling and configuration validation.
+- [ ] Add auth endpoint protections (rate limiting, CSRF approach).
+- [ ] Validate security headers and HTTPS assumptions.
+- [ ] Review audit trail coverage for sensitive actions.
 
-### Root `.env.local`
-```bash
-# Database (Neon — pooled)
-DATABASE_URL=postgresql://...@neon.tech/neondb?sslmode=require
+### Deployment Tasks
 
-# Database (Neon — direct, for migrations)
-DATABASE_URL_UNPOOLED=postgresql://...@neon.tech/neondb?sslmode=require
-```
+- [ ] Configure Vercel projects/envs for tracker/admin/docs.
+- [ ] Document preview/staging workflow.
+- [ ] Add go-live checklist and rollback runbook.
 
-### App-Specific (Phase 4+)
-```bash
-# Both apps
-BETTER_AUTH_SECRET=your-secret-min-32-chars
+### Exit Criteria
 
-# apps/tracker/.env.local
-NEXTAUTH_URL=http://localhost:3000
-
-# apps/admin/.env.local
-NEXTAUTH_URL=http://localhost:3001
-```
+- [ ] CI green on required checks.
+- [ ] Deployment flow tested and documented.
 
 ---
 
-## Timeline
+## 6) Execution Order (Strict)
 
-| Phase | Task | Duration | Status |
-|-------|------|----------|--------|
-| 1 | Foundation | ~1 day | ✅ Complete |
-| 2 | Database (`@pmg/db`) | 2-3 days | ✅ Complete |
-| 3 | UI Package (`@pmg/ui`) | 2-3 days | ✅ Complete |
-| 4 | Auth (`@pmg/auth`) | 2-3 days | 🔲 Next |
-| 5 | Tracker features | 4-5 days | 🔲 |
-| 6 | Admin features | 3-4 days | 🔲 |
-| 7 | Documentation | 2-3 days | 🔲 |
-| 8 | Testing & Deployment | 2-3 days | 🔲 |
-| **Total** | | **~3-4 weeks** | |
+- [ ] 1. Phase 0 - Baseline
+- [ ] 2. Phase 1 - `@pmg/ui` stabilization
+- [ ] 3. Phase 2 - `@pmg/auth` package
+- [ ] 4. Phase 3 - Tracker auth integration
+- [ ] 5. Phase 4 - Tracker feature gap closure
+- [ ] 6. Phase 5 - Admin app implementation
+- [ ] 7. Phase 6 - Docs completion
+- [ ] 8. Phase 7 - Hardening + deployment
 
 ---
 
-## Key Decisions
+## 7) Detailed Validation Checklist for v1
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Auth approach | Shared `@pmg/auth` | Single source of truth, consistent UX |
-| Auth provider | Better Auth | TypeScript-first, Drizzle-compatible, org support |
-| Database | Neon PostgreSQL | Serverless, free tier, great DX |
-| ORM | Drizzle ORM | Type-safe, excellent TS support |
-| UI library | shadcn/ui (base style) | Accessible, customizable, no config file |
-| Styling | Tailwind CSS v4 | CSS-first, no tailwind.config.ts needed |
-| Theming | Per-app CSS variables | Each app overrides only what it needs |
-| Dark mode | OS preference + optional toggle | `next-themes` with `defaultTheme="system"` |
-| Docs | Astro Starlight | Optimized for docs, searchable, fast |
-| Deployment | Vercel | Next.js-first, global CDN |
+### Functional
 
----
+- [ ] Register -> login -> session persists -> logout.
+- [ ] RBAC blocks unauthorized actions and routes.
+- [ ] Tracker CRUD flows work and persist correctly.
+- [ ] Admin user/org/log/report workflows are operational.
 
-## Success Criteria
+### Technical Quality
 
-| Phase | Criteria | Status |
-|-------|----------|--------|
-| 1 | 3 apps running, turbo configured | ✅ |
-| 2 | 21 tables in Neon, Drizzle queries work, indexes in place | ✅ |
-| 3 | 15+ components, themes working in both apps, dark mode functional | 🔄 |
-| 4 | Login/register working, sessions persisting, RBAC functional | 🔲 |
-| 5 | Tender/project/PO/invoice CRUD working end-to-end | 🔲 |
-| 6 | Admin dashboard, user management, audit logs working | 🔲 |
-| 7 | All docs written, search functional, no broken links | 🔲 |
-| 8 | Lighthouse > 90, security audit passed, deployed to production | 🔲 |
+- [ ] `bun run lint` passes.
+- [ ] `bun run check-types` passes.
+- [ ] Required automated tests pass locally and in CI.
+- [ ] No critical runtime errors in core flows.
+
+### Product Readiness
+
+- [ ] Docs cover setup, operations, and troubleshooting.
+- [ ] Env variable contract documented and validated.
+- [ ] Deployment/rollback steps tested once before release.
 
 ---
 
-## Dependency Graph
+## 8) Risks and Mitigations
 
-```
-Phase 1 (Foundation) ✅
-    ↓
-Phase 2 (Database) ✅
-    ↓
-Phase 3 (UI) 🔄 ←── finish remaining components
-    ↓
-Phase 4 (Auth) 🔲 ←── depends on Phase 2 ✅
-    ↓
-Phase 5 & 6 (Features) 🔲 ←── depend on 2 ✅ + 3 + 4
-    ↓
-Phase 7 (Docs) 🔲
-    ↓
-Phase 8 (Deployment) 🔲
-```
+- **Risk:** Auth migration causes widespread breakage.  
+  **Mitigation:** Build `@pmg/auth` first, then replace stubs in a controlled phase.
+
+- **Risk:** UI package instability blocks all apps.  
+  **Mitigation:** Resolve `@pmg/ui` health before auth/admin work.
+
+- **Risk:** Admin scope grows and delays v1.  
+  **Mitigation:** keep admin v1 focused on must-have operations; defer extras.
+
+- **Risk:** Imported code from old repo violates monorepo boundaries.  
+  **Mitigation:** enforce package ownership and do adaptation, not raw copying.
 
 ---
 
-## Next Actions
+## 9) Immediate Next Sprint Plan (Actionable)
 
-### Finish Phase 3 (remaining UI components)
-```
-table, tabs, alert, sheet, tooltip, sonner, form
-theme-toggle, sidebar, nav-bar
-use-mobile hook
-ThemeProvider in both app layouts
-components.json files
-```
-
-### Then Phase 4 (Auth)
-```
-packages/auth/ → Better Auth + Drizzle adapter
-RBAC using member.role (owner/admin/manager/member)
-Middleware for both apps
-```
+- [ ] Fix `@pmg/ui` type/dependency issues and add `components.json` files.
+- [ ] Scaffold `packages/auth` and wire Better Auth to `@pmg/db`.
+- [ ] Implement tracker auth route + remove auth stubs.
+- [ ] Add first RBAC enforcement path and test.
+- [ ] Scaffold admin protected layout and dashboard/users foundation.
 
 ---
 
-**Document Version:** 4.0  
-**Owner:** Jacob (PMG)  
-**Start Date:** April 29, 2026  
-**Expected Completion:** Late May 2026  
-**Last Updated:** April 29, 2026
+**Document Version:** 6.0  
+**Format:** Detailed phased migration guide (v1 target)  
+**Last Updated:** April 30, 2026
