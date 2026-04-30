@@ -26,3 +26,4 @@ bun run --filter docs build
 
 - Documentation lives under `apps/docs/src/content/docs`
 - Add pages as `.md` or `.mdx`
+
