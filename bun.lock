@@ -47,6 +47,7 @@
       "name": "tracker",
       "version": "0.1.0",
       "dependencies": {
+        "@pmg/auth": "*",
         "@pmg/db": "*",
         "@pmg/ui": "*",
         "@radix-ui/react-avatar": "^1.1.11",
@@ -97,6 +98,23 @@
         "eslint-config-next": "16.2.4",
         "tailwindcss": "^4",
         "typescript": "^5",
+      },
+    },
+    "packages/auth": {
+      "name": "@pmg/auth",
+      "version": "0.1.0",
+      "dependencies": {
+        "@pmg/db": "*",
+        "better-auth": "1.6.9",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/node": "^22.15.3",
+        "next": "^16.2.4",
+        "typescript": "5.9.2",
+      },
+      "peerDependencies": {
+        "next": "^16.2.4",
       },
     },
     "packages/db": {
@@ -504,6 +522,8 @@
     "@pagefind/windows-arm64": ["@pagefind/windows-arm64@1.5.2", "", { "os": "win32", "cpu": "arm64" }, "sha512-hN9Nh90fNW61nNRCW9ZyQrAj/mD0eRvmJ8NlTUzkbuW8kIzGJUi3cxjFkEcMZ5h/8FsKWD/VcouZl4yo1F7B6g=="],
 
     "@pagefind/windows-x64": ["@pagefind/windows-x64@1.5.2", "", { "os": "win32", "cpu": "x64" }, "sha512-Fa2Iyw7kaDRzGMfNYNUXNW2zbL5FQVDgSOcbDHdzBrDEdpqOqg8TcZ68F22ol6NJ9IGzvUdmeyZypLW5dyhqsg=="],
+
+    "@pmg/auth": ["@pmg/auth@workspace:packages/auth"],
 
     "@pmg/db": ["@pmg/db@workspace:packages/db"],
 

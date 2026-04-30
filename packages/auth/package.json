@@ -1,0 +1,30 @@
+{
+  "name": "@pmg/auth",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./proxy": "./src/proxy.ts",
+    "./rbac": "./src/rbac.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pmg/db": "*",
+    "better-auth": "1.6.9"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/node": "^22.15.3",
+    "next": "^16.2.4",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "next": "^16.2.4"
+  }
+}

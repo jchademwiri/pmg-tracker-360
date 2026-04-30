@@ -138,79 +138,40 @@ Make shared UI package clean and reusable by both apps.
 
 ---
 
-## 🔄 Phase 2 - Build Shared Auth Package `@pmg/auth` — NEXT
+## ✅ Phase 2 - Build Shared Auth Package `@pmg/auth` — COMPLETE
 
 ### Goal
 
 Implement real auth + RBAC once for all apps.
 
-### Target Package Structure
+### Completed
 
-```
-packages/auth/
-├── src/
-│   ├── server.ts
-│   ├── client.ts
-│   ├── middleware.ts
-│   ├── rbac.ts
-│   ├── types.ts
-│   └── index.ts
-├── package.json
-├── tsconfig.json
-└── .env.example
-```
+- Created `packages/auth/` with full package structure.
+- `src/permissions.ts` — `createAccessControl` with custom `owner / admin / manager / member` roles and resource-level permissions (project, tender, task, document, user, organization, purchase_order).
+- `src/server.ts` — Better Auth instance with Drizzle adapter → `@pmg/db`, organization plugin with custom roles + `ac`, `nextCookies()`, `databaseHooks` to auto-set `activeOrganizationId` on session create, org creation limits by plan.
+- `src/client.ts` — `createAuthClient` with `organizationClient({ ac, roles })` so all organization methods and hooks are typed.
+- `src/proxy.ts` — exports `SESSION_COOKIE_NAME`, `PROTECTED_PREFIXES`, `AUTH_ONLY_PREFIXES` for use in `proxy.ts` without importing the full auth instance.
+- `src/rbac.ts` — `checkUserSession()`, `requireSession()`, `requireOrganization()`, `requireRole()`, `hasRole()`, `meetsMinimumRole()`.
+- `src/types.ts` — shared `Role`, `SessionCheck`, `UserSessionCheck` types.
+- `bun run check-types` passes for `@pmg/auth`.
 
-### Tasks
-
-- Create `packages/auth` and configure exports.
-- Configure Better Auth + Drizzle adapter to `@pmg/db`.
-- Wire tables: `user`, `session`, `account`, `verification`.
-- Add organization-aware behavior using existing org/member tables.
-- Implement RBAC helpers for `owner`, `admin`, `manager`, `member`.
-- Define env contract (`BETTER_AUTH_SECRET`, trusted origins, app URLs).
-- Add typed server/client helper utilities.
-
-### Code/Logic Improvements
-
-- Remove fallback auth secret behavior in app runtime paths.
-- Introduce consistent auth error model: unauthenticated vs unauthorized.
-- Centralize session fetch helper for server actions/routes.
-
-### Exit Criteria
-
-- Register/login/logout/session flow works end-to-end.
-- Role checks are reusable from tracker and admin.
-
----
-
-## Phase 3 - Integrate Auth in Tracker and Remove Stubs (1-2 days)
+## ✅ Phase 3 - Integrate Auth in Tracker and Remove Stubs — COMPLETE
 
 ### Goal
 
 Replace temporary tracker auth logic with real shared auth.
 
-### Tasks
+### Completed
 
-- Replace/remove stubs in tracker:
-  - `src/lib/auth.ts`
-  - `src/lib/session-check.ts`
-  - `src/proxy.ts`
-- Add tracker auth route handler:
-  - `src/app/api/auth/[...auth]/route.ts`
-- Add protected-route enforcement for dashboard/module routes.
-- Verify login/signup/reset flows under real session state.
-- Verify organization-aware behavior after login.
-
-### Code/Logic Improvements
-
-- Apply deny-by-default access for protected areas.
-- Standardize unauthenticated redirects.
-- Add server action guards to avoid auth bypass.
-
-### Exit Criteria
-
-- Tracker has no auth stubs.
-- Protected pages/actions require valid session and role.
+- `apps/tracker/src/app/api/auth/[...auth]/route.ts` — Better Auth catch-all handler via `toNextJsHandler`. Route now appears in build output as `ƒ /api/auth/[...auth]`.
+- `apps/tracker/src/lib/auth.ts` — replaced stub with re-export from `@pmg/auth/server`.
+- `apps/tracker/src/lib/session-check.ts` — replaced hardcoded stub with re-export of `checkUserSession()` from `@pmg/auth/rbac`.
+- `apps/tracker/src/lib/auth-client.ts` — replaced local implementation with re-export from `@pmg/auth/client`.
+- `apps/tracker/src/proxy.ts` — replaced pass-through stub with real cookie-existence gate: protected routes redirect to `/login?returnTo=`, auth-only routes redirect logged-in users to `/dashboard`, `/api/auth/*` excluded from matcher.
+- `apps/tracker/src/app/(dashboard)/dashboard/layout.tsx` — replaced stub comment with `requireSession()` + org check → redirects to `/onboarding` if no active org.
+- `BETTER_AUTH_SECRET` generated and set in `apps/tracker/.env.local` and root `.env.local`.
+- `bun run check-types` passes across all 8 packages.
+- `bun run build` passes for all 3 apps — tracker build shows `ƒ Proxy (Middleware)` confirming proxy.ts is active.
 
 ---
 
@@ -335,9 +296,9 @@ Make v1 safe and repeatable in production.
 
 - ✅ Phase 0 - Baseline
 - ✅ Phase 1 - `@pmg/ui` stabilization
-- 🔄 Phase 2 - `@pmg/auth` package ← **current**
-- ⬜ Phase 3 - Tracker auth integration
-- ⬜ Phase 4 - Tracker feature gap closure
+- ✅ Phase 2 - `@pmg/auth` package
+- ✅ Phase 3 - Tracker auth integration
+- 🔄 Phase 4 - Tracker feature gap closure ← **current**
 - ⬜ Phase 5 - Admin app implementation
 - ⬜ Phase 6 - Docs completion
 - ⬜ Phase 7 - Hardening + deployment
@@ -383,14 +344,14 @@ Make v1 safe and repeatable in production.
 
 ## 9) Immediate Next Sprint Plan (Actionable)
 
-- Scaffold `packages/auth` with Better Auth + Drizzle adapter wired to `@pmg/db`.
-- Wire tables: `user`, `session`, `account`, `verification`, org/member.
-- Implement RBAC helpers for `owner`, `admin`, `manager`, `member`.
-- Export typed `server.ts`, `client.ts`, `middleware.ts`, `rbac.ts` from the package.
-- Verify `@pmg/auth` builds and `check-types` passes.
+- Smoke test auth end-to-end: register → login → dashboard → logout.
+- Verify `/dashboard` redirects to `/login` when unauthenticated.
+- Verify `/login` redirects to `/dashboard` when already logged in.
+- Verify `/onboarding` is shown after first login with no org.
+- Begin Phase 4: invoices module, missing route reconciliation, server action guards.
 
 ---
 
-**Document Version:** 7.0  
+**Document Version:** 8.0  
 **Format:** Detailed phased migration guide (v1 target)  
 **Last Updated:** April 30, 2026

@@ -17,7 +17,7 @@ export const addMember = async (
       body: {
         userId,
         organizationId,
-        role,
+        role: role as 'owner' | 'admin' | 'member',
       },
     });
     return {
