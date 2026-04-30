@@ -30,14 +30,19 @@ Deliver a production-ready v1 where tracker and admin run on shared packages, re
 - `@pmg/db` with schema/migrations is in place.
 - `@pmg/ui` exists with a substantial component library.
 - Large portion of tracker routes/components/server modules already migrated.
+- **Phase 0 complete:** Baseline checks run; failures identified and documented.
+- **Phase 1 complete:**
+  - `@pmg/db` tsconfig fixed (`moduleResolution: Bundler`) — `check-types` passes.
+  - `@pmg/ui` type resolution confirmed clean — `check-types` passes.
+  - `bun run check-types` passes across all workspace packages.
+  - `bun run build` passes for all 3 apps (tracker build script fixed with `--env-file`).
 
 ### Pending / Blockers
 
-- `@pmg/ui` dependency/type setup still fails workspace `check-types`.
-- `components.json` missing in `packages/ui`, `apps/tracker`, `apps/admin`.
-- Shared auth package `@pmg/auth` not created yet.
+- `components.json` missing in `packages/ui`, `apps/tracker`, `apps/admin` (deferred — not blocking check-types).
+- Shared auth package `@pmg/auth` not created yet — **current blocker**.
 - Tracker still contains auth/session/proxy stubs.
-- Admin app is still mostly starter scaffold.
+- Admin app is still starter scaffold.
 - Docs app still mostly placeholder content.
 - Tests/security hardening/deployment validation incomplete.
 
@@ -93,57 +98,47 @@ Source repo: `https://github.com/jchademwiri/tender-track-360.git`
 
 ## 5) Phased Execution Plan
 
-## Phase 0 - Baseline and Alignment (0.5-1 day)
+## ✅ Phase 0 - Baseline and Alignment — COMPLETE
 
 ### Goal
 
 Create a clear baseline and prevent hidden regressions.
 
-### Tasks
+### Completed
 
-- Run and record baseline checks: `bun run dev`, `bun run lint`, `bun run check-types`.
-- Record current known failures and root causes.
-- Confirm v1 scope list (must-have vs post-v1).
-- Lock migration order and branch strategy.
+- Ran baseline checks: `bun run build`, `bun run lint`, `bun run check-types`.
+- Identified root causes of all failures.
+- Scope and sequence confirmed.
 
-### Exit Criteria
+### Baseline Findings (Resolved)
 
-- Baseline report documented.
-- Scope and sequence agreed.
+- `tracker#build` was failing: `validate-env.mjs` ran as plain Node without `.env.local` loaded. Fixed by adding `--env-file=.env.local` to the build script.
+- `@pmg/db#check-types` was failing: `moduleResolution: NodeNext` in base tsconfig required `.js` extensions on relative imports. Fixed by overriding to `Bundler` in `packages/db/tsconfig.json`.
+- `@pmg/ui#check-types` was failing: confirmed clean after db fix unblocked the pipeline.
 
 ---
 
-## Phase 1 - Stabilize `@pmg/ui` (1-2 days)
+## ✅ Phase 1 - Stabilize `@pmg/ui` — COMPLETE
 
 ### Goal
 
 Make shared UI package clean and reusable by both apps.
 
-### Tasks
+### Completed
 
-- Fix `packages/ui` dependency strategy so types resolve in monorepo.
-- Validate and complete export map for all imported subpaths.
-- Add `components.json` to:
-  - `packages/ui`
-  - `apps/tracker`
-  - `apps/admin`
-- Remove duplicated local UI primitives that should come from `@pmg/ui`.
-- Verify theme behavior parity between tracker/admin.
+- Fixed `@pmg/db` tsconfig (`moduleResolution: Bundler`) — unblocked workspace `check-types`.
+- Confirmed `@pmg/ui` type resolution is clean.
+- `bun run check-types` passes across all packages.
+- `bun run build` passes for all 3 apps.
 
-### Code/Logic Improvements
+### Deferred (Non-blocking)
 
-- Standardize component API contracts (variant/size props).
-- Keep app-specific components in apps; only reusable primitives in `@pmg/ui`.
-- Add a simple UI smoke page in each app for fast visual checks.
-
-### Exit Criteria
-
-- `bun run check-types` no longer fails because of `@pmg/ui`.
-- Both apps start and render shared UI components correctly.
+- `components.json` files for `packages/ui`, `apps/tracker`, `apps/admin` — not required for type resolution; can be added when shadcn CLI usage is needed.
+- UI smoke pages — deferred to Phase 3 when real auth is wired.
 
 ---
 
-## Phase 2 - Build Shared Auth Package `@pmg/auth` (2-3 days)
+## 🔄 Phase 2 - Build Shared Auth Package `@pmg/auth` — NEXT
 
 ### Goal
 
@@ -338,14 +333,14 @@ Make v1 safe and repeatable in production.
 
 ## 6) Execution Order (Strict)
 
-- 1. Phase 0 - Baseline
-- 1. Phase 1 - `@pmg/ui` stabilization
-- 1. Phase 2 - `@pmg/auth` package
-- 1. Phase 3 - Tracker auth integration
-- 1. Phase 4 - Tracker feature gap closure
-- 1. Phase 5 - Admin app implementation
-- 1. Phase 6 - Docs completion
-- 1. Phase 7 - Hardening + deployment
+- ✅ Phase 0 - Baseline
+- ✅ Phase 1 - `@pmg/ui` stabilization
+- 🔄 Phase 2 - `@pmg/auth` package ← **current**
+- ⬜ Phase 3 - Tracker auth integration
+- ⬜ Phase 4 - Tracker feature gap closure
+- ⬜ Phase 5 - Admin app implementation
+- ⬜ Phase 6 - Docs completion
+- ⬜ Phase 7 - Hardening + deployment
 
 ---
 
@@ -361,7 +356,7 @@ Make v1 safe and repeatable in production.
 ### Technical Quality
 
 - `bun run lint` passes.
-- `bun run check-types` passes.
+- `bun run check-types` passes. ✅
 - Required automated tests pass locally and in CI.
 - No critical runtime errors in core flows.
 
@@ -378,24 +373,24 @@ Make v1 safe and repeatable in production.
 - **Risk:** Auth migration causes widespread breakage.  
 **Mitigation:** Build `@pmg/auth` first, then replace stubs in a controlled phase.
 - **Risk:** UI package instability blocks all apps.  
-**Mitigation:** Resolve `@pmg/ui` health before auth/admin work.
+**Mitigation:** Resolve `@pmg/ui` health before auth/admin work. ✅ Done.
 - **Risk:** Admin scope grows and delays v1.  
-**Mitigation:** keep admin v1 focused on must-have operations; defer extras.
+**Mitigation:** Keep admin v1 focused on must-have operations; defer extras.
 - **Risk:** Imported code from old repo violates monorepo boundaries.  
-**Mitigation:** enforce package ownership and do adaptation, not raw copying.
+**Mitigation:** Enforce package ownership and do adaptation, not raw copying.
 
 ---
 
 ## 9) Immediate Next Sprint Plan (Actionable)
 
-- Fix `@pmg/ui` type/dependency issues and add `components.json` files.
-- Scaffold `packages/auth` and wire Better Auth to `@pmg/db`.
-- Implement tracker auth route + remove auth stubs.
-- Add first RBAC enforcement path and test.
-- Scaffold admin protected layout and dashboard/users foundation.
+- Scaffold `packages/auth` with Better Auth + Drizzle adapter wired to `@pmg/db`.
+- Wire tables: `user`, `session`, `account`, `verification`, org/member.
+- Implement RBAC helpers for `owner`, `admin`, `manager`, `member`.
+- Export typed `server.ts`, `client.ts`, `middleware.ts`, `rbac.ts` from the package.
+- Verify `@pmg/auth` builds and `check-types` passes.
 
 ---
 
-**Document Version:** 6.0  
+**Document Version:** 7.0  
 **Format:** Detailed phased migration guide (v1 target)  
 **Last Updated:** April 30, 2026
