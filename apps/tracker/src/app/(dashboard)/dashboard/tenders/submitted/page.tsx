@@ -1,15 +1,17 @@
-﻿import { getCurrentUser } from '@/server';
-import { getTendersWithCustomSorting } from '@/server/tenders';
+﻿import { getTendersWithCustomSorting } from '@/server/tenders';
 import { TenderList } from '@/components/tenders/tender-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
 import { Clock, FileText, Plus, Send } from 'lucide-react';
 import { Button } from '@/components/ui';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SubmittedTendersPage() {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
 
   if (!session.activeOrganizationId) {
     return (

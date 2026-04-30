@@ -1,7 +1,7 @@
-import { getCurrentUser } from '@/server';
 import { getPurchaseOrderById } from '@/server/purchase-orders';
 import { POForm } from '@/components/purchase-orders/po-form';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Edit Purchase Order' };
@@ -11,7 +11,8 @@ export default async function EditPurchaseOrderPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const { id } = await params;
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 

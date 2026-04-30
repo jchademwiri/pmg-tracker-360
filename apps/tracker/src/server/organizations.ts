@@ -134,8 +134,11 @@ export async function getActiveOrganizations(): Promise<
 
 export async function getOrganizationsForProvider() {
   const { currentUser } = await getCurrentUser();
+  if (!currentUser?.id) {
+    return [];
+  }
   const members = await db.query.member.findMany({
-    where: eq(member.userId, currentUser?.id),
+    where: eq(member.userId, currentUser.id),
   });
   const organizations = await db.query.organization.findMany({
     where: and(

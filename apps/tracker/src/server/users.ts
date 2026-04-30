@@ -1,57 +1,96 @@
 ﻿'use server';
+
 import { db } from '@pmg/db';
 import { member, user } from '@pmg/db/schema';
 import { eq, inArray, not } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { StorageService } from '@/lib/storage';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 
-// ============================================================
-// AUTH STUB — Phase 4 will replace with real Better Auth
-// ============================================================
-const STUB_USER_ID = 'stub-user-id';
-const STUB_ORG_ID = 'stub-org-id';
-
+/**
+ * Returns the current authenticated user and session.
+ * Throws if not authenticated — callers that need a soft check
+ * should use checkUserSession() from @/lib/session-check instead.
+ */
 export const getCurrentUser = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    return { user: null, session: null, currentUser: null };
+  }
+
   return {
-    user: {
-      id: STUB_USER_ID,
-      name: 'Dev User',
-      email: 'dev@tendertrack360.co.za',
-      role: 'owner',
-      image: null as string | null,
-      emailVerified: true,
-    },
-    session: {
-      id: 'stub-session-id',
-      userId: STUB_USER_ID,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-      activeOrganizationId: STUB_ORG_ID,
-    },
-    currentUser: {
-      id: STUB_USER_ID,
-      name: 'Dev User',
-      email: 'dev@tendertrack360.co.za',
-      role: 'owner',
-      image: null as string | null,
-      emailVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      plan: 'free',
-    },
+    user: session.user,
+    session: session.session,
+    currentUser: session.user,
   };
 };
 
-// Stub sign-in — Phase 4 will use real auth
-export const signIn = async (_email: string, _password: string) => {
-  return { success: true, message: 'Stub: sign-in not active yet' };
+/**
+ * Email + password sign-in via Better Auth.
+ */
+export const signIn = async (email: string, password: string) => {
+  try {
+    const result = await auth.api.signInEmail({
+      body: { email, password },
+      headers: await headers(),
+    });
+
+    if (!result) {
+      return { success: false, message: 'Invalid email or password' };
+    }
+
+    return { success: true, message: 'Signed in successfully' };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Invalid email or password';
+    return { success: false, message };
+  }
 };
 
-export const signUp = async (_name: string, _email: string, _password: string) => {
-  return { success: true, message: 'Stub: sign-up not active yet' };
+/**
+ * Email + password sign-up via Better Auth.
+ */
+export const signUp = async (name: string, email: string, password: string) => {
+  try {
+    const result = await auth.api.signUpEmail({
+      body: { name, email, password },
+      headers: await headers(),
+    });
+
+    if (!result) {
+      return { success: false, message: 'Failed to create account' };
+    }
+
+    return { success: true, message: 'Account created successfully' };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to create account';
+    // Surface duplicate email as a friendly message
+    if (message.toLowerCase().includes('already exists') || message.toLowerCase().includes('unique')) {
+      return { success: false, message: 'An account with this email already exists' };
+    }
+    return { success: false, message };
+  }
 };
 
-export const sendVerificationEmail = async (_email: string) => {
-  return { success: true, message: 'Stub: email not active yet' };
+/**
+ * Sends a verification email to the given address via Better Auth.
+ */
+export const sendVerificationEmail = async (email: string) => {
+  try {
+    await auth.api.sendVerificationEmail({
+      body: { email },
+      headers: await headers(),
+    });
+    return { success: true, message: 'Verification email sent — check your inbox' };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to send verification email';
+    return { success: false, message };
+  }
 };
 
 export const getAllUsers = async (organizationId: string) => {
@@ -70,6 +109,6 @@ export const getAllUsers = async (organizationId: string) => {
 };
 
 export const updateUserImage = async (_formData: FormData) => {
-  // Stub — storage not configured yet
+  // TODO Phase 7: wire Cloudflare R2 storage
   return { success: false, error: 'File storage not configured yet' };
 };

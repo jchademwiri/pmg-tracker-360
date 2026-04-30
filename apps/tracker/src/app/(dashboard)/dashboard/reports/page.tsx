@@ -1,12 +1,14 @@
-﻿import { getCurrentUser } from '@/server';
-import { getReportStats } from '@/server/reports';
+﻿import { getReportStats } from '@/server/reports';
 import { ReportStatsCards } from '@/components/reports/stats-cards';
 import { Card, CardContent, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ReportsPage() {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
 
   if (!session.activeOrganizationId) {
     return (

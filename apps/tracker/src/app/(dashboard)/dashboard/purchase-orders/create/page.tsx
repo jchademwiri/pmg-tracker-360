@@ -1,11 +1,13 @@
-import { getCurrentUser } from '@/server';
 import { POForm } from '@/components/purchase-orders/po-form';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Create Purchase Order' };
 
 export default async function NewPurchaseOrderPage() {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
 
   return (
     <div className="space-y-6">

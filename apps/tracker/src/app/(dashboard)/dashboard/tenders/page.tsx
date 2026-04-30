@@ -1,5 +1,4 @@
-﻿import { getCurrentUser } from '@/server';
-import {
+﻿import {
   getTenderStats,
   getRecentActivity,
   getUpcomingDeadlines,
@@ -13,12 +12,15 @@ import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
 import { TendersOverviewClient } from './client-wrapper';
 import { Button } from '@pmg/ui/components/ui/button';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Tenders' };
 
 export default async function TendersPage() {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 
   const [statsResult, activityResult, deadlinesResult, clientsResult, tendersResult] =

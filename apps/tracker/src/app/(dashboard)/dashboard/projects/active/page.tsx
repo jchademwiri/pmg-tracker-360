@@ -1,9 +1,10 @@
-import { getCurrentUser } from '@/server';
 import { getProjects } from '@/server/projects';
 import { ProjectsTable } from '@/components/projects/projects-table';
 import { Button } from '@pmg/ui/components/ui/button';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Active Projects' };
@@ -13,7 +14,8 @@ export default async function ActiveProjectsPage({
 }: {
   searchParams: Promise<{ search?: string; status?: string; page?: string }>;
 }) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
   const params = await searchParams;
   const page = parseInt(params.page ?? '1');

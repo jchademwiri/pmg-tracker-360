@@ -3,28 +3,32 @@
  *
  * Wired to @pmg/db via the Drizzle adapter.
  * Exports `auth` — the single source of truth for all server-side auth calls.
- *
- * Usage:
- *   import { auth } from '@pmg/auth/server';
- *   const session = await auth.api.getSession({ headers: await headers() });
  */
 
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { organization } from 'better-auth/plugins';
 import { nextCookies } from 'better-auth/next-js';
+import { Resend } from 'resend';
 import { db } from '@pmg/db/client';
 import * as schema from '@pmg/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { ac, owner, admin, manager, member } from './permissions';
+import VerifyEmail from './emails/verify-email';
+import ResetPasswordEmail from './emails/reset-password-email';
+import OrganizationInvitation from './emails/organization-invitation';
 
 if (!process.env.BETTER_AUTH_SECRET) {
   throw new Error('BETTER_AUTH_SECRET environment variable is required');
 }
-
 if (!process.env.BETTER_AUTH_URL) {
   throw new Error('BETTER_AUTH_URL environment variable is required');
 }
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM_EMAIL = `${process.env.SENDER_NAME ?? 'Tender Track 360'} <${process.env.SENDER_EMAIL ?? 'noreply@tendertrack360.co.za'}>`;
+const REPLY_TO = process.env.REPLY_TO_EMAIL ?? 'info@tendertrack360.co.za';
 
 /**
  * Finds the most recently joined organization for a user.
@@ -106,19 +110,51 @@ export const auth = betterAuth({
     },
   },
 
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
     sendResetPassword: async ({ user, url }) => {
-      // TODO Phase 7: wire Resend here
-      console.log(`[auth] password reset link for ${user.email}: ${url}`);
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: user.email,
+        replyTo: REPLY_TO,
+        subject: 'Reset your Tender Track 360 password',
+        react: ResetPasswordEmail({
+          username: user.name,
+          resetUrl: url,
+          userEmail: user.email,
+        }),
+      });
+      if (error) {
+        console.error('[auth] Failed to send reset password email:', error);
+        throw new Error('Failed to send reset password email');
+      }
     },
   },
 
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      // TODO Phase 7: wire Resend here
-      console.log(`[auth] verify email link for ${user.email}: ${url}`);
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: user.email,
+        replyTo: REPLY_TO,
+        subject: 'Verify your Tender Track 360 email address',
+        react: VerifyEmail({
+          username: user.name,
+          verificationUrl: url,
+        }),
+      });
+      if (error) {
+        console.error('[auth] Failed to send verification email:', error);
+        throw new Error('Failed to send verification email');
+      }
     },
     sendOnSignUp: false,
     autoSignInAfterVerification: true,
@@ -127,12 +163,25 @@ export const auth = betterAuth({
   plugins: [
     organization({
       sendInvitationEmail: async (data) => {
-        // TODO Phase 7: wire Resend here
         const base = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000';
         const inviteLink = `${base}/invite/accept/${data.id}`;
-        console.log(
-          `[auth] invitation for ${data.email} to join ${data.organization.name}: ${inviteLink}`
-        );
+
+        const { error } = await resend.emails.send({
+          from: FROM_EMAIL,
+          to: data.email,
+          replyTo: REPLY_TO,
+          subject: `You're invited to join ${data.organization.name}`,
+          react: OrganizationInvitation({
+            email: data.email,
+            invitedByUsername: data.inviter.user.name,
+            invitedByEmail: data.inviter.user.email,
+            teamName: data.organization.name,
+            inviteLink,
+          }),
+        });
+        if (error) {
+          console.error('[auth] Failed to send invitation email:', error);
+        }
       },
 
       allowUserToCreateOrganization: async (user) => {

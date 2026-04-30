@@ -1,4 +1,5 @@
-﻿import { getCurrentUser } from '@/server';
+﻿import { checkUserSession } from '@/lib/session-check';
+import { redirect } from 'next/navigation';
 import { getUserOrganizationMembership } from '@/server/organizations';
 import { Card, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@pmg/ui/components/ui/avatar';
@@ -15,12 +16,35 @@ import {
 
 import { CalendarDays, Mail } from 'lucide-react';
 import { SkipNavigation } from '@/components/skip-navigation';
+import { db } from '@pmg/db';
+import { user } from '@pmg/db/schema';
+import { eq } from 'drizzle-orm';
 
 // Force dynamic rendering since we use headers() in server functions
 export const dynamic = 'force-dynamic';
 
 export default async function ProfileSettingsPage() {
-  const { session, currentUser } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
+
+  // Fetch full user details from DB for profile page (includes createdAt, updatedAt)
+  const fullUser = await db.query.user.findFirst({
+    where: eq(user.id, session.user.id),
+  });
+
+  if (!fullUser) {
+    redirect('/login');
+  }
+
+  const currentUser = {
+    id: fullUser.id,
+    name: fullUser.name,
+    email: fullUser.email,
+    emailVerified: fullUser.emailVerified,
+    image: fullUser.image,
+    createdAt: fullUser.createdAt,
+    updatedAt: fullUser.updatedAt,
+  };
 
   // Get user's organization membership details if they have an active organization
   const organizationMembership = session.activeOrganizationId

@@ -1,9 +1,9 @@
-﻿import { getCurrentUser } from '@/server';
-import { getTenderById } from '@/server/tenders';
+﻿import { getTenderById } from '@/server/tenders';
 import { getDocuments } from '@/server/documents';
 import { getTenderExtensions } from '@/server/modules/extensions';
 import { TenderDetails } from '@/components/tenders/tender-details';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,8 @@ interface TenderDetailPageProps {
 export default async function TenderDetailPage({
   params,
 }: TenderDetailPageProps) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const { id } = await params;
 
   if (!session.activeOrganizationId) {

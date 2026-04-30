@@ -49,6 +49,7 @@ export async function checkUserSession(): Promise<UserSessionCheck> {
         id: session.user.id,
         name: session.user.name,
         email: session.user.email,
+        emailVerified: session.user.emailVerified ?? false,
         // Better Auth stores org-level role in the member table.
         // The user.role field is the global platform role ('user' | 'admin').
         // We cast to Role here; org-level role checks use requireOrgRole().

@@ -1,17 +1,19 @@
-﻿import { getCurrentUser } from '@/server';
-import { getProjectStats, getRecentProjectActivities } from '@/server/projects';
+﻿import { getProjectStats, getRecentProjectActivities } from '@/server/projects';
 import { RecentActivitySection } from '@/components/recent-activity-section';
 import { Card, CardContent, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
 import { FolderOpen, Receipt, Banknote, TrendingUp, Plus } from 'lucide-react';
 import { Button } from '@pmg/ui/components/ui/button';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/format';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Projects' };
 
 export default async function ProjectsPage() {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 
   const [statsResult, activities] = await Promise.all([

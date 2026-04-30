@@ -46,6 +46,7 @@ export interface SessionCheck {
     id: string;
     name: string;
     email: string;
+    emailVerified: boolean;
     role: Role;
     image?: string | null;
   };

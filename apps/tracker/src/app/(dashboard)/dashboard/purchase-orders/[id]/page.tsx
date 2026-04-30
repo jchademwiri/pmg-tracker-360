@@ -1,7 +1,7 @@
-import { getCurrentUser } from '@/server';
 import { getPurchaseOrderById } from '@/server/purchase-orders';
 import { PODetails } from '@/components/purchase-orders/po-details';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,8 @@ export default async function PurchaseOrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const { id } = await params;
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 

@@ -1,7 +1,7 @@
-import { getCurrentUser } from '@/server';
 import { getTenderById } from '@/server/tenders';
 import { TenderForm } from '@/components/tenders/tender-form';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Edit Tender' };
@@ -11,7 +11,8 @@ export default async function EditTenderPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const { id } = await params;
   const organizationId = session.activeOrganizationId ?? 'stub-org-id';
 

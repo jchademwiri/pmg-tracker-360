@@ -1,6 +1,6 @@
 ﻿import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/server';
+import { checkUserSession } from '@/lib/session-check';
 import {
   getOrganizationBySlugWithUserRole,
   getUserOrganizationMembership,
@@ -19,7 +19,8 @@ interface OrganizationManagementPageProps {
 
 async function OrganizationManagementContent({ slug }: { slug: string }) {
   try {
-    const { currentUser } = await getCurrentUser();
+    const session = await checkUserSession();
+    if (!session.hasSession) redirect('/login');
 
     // Get organization by slug with user role
     const organizationData = await getOrganizationBySlugWithUserRole(slug);
@@ -30,7 +31,7 @@ async function OrganizationManagementContent({ slug }: { slug: string }) {
 
     // Check if user has access to this organization
     const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
+      session.user.id,
       organizationData.id
     );
 
@@ -49,7 +50,7 @@ async function OrganizationManagementContent({ slug }: { slug: string }) {
         <OrganizationManagementTabs
           organization={organizationData}
           userRole={userMembership.role}
-          currentUser={currentUser}
+          currentUser={session.user}
         />
       </OrganizationSettingsWrapper>
     );

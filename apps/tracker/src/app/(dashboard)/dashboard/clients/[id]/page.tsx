@@ -1,7 +1,7 @@
-﻿import { getCurrentUser } from '@/server';
-import { getClientById } from '@/server';
+﻿import { getClientById } from '@/server';
 import { ClientDetails } from '@/components/clients/client-details';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,8 @@ interface ClientDetailPageProps {
 export default async function ClientDetailPage({
   params,
 }: ClientDetailPageProps) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const { id } = await params;
 
   if (!session.activeOrganizationId) {

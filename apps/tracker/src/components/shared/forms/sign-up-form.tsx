@@ -90,9 +90,9 @@ export function SignUpForm({
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="p-6 md:p-8 pt-0">
+        <CardContent className="px-6 pb-6 md:px-8 md:pb-8 pt-0">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <div className="grid gap-4">
                 <FormField
                   control={form.control}
@@ -159,10 +159,10 @@ export function SignUpForm({
                   )}
                 </Button>
 
-                <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                  <span className="relative z-10 bg-card px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-muted-foreground">Or continue with</span>
+                  <div className="h-px flex-1 bg-border" />
                 </div>
 
                 <Button
@@ -200,19 +200,21 @@ export function SignUpForm({
               </div>
             </form>
           </Form>
+
+          {/* Terms — inside the card, separated by a subtle border */}
+          <div className="mt-6 pt-5 border-t border-border/50 text-center text-xs text-muted-foreground/60 text-balance">
+            By clicking continue, you agree to our{' '}
+            <Link href="/terms" className="underline underline-offset-2 hover:text-primary transition-colors">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            .
+          </div>
         </CardContent>
       </Card>
-      <div className="text-muted-foreground/60 text-center text-xs text-balance">
-        By clicking continue, you agree to our{' '}
-        <Link href="/terms" className="underline hover:text-primary">
-          Terms of Service
-        </Link>{' '}
-        and{' '}
-        <Link href="/privacy" className="underline hover:text-primary">
-          Privacy Policy
-        </Link>
-        .
-      </div>
     </div>
   );
 }

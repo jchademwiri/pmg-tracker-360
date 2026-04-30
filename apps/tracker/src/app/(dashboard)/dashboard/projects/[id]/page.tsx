@@ -1,11 +1,11 @@
-﻿import { getCurrentUser } from '@/server';
-import { getProjectById } from '@/server/projects';
-import { notFound } from 'next/navigation';
+﻿import { getProjectById } from '@/server/projects';
+import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, Edit, FileText, Building, Calendar } from 'lucide-react';
 import { Button } from '@pmg/ui/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@pmg/ui/components/ui/card';
 import { Badge } from '@pmg/ui/components/ui/badge';
 import Link from 'next/link';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,8 @@ const statusLabels = {
 export default async function ProjectDetailPage({
   params,
 }: ProjectDetailPageProps) {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
   const { id } = await params;
 
   if (!session.activeOrganizationId) {

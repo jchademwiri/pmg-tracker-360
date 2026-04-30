@@ -1,4 +1,5 @@
-﻿import { getCurrentUser } from '@/server';
+﻿import { checkUserSession } from '@/lib/session-check';
+import { redirect } from 'next/navigation';
 import {
   User,
   Bell,
@@ -51,7 +52,9 @@ function calculateProfileCompletion(user: {
 }
 
 export default async function SettingsPage() {
-  const { currentUser } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
+  const currentUser = session.user;
   const profileCompletion = calculateProfileCompletion(currentUser);
   const securityScore = currentUser.emailVerified ? 80 : 60; // Simple security score calculation
 

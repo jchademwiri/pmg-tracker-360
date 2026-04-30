@@ -1,10 +1,12 @@
-﻿import { getCurrentUser } from '@/server';
-import { ClientForm } from '@/components/clients/client-form';
+﻿import { ClientForm } from '@/components/clients/client-form';
+import { redirect } from 'next/navigation';
+import { checkUserSession } from '@/lib/session-check';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewClientPage() {
-  const { session } = await getCurrentUser();
+  const session = await checkUserSession();
+  if (!session.hasSession) redirect('/login');
 
   if (!session.activeOrganizationId) {
     return (
