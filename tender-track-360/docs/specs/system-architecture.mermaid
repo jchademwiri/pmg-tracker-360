@@ -1,0 +1,62 @@
+graph TB
+    subgraph Client ["Client Side"]
+        Browser["fa:fa-laptop User Browser"]
+    end
+
+    subgraph Vercel ["Vercel Infrastructure"]
+        subgraph NextJS ["Next.js Application"]
+            AppRouter["fa:fa-code App Router (Server Components)"]
+            ServerActions["fa:fa-cogs Server Actions (Backend Logic)"]
+            API_Routes["fa:fa-exchange-alt API Routes (Webhooks/Downloads)"]
+            AuthLib["fa:fa-lock Better Auth (Library)"]
+        end
+    end
+
+    subgraph DataData ["Data & Storage"]
+        NeonDB[("fa:fa-database Neon DB (Postgres)")]
+        R2_Bucket[("fa:fa-cloud Cloudflare R2 (Object Storage)")]
+    end
+
+    subgraph ExternalServices ["External Services"]
+        Resend["fa:fa-envelope Resend (Email Service)"]
+        RouterSO["fa:fa-magnet Router.so (Lead Capture)"]
+        Polar["fa:fa-credit-card Polar_sh (Payments & Subscriptions)"]
+    end
+
+    %% Client Interactions
+    Browser -- "HTTPS / UI Interaction" --> AppRouter
+    Browser -- "Form Submissions / RPC" --> ServerActions
+    Browser -- "Direct File Uploads (Presigned URL)" --> R2_Bucket
+    Browser -- "File Downloads (Presigned URL)" --> R2_Bucket
+
+    %% Application Internal Logic
+    AppRouter --> ServerActions
+    ServerActions --> AuthLib
+    API_Routes --> AuthLib
+
+    %% Database Interactions
+    ServerActions -- "Read/Write Data (Drizzle ORM)" --> NeonDB
+    AuthLib -- "Session/User Data" --> NeonDB
+    API_Routes -- "Verify Entitlements" --> NeonDB
+
+    %% Storage Logic
+    ServerActions -- "Generate Presigned URLs" --> R2_Bucket
+    API_Routes -- "Generate Download URLs" --> R2_Bucket
+
+    %% External Service Interactions
+    AuthLib -- "Send Verification Emails" --> Resend
+    ServerActions -- "Send Invites/Notifications" --> Resend
+    ServerActions -- "Submit Leads (Waitlist)" --> RouterSO
+    ServerActions -- "Manage Subscriptions" --> Polar
+    Polar -- "Webhooks (Subscription Updates)" --> API_Routes
+
+    %% Styling
+    classDef client fill:#E1F5FE,stroke:#01579B,stroke-width:2px,color:#000;
+    classDef app fill:#E8F5E9,stroke:#1B5E20,stroke-width:2px,color:#000;
+    classDef db fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#000;
+    classDef external fill:#F3E5F5,stroke:#4A148C,stroke-width:2px,color:#000;
+
+    class Browser client;
+    class AppRouter,ServerActions,API_Routes,AuthLib app;
+    class NeonDB,R2_Bucket db;
+    class Resend,RouterSO,Polar external;
