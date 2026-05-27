@@ -1,0 +1,1 @@
+2026-05-27T04:28:11.071Z WARN [Better Auth]: [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.

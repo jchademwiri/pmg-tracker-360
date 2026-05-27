@@ -1,0 +1,143 @@
+/* Custom animation delays for staggered effects */
+.animation-delay-100 {
+    animation-delay: 100ms;
+}
+
+.animation-delay-150 {
+    animation-delay: 150ms;
+}
+
+.animation-delay-200 {
+    animation-delay: 200ms;
+}
+
+.animation-delay-300 {
+    animation-delay: 300ms;
+}
+
+.animation-delay-400 {
+    animation-delay: 400ms;
+}
+
+.animation-delay-500 {
+    animation-delay: 500ms;
+}
+
+/* Enhanced hover effects with hardware acceleration */
+.enhanced-hover {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-hover:hover {
+    transform: translateY(-4px) translateZ(0) scale(1.03);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Smooth micro-interactions */
+.micro-bounce {
+    transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.micro-bounce:hover {
+    transform: scale(1.05);
+}
+
+.micro-bounce:active {
+    transform: scale(0.95);
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+    0% {
+        background-position: -200px 0;
+    }
+
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(90deg, #f0f0f0 0px, #e0e0e0 40px, #f0f0f0 80px);
+    background-size: 200px;
+    animation: shimmer 1.5s infinite;
+}
+
+/* Pulse animation for success states */
+@keyframes success-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+.success-pulse {
+    animation: success-pulse 2s infinite;
+}
+
+/* Smooth fade transitions */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cross-browser compatibility */
+@supports not (backdrop-filter: blur(10px)) {
+    .backdrop-blur {
+        background: rgba(255, 255, 255, 0.9);
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+    .enhanced-hover,
+    .micro-bounce,
+    .shimmer,
+    .success-pulse,
+    .fade-in {
+        animation: none;
+        transition: none;
+    }
+
+    .enhanced-hover:hover {
+        transform: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .enhanced-hover:hover {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+.enhanced-hover:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 8px;
+}

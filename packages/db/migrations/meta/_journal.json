@@ -5,15 +5,106 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777450255339,
-      "tag": "0000_motionless_onslaught",
+      "when": 1755154914892,
+      "tag": "0000_breezy_zodiak",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1777450477380,
-      "tag": "0001_skinny_rhino",
+      "when": 1758382806568,
+      "tag": "0001_rapid_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759648429438,
+      "tag": "0002_icy_tomas",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759671209745,
+      "tag": "0003_married_thunderbolt_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759682237351,
+      "tag": "0004_zippy_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759683525299,
+      "tag": "0005_flippant_catseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759685751719,
+      "tag": "0006_sleepy_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1759686521544,
+      "tag": "0007_cute_micromacro",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1759691807343,
+      "tag": "0008_gray_devos",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1759736487522,
+      "tag": "0009_condemned_adam_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1760193473361,
+      "tag": "0010_daffy_lethal_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1766484799821,
+      "tag": "0011_common_ted_forrester",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1768448783068,
+      "tag": "0012_rapid_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1768716188276,
+      "tag": "0013_special_grey_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1768795690259,
+      "tag": "0014_blue_magus",
       "breakpoints": true
     }
   ]

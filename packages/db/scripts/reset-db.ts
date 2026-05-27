@@ -4,18 +4,18 @@
  * Run with: bun scripts/reset-db.ts
  * ⚠️  This is destructive — only use in development.
  */
-import { neon } from "@neondatabase/serverless";
+import postgres from "postgres";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is required");
 
-const sql = neon(url);
+const client = postgres(url);
 
 async function reset() {
   console.log("⚠️  Dropping all tables and enums in public schema...");
 
   // Drop all tables in dependency order (or use CASCADE)
-  await sql`
+  await client`
     DO $$ DECLARE
       r RECORD;
     BEGIN
@@ -28,7 +28,7 @@ async function reset() {
   `;
 
   // Drop all enums
-  await sql`
+  await client`
     DO $$ DECLARE
       r RECORD;
     BEGIN
@@ -45,7 +45,11 @@ async function reset() {
   console.log("✅ Database reset complete. Run `bun run push` to re-apply schema.");
 }
 
-reset().catch((err) => {
-  console.error("❌ Reset failed:", err);
-  process.exit(1);
-});
+reset()
+  .catch((err) => {
+    console.error("❌ Reset failed:", err);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await client.end();
+  });
