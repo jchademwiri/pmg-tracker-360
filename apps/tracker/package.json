@@ -11,6 +11,7 @@
     "check-types": "tsc --noEmit",
     "test": "jest",
     "test:integration": "RUN_INTEGRATION_TESTS=true jest --runInBand src/server/__tests__/crud-integration.test.ts src/server/__tests__/ownership-transfer.test.ts",
+    "test:e2e": "playwright test",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "email": "email dev --port 3001"
@@ -73,6 +74,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@faker-js/faker": "^10.1.0",
+    "@playwright/test": "^1.60.0",
     "@react-email/preview-server": "4.2.8",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.1.4",
