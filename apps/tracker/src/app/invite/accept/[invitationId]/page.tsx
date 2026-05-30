@@ -1,6 +1,6 @@
 import { db } from '@pmg/db';
 import { invitation, user } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import AcceptInvitationClient from '@/components/invite/AcceptInvitationClient';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -32,9 +32,9 @@ export default async function InviteAcceptPage({ params }: Props) {
     );
   }
 
-  // Check if a user already exists with this email
+  // Check if a user already exists with this email (case-insensitive)
   const existingUser = await db.query.user.findFirst({
-    where: eq(user.email, invite.email),
+    where: eq(sql`lower(${user.email})`, invite.email.toLowerCase()),
   });
 
   // Check if current user is logged in

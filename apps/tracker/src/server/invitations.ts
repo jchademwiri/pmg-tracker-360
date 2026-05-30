@@ -3,7 +3,7 @@
 import { db } from '@pmg/db';
 import { invitation, member, organization, user } from '@pmg/db/schema';
 import type { Role } from '@pmg/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from './users';
 import { getUserOrganizationMembership } from './organizations';
 import { revalidatePath } from 'next/cache';
@@ -96,9 +96,9 @@ export async function inviteMember(
       };
     }
 
-    // Check if email is already a member
+    // Check if email is already a member (case-insensitive)
     const existingUser = await db.query.user.findFirst({
-      where: eq(user.email, email),
+      where: eq(sql`lower(${user.email})`, email.toLowerCase()),
     });
 
     if (existingUser) {
