@@ -6,14 +6,14 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: 'My Docs',
-			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
+			title: 'PMG Tracker 360 Docs',
+			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/jchademwiri/pmg-tracker-360' }],
 			sidebar: [
 				{
 					label: 'Guides',
 					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
+						{ label: 'System Admin Portal', slug: 'guides/admin-portal' },
+						{ label: 'Tracker Client Portal', slug: 'guides/tracker-portal' },
 					],
 				},
 				{
