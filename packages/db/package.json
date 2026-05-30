@@ -15,6 +15,7 @@
     "studio": "drizzle-kit studio",
     "dev": "drizzle-kit studio",
     "db:reset": "bun scripts/reset-db.ts",
+    "db:promote": "bun scripts/promote-admin.ts",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
