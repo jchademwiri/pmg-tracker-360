@@ -33,7 +33,7 @@ type NavItem = {
   }[];
 };
 
-export function NavMain({ items }: { items: NavItem[] }) {
+export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label?: string }) {
   const pathname = usePathname();
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -79,7 +79,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible

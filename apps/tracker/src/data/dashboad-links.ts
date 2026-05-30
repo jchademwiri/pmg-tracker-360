@@ -6,8 +6,9 @@ import {
   Users,
   BarChart3,
 } from 'lucide-react';
+
 export const dashboadLinks = {
-  navMain: [
+  mainHub: [
     {
       title: 'Dashboard',
       url: '/dashboard',
@@ -15,7 +16,24 @@ export const dashboadLinks = {
       isActive: true,
     },
     {
-      title: 'Tender Management',
+      title: 'Calendar',
+      url: '/dashboard/calendar',
+      icon: Calendar,
+    },
+    {
+      title: 'Reports',
+      url: '/dashboard/reports',
+      icon: BarChart3,
+    },
+  ],
+  procurement: [
+    {
+      title: 'Clients Directory',
+      url: '/dashboard/clients',
+      icon: Users,
+    },
+    {
+      title: 'Tender Pipeline',
       url: '#',
       icon: ClipboardList,
       items: [
@@ -28,22 +46,13 @@ export const dashboadLinks = {
           url: '/dashboard/tenders',
         },
         {
-          title: 'Submitted',
+          title: 'Submitted Tenders',
           url: '/dashboard/tenders/submitted',
         },
-        // {
-        //   title: 'Proposals',
-        //   url: '/dashboard/tenders/proposals',
-        // },
-        // {
-        //   title: 'Documents',
-        //   url: '/dashboard/tenders/documents',
-        // },
       ],
     },
-
     {
-      title: 'Project Management',
+      title: 'Project Tracking',
       url: '#',
       icon: FolderKanban,
       items: [
@@ -56,37 +65,10 @@ export const dashboadLinks = {
           url: '/dashboard/projects',
         },
         {
-          title: 'Purchase Orders', // Can not be visible to the role of member
+          title: 'Purchase Orders', // Hidden for standard 'member' role
           url: '/dashboard/projects/purchase-orders',
         },
-        // {
-        //   title: 'Contracts', // Can not be visible to the role of member
-        //   url: '/dashboard/projects/contracts',
-        // },
-        // {
-        //   title: 'PO Status Tracker',
-        //   url: '/dashboard/projects/po-tracker',
-        // },
-        // {
-        //   title: 'Project Timeline',
-        //   url: '/dashboard/projects/timeline',
-        // },
       ],
-    },
-    {
-      title: 'Calendar',
-      url: '/dashboard/calendar',
-      icon: Calendar,
-    },
-    {
-      title: 'Reports',
-      url: '/dashboard/reports',
-      icon: BarChart3,
-    },
-    {
-      title: 'Clients',
-      url: '/dashboard/clients',
-      icon: Users,
     },
   ],
 };

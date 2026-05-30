@@ -34,9 +34,14 @@ export function AppSidebar({
   activeOrganizationId,
   ...props
 }: AppSidebarProps) {
-  // Filter links based on role
-  const navItems = useMemo(() => {
-    return dashboadLinks.navMain.map((item) => {
+  // Filter and process main hub links
+  const mainHubItems = useMemo(() => {
+    return dashboadLinks.mainHub;
+  }, []);
+
+  // Filter and process procurement workflow links based on role permissions
+  const procurementItems = useMemo(() => {
+    return dashboadLinks.procurement.map((item) => {
       // If item has sub-items, filter them
       if (item.items) {
         const filteredSubItems = item.items.filter((subItem) => {
@@ -65,7 +70,8 @@ export function AppSidebar({
         />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain items={mainHubItems} label="Overview" />
+        <NavMain items={procurementItems} label="Procurement Cycle" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
