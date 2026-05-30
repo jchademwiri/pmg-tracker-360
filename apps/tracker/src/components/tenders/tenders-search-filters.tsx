@@ -29,11 +29,11 @@ export interface TendersSearchFiltersProps {
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'submitted', label: 'Submitted' },
-  { value: 'won', label: 'Won' },
-  { value: 'lost', label: 'Lost' },
-  { value: 'pending', label: 'Pending' },
+  { value: 'open', label: 'Open' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'evaluation', label: 'Evaluation' },
+  { value: 'awarded', label: 'Appointed / Awarded' },
+  { value: 'lost', label: 'Rejected / Lost' },
 ];
 
 const SORT_OPTIONS = [

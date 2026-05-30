@@ -4,6 +4,7 @@ import { db } from '@pmg/db';
 import { tender, project, purchaseOrder } from '@pmg/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { resolveTenderStatus } from '@/lib/tender-utils';
 
 export async function getReportStats(organizationId: string) {
   try {
@@ -12,6 +13,7 @@ export async function getReportStats(organizationId: string) {
       .select({
         status: tender.status,
         value: tender.value,
+        submissionDate: tender.submissionDate,
       })
       .from(tender)
       .where(and(eq(tender.organizationId, organizationId)));
@@ -41,7 +43,7 @@ export async function getReportStats(organizationId: string) {
     let totalTenders = 0;
     let wonTenders = 0;
     let lostTenders = 0;
-    let pendingTenders = 0; // submitted or pending
+    let pendingTenders = 0; // open, closed, evaluation
     let pipelineValue = 0;
     let totalWonValue = 0; // Was "revenueSecured" - now "Total Won Value"
     let poRevenue = 0; // New "Guaranteed" revenue
@@ -50,13 +52,15 @@ export async function getReportStats(organizationId: string) {
     for (const t of tenders) {
       totalTenders++;
       const val = parseFloat(t.value || '0');
+      const resolvedStatus = resolveTenderStatus(t.status, t.submissionDate);
 
-      if (t.status === 'won') {
+      if (resolvedStatus === 'awarded') {
         wonTenders++;
         totalWonValue += val;
-      } else if (t.status === 'lost') {
+      } else if (resolvedStatus === 'lost') {
         lostTenders++;
-      } else if (t.status === 'submitted' || t.status === 'pending') {
+      } else {
+        // open, closed, evaluation count as pending/pipeline
         pendingTenders++;
         pipelineValue += val;
       }

@@ -69,19 +69,19 @@ interface TenderListProps {
 }
 
 const statusColors = {
-  draft: 'bg-gray-100 text-gray-800',
-  submitted: 'bg-blue-100 text-blue-800',
-  won: 'bg-green-100 text-green-800',
-  lost: 'bg-red-100 text-red-800',
-  pending: 'bg-yellow-100 text-yellow-800',
+  open: 'bg-green-100/10 text-green-400 border border-green-500/20',
+  closed: 'bg-zinc-800 text-zinc-400 border border-zinc-700/30',
+  evaluation: 'bg-blue-100/10 text-blue-400 border border-blue-500/20',
+  awarded: 'bg-amber-100/10 text-amber-400 border border-amber-500/20',
+  lost: 'bg-red-100/10 text-red-400 border border-red-500/20',
 };
 
 const statusLabels = {
-  draft: 'Draft',
-  submitted: 'Submitted',
-  won: 'Won',
-  lost: 'Lost',
-  pending: 'Pending',
+  open: 'Open',
+  closed: 'Closed',
+  evaluation: 'Evaluation',
+  awarded: 'Appointed / Awarded',
+  lost: 'Rejected / Lost',
 };
 
 export function TenderList({
@@ -108,7 +108,7 @@ export function TenderList({
   const filteredTenders =
     statusFilter === 'submitted-pending'
       ? tenders.filter(
-          (t) => t.status === 'submitted' || t.status === 'pending'
+          (t) => t.status === 'evaluation' || t.status === 'closed'
         )
       : tenders;
 
@@ -187,9 +187,9 @@ export function TenderList({
   const handleStatusToggle = () => {
     const newShowAll = !showAllStatuses;
     setShowAllStatuses(newShowAll);
-    setStatusFilter(newShowAll ? 'all' : 'draft');
+    setStatusFilter(newShowAll ? 'all' : 'open');
     setCurrentPage(1);
-    fetchTenders(searchQuery, 1, newShowAll ? undefined : 'draft');
+    fetchTenders(searchQuery, 1, newShowAll ? undefined : 'open');
   };
 
   // Handle pagination
@@ -274,24 +274,24 @@ export function TenderList({
             </SelectTrigger>
             <SelectContent>
               {pageType === 'submitted' ? (
-                // Submitted page: show submitted & pending by default, but allow all
+                // Submitted page: show evaluation & closed by default, but allow all
                 <>
                   <SelectItem value="submitted-pending">Default</SelectItem>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
+                  <SelectItem value="evaluation">Evaluation</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="awarded">Appointed / Awarded</SelectItem>
+                  <SelectItem value="lost">Rejected / Lost</SelectItem>
                 </>
               ) : (
                 // Active tenders page: all statuses
                 <>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="evaluation">Evaluation</SelectItem>
+                  <SelectItem value="awarded">Appointed / Awarded</SelectItem>
+                  <SelectItem value="lost">Rejected / Lost</SelectItem>
                 </>
               )}
             </SelectContent>

@@ -5,16 +5,51 @@ import { tender, client, project } from '@pmg/db/schema';
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import {
-  TenderCreateSchema,
-  TenderUpdateSchema,
-  TenderStatusUpdateSchema,
-  TenderSearchSchema,
-  type TenderCreateInput,
-  type TenderUpdateInput,
-  type TenderStatusUpdateInput,
-  type TenderSearchInput,
-} from '@/lib/validations/tender';
+import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
+import { randomUUID } from 'crypto';
+import { resolveTenderStatus } from '@/lib/tender-utils';
+
+/**
+ * Automatically creates a project record in the database for an awarded tender.
+ * Returns the created or existing project ID.
+ */
+async function autoCreateProjectForTender(
+  organizationId: string,
+  tenderId: string,
+  tenderData: { tenderNumber: string; description?: string | null; clientId: string }
+) {
+  try {
+    // Check if project already exists for this tender
+    const existingProj = await db
+      .select()
+      .from(project)
+      .where(and(eq(project.tenderId, tenderId), isNull(project.deletedAt)))
+      .limit(1);
+
+    if (existingProj.length > 0) {
+      return existingProj[0].id;
+    }
+
+    const projectId = randomUUID();
+    await db.insert(project).values({
+      id: projectId,
+      organizationId,
+      projectNumber: tenderData.tenderNumber.toUpperCase(),
+      description: tenderData.description || `Project for Tender ${tenderData.tenderNumber}`,
+      tenderId,
+      clientId: tenderData.clientId,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    revalidatePath('/dashboard/projects');
+    return projectId;
+  } catch (err) {
+    console.error('Failed to auto create project for tender:', err);
+    return undefined;
+  }
+}
 
 // Get tenders with pagination, search, and client joins
 export async function getTenders(
@@ -80,8 +115,13 @@ export async function getTenders(
       .from(tender)
       .where(whereCondition);
 
+    const resolvedTenders = tenders.map((t) => ({
+      ...t,
+      status: resolveTenderStatus(t.status, t.submissionDate),
+    }));
+
     return {
-      tenders,
+      tenders: resolvedTenders,
       totalCount: totalCount.length,
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
@@ -141,15 +181,20 @@ export async function createTender(
     const newTender = await db
       .insert(tender)
       .values({
-        id: crypto.randomUUID(),
+        id: randomUUID(),
         organizationId,
         ...validatedData,
         tenderNumber: validatedData.tenderNumber.toUpperCase(),
       })
       .returning();
 
+    let projectId: string | undefined;
+    if (validatedData.status === 'awarded') {
+      projectId = await autoCreateProjectForTender(organizationId, newTender[0].id, newTender[0]);
+    }
+
     revalidatePath('/dashboard/tenders');
-    return { success: true, tender: newTender[0] };
+    return { success: true, tender: newTender[0], projectId };
   } catch (error) {
     console.error('Error creating tender:', error);
     if (error instanceof z.ZodError) {
@@ -195,11 +240,12 @@ export async function getTenderById(organizationId: string, tenderId: string) {
       )
       .limit(1);
 
-    if (tenderData.length === 0) {
-      return { success: false, error: 'Tender not found' };
-    }
+    const resolvedTender = {
+      ...tenderData[0],
+      status: resolveTenderStatus(tenderData[0].status, tenderData[0].submissionDate),
+    };
 
-    return { success: true, tender: tenderData[0] };
+    return { success: true, tender: resolvedTender };
   } catch (error) {
     console.error('Error fetching tender:', error);
     return { success: false, error: 'Failed to fetch tender' };
@@ -288,9 +334,18 @@ export async function updateTender(
       .where(eq(tender.id, tenderId))
       .returning();
 
+    let projectId: string | undefined;
+    if (validatedData.status === 'awarded') {
+      projectId = await autoCreateProjectForTender(organizationId, tenderId, {
+        tenderNumber: updatedTender[0].tenderNumber,
+        description: updatedTender[0].description,
+        clientId: updatedTender[0].clientId,
+      });
+    }
+
     revalidatePath('/dashboard/tenders');
     revalidatePath(`/dashboard/tenders/${tenderId}`);
-    return { success: true, tender: updatedTender[0] };
+    return { success: true, tender: updatedTender[0], projectId };
   } catch (error) {
     console.error('Error updating tender:', error);
     if (error instanceof z.ZodError) {
@@ -340,9 +395,14 @@ export async function updateTenderStatus(
       .where(eq(tender.id, tenderId))
       .returning();
 
+    let projectId: string | undefined;
+    if (validatedData.status === 'awarded') {
+      projectId = await autoCreateProjectForTender(organizationId, tenderId, existingTender[0]);
+    }
+
     revalidatePath('/dashboard/tenders');
     revalidatePath(`/dashboard/tenders/${tenderId}`);
-    return { success: true, tender: updatedTender[0] };
+    return { success: true, tender: updatedTender[0], projectId };
   } catch (error) {
     console.error('Error updating tender status:', error);
     if (error instanceof z.ZodError) {
@@ -595,9 +655,14 @@ export async function getTendersWithSorting(
       .from(tender)
       .where(whereCondition);
 
+    const resolvedTenders = tenders.map((t) => ({
+      ...t,
+      status: resolveTenderStatus(t.status, t.submissionDate),
+    }));
+
     return {
       success: true,
-      tenders,
+      tenders: resolvedTenders,
       totalCount: totalCount.length,
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
@@ -701,7 +766,8 @@ export async function getTenderStats(organizationId: string) {
     const totalTenders = stats.length;
     const statusCounts = stats.reduce(
       (acc, tender) => {
-        acc[tender.status] = (acc[tender.status] || 0) + 1;
+        const resolved = resolveTenderStatus(tender.status, tender.submissionDate);
+        acc[resolved] = (acc[resolved] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -713,9 +779,9 @@ export async function getTenderStats(organizationId: string) {
       return sum + (isNaN(value) ? 0 : value);
     }, 0);
 
-    // Calculate win rate
+    // Calculate win rate using 'awarded'
     const winRate =
-      totalTenders > 0 ? (statusCounts.won || 0) / totalTenders : 0;
+      totalTenders > 0 ? (statusCounts.awarded || 0) / totalTenders : 0;
 
     // Calculate average value
     const averageValue = totalTenders > 0 ? totalValue / totalTenders : 0;
@@ -741,8 +807,6 @@ export async function getTenderStats(organizationId: string) {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Filter stats to represent the state 30 days ago
-    // Note: This relies on createdAt. For more accuracy on status changes, we'd need a history table.
-    // For MVP, assuming tenders created before 30 days ago represents the "previous" pool is a reasonable approximation for finding growth in volume/value.
     const previousStats = stats.filter(
       (t) => t.createdAt && t.createdAt < thirtyDaysAgo
     );
@@ -752,7 +816,8 @@ export async function getTenderStats(organizationId: string) {
     // Status counts for previous period
     const previousStatusCounts = previousStats.reduce(
       (acc, tender) => {
-        acc[tender.status] = (acc[tender.status] || 0) + 1;
+        const resolved = resolveTenderStatus(tender.status, tender.submissionDate);
+        acc[resolved] = (acc[resolved] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -764,10 +829,10 @@ export async function getTenderStats(organizationId: string) {
       return sum + (isNaN(value) ? 0 : value);
     }, 0);
 
-    // Previous Win Rate
+    // Previous Win Rate using 'awarded'
     const previousWinRate =
       previousTotalTenders > 0
-        ? (previousStatusCounts.won || 0) / previousTotalTenders
+        ? (previousStatusCounts.awarded || 0) / previousTotalTenders
         : 0;
 
     // Calculate Percentage Changes
@@ -786,11 +851,11 @@ export async function getTenderStats(organizationId: string) {
       stats: {
         totalTenders,
         statusCounts: {
-          draft: statusCounts.draft || 0,
-          submitted: statusCounts.submitted || 0,
-          won: statusCounts.won || 0,
+          open: statusCounts.open || 0,
+          closed: statusCounts.closed || 0,
+          evaluation: statusCounts.evaluation || 0,
+          awarded: statusCounts.awarded || 0,
           lost: statusCounts.lost || 0,
-          pending: statusCounts.pending || 0,
         },
         totalValue,
         winRate,
@@ -811,11 +876,11 @@ export async function getTenderStats(organizationId: string) {
       stats: {
         totalTenders: 0,
         statusCounts: {
-          draft: 0,
-          submitted: 0,
-          won: 0,
+          open: 0,
+          closed: 0,
+          evaluation: 0,
+          awarded: 0,
           lost: 0,
-          pending: 0,
         },
         totalValue: 0,
         winRate: 0,
@@ -974,7 +1039,7 @@ export async function getTendersWithCustomSorting(
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
       isNull(tender.deletedAt),
-      ne(tender.status, 'draft') // Exclude drafts
+      ne(tender.status, 'open') // Exclude open tenders
     );
 
     // Add search condition if provided
@@ -989,8 +1054,8 @@ export async function getTendersWithCustomSorting(
       );
     }
 
-    // Custom sorting: submitted → pending → won → lost, then by submission date desc within each group
-    const statusOrder = ['submitted', 'pending', 'won', 'lost'];
+    // Custom sorting: evaluation → awarded → lost → closed, then by submission date desc within each group
+    const statusOrder = ['evaluation', 'awarded', 'lost', 'closed'];
     const tenders = await db
       .select({
         id: tender.id,
@@ -1031,9 +1096,14 @@ export async function getTendersWithCustomSorting(
 
     const totalCount = totalCountResult.length;
 
+    const resolvedTenders = tenders.map((t) => ({
+      ...t,
+      status: resolveTenderStatus(t.status, t.submissionDate),
+    }));
+
     return {
       success: true,
-      tenders,
+      tenders: resolvedTenders,
       totalCount,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
@@ -1143,9 +1213,14 @@ export async function getTendersOverview(
 
     const totalCount = totalCountResult.length;
 
+    const resolvedTenders = tenders.map((t) => ({
+      ...t,
+      status: resolveTenderStatus(t.status, t.submissionDate),
+    }));
+
     return {
       success: true,
-      tenders,
+      tenders: resolvedTenders,
       totalCount,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),

@@ -54,20 +54,28 @@ interface TendersTableProps {
   className?: string;
 }
 
+const statusLabels = {
+  open: 'Open',
+  closed: 'Closed',
+  evaluation: 'Evaluation',
+  awarded: 'Appointed / Awarded',
+  lost: 'Rejected / Lost',
+};
+
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'draft':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    case 'submitted':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-    case 'won':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+    case 'open':
+      return 'bg-green-500/10 text-green-400 border border-green-500/20';
+    case 'closed':
+      return 'bg-zinc-800 text-zinc-400 border border-zinc-700/30';
+    case 'evaluation':
+      return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+    case 'awarded':
+      return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
     case 'lost':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+      return 'bg-red-500/10 text-red-400 border border-red-500/20';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      return 'bg-zinc-800 text-zinc-400 border border-zinc-700/30';
   }
 }
 
@@ -168,7 +176,7 @@ export function TendersTable({
                           </TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(tender.status)}>
-                              {tender.status}
+                              {statusLabels[tender.status as keyof typeof statusLabels] || tender.status}
                             </Badge>
                           </TableCell>
                           {/* <TableCell className="hidden md:table-cell">
@@ -178,7 +186,7 @@ export function TendersTable({
                             {formatDate(tender.submissionDate)}
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
-                            {tender.status === 'submitted' ? (
+                            {tender.status === 'evaluation' ? (
                               (() => {
                                 const submissionDate = tender.updatedAt;
                                 return `Submitted ${formatDate(submissionDate)}`;

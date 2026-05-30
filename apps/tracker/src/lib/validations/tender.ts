@@ -6,7 +6,7 @@ export const TenderCreateSchema = z.object({
   clientId: z.string().min(1, 'Client is required'),
   submissionDate: z.date().optional(),
   value: z.string().optional(),
-  status: z.enum(['draft', 'submitted', 'won', 'lost', 'pending']),
+  status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost']),
 });
 
 export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
@@ -14,12 +14,12 @@ export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
 });
 
 export const TenderStatusUpdateSchema = z.object({
-  status: z.enum(['draft', 'submitted', 'won', 'lost', 'pending']),
+  status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost']),
 });
 
 export const TenderSearchSchema = z.object({
   query: z.string().optional(),
-  status: z.enum(['draft', 'submitted', 'won', 'lost', 'pending']).optional(),
+  status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost']).optional(),
   clientId: z.string().optional(),
   dateFrom: z.date().optional(),
   dateTo: z.date().optional(),

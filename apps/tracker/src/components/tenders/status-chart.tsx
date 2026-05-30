@@ -5,27 +5,27 @@ import { BarChart3 } from 'lucide-react';
 
 interface StatusChartProps {
   statusCounts: {
-    draft: number;
-    submitted: number;
-    won: number;
+    open: number;
+    closed: number;
+    evaluation: number;
+    awarded: number;
     lost: number;
-    pending: number;
   };
   className?: string;
 }
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'draft':
-      return 'bg-gray-500';
-    case 'submitted':
-      return 'bg-blue-500';
-    case 'won':
+    case 'open':
       return 'bg-green-500';
+    case 'closed':
+      return 'bg-gray-500';
+    case 'evaluation':
+      return 'bg-blue-500';
+    case 'awarded':
+      return 'bg-amber-500';
     case 'lost':
       return 'bg-red-500';
-    case 'pending':
-      return 'bg-yellow-500';
     default:
       return 'bg-gray-500';
   }
@@ -33,16 +33,16 @@ function getStatusColor(status: string): string {
 
 function getStatusLabel(status: string): string {
   switch (status) {
-    case 'draft':
-      return 'Draft';
-    case 'submitted':
-      return 'Submitted';
-    case 'won':
-      return 'Won';
+    case 'open':
+      return 'Open';
+    case 'closed':
+      return 'Closed';
+    case 'evaluation':
+      return 'Evaluation';
+    case 'awarded':
+      return 'Appointed / Awarded';
     case 'lost':
-      return 'Lost';
-    case 'pending':
-      return 'Pending';
+      return 'Rejected / Lost';
     default:
       return status;
   }

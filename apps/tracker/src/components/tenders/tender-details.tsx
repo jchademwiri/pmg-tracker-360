@@ -66,19 +66,19 @@ interface TenderDetailsProps {
 }
 
 const statusColors = {
-  draft: 'bg-gray-100 text-gray-800',
-  submitted: 'bg-blue-100 text-blue-800',
-  won: 'bg-green-100 text-green-800',
-  lost: 'bg-red-100 text-red-800',
-  pending: 'bg-yellow-100 text-yellow-800',
+  open: 'bg-green-100/10 text-green-400 border border-green-500/20',
+  closed: 'bg-zinc-800 text-zinc-400 border border-zinc-700/30',
+  evaluation: 'bg-blue-100/10 text-blue-400 border border-blue-500/20',
+  awarded: 'bg-amber-100/10 text-amber-400 border border-amber-500/20',
+  lost: 'bg-red-100/10 text-red-400 border border-red-500/20',
 };
 
 const statusLabels = {
-  draft: 'Draft',
-  submitted: 'Submitted',
-  won: 'Won',
-  lost: 'Lost',
-  pending: 'Pending',
+  open: 'Open',
+  closed: 'Closed',
+  evaluation: 'Evaluation',
+  awarded: 'Appointed / Awarded',
+  lost: 'Rejected / Lost',
 };
 
 export function TenderDetails({
@@ -115,14 +115,18 @@ export function TenderDetails({
   };
 
   const handleStatusUpdate = async (
-    newStatus: 'draft' | 'submitted' | 'won' | 'lost' | 'pending'
+    newStatus: 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost'
   ) => {
     startTransition(async () => {
       const result = await updateTenderStatus(organizationId, tender.id, {
         status: newStatus,
       });
       if (result.success) {
-        router.refresh();
+        if (newStatus === 'awarded' && result.projectId) {
+          router.push(`/dashboard/projects/${result.projectId}/edit`);
+        } else {
+          router.refresh();
+        }
       } else {
         alert(result.error || 'Failed to update tender status');
       }
@@ -473,27 +477,27 @@ export function TenderDetails({
                     </span>
                   </div>
 
-                  {tender.status !== 'submitted' && (
+                   {tender.status !== 'evaluation' && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('submitted')}
+                      onClick={() => handleStatusUpdate('evaluation')}
                       disabled={isPending}
                     >
-                      Mark as Submitted
+                      Mark as Submitted / Evaluation
                     </Button>
                   )}
 
-                  {tender.status !== 'won' && (
+                  {tender.status !== 'awarded' && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('won')}
+                      onClick={() => handleStatusUpdate('awarded')}
                       disabled={isPending}
                     >
-                      Mark as Won
+                      Mark as Appointed / Awarded
                     </Button>
                   )}
 
@@ -505,19 +509,31 @@ export function TenderDetails({
                       onClick={() => handleStatusUpdate('lost')}
                       disabled={isPending}
                     >
-                      Mark as Lost
+                      Mark as Rejected / Lost
                     </Button>
                   )}
 
-                  {tender.status !== 'pending' && (
+                  {tender.status !== 'closed' && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('pending')}
+                      onClick={() => handleStatusUpdate('closed')}
                       disabled={isPending}
                     >
-                      Mark as Pending
+                      Mark as Closed
+                    </Button>
+                  )}
+
+                  {tender.status !== 'open' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start cursor-pointer"
+                      onClick={() => handleStatusUpdate('open')}
+                      disabled={isPending}
+                    >
+                      Mark as Open
                     </Button>
                   )}
                 </CardContent>

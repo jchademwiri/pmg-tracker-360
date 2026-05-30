@@ -53,7 +53,7 @@ export default async function TendersOverviewPage() {
     ? statsResult.stats
     : {
         totalTenders: 0,
-        statusCounts: { draft: 0, submitted: 0, won: 0, lost: 0, pending: 0 },
+        statusCounts: { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 },
         totalValue: 0,
         winRate: 0,
         averageValue: 0,
@@ -85,9 +85,9 @@ export default async function TendersOverviewPage() {
       };
 
   const activeCount =
-    stats.statusCounts.draft +
-    stats.statusCounts.submitted +
-    stats.statusCounts.pending;
+    stats.statusCounts.open +
+    stats.statusCounts.closed +
+    stats.statusCounts.evaluation;
 
   return (
     <div className="space-y-6">

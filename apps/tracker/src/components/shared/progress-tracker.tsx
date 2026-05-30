@@ -10,9 +10,9 @@ interface ProgressTrackerProps {
 
 export function ProgressTracker({ status, className }: ProgressTrackerProps) {
   const steps = [
-    { id: 'draft', label: 'Draft', icon: FileText },
-    { id: 'submitted', label: 'Submitted', icon: Send },
-    { id: 'pending', label: 'Pending', icon: Clock },
+    { id: 'open', label: 'Open', icon: FileText },
+    { id: 'closed', label: 'Closed', icon: Clock },
+    { id: 'evaluation', label: 'Evaluation', icon: Send },
     { id: 'outcome', label: 'Outcome', icon: Check }, // Icon changes based on win/loss
   ];
 
@@ -23,15 +23,19 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
 
   switch (status) {
     case 'draft':
+    case 'open':
       currentIndex = 0;
       break;
-    case 'submitted':
+    case 'closed':
       currentIndex = 1;
       break;
+    case 'submitted':
     case 'pending':
+    case 'evaluation':
       currentIndex = 2;
       break;
     case 'won':
+    case 'awarded':
       currentIndex = 3;
       isWon = true;
       break;
@@ -102,7 +106,7 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
                 {isLast && isLost
                   ? 'Lost'
                   : isLast && isWon
-                    ? 'Won'
+                    ? 'Awarded'
                     : step.label}
               </span>
             </div>

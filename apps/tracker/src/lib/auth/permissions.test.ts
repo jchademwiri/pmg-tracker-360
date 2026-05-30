@@ -24,7 +24,9 @@ function can(role: any, resource: string, action: string, data?: any) {
 }
 
 const DRAFT_TENDER = { status: 'draft' };
+const OPEN_TENDER = { status: 'open' };
 const SUBMITTED_TENDER = { status: 'submitted' };
+const EVALUATION_TENDER = { status: 'evaluation' };
 
 describe('Access Control', () => {
   // ... Phase 1 & 2 tests (abbreviated for brevity in edit, but full content in file)
@@ -45,12 +47,14 @@ describe('Access Control', () => {
       expect(can(manager, 'project', 'delete')).toBe(false);
     });
 
-    it('should be able to delete DRAFT tenders', () => {
+    it('should be able to delete DRAFT/OPEN tenders', () => {
       expect(can(manager, 'tender', 'delete', DRAFT_TENDER)).toBe(true);
+      expect(can(manager, 'tender', 'delete', OPEN_TENDER)).toBe(true);
     });
 
-    it('should NOT be able to delete SUBMITTED tenders', () => {
+    it('should NOT be able to delete SUBMITTED/EVALUATION tenders', () => {
       expect(can(manager, 'tender', 'delete', SUBMITTED_TENDER)).toBe(false);
+      expect(can(manager, 'tender', 'delete', EVALUATION_TENDER)).toBe(false);
     });
   });
 
@@ -67,12 +71,14 @@ describe('Access Control', () => {
       expect(can(member, 'tender', 'update')).toBe(true);
     });
 
-    it('should be able to delete DRAFT tenders', () => {
+    it('should be able to delete DRAFT/OPEN tenders', () => {
       expect(can(member, 'tender', 'delete', DRAFT_TENDER)).toBe(true);
+      expect(can(member, 'tender', 'delete', OPEN_TENDER)).toBe(true);
     });
 
-    it('should NOT be able to delete SUBMITTED tenders', () => {
+    it('should NOT be able to delete SUBMITTED/EVALUATION tenders', () => {
       expect(can(member, 'tender', 'delete', SUBMITTED_TENDER)).toBe(false);
+      expect(can(member, 'tender', 'delete', EVALUATION_TENDER)).toBe(false);
     });
   });
 });

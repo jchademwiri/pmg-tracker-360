@@ -14,6 +14,7 @@ export default defineConfig({
 					items: [
 						{ label: 'System Admin Portal', slug: 'guides/admin-portal' },
 						{ label: 'Tracker Client Portal', slug: 'guides/tracker-portal' },
+						{ label: 'Tendering Pipeline Flow', slug: 'guides/tendering-pipeline' },
 					],
 				},
 				{

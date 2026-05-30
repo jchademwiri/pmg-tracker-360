@@ -92,11 +92,11 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
       value: tender?.value || '',
       status:
         (tender?.status as
-          | 'draft'
-          | 'submitted'
-          | 'won'
-          | 'lost'
-          | 'pending') || 'draft',
+          | 'open'
+          | 'closed'
+          | 'evaluation'
+          | 'awarded'
+          | 'lost') || 'open',
     },
   });
 
@@ -147,7 +147,11 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             }
           }
 
-          router.push('/dashboard/tenders');
+          if (data.status === 'awarded' && result.projectId) {
+            router.push(`/dashboard/projects/${result.projectId}/edit`);
+          } else {
+            router.push('/dashboard/tenders');
+          }
           router.refresh();
         } else {
           setError(result?.error || 'An error occurred');
@@ -303,11 +307,11 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="draft">Draft</SelectItem>
-                          <SelectItem value="submitted">Submitted</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="won">Won</SelectItem>
-                          <SelectItem value="lost">Lost</SelectItem>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="closed">Closed</SelectItem>
+                          <SelectItem value="evaluation">Evaluation</SelectItem>
+                          <SelectItem value="awarded">Appointed / Awarded</SelectItem>
+                          <SelectItem value="lost">Rejected / Lost</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

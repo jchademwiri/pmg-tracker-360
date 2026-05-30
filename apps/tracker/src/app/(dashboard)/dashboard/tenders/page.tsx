@@ -45,11 +45,11 @@ export default async function TendersPage() {
     : {
         totalTenders: 0,
         statusCounts: {
-          draft: 0,
-          submitted: 0,
-          won: 0,
+          open: 0,
+          closed: 0,
+          evaluation: 0,
+          awarded: 0,
           lost: 0,
-          pending: 0,
         },
         totalValue: 0,
       };
@@ -89,12 +89,12 @@ export default async function TendersPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Won</CardTitle>
+            <CardTitle className="text-sm font-medium">Awarded</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {stats.statusCounts.won}
+              {stats.statusCounts.awarded}
             </div>
             <p className="text-xs text-muted-foreground">Successful tenders</p>
           </CardContent>
@@ -107,7 +107,7 @@ export default async function TendersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {stats.statusCounts.pending + stats.statusCounts.submitted}
+              {stats.statusCounts.evaluation + stats.statusCounts.closed}
             </div>
             <p className="text-xs text-muted-foreground">Awaiting results</p>
           </CardContent>

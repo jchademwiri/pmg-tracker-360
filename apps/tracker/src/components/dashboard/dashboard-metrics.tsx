@@ -43,7 +43,7 @@ export async function DashboardMetrics({
       trends: { value: 0, winRate: 0 },
       upcomingDeadlines: 0,
       totalTenders: 0,
-      statusCounts: { draft: 0, submitted: 0 },
+      statusCounts: { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 },
       overdueCount: 0,
     };
   if (!clientStats)
@@ -106,7 +106,7 @@ export async function DashboardMetrics({
         <MetricCard
           title="Total Tenders"
           value={formatNumber(tenderStats.totalTenders)}
-          description={`${tenderStats.statusCounts.draft} draft, ${tenderStats.statusCounts.submitted} submitted`}
+          description={`${tenderStats.statusCounts.open} open, ${tenderStats.statusCounts.evaluation} in evaluation`}
         />
         <MetricCard
           title="Client Engagement"

@@ -46,15 +46,17 @@ export async function DashboardCharts({
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${
-                        status === 'won'
+                        status === 'open'
                           ? 'bg-green-500'
-                          : status === 'lost'
-                            ? 'bg-red-500'
-                            : status === 'submitted'
+                          : status === 'closed'
+                            ? 'bg-gray-500'
+                            : status === 'evaluation'
                               ? 'bg-blue-500'
-                              : status === 'pending'
-                                ? 'bg-yellow-500'
-                                : 'bg-gray-500'
+                              : status === 'awarded'
+                                ? 'bg-amber-500'
+                                : status === 'lost'
+                                  ? 'bg-red-500'
+                                  : 'bg-muted'
                       }`}
                       role="progressbar"
                       aria-valuemin={0}

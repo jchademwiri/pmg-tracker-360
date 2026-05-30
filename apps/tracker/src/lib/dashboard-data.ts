@@ -80,19 +80,11 @@ export function getTenderStatusChartData(
   tenderStats: DashboardData['tenderStats']
 ) {
   return [
-    { name: 'Draft', value: tenderStats.statusCounts.draft, fill: '#8884d8' },
-    {
-      name: 'Submitted',
-      value: tenderStats.statusCounts.submitted,
-      fill: '#82ca9d',
-    },
-    { name: 'Won', value: tenderStats.statusCounts.won, fill: '#ffc658' },
-    { name: 'Lost', value: tenderStats.statusCounts.lost, fill: '#ff7c7c' },
-    {
-      name: 'Pending',
-      value: tenderStats.statusCounts.pending,
-      fill: '#8dd1e1',
-    },
+    { name: 'Open', value: tenderStats.statusCounts.open, fill: '#10b981' }, // green
+    { name: 'Closed', value: tenderStats.statusCounts.closed, fill: '#6b7280' }, // gray
+    { name: 'Evaluation', value: tenderStats.statusCounts.evaluation, fill: '#3b82f6' }, // blue
+    { name: 'Awarded', value: tenderStats.statusCounts.awarded, fill: '#f59e0b' }, // amber
+    { name: 'Lost', value: tenderStats.statusCounts.lost, fill: '#ef4444' }, // red
   ].filter((item) => item.value > 0);
 }
 
