@@ -1,4 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
+jest.setTimeout(60000);
+
 import '@testing-library/jest-dom';
+
+
 import 'jest-axe/extend-expect';
 import { TextDecoder, TextEncoder } from 'util';
 

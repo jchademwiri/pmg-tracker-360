@@ -1,7 +1,9 @@
 import { config } from "dotenv";
 import type { Config } from "drizzle-kit";
+import * as path from "path";
 
-config({ path: ".env" });
+config({ path: path.resolve(__dirname, "../../.env.local") });
+
 
 export default {
   dialect: "postgresql",

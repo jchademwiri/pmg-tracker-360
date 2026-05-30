@@ -1,6 +1,6 @@
 type Statements = Record<string, unknown>;
 
-export function createAccessControl(_statement: Statements) {
+export function createAccessControl() {
   return {
     newRole(statements: Statements) {
       return { statements };

@@ -8,7 +8,8 @@
     "RESEND_API_KEY",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
-    "NEXT_PUBLIC_URL"
+    "NEXT_PUBLIC_URL",
+    "SKIP_ENV_VALIDATION"
   ],
   "tasks": {
     "build": {

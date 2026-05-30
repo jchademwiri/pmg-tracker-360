@@ -5,6 +5,11 @@
  * ⚠️  This is destructive — only use in development.
  */
 import postgres from "postgres";
+import { config } from "dotenv";
+import * as path from "path";
+
+config({ path: path.resolve(__dirname, "../../../.env.local") });
+
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is required");
