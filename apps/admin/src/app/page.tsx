@@ -1,7 +1,7 @@
 import React from 'react';
 import { db } from '@pmg/db';
 import { user, organization, tender, project } from '@pmg/db/schema';
-import { count, desc } from 'drizzle-orm';
+import { count, desc, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -23,6 +23,15 @@ export default async function AdminDashboardPage() {
   });
 
   if (!session || (session.user as any).role !== 'admin') {
+    // If no administrators exist in the database, redirect to initial setup
+    const adminCountResult = await db
+      .select({ count: count() })
+      .from(user)
+      .where(eq(user.role, 'admin'));
+    const adminCount = adminCountResult[0]?.count ?? 0;
+    if (adminCount === 0) {
+      redirect('/setup');
+    }
     redirect('/login');
   }
 

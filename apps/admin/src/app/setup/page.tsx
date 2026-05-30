@@ -3,23 +3,25 @@ import { db } from '@pmg/db';
 import { user } from '@pmg/db/schema';
 import { count, eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import LoginForm from './LoginForm';
+import SetupForm from './SetupForm';
 
-export default async function AdminLoginPage() {
-  // If no administrators exist in the database, redirect to initial setup
+export default async function InitialSetupPage() {
+  // Check if any administrators already exist in the system
   const adminCountResult = await db
     .select({ count: count() })
     .from(user)
     .where(eq(user.role, 'admin'));
-  
+
   const adminCount = adminCountResult[0]?.count ?? 0;
-  if (adminCount === 0) {
-    redirect('/setup');
+
+  // Security Hardening: If an admin already exists, block access and redirect to login
+  if (adminCount > 0) {
+    redirect('/login');
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 py-12">
-      <LoginForm />
+      <SetupForm />
     </div>
   );
 }
