@@ -30,70 +30,70 @@ export default function ModuleDiagram() {
       name: 'Authentication & Accounts',
       icon: Key,
       accent: 'auth',
-      tables: ['user', 'session', 'account', 'verification'],
+      features: ['Secure Sign-In', 'Session Lifecycles', 'OAuth Integrations', 'Email Verification'],
       description: 'Auth, sessions, OAuth',
     },
     {
       name: 'Organization & Membership',
       icon: Users,
       accent: 'organization',
-      tables: ['organization', 'member', 'invitation'],
+      features: ['Tenant Scoping', 'Role Permissions', 'Team Invitations'],
       description: 'Teams, roles, invitations',
     },
     {
       name: 'Notifications & Preferences',
       icon: Bell,
       accent: 'notifications',
-      tables: ['notificationPreferences', 'notification'],
+      features: ['User Alerts', 'Reminder Rules', 'Preferences Dashboard'],
       description: 'User notifications',
     },
     {
       name: 'Ownership Transfer',
       icon: Users,
       accent: 'ownership',
-      tables: ['ownershipTransfer'],
+      features: ['Secure Delegation', 'Transfer Keys', 'Approval Logs'],
       description: 'Organization ownership',
     },
     {
       name: 'Security & Audit',
       icon: Shield,
       accent: 'security',
-      tables: ['securityAuditLog', 'sessionTracking'],
+      features: ['Activity Monitoring', 'IP & Device Logs', 'Compliance Auditing'],
       description: 'Audit logs, tracking',
     },
     {
       name: 'Client Management',
       icon: Briefcase,
       accent: 'client',
-      tables: ['client'],
+      features: ['Client Profiles', 'Contact Details', 'Engagement Tracking'],
       description: 'Client records',
     },
     {
       name: 'Tender Management',
       icon: FileText,
       accent: 'tender',
-      tables: ['tender', 'tenderExtension'],
-      description: 'Tenders, extensions',
+      features: ['Bid Trackers', 'Timeline Extensions', 'Automatic Closing Date Statuses'],
+      description: 'Dynamic statuses (open, closed, evaluation, awarded, lost) & auto-project creation',
     },
     {
       name: 'Project Management',
       icon: FolderOpen,
       accent: 'project',
-      tables: ['project', 'purchaseOrder'],
-      description: 'Projects, POs',
+      features: ['Auto-created Projects', 'Timeline Editors', 'Purchase Orders'],
+      description: 'Auto-created projects, details editor, purchase orders',
     },
     {
       name: 'Support & Feedback',
       icon: MessageSquare,
       accent: 'support',
-      tables: ['feedback', 'support_tickets'],
+      features: ['Support Ticketing', 'User Feedback Channels', 'Administrative Tools'],
       description: 'User support & feedback',
     },
     {
       name: 'Document Management',
       icon: File,
       accent: 'document',
-      tables: ['document'],
+      features: ['Presigned Secure Access', 'Cloudflare R2 Isolation', 'Centralized Spec Storage'],
       description: 'Centralized file storage',
     },
   ];
@@ -122,7 +122,7 @@ export default function ModuleDiagram() {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            10 Core Modules with Database Schema Mapping
+            10 Core Modules with Business Entity Mapping
           </p>
         </div>
 
@@ -148,14 +148,14 @@ export default function ModuleDiagram() {
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Tables:
+                    Core Capabilities:
                   </p>
-                  {module.tables.map((table, tidx) => (
+                  {module.features.map((feature, fidx) => (
                     <div
-                      key={tidx}
-                      className="bg-muted/50 px-3 py-1.5 rounded text-sm font-mono text-foreground"
+                      key={fidx}
+                      className="bg-muted/50 px-3 py-1.5 rounded text-sm font-medium text-foreground"
                     >
-                      {table}
+                      {feature}
                     </div>
                   ))}
                 </div>
@@ -305,6 +305,12 @@ export default function ModuleDiagram() {
               <span>
                 <strong>Session Management:</strong> Comprehensive session
                 tracking with suspicious activity detection
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-400 font-bold">✓</span>
+              <span>
+                <strong>Tendering Pipeline:</strong> Automated closing-date checks, evaluation lockdowns, and instant project auto-generation upon bid award
               </span>
             </li>
           </ul>
