@@ -39,7 +39,7 @@ export default function NotFound() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-center">
               <Button
                 asChild
-                className="bg-[oklch(0.646_0.222_41.116)] hover:bg-[oklch(0.646_0.222_41.116)]/90 text-white w-[140px] h-10 px-4"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground w-[140px] h-10 px-4"
               >
                 <Link href="/">
                   <HomeIcon className="mr-2 h-4 w-4" />
@@ -81,3 +81,4 @@ export default function NotFound() {
     </div>
   );
 }
+
