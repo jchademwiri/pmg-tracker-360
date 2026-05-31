@@ -28,7 +28,7 @@ export default function SetupForm() {
       } else {
         setError(response.error ?? 'Setup failed');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred during setup. Please try again.');
     } finally {
       setLoading(false);

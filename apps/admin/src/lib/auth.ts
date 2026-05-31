@@ -15,6 +15,11 @@ const REPLY_TO = process.env.REPLY_TO_EMAIL || 'info@contact.tendertrack360.co.z
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
+  rateLimit: {
+    enabled: true,
+    window: 60, // 1 minute
+    max: 10,    // limit to 10 authentication requests per window per client IP
+  },
   advanced: {
     cookiePrefix: 'tender-track-360',
     crossSubdomainCookies: {
@@ -36,11 +41,13 @@ export const auth = betterAuth({
   },
   callbacks: {
     session: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       after: async (session: any, user: any) => {
         return {
           ...session,
           user: {
             ...session.user,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             role: (user as any).role || 'user',
           },
         };

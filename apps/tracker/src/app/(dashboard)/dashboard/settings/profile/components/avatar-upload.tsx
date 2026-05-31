@@ -45,7 +45,7 @@ export function AvatarUpload({
   uploadAction,
   entityName = 'Profile picture',
 }: AvatarUploadProps) {
-  const isUploadDisabled = entityName === 'Organization logo' ? false : true;
+  const isUploadDisabled = entityName.toLowerCase() === 'organization logo' ? false : true;
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);

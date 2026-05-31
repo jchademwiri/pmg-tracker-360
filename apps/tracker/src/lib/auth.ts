@@ -28,6 +28,11 @@ export const auth = betterAuth({
     'https://admin.tendertrack360.co.za',
     ...(env.NEXT_PUBLIC_URL ? [new URL(env.NEXT_PUBLIC_URL).origin] : []),
   ],
+  rateLimit: {
+    enabled: true,
+    window: 60, // 1 minute
+    max: 10,    // limit to 10 authentication requests per window per client IP
+  },
   advanced: {
     cookiePrefix: 'tender-track-360',
     crossSubdomainCookies: {

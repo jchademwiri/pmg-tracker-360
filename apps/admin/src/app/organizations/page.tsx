@@ -13,6 +13,7 @@ export default async function AdminOrganizationsPage() {
     headers: await headers(),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!session || (session.user as any).role !== 'admin') {
     redirect('/login');
   }

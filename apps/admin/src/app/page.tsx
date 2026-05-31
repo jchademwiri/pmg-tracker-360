@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
     headers: await headers(),
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!session || (session.user as any).role !== 'admin') {
     // If no administrators exist in the database, redirect to initial setup
     const adminCountResult = await db

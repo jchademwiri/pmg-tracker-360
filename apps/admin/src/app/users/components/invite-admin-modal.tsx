@@ -43,7 +43,7 @@ export function InviteAdminModal() {
       } else {
         setError(res.error ?? 'Failed to create system administrator');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

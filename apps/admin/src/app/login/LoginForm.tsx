@@ -27,7 +27,7 @@ export default function LoginForm() {
       } else {
         setError(response.error ?? 'Authentication failed');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -48,7 +48,7 @@ export default function LoginForm() {
       } else {
         setError(response.error ?? 'Failed to send login code');
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export default function LoginForm() {
       } else {
         setError(response.error ?? 'Invalid or expired passcode.');
       }
-    } catch (err) {
+    } catch {
       setError('Verification failed. Please try again.');
     } finally {
       setLoading(false);
