@@ -132,6 +132,12 @@ export function NavUser({ user }: { user: User }) {
                   Organizations
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/billing" className="cursor-pointer">
+                  <CreditCard />
+                  Billing & Plans
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
