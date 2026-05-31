@@ -1,6 +1,6 @@
 'use server';
 import { db } from '@pmg/db';
-import { member, user } from '@pmg/db/schema';
+import { member, user, verification } from '@pmg/db/schema';
 import { auth } from '@/lib/auth';
 import { eq, inArray, not } from 'drizzle-orm';
 import { headers } from 'next/headers';
@@ -101,6 +101,40 @@ export const sendVerificationEmail = async (email: string) => {
       success: false,
       message: e.message || 'Failed to send verification email',
     };
+  }
+};
+
+export const verifyOTPAndGetToken = async (email: string, otp: string) => {
+  try {
+    const formattedEmail = email.trim().toLowerCase();
+    const formattedOtp = otp.trim();
+    const identifierKey = `otp-map:${formattedEmail}:${formattedOtp}`;
+
+    const record = await db.query.verification.findFirst({
+      where: eq(verification.identifier, identifierKey),
+    });
+
+    if (!record) {
+      return { success: false, error: 'Invalid or expired verification code.' };
+    }
+
+    if (new Date() > record.expiresAt) {
+      // Cleanup expired record
+      await db.delete(verification).where(eq(verification.id, record.id));
+      return { success: false, error: 'Verification code has expired.' };
+    }
+
+    // Delete record immediately to prevent replay attacks
+    await db.delete(verification).where(eq(verification.id, record.id));
+
+    return {
+      success: true,
+      token: record.value, // This is the real magic-link token!
+    };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Error in verifyOTPAndGetToken:', e);
+    return { success: false, error: e.message || 'Verification failed.' };
   }
 };
 

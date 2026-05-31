@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db } from '@pmg/db';
-import { user } from '@pmg/db/schema';
+import { user, verification } from '@pmg/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
 
@@ -49,6 +49,85 @@ export async function adminSignIn(email: string, password: string) {
       success: false,
       error: e.message || 'An error occurred during authentication',
     };
+  }
+}
+
+/**
+ * Sends a magic link and 6-digit OTP code to registered administrators.
+ */
+export async function adminSendMagicLink(email: string) {
+  try {
+    const formattedEmail = email.trim().toLowerCase();
+    
+    // Validate role: only allow registered admins to request this
+    const foundUser = await db.query.user.findFirst({
+      where: eq(sql`lower(${user.email})`, formattedEmail),
+    });
+
+    if (!foundUser || foundUser.role !== 'admin') {
+      return {
+        success: false,
+        error: 'Access Denied: Only registered system administrators are authorized.',
+      };
+    }
+
+    // Trigger magic-link creation which fires the sendMagicLink callback (generating the OTP & sending the email)
+    await auth.api.signInMagicLink({
+      body: {
+        email: foundUser.email,
+        callbackURL: '/',
+      },
+      headers: await headers(),
+    });
+
+    return {
+      success: true,
+      message: 'A secure sign-in link and 6-digit verification passcode have been sent to your email.',
+    };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Error in adminSendMagicLink:', e);
+    return {
+      success: false,
+      error: e.message || 'Failed to generate and send sign-in link.',
+    };
+  }
+}
+
+/**
+ * Verifies the 6-digit passcode and retrieves the corresponding magic link verification token.
+ */
+export async function verifyAdminOTP(email: string, otp: string) {
+  try {
+    const formattedEmail = email.trim().toLowerCase();
+    const formattedOtp = otp.trim();
+    const identifierKey = `otp-map:${formattedEmail}:${formattedOtp}`;
+
+    const record = await db.query.verification.findFirst({
+      where: eq(verification.identifier, identifierKey),
+    });
+
+    if (!record) {
+      return { success: false, error: 'Invalid or expired verification code.' };
+    }
+
+    if (new Date() > record.expiresAt) {
+      // Cleanup expired record
+      await db.delete(verification).where(eq(verification.id, record.id));
+      return { success: false, error: 'Verification code has expired.' };
+    }
+
+    // Delete record to prevent replay attacks
+    await db.delete(verification).where(eq(verification.id, record.id));
+
+    return {
+      success: true,
+      token: record.value, // Return real magic link token
+    };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Error in verifyAdminOTP:', e);
+    return { success: false, error: e.message || 'Verification failed.' };
   }
 }
 
