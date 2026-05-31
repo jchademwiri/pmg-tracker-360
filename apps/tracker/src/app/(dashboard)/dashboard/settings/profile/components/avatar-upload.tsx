@@ -36,8 +36,6 @@ interface AvatarUploadProps {
   entityName?: string; // e.g. "Profile picture" or "Organization logo"
 }
 
-const UPLOAD_DISABLED = true; // Disabled for free MVP - enable when billing is implemented
-
 export function AvatarUpload({
   currentImage,
   userName,
@@ -47,6 +45,8 @@ export function AvatarUpload({
   uploadAction,
   entityName = 'Profile picture',
 }: AvatarUploadProps) {
+  const isUploadDisabled = entityName === 'Organization logo' ? false : true;
+
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -190,13 +190,13 @@ export function AvatarUpload({
         {/* Upload Overlay */}
         <div
           className={`absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 ${
-            disabled || UPLOAD_DISABLED
+            disabled || isUploadDisabled
               ? 'cursor-not-allowed'
               : 'cursor-pointer'
           }`}
           onClick={(e) => {
             e.stopPropagation(); // Prevent bubbling issues
-            if (UPLOAD_DISABLED) {
+            if (isUploadDisabled) {
               toast.info('Photo upload is currently unavailable. Coming soon!');
               return;
             }
@@ -213,7 +213,7 @@ export function AvatarUpload({
           variant="outline"
           size="sm"
           onClick={() => {
-            if (UPLOAD_DISABLED) {
+            if (isUploadDisabled) {
               toast.info('Photo upload is currently unavailable. Coming soon!');
               return;
             }

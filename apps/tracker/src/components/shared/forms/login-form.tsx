@@ -125,7 +125,7 @@ export function LoginForm({
       if (response.success && response.token) {
         toast.success('Code verified successfully! Redirecting...');
         // Authenticate programmatically by navigating to standard verification endpoint
-        window.location.replace(`/api/auth/magic-link?token=${response.token}&callbackURL=${encodeURIComponent(getRedirectPath())}`);
+        window.location.replace(`/api/auth/magic-link/verify?token=${response.token}&callbackURL=${encodeURIComponent(getRedirectPath())}`);
       } else {
         toast.error(response.error || 'Invalid or expired passcode.');
       }
