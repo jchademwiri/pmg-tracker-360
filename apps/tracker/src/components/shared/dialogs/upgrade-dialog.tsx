@@ -24,6 +24,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/format';
+import { toast } from 'sonner';
+import { updateUserPlan } from '@/server/billing';
 
 // Enhanced TypeScript interfaces
 interface PricingTier {
@@ -170,16 +172,23 @@ export function UpgradeDialog({
   const handleUpgradeToPro = async () => {
     setIsUpgrading(true);
     try {
-      // TODO: Implement actual upgrade flow with payment provider
-      // For now, simulate API call
+      // Simulate API latency/payment gateway processing
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Redirect to the full upgrade page with the selected plan
-      onOpenChange(false);
-      window.location.href = '/dashboard';
+      const result = await updateUserPlan('pro');
+      if (result.success) {
+        toast.success("Successfully upgraded to the Pro plan!", {
+          description: "Your organization creation limit has been increased to 2 owned organizations.",
+        });
+        onOpenChange(false);
+        // Force fully reload page to flush and rebuild Better Auth cookies / state
+        window.location.reload();
+      } else {
+        toast.error(result.error || "Failed to update your subscription plan.");
+      }
     } catch (error) {
       console.error('Upgrade failed:', error);
-      // Show error toast or alert
+      toast.error("An unexpected error occurred during your upgrade.");
     } finally {
       setIsUpgrading(false);
     }
