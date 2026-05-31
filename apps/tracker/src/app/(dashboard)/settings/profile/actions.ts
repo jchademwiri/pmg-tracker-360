@@ -104,7 +104,7 @@ export async function updateProfile(
     }
 
     // Revalidate the profile page to show updated data
-    revalidatePath('/dashboard/settings/profile');
+    revalidatePath('/settings/profile');
     revalidatePath('/profile'); // Also revalidate the main profile page
 
     return {
@@ -341,7 +341,7 @@ export async function changePassword(
     passwordChangeAttempts.delete(userId);
 
     // Revalidate the profile page
-    revalidatePath('/dashboard/settings/profile');
+    revalidatePath('/settings/profile');
     revalidatePath('/profile'); // Also revalidate the main profile page
 
     return {

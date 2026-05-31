@@ -148,7 +148,7 @@ class OwnershipTransferManager {
       });
 
       if (toUser?.email && org && fromUser) {
-        const acceptLink = `${env.NEXT_PUBLIC_URL}/dashboard/organization/${org.slug}/settings/transfer-ownership?token=${transferToken}`;
+        const acceptLink = `${env.NEXT_PUBLIC_URL}/organization/${org.slug}/settings/transfer-ownership?token=${transferToken}`;
 
         await resend.emails.send({
           from:

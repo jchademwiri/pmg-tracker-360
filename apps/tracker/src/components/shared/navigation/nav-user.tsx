@@ -53,7 +53,7 @@ export function NavUser({ user }: { user: User }) {
   };
 
   const handleProfileClick = () => {
-    router.push('/dashboard/settings/profile');
+    router.push('/settings/profile');
   };
 
   return (
@@ -103,7 +103,7 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link
-                  href="/dashboard/settings/notifications"
+                  href="/settings/notifications"
                   className="cursor-pointer"
                 >
                   <Bell />
@@ -121,13 +121,13 @@ export function NavUser({ user }: { user: User }) {
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings" className="cursor-pointer">
+                <Link href="/settings" className="cursor-pointer">
                   <Settings2 />
                   Settings
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/organization" className="cursor-pointer">
+                <Link href="/organization" className="cursor-pointer">
                   <Building2 />
                   Organizations
                 </Link>

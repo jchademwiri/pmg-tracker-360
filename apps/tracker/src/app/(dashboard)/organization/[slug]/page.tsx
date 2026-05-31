@@ -36,12 +36,12 @@ async function OrganizationManagementContent({ slug }: { slug: string }) {
 
     if (!userMembership) {
       // User doesn't belong to this organization
-      redirect('/dashboard/organization');
+      redirect('/organization');
     }
 
     // If user is just a member, redirect to read-only view
     if (userMembership.role === 'member') {
-      redirect(`/dashboard/organization/${slug}`);
+      redirect(`/organization/${slug}`);
     }
 
     return (

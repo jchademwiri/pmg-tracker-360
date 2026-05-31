@@ -85,7 +85,7 @@ export function TransferOwnershipClient({
         </CardHeader>
         <CardContent className="flex justify-center">
           <Button asChild>
-            <a href={`/dashboard/organization/${slug}`}>
+            <a href={`/organization/${slug}`}>
               Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </Button>

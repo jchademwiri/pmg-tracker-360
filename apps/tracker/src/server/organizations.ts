@@ -600,8 +600,8 @@ export async function updateOrganizationLogo(
       }
     }
 
-    revalidatePath(`/dashboard/organization/${organizationId}/settings`); // Revalidate settings page
-    revalidatePath('/dashboard/organization'); // Revalidate list
+    revalidatePath(`/organization/${organizationId}/settings`); // Revalidate settings page
+    revalidatePath('/organization'); // Revalidate list
     revalidatePath('/dashboard'); // Revalidate sidebar potentially
 
     // Return signed URL for immediate display

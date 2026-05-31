@@ -60,14 +60,14 @@ export function OrganizationCard({
             <Avatar className="size-12 transition-transform duration-300">
               <AvatarImage src={organization.logo || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary font-semibold transition-colors duration-300 group-hover:bg-primary/20">
-                <Link href={`/dashboard/organization/${organization.slug}`}>
+                <Link href={`/organization/${organization.slug}`}>
                   {getInitials(organization.name)}
                 </Link>
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg leading-tight truncate">
-                <Link href={`/dashboard/organization/${organization.slug}`}>
+                <Link href={`/organization/${organization.slug}`}>
                   {organization.name}
                 </Link>
               </h3>
@@ -125,7 +125,7 @@ export function OrganizationCard({
                 aria-label="Organization settings"
                 className="transition-all duration-200 hover:scale-105 hover:rotate-12 p-1 hover:bg-muted rounded"
               >
-                <Link href={`/dashboard/organization/${organization.slug}`}>
+                <Link href={`/organization/${organization.slug}`}>
                   <Settings className="size-4 transition-transform duration-200" />
                 </Link>
               </Button>

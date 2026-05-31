@@ -30,7 +30,7 @@ export default async function TransferOwnershipPage({
   });
 
   if (!session) {
-    const callbackUrl = `/dashboard/organization/${slug}/settings/transfer-ownership?token=${token}`;
+    const callbackUrl = `/organization/${slug}/settings/transfer-ownership?token=${token}`;
     redirect(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 

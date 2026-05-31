@@ -98,7 +98,7 @@ export default async function SettingsOverviewPage() {
             </div>
             <Separator />
             <Button asChild className="w-full">
-              <Link href="/dashboard/settings/profile">Edit Profile</Link>
+              <Link href="/settings/profile">Edit Profile</Link>
             </Button>
           </CardContent>
         </Card>
@@ -126,8 +126,8 @@ export default async function SettingsOverviewPage() {
             <Separator />
             <Button asChild className="w-full">
               <Link
-                href="/dashboard/settings"
-                as="/dashboard/settings/organization"
+                href="/settings"
+                as="/settings/organization"
               >
                 Manage Organisation
               </Link>
@@ -157,7 +157,7 @@ export default async function SettingsOverviewPage() {
             </div>
             <Separator />
             <Button asChild className="w-full">
-              <Link href="/dashboard/settings/notifications">
+              <Link href="/settings/notifications">
                 Configure Alerts
               </Link>
             </Button>
@@ -228,7 +228,7 @@ export default async function SettingsOverviewPage() {
               className="w-full justify-start hover:bg-blue-50 hover:border-blue-200 dark:hover:bg-blue-950/20 dark:hover:border-blue-800"
               asChild
             >
-              <Link href="/dashboard/settings" as="/dashboard/settings/backup">
+              <Link href="/settings" as="/settings/backup">
                 <Database className="h-4 w-4 mr-2 text-blue-500" />
                 Create System Backup
               </Link>
@@ -238,7 +238,7 @@ export default async function SettingsOverviewPage() {
               className="w-full justify-start hover:bg-green-50 hover:border-green-200 dark:hover:bg-green-950/20 dark:hover:border-green-800"
               asChild
             >
-              <Link href="/dashboard/settings" as="/dashboard/settings/export">
+              <Link href="/settings" as="/settings/export">
                 <Download className="h-4 w-4 mr-2 text-green-500" />
                 Export Data
               </Link>
@@ -249,8 +249,8 @@ export default async function SettingsOverviewPage() {
               asChild
             >
               <Link
-                href="/dashboard/settings"
-                as="/dashboard/settings/security"
+                href="/settings"
+                as="/settings/security"
               >
                 <Key className="h-4 w-4 mr-2 text-red-500" />
                 Security Audit
@@ -261,7 +261,7 @@ export default async function SettingsOverviewPage() {
               className="w-full justify-start hover:bg-purple-50 hover:border-purple-200 dark:hover:bg-purple-950/20 dark:hover:border-purple-800"
               asChild
             >
-              <Link href="/dashboard/settings" as="/dashboard/settings/logs">
+              <Link href="/settings" as="/settings/logs">
                 <Clock className="h-4 w-4 mr-2 text-purple-500" />
                 View Activity Logs
               </Link>

@@ -17,19 +17,19 @@ export const dashboadLinks = {
     },
     {
       title: 'Calendar',
-      url: '/dashboard/calendar',
+      url: '/calendar',
       icon: Calendar,
     },
     {
       title: 'Reports',
-      url: '/dashboard/reports',
+      url: '/reports',
       icon: BarChart3,
     },
   ],
   procurement: [
     {
       title: 'Clients Directory',
-      url: '/dashboard/clients',
+      url: '/clients',
       icon: Users,
     },
     {
@@ -39,15 +39,15 @@ export const dashboadLinks = {
       items: [
         {
           title: 'Overview',
-          url: '/dashboard/tenders/overview',
+          url: '/tenders/overview',
         },
         {
           title: 'Active Tenders',
-          url: '/dashboard/tenders',
+          url: '/tenders',
         },
         {
           title: 'Submitted Tenders',
-          url: '/dashboard/tenders/submitted',
+          url: '/tenders/submitted',
         },
       ],
     },
@@ -58,15 +58,15 @@ export const dashboadLinks = {
       items: [
         {
           title: 'Overview',
-          url: '/dashboard/projects/overview',
+          url: '/projects/overview',
         },
         {
           title: 'Active Projects',
-          url: '/dashboard/projects',
+          url: '/projects',
         },
         {
           title: 'Purchase Orders', // Hidden for standard 'member' role
-          url: '/dashboard/projects/purchase-orders',
+          url: '/projects/purchase-orders',
         },
       ],
     },

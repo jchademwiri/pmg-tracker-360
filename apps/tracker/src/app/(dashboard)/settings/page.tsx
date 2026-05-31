@@ -183,7 +183,7 @@ export default async function SettingsPage() {
               <div>• Change password and security</div>
               <div>• Manage email preferences</div>
             </div>
-            <Link href="/dashboard/settings/profile">
+            <Link href="/settings/profile">
               <Button type="button" className="w-full">
                 Manage Profile
                 <ChevronRight className="h-4 w-4 ml-2" />
@@ -212,7 +212,7 @@ export default async function SettingsPage() {
               <div>• Manage team members</div>
               <div>• Configure organization settings</div>
             </div>
-            <Link href="/dashboard/organization">
+            <Link href="/organization">
               <Button type="button" className="w-full">
                 Manage Organizations
                 <ChevronRight className="h-4 w-4 ml-2" />
@@ -241,7 +241,7 @@ export default async function SettingsPage() {
               <div>• Tender deadline alerts</div>
               <div>• System notifications</div>
             </div>
-            <Link href="/dashboard/settings/notifications">
+            <Link href="/settings/notifications">
               <Button type="button" className="w-full">
                 Configure Notifications
                 <ChevronRight className="h-4 w-4 ml-2" />
