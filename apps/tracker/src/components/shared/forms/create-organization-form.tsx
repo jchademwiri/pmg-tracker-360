@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { authClient } from '@/lib/auth-client';
+import { checkOrganizationSlugAvailability } from '@/server/organizations';
 import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import { Loader, Check, X, AlertCircle, Eye } from 'lucide-react';
@@ -175,17 +176,17 @@ export function CreateOrganizationForm({
     setSlugValidation('checking');
 
     try {
-      const result = await authClient.organization.checkSlug({ slug });
+      const result = await checkOrganizationSlugAvailability(slug);
 
       if (result.error) {
-        setSlugValidation(isSlugTakenError(result.error) ? 'taken' : 'error');
+        setSlugValidation('error');
         return;
       }
 
-      setSlugValidation(result.data?.status === true ? 'available' : 'error');
+      setSlugValidation(result.available ? 'available' : 'taken');
     } catch (error) {
       console.error('Error checking slug availability:', error);
-      setSlugValidation(isSlugTakenError(error) ? 'taken' : 'error');
+      setSlugValidation('error');
     }
   }, []);
 
@@ -227,6 +228,24 @@ export function CreateOrganizationForm({
 
     setIsLoading(true);
     try {
+      const slugAvailability = await checkOrganizationSlugAvailability(
+        values.slug
+      );
+
+      if (slugAvailability.error) {
+        toast.error(slugAvailability.error);
+        setSlugValidation('error');
+        return;
+      }
+
+      if (!slugAvailability.available) {
+        toast.error(
+          'This organization slug is already taken. Please choose a different one.'
+        );
+        setSlugValidation('taken');
+        return;
+      }
+
       const result = await authClient.organization.create({
         name: values.name,
         slug: values.slug,

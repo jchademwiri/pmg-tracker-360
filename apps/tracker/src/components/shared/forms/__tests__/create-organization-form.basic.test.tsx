@@ -32,10 +32,15 @@ jest.mock('@/lib/auth-client', () => ({
   authClient: {
     organization: {
       create: jest.fn().mockResolvedValue({ data: { id: 'org-1' } }),
-      checkSlug: jest.fn().mockResolvedValue({ data: { status: true } }),
       setActive: jest.fn().mockResolvedValue({ data: { id: 'org-1' } }),
     },
   },
+}));
+
+jest.mock('@/server/organizations', () => ({
+  checkOrganizationSlugAvailability: jest
+    .fn()
+    .mockResolvedValue({ available: true }),
 }));
 
 describe('CreateorganizationForm - Basic Functionality', () => {
@@ -44,12 +49,14 @@ describe('CreateorganizationForm - Basic Functionality', () => {
 
     const { authClient } = require('@/lib/auth-client');
     authClient.organization.create.mockResolvedValue({ data: { id: 'org-1' } });
-    authClient.organization.checkSlug.mockResolvedValue({
-      data: { status: true },
-    });
     authClient.organization.setActive.mockResolvedValue({
       data: { id: 'org-1' },
     });
+
+    const { checkOrganizationSlugAvailability } = require(
+      '@/server/organizations'
+    );
+    checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
   });
 
   describe('Form Rendering', () => {
@@ -306,12 +313,14 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       expect(submitButton).toBeDisabled();
     });
 
-    it('does not mark unavailable slug checks as taken unless the API reports a slug conflict', async () => {
+    it('does not mark unavailable slug checks as taken unless our slug lookup finds a conflict', async () => {
       const user = userEvent.setup();
-      const { authClient } = require('@/lib/auth-client');
-      authClient.organization.checkSlug.mockResolvedValue({
-        data: null,
-        error: { message: 'Unauthorized' },
+      const { checkOrganizationSlugAvailability } = require(
+        '@/server/organizations'
+      );
+      checkOrganizationSlugAvailability.mockResolvedValue({
+        available: false,
+        error: 'Unable to check slug availability right now.',
       });
 
       render(<CreateOrganizationForm />);
@@ -334,6 +343,32 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       expect(
         screen.getByRole('button', { name: /create organization/i })
       ).not.toBeDisabled();
+    });
+
+    it('shows a new database-backed slug as available', async () => {
+      const user = userEvent.setup();
+      const { checkOrganizationSlugAvailability } = require(
+        '@/server/organizations'
+      );
+      checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
+
+      render(<CreateOrganizationForm />);
+
+      const nameInput = screen.getByLabelText(/organization name/i);
+      await user.type(nameInput, 'Livhu and Musa Enterprise');
+
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(/this slug is available/i)
+          ).toBeInTheDocument();
+        },
+        { timeout: 2500 }
+      );
+
+      expect(
+        screen.queryByText(/slug is already taken/i)
+      ).not.toBeInTheDocument();
     });
   });
 
