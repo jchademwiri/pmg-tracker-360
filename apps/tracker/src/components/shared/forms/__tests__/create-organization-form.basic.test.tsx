@@ -31,15 +31,32 @@ jest.mock('sonner', () => ({
 jest.mock('@/lib/auth-client', () => ({
   authClient: {
     organization: {
-      create: jest.fn().mockResolvedValue({}),
-      checkSlug: jest.fn().mockResolvedValue({ data: { status: true } }),
+      create: jest.fn().mockResolvedValue({ data: { id: 'org-1' } }),
+      setActive: jest.fn().mockResolvedValue({ data: { id: 'org-1' } }),
     },
   },
+}));
+
+jest.mock('@/server/organizations', () => ({
+  checkOrganizationSlugAvailability: jest
+    .fn()
+    .mockResolvedValue({ available: true }),
 }));
 
 describe('CreateorganizationForm - Basic Functionality', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    const { authClient } = require('@/lib/auth-client');
+    authClient.organization.create.mockResolvedValue({ data: { id: 'org-1' } });
+    authClient.organization.setActive.mockResolvedValue({
+      data: { id: 'org-1' },
+    });
+
+    const { checkOrganizationSlugAvailability } = require(
+      '@/server/organizations'
+    );
+    checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
   });
 
   describe('Form Rendering', () => {
@@ -270,7 +287,10 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       // Mock a slow API call
       const { authClient } = require('@/lib/auth-client');
       authClient.organization.create.mockImplementation(
-        () => new Promise((resolve) => setTimeout(resolve, 1000))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ data: { id: 'org-1' } }), 1000)
+          )
       );
 
       render(<CreateOrganizationForm />);
@@ -291,6 +311,64 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       // Should show loading state
       expect(screen.getByText(/creating organization/i)).toBeInTheDocument();
       expect(submitButton).toBeDisabled();
+    });
+
+    it('does not mark unavailable slug checks as taken unless our slug lookup finds a conflict', async () => {
+      const user = userEvent.setup();
+      const { checkOrganizationSlugAvailability } = require(
+        '@/server/organizations'
+      );
+      checkOrganizationSlugAvailability.mockResolvedValue({
+        available: false,
+        error: 'Unable to check slug availability right now.',
+      });
+
+      render(<CreateOrganizationForm />);
+
+      const nameInput = screen.getByLabelText(/organization name/i);
+      await user.type(nameInput, 'Network Error Org');
+
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(/unable to check availability right now/i)
+          ).toBeInTheDocument();
+        },
+        { timeout: 2500 }
+      );
+
+      expect(
+        screen.queryByText(/slug is already taken/i)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /create organization/i })
+      ).not.toBeDisabled();
+    });
+
+    it('shows a new database-backed slug as available', async () => {
+      const user = userEvent.setup();
+      const { checkOrganizationSlugAvailability } = require(
+        '@/server/organizations'
+      );
+      checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
+
+      render(<CreateOrganizationForm />);
+
+      const nameInput = screen.getByLabelText(/organization name/i);
+      await user.type(nameInput, 'Livhu and Musa Enterprise');
+
+      await waitFor(
+        () => {
+          expect(
+            screen.getByText(/this slug is available/i)
+          ).toBeInTheDocument();
+        },
+        { timeout: 2500 }
+      );
+
+      expect(
+        screen.queryByText(/slug is already taken/i)
+      ).not.toBeInTheDocument();
     });
   });
 

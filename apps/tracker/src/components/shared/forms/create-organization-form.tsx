@@ -17,8 +17,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { authClient } from '@/lib/auth-client';
+import { checkOrganizationSlugAvailability } from '@/server/organizations';
 import { toast } from 'sonner';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader, Check, X, AlertCircle, Eye } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -54,6 +55,61 @@ type SlugValidationState =
   | 'available'
   | 'taken'
   | 'error';
+
+type AuthErrorLike = {
+  code?: unknown;
+  message?: unknown;
+  status?: unknown;
+  statusText?: unknown;
+};
+
+function getAuthErrorText(error: unknown) {
+  if (!error) return '';
+  if (typeof error === 'string') return error.toLowerCase();
+  if (error instanceof Error) return error.message.toLowerCase();
+
+  if (typeof error === 'object') {
+    const errorLike = error as AuthErrorLike;
+    return [
+      errorLike.code,
+      errorLike.message,
+      errorLike.status,
+      errorLike.statusText,
+    ]
+      .filter((value): value is string | number =>
+        typeof value === 'string' || typeof value === 'number'
+      )
+      .join(' ')
+      .toLowerCase();
+  }
+
+  return '';
+}
+
+function isSlugTakenError(error: unknown) {
+  const errorText = getAuthErrorText(error);
+
+  return (
+    errorText.includes('organization_slug_already_taken') ||
+    errorText.includes('organization_already_exists') ||
+    (errorText.includes('slug') &&
+      (errorText.includes('taken') || errorText.includes('exists')))
+  );
+}
+
+function isOrganizationLimitError(error: unknown) {
+  const errorText = getAuthErrorText(error);
+
+  return (
+    errorText.includes('maximum number of organizations') ||
+    errorText.includes('reached the maximum') ||
+    errorText.includes('not allowed to create') ||
+    errorText.includes(
+      'you_have_reached_the_maximum_number_of_organizations'
+    ) ||
+    errorText.includes('you_are_not_allowed_to_create_a_new_organization')
+  );
+}
 
 interface CreateOrganizationFormProps {
   currentOrganizationCount?: number;
@@ -120,8 +176,14 @@ export function CreateOrganizationForm({
     setSlugValidation('checking');
 
     try {
-      const result = await authClient.organization.checkSlug({ slug });
-      setSlugValidation(result.data?.status ? 'available' : 'taken');
+      const result = await checkOrganizationSlugAvailability(slug);
+
+      if (result.error) {
+        setSlugValidation('error');
+        return;
+      }
+
+      setSlugValidation(result.available ? 'available' : 'taken');
     } catch (error) {
       console.error('Error checking slug availability:', error);
       setSlugValidation('error');
@@ -166,18 +228,42 @@ export function CreateOrganizationForm({
 
     setIsLoading(true);
     try {
+      const slugAvailability = await checkOrganizationSlugAvailability(
+        values.slug
+      );
+
+      if (slugAvailability.error) {
+        toast.error(slugAvailability.error);
+        setSlugValidation('error');
+        return;
+      }
+
+      if (!slugAvailability.available) {
+        toast.error(
+          'This organization slug is already taken. Please choose a different one.'
+        );
+        setSlugValidation('taken');
+        return;
+      }
+
       const result = await authClient.organization.create({
         name: values.name,
         slug: values.slug,
         logo: values.logo || undefined,
       });
 
-      // Set the newly created organization as active
-      if (result.data?.id) {
-        await authClient.organization.setActive({
-          organizationId: result.data.id,
-        });
+      if (result.error) {
+        throw result.error;
       }
+
+      if (!result.data?.id) {
+        throw new Error('Organization creation did not return an id.');
+      }
+
+      // Set the newly created organization as active
+      await authClient.organization.setActive({
+        organizationId: result.data.id,
+      });
 
       // Show success state with animation
       setIsSuccess(true);
@@ -189,27 +275,15 @@ export function CreateOrganizationForm({
     } catch (error: unknown) {
       console.error('Organization creation error:', error);
 
-      // Handle specific error cases
-      if (
-        typeof error === 'object' &&
-        error &&
-        'message' in error &&
-        typeof (error as { message: unknown }).message === 'string'
-      ) {
-        const errorMessage = (
-          error as { message: string }
-        ).message.toLowerCase();
-
-        if (errorMessage.includes('slug')) {
-          toast.error(
-            'This organization slug is already taken. Please choose a different one.'
-          );
-          setSlugValidation('taken');
-        } else if (errorMessage.includes('name')) {
-          toast.error('An organization with this name already exists.');
-        } else {
-          toast.error('Failed to create organization. Please try again.');
-        }
+      if (isSlugTakenError(error)) {
+        toast.error(
+          'This organization slug is already taken. Please choose a different one.'
+        );
+        setSlugValidation('taken');
+      } else if (isOrganizationLimitError(error)) {
+        toast.error(
+          'You have reached your organization limit for your current plan.'
+        );
       } else {
         toast.error('Failed to create organization. Please try again.');
       }
@@ -243,7 +317,7 @@ export function CreateOrganizationForm({
       case 'taken':
         return 'This slug is already taken';
       case 'error':
-        return 'Error checking availability';
+        return 'Unable to check availability right now. You can still try creating the organization.';
       default:
         return null;
     }

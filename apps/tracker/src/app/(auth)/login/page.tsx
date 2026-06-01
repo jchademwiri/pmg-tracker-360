@@ -1,11 +1,22 @@
 import { LoginForm } from '@/components/forms';
+import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Login to your Account',
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-linear-to-b from-secondary/40 via-background to-background p-6 md:p-10">
       {/* Decorative background accents */}
