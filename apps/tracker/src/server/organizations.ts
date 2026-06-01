@@ -21,6 +21,39 @@ export interface OrganizationWithStats extends Organization {
   lastActivity?: Date;
 }
 
+export async function checkOrganizationSlugAvailability(slug: string) {
+  const normalizedSlug = slug.trim().toLowerCase();
+
+  if (
+    normalizedSlug.length < 2 ||
+    normalizedSlug.length > 50 ||
+    !/^[a-z0-9-]+$/.test(normalizedSlug) ||
+    normalizedSlug.startsWith('-') ||
+    normalizedSlug.endsWith('-')
+  ) {
+    return {
+      available: false,
+      error: 'Please enter a valid organization slug.',
+    };
+  }
+
+  try {
+    const existingOrganization = await db
+      .select({ id: organization.id })
+      .from(organization)
+      .where(eq(organization.slug, normalizedSlug))
+      .limit(1);
+
+    return { available: existingOrganization.length === 0 };
+  } catch (error) {
+    console.error('Error checking organization slug availability:', error);
+    return {
+      available: false,
+      error: 'Unable to check slug availability right now.',
+    };
+  }
+}
+
 export async function getorganizations(): Promise<OrganizationWithStats[]> {
   try {
     const { currentUser } = await getCurrentUser();
