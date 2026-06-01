@@ -19,6 +19,57 @@ const senderName = process.env.SENDER_NAME || 'Tender Track 360';
 const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
 const SENDER = `${senderName} <${senderEmail}>`;
 const REPLY_TO = process.env.REPLY_TO_EMAIL || 'info@contact.tendertrack360.co.za';
+const TRACKER_PRODUCTION_URL = 'https://tendertrack360.co.za';
+const LOCAL_AUTH_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+
+function getNonLocalOrigin(value?: string) {
+  if (!value) return null;
+
+  try {
+    const url = new URL(
+      value.startsWith('http://') || value.startsWith('https://')
+        ? value
+        : `https://${value}`
+    );
+
+    if (LOCAL_AUTH_HOSTNAMES.has(url.hostname)) {
+      return null;
+    }
+
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function getPublicEmailOrigin() {
+  return (
+    getNonLocalOrigin(env.NEXT_PUBLIC_URL) ||
+    getNonLocalOrigin(env.BETTER_AUTH_URL) ||
+    getNonLocalOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
+    getNonLocalOrigin(process.env.VERCEL_URL) ||
+    (process.env.NODE_ENV === 'production' ? TRACKER_PRODUCTION_URL : null)
+  );
+}
+
+function getPublicAuthEmailUrl(url: string) {
+  const publicOrigin = getPublicEmailOrigin();
+  if (!publicOrigin) return url;
+
+  try {
+    const authUrl = new URL(url);
+    if (!LOCAL_AUTH_HOSTNAMES.has(authUrl.hostname)) {
+      return url;
+    }
+
+    return new URL(
+      `${authUrl.pathname}${authUrl.search}${authUrl.hash}`,
+      publicOrigin
+    ).toString();
+  } catch {
+    return url;
+  }
+}
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
@@ -105,7 +156,7 @@ export const auth = betterAuth({
         replyTo: REPLY_TO,
         react: VerifyEmail({
           username: user.name,
-          verificationUrl: url,
+          verificationUrl: getPublicAuthEmailUrl(url),
         }),
       });
     },
@@ -125,7 +176,7 @@ export const auth = betterAuth({
           replyTo: REPLY_TO,
           react: ResetPasswordEmail({
             username: user.name,
-            resetUrl: url,
+            resetUrl: getPublicAuthEmailUrl(url),
             userEmail: user.email,
           }),
         });
@@ -146,7 +197,8 @@ export const auth = betterAuth({
       sendMagicLink: async ({ email, url, token }) => {
         try {
           const otp = Math.floor(100000 + Math.random() * 900000).toString();
-          
+          const magicLinkUrl = getPublicAuthEmailUrl(url);
+
           await db.insert(schema.verification).values({
             id: crypto.randomUUID(),
             identifier: `otp-map:${email.toLowerCase()}:${otp}`,
@@ -165,24 +217,24 @@ export const auth = betterAuth({
                   <h2 style="color: #0f172a; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.025em;">Tender Track 360</h2>
                   <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Platform Sign-In Verification</p>
                 </div>
-                
+
                 <p style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0; text-align: center;">Click the button below to sign in instantly on this device, or use the 6-digit verification code below if you are logging in on another device.</p>
-                
+
                 <div style="text-align: center; margin: 24px 0;">
-                  <a href="${url}" style="background-color: #0f172a; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 14px;">Sign In Instantly</a>
+                  <a href="${magicLinkUrl}" style="background-color: #0f172a; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 14px;">Sign In Instantly</a>
                 </div>
-                
+
                 <div style="position: relative; margin: 32px 0; text-align: center;">
                   <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 0;" />
                   <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #ffffff; padding: 0 12px; color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Or Use Passcode</span>
                 </div>
-                
+
                 <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; text-align: center; border: 1px dashed #cbd5e1;">
                   <p style="color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px 0;">Verification Code</p>
                   <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 32px; font-weight: 800; letter-spacing: 0.25em; color: #0f172a; padding-left: 0.25em;">${otp}</div>
                   <p style="color: #94a3b8; font-size: 11px; margin: 8px 0 0 0;">Expires in 10 minutes</p>
                 </div>
-                
+
                 <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 32px 0 0 0; line-height: 1.5;">If you did not request this verification email, you can safely ignore it.</p>
               </div>
             `,
