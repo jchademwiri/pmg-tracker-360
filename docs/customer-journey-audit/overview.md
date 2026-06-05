@@ -89,10 +89,11 @@ flowchart TD
 This audit report is divided into several sections for detailed reading:
 
 1. **[Overview (README.md)](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/overview.md)**: This summary page.
-2. **[Detailed Audit Findings](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/audit-findings.md)**: A step-by-step breakdown of every step in the journey, code auditing, security checks, and logic errors.
-3. **[UI/UX Assessment & Recommendations](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/ui-ux-assessment.md)**: Evaluation of the UI/UX flows, ZAR currency formatting, feedback loops, responsiveness, and aesthetic updates.
-4. **[Proposed Technical Solutions](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/proposed-solutions.md)**: Detailed code templates, database schemas, and migration path snippets to resolve all audited issues.
-5. **[Link Analysis Report](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/link-analysis.md)**: An automated scan validating all internal references, files, and paths.
+2. **[Product & Architecture Audit](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/product-architecture-audit.md)**: Introduction to PMG Tracker 360, the core problems it solves, its modules, and a roadmap of recommended future modules (Invoices, Checklists, Calendar, etc.).
+3. **[Detailed Audit Findings](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/audit-findings.md)**: A step-by-step breakdown of every step in the journey, code auditing, security checks, and logic errors.
+4. **[UI/UX Assessment & Recommendations](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/ui-ux-assessment.md)**: Evaluation of the UI/UX flows, ZAR currency formatting, feedback loops, responsiveness, and aesthetic updates.
+5. **[Proposed Technical Solutions](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/proposed-solutions.md)**: Detailed code templates, database schemas, and migration path snippets to resolve all audited issues.
+6. **[Link Analysis Report](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/link-analysis.md)**: An automated scan validating all internal references, files, and paths.
 
 ---
 
