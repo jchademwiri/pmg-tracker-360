@@ -32,6 +32,7 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
+    '<rootDir>/tests-e2e/',
     ...(process.env.RUN_INTEGRATION_TESTS === 'true'
       ? []
       : integrationTestPatterns),

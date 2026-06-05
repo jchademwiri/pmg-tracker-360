@@ -223,7 +223,7 @@ export const updateUserImage = async (formData: FormData) => {
       }
     }
 
-    revalidatePath('/dashboard/settings/profile');
+    revalidatePath('/settings/profile');
 
     // Return signed URL for immediate display
     const signedUrl = await StorageService.getSignedUrl(storageKey);

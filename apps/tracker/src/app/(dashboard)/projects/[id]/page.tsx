@@ -71,7 +71,7 @@ export default async function ProjectDetailPage({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard/projects">
+          <Link href="/projects">
             <Button variant="ghost" size="sm" className="cursor-pointer">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Projects
@@ -84,7 +84,7 @@ export default async function ProjectDetailPage({
             {project.projectNumber.toUpperCase()}
           </h1>
 
-          <Link href={`/dashboard/projects/${id}/edit`}>
+          <Link href={`/projects/${id}/edit`}>
             <Button variant="outline" className="cursor-pointer">
               <Edit className="h-4 w-4 mr-2" />
               Edit Project
@@ -231,7 +231,7 @@ export default async function ProjectDetailPage({
               <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Link href={`/dashboard/projects/${id}/edit`}>
+              <Link href={`/projects/${id}/edit`}>
                 <Button
                   variant="outline"
                   className="w-full justify-start cursor-pointer"

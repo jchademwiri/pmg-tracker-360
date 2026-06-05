@@ -155,7 +155,7 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       // Should show URL preview
       await waitFor(() => {
         expect(
-          screen.getByText('/dashboard/settings/organization/test-org')
+          screen.getByText('/organization/test-org')
         ).toBeInTheDocument();
       });
     });

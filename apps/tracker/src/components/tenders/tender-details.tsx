@@ -91,7 +91,7 @@ export function TenderDetails({
   const [isPending, startTransition] = useTransition();
 
   const handleEdit = () => {
-    router.push(`/dashboard/tenders/${tender.id}/edit`);
+    router.push(`/tenders/${tender.id}/edit`);
   };
 
   const handleDelete = async () => {
@@ -106,7 +106,7 @@ export function TenderDetails({
     startTransition(async () => {
       const result = await deleteTender(organizationId, tender.id);
       if (result.success) {
-        router.push('/dashboard/tenders');
+        router.push('/tenders');
         router.refresh();
       } else {
         alert(result.error || 'Failed to delete tender');
@@ -123,7 +123,7 @@ export function TenderDetails({
       });
       if (result.success) {
         if (newStatus === 'awarded' && result.projectId) {
-          router.push(`/dashboard/projects/${result.projectId}/edit`);
+          router.push(`/projects/${result.projectId}/edit`);
         } else {
           router.refresh();
         }
@@ -134,7 +134,7 @@ export function TenderDetails({
   };
 
   const handleBack = () => {
-    router.push('/dashboard/tenders');
+    router.push('/tenders');
   };
 
   const formatDate = (date: Date | null) => {
@@ -326,7 +326,7 @@ export function TenderDetails({
                             {tender.client.name}
                           </p>
                         </div>
-                        <Link href={`/dashboard/clients/${tender.client.id}`}>
+                        <Link href={`/clients/${tender.client.id}`}>
                           <Button
                             variant="outline"
                             size="sm"

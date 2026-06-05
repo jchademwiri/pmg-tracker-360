@@ -68,13 +68,13 @@ export default async function PurchaseOrdersPage({
         </div>
         <div className="flex gap-2">
           <Button asChild size={'lg'}>
-            <Link href="/dashboard/projects/create">
+            <Link href="/projects/create">
               <Plus className="h-4 w-4 mr-2" />
               Add Project
             </Link>
           </Button>
           <Button asChild size={'lg'}>
-            <Link href="/dashboard/projects/purchase-orders/create">
+            <Link href="/projects/purchase-orders/create">
               <Plus className="h-4 w-4 mr-2" />
               Add Purchase Order
             </Link>

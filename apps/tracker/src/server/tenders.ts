@@ -43,7 +43,7 @@ async function autoCreateProjectForTender(
       updatedAt: new Date(),
     });
 
-    revalidatePath('/dashboard/projects');
+    revalidatePath('/projects');
     return projectId;
   } catch (err) {
     console.error('Failed to auto create project for tender:', err);
@@ -193,7 +193,7 @@ export async function createTender(
       projectId = await autoCreateProjectForTender(organizationId, newTender[0].id, newTender[0]);
     }
 
-    revalidatePath('/dashboard/tenders');
+    revalidatePath('/tenders');
     return { success: true, tender: newTender[0], projectId };
   } catch (error) {
     console.error('Error creating tender:', error);
@@ -343,8 +343,8 @@ export async function updateTender(
       });
     }
 
-    revalidatePath('/dashboard/tenders');
-    revalidatePath(`/dashboard/tenders/${tenderId}`);
+    revalidatePath('/tenders');
+    revalidatePath(`/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0], projectId };
   } catch (error) {
     console.error('Error updating tender:', error);
@@ -400,8 +400,8 @@ export async function updateTenderStatus(
       projectId = await autoCreateProjectForTender(organizationId, tenderId, existingTender[0]);
     }
 
-    revalidatePath('/dashboard/tenders');
-    revalidatePath(`/dashboard/tenders/${tenderId}`);
+    revalidatePath('/tenders');
+    revalidatePath(`/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0], projectId };
   } catch (error) {
     console.error('Error updating tender status:', error);
@@ -459,7 +459,7 @@ export async function deleteTender(organizationId: string, tenderId: string) {
       })
       .where(eq(tender.id, tenderId));
 
-    revalidatePath('/dashboard/tenders');
+    revalidatePath('/tenders');
     return { success: true, message: 'Tender deleted successfully' };
   } catch (error) {
     console.error('Error deleting tender:', error);

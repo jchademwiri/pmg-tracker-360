@@ -72,7 +72,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/tenders/create">
+            <Link href="/tenders/create">
               <Plus className="mr-2 h-4 w-4" />
               Create Tender
             </Link>
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
             })
           ).success && (
             <Button variant="outline" size="sm" asChild>
-              <Link href="/dashboard/projects/purchase-orders/create">
+              <Link href="/projects/purchase-orders/create">
                 <Plus className="mr-2 h-4 w-4" />
                 Create PO
               </Link>
@@ -106,14 +106,14 @@ export default async function DashboardPage() {
             })
           ).success && (
             <Button variant="outline" size="sm" asChild>
-              <Link href="/dashboard/projects/create">
+              <Link href="/projects/create">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Project
               </Link>
             </Button>
           )}
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/clients/create">
+            <Link href="/clients/create">
               <Plus className="mr-2 h-4 w-4" />
               Create Client
             </Link>

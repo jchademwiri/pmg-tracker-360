@@ -178,7 +178,7 @@ export async function createProject(
       })
       .returning();
 
-    revalidatePath('/dashboard/projects');
+    revalidatePath('/projects');
     return { success: true, project: newProject[0] };
   } catch (error) {
     console.error('Error creating project:', error);
@@ -514,8 +514,8 @@ export async function updateProject(
       .where(eq(project.id, projectId))
       .returning();
 
-    revalidatePath('/dashboard/projects');
-    revalidatePath(`/dashboard/projects/${projectId}`);
+    revalidatePath('/projects');
+    revalidatePath(`/projects/${projectId}`);
     return { success: true, project: updatedProject[0] };
   } catch (error) {
     console.error('Error updating project:', error);
@@ -566,8 +566,8 @@ export async function updateProjectStatus(
       .where(eq(project.id, projectId))
       .returning();
 
-    revalidatePath('/dashboard/projects');
-    revalidatePath(`/dashboard/projects/${projectId}`);
+    revalidatePath('/projects');
+    revalidatePath(`/projects/${projectId}`);
     return { success: true, project: updatedProject[0] };
   } catch (error) {
     console.error('Error updating project status:', error);
@@ -630,7 +630,7 @@ export async function deleteProject(organizationId: string, projectId: string) {
       })
       .where(eq(project.id, projectId));
 
-    revalidatePath('/dashboard/projects');
+    revalidatePath('/projects');
     return { success: true, message: 'Project deleted successfully' };
   } catch (error) {
     console.error('Error deleting project:', error);

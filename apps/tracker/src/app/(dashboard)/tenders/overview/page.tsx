@@ -101,7 +101,7 @@ export default async function TendersOverviewPage() {
           </p>
         </div>
         <Button asChild size={'lg'}>
-          <Link href="/dashboard/tenders/create">
+          <Link href="/tenders/create">
             <Plus className="h-4 w-4 mr-2" />
             Add Tender
           </Link>

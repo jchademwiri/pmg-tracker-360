@@ -161,13 +161,13 @@ export async function uploadDocument(
 
     // 6. Revalidate
     if (linkedEntity?.tenderId) {
-      revalidatePath(`/dashboard/tenders/${linkedEntity.tenderId}`);
+      revalidatePath(`/tenders/${linkedEntity.tenderId}`);
     } else if (linkedEntity?.projectId) {
-      revalidatePath(`/dashboard/projects/${linkedEntity.projectId}`);
+      revalidatePath(`/projects/${linkedEntity.projectId}`);
     } else if (linkedEntity?.purchaseOrderId) {
       // Assuming route for PO details
       revalidatePath(
-        `/dashboard/projects/purchase-orders/${linkedEntity.purchaseOrderId}`
+        `/projects/purchase-orders/${linkedEntity.purchaseOrderId}`
       );
     }
 
@@ -254,9 +254,9 @@ export async function deleteDocument(
     // 4. Delete from DB
     await db.delete(document).where(eq(document.id, documentId));
 
-    revalidatePath('/dashboard/tenders');
+    revalidatePath('/tenders');
     if (docToDelete.tenderId)
-      revalidatePath(`/dashboard/tenders/${docToDelete.tenderId}`);
+      revalidatePath(`/tenders/${docToDelete.tenderId}`);
 
     return { success: true, message: 'Document deleted' };
   } catch (error) {

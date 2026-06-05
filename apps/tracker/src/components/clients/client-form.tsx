@@ -61,7 +61,7 @@ export function ClientForm({ organizationId, client, mode }: ClientFormProps) {
         }
 
         if (result?.success) {
-          router.push('/dashboard/clients');
+          router.push('/clients');
           router.refresh();
         } else {
           setError(result?.error || 'An error occurred');

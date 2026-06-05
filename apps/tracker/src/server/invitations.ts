@@ -195,7 +195,7 @@ export async function inviteMember(
     }
 
     // Revalidate the organization page to show updated data
-    revalidatePath(`/organizations/${userMembership.organization.slug}`);
+    revalidatePath(`/organization/${userMembership.organization.slug}`);
 
     return {
       success: true,
@@ -285,7 +285,7 @@ export async function cancelInvitation(
       .where(eq(invitation.id, invitationId));
 
     // Revalidate the organization page
-    revalidatePath(`/organizations/${userMembership.organization.slug}`);
+    revalidatePath(`/organization/${userMembership.organization.slug}`);
 
     return {
       success: true,
@@ -425,7 +425,7 @@ export async function resendInvitation(
     }
 
     // Revalidate the organization page
-    revalidatePath(`/organizations/${userMembership.organization.slug}`);
+    revalidatePath(`/organization/${userMembership.organization.slug}`);
 
     return {
       success: true,
@@ -526,7 +526,7 @@ export async function bulkCancelInvitations(
         where: eq(organization.id, orgId),
       });
       if (org?.slug) {
-        revalidatePath(`/organizations/${org.slug}`);
+        revalidatePath(`/organization/${org.slug}`);
       }
     }
 
@@ -644,7 +644,7 @@ export async function bulkRemoveMembers(
         where: eq(organization.id, orgId),
       });
       if (org?.slug) {
-        revalidatePath(`/organizations/${org.slug}`);
+        revalidatePath(`/organization/${org.slug}`);
       }
     }
 

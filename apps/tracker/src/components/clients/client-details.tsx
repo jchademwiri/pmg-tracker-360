@@ -37,7 +37,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleEdit = () => {
-    router.push(`/dashboard/clients/${client.id}/edit`);
+    router.push(`/clients/${client.id}/edit`);
   };
 
   const handleDelete = async () => {
@@ -52,7 +52,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
     startTransition(async () => {
       const result = await deleteClient(organizationId, client.id);
       if (result.success) {
-        router.push('/dashboard/clients');
+        router.push('/clients');
         router.refresh();
       } else {
         alert(result.error || 'Failed to delete client');
@@ -61,7 +61,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
   };
 
   const handleBack = () => {
-    router.push('/dashboard/clients');
+    router.push('/clients');
   };
 
   const formatDate = (date: Date) => {

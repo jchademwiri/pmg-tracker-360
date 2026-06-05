@@ -197,8 +197,8 @@ export async function createPurchaseOrder(
       })
       .returning();
 
-    revalidatePath('/dashboard/projects/purchase-orders');
-    revalidatePath(`/dashboard/projects/${validatedData.projectId}`);
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/${validatedData.projectId}`);
     return { success: true, purchaseOrder: newPurchaseOrder[0] };
   } catch (error) {
     console.error('Error creating purchase order:', error);
@@ -379,10 +379,10 @@ export async function updatePurchaseOrder(
       .where(eq(purchaseOrder.id, poId))
       .returning();
 
-    revalidatePath('/dashboard/projects/purchase-orders');
-    revalidatePath(`/dashboard/projects/purchase-orders/${poId}`);
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${poId}`);
     if (existingPO[0].projectId) {
-      revalidatePath(`/dashboard/projects/${existingPO[0].projectId}`);
+      revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, purchaseOrder: updatedPO[0] };
   } catch (error) {
@@ -466,10 +466,10 @@ export async function updatePurchaseOrderStatus(
       .where(eq(purchaseOrder.id, poId))
       .returning();
 
-    revalidatePath('/dashboard/projects/purchase-orders');
-    revalidatePath(`/dashboard/projects/purchase-orders/${poId}`);
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${poId}`);
     if (existingPO[0].projectId) {
-      revalidatePath(`/dashboard/projects/${existingPO[0].projectId}`);
+      revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, purchaseOrder: updatedPO[0] };
   } catch (error) {
@@ -535,9 +535,9 @@ export async function deletePurchaseOrder(
       })
       .where(eq(purchaseOrder.id, poId));
 
-    revalidatePath('/dashboard/projects/purchase-orders');
+    revalidatePath('/projects/purchase-orders');
     if (existingPO[0].projectId) {
-      revalidatePath(`/dashboard/projects/${existingPO[0].projectId}`);
+      revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, message: 'Purchase order deleted successfully' };
   } catch (error) {

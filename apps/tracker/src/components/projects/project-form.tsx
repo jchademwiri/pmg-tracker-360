@@ -197,7 +197,7 @@ export function ProjectForm({
         }
 
         if (result?.success) {
-          router.push('/dashboard/projects');
+          router.push('/projects');
           router.refresh();
         } else {
           setError(result?.error || 'An error occurred');

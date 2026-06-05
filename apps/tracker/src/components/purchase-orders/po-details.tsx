@@ -69,7 +69,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleEdit = () => {
-    router.push(`/dashboard/projects/purchase-orders/${po.id}/edit`);
+    router.push(`/projects/purchase-orders/${po.id}/edit`);
   };
 
   const handleDelete = async () => {
@@ -84,7 +84,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
     startTransition(async () => {
       const result = await deletePurchaseOrder(organizationId, po.id);
       if (result.success) {
-        router.push('/dashboard/projects/purchase-orders');
+        router.push('/projects/purchase-orders');
         router.refresh();
       } else {
         alert(result.error || 'Failed to delete purchase order');
@@ -108,7 +108,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
   };
 
   const handleBack = () => {
-    router.push('/dashboard/projects/purchase-orders');
+    router.push('/projects/purchase-orders');
   };
 
   const formatDate = (date: Date | null) => {

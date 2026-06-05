@@ -128,7 +128,7 @@ export function ClientList({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Clients</CardTitle>
-          <Link href="/dashboard/clients/create">
+          <Link href="/clients/create">
             <Button asChild>
               <Plus className="h-4 w-4 mr-2" />
               Add Client
@@ -169,7 +169,7 @@ export function ClientList({
                 : 'Get started by adding your first client.'}
             </p>
             {!searchQuery && (
-              <Link href="/dashboard/clients/create">
+              <Link href="/clients/create">
                 <Button asChild>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Client
@@ -197,7 +197,7 @@ export function ClientList({
                       key={client.id}
                       className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
                       onClick={() =>
-                        router.push(`/dashboard/clients/${client.id}`)
+                        router.push(`/clients/${client.id}`)
                       }
                     >
                       <TableCell>
@@ -262,7 +262,7 @@ export function ClientList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/dashboard/clients/${client.id}`);
+                                router.push(`/clients/${client.id}`);
                               }}
                             >
                               View Details
@@ -271,7 +271,7 @@ export function ClientList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/dashboard/clients/${client.id}/edit`
+                                  `/clients/${client.id}/edit`
                                 );
                               }}
                             >
@@ -302,7 +302,7 @@ export function ClientList({
                 <Card
                   key={client.id}
                   className="cursor-pointer md:hover:bg-gray-50/30 md:transition-colors md:duration-200 group rounded-lg border md:hover:border-gray-200"
-                  onClick={() => router.push(`/dashboard/clients/${client.id}`)}
+                  onClick={() => router.push(`/clients/${client.id}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -358,7 +358,7 @@ export function ClientList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/dashboard/clients/${client.id}`);
+                              router.push(`/clients/${client.id}`);
                             }}
                           >
                             View Details
@@ -367,7 +367,7 @@ export function ClientList({
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(
-                                `/dashboard/clients/${client.id}/edit`
+                                `/clients/${client.id}/edit`
                               );
                             }}
                           >
