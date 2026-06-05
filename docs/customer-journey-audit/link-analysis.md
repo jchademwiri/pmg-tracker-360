@@ -1,16 +1,16 @@
 # PMG Tracker 360: Documentation Link Analysis Report
 
-**Generated on:** 2026-06-05T04:25:57.901Z
+**Generated on:** 2026-06-05T04:50:35.901Z
 **Status:** 🟢 ALL INTERNAL LINKS SECURED
 
 ## Summary Matrix
 
 | Link Category | Count | Status |
 | :--- | :---: | :--- |
-| Valid Internal Links | 48 | 🟢 OK |
+| Valid Internal Links | 68 | 🟢 OK |
 | Broken Internal Links | 0 | 🟢 None |
-| Unchecked External Links | 72 | 🟡 External (not verified) |
-| **Total Checked** | **120** | |
+| Unchecked External Links | 96 | 🟡 External (not verified) |
+| **Total Checked** | **164** | |
 
 ## 🟢 Broken Links Details
 
@@ -29,6 +29,9 @@ No broken internal links were found in the scanned documentation directories.
 | `docs\customer-journey-audit\audit-findings.md` | "organization-selector.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/organization-selector.tsx` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "create-organization-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/create-organization-form.tsx#L475-L484` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "overview/page.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/settings/overview/page.tsx` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "actions.ts" | `file:///D:/websites/pmg-tracker-360/apps/admin/src/app/actions.ts#L152-L205` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "auth.ts" | `file:///D:/websites/pmg-tracker-360/apps/admin/src/lib/auth.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "users.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/users.ts#L12-L35` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "clients.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/clients.ts` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "schema.ts" | `file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "clients.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/clients.ts` | `file_url` | 🟢 valid |
@@ -50,6 +53,15 @@ No broken internal links were found in the scanned documentation directories.
 | `docs\customer-journey-audit\audit-findings.md` | "documents.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/documents.ts` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "documents.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/documents.ts#L182` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\audit-findings.md` | "po-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/purchase-orders/po-form.tsx#L289-L320` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "robots.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "sitemap.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/sitemap.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "robots.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "sitemap.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/sitemap.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "layout.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/layout.tsx#L9-L27` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "MainDashboardLayout" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/layout.tsx#L22` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "dashboard/page.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/dashboard/page.tsx#L50` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "dashboard/page.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/dashboard/page.tsx#L80-L114` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\audit-findings.md` | "schema.ts" | `file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\overview.md` | "Overview (README.md)" | `file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/overview.md` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\overview.md` | "Detailed Audit Findings" | `file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/audit-findings.md` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\overview.md` | "UI/UX Assessment & Recommendations" | `file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/ui-ux-assessment.md` | `file_url` | 🟢 valid |
@@ -65,14 +77,46 @@ No broken internal links were found in the scanned documentation directories.
 | `docs\customer-journey-audit\proposed-solutions.md` | "create-organization-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/create-organization-form.tsx` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\proposed-solutions.md` | "po-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/purchase-orders/po-form.tsx` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\proposed-solutions.md` | "schema.ts" | `file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\proposed-solutions.md` | "layout.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/layout.tsx` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\proposed-solutions.md` | "extension-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/extension-form.tsx` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\proposed-solutions.md` | "actions.ts" | `file:///D:/websites/pmg-tracker-360/apps/admin/src/app/actions.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\proposed-solutions.md` | "auth.ts" | `file:///D:/websites/pmg-tracker-360/apps/admin/src/lib/auth.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\proposed-solutions.md` | "users.ts" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/users.ts` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\proposed-solutions.md` | "schema.ts" | `file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\ui-ux-assessment.md` | "globals.css" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/globals.css` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\ui-ux-assessment.md` | "tender-details.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-details.tsx` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\ui-ux-assessment.md` | "tender-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx#L399` | `file_url` | 🟢 valid |
 | `docs\customer-journey-audit\ui-ux-assessment.md` | "tender-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx` | `file_url` | 🟢 valid |
+| `docs\customer-journey-audit\ui-ux-assessment.md` | "extension-form.tsx" | `file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/extension-form.tsx#L70-L81` | `file_url` | 🟢 valid |
 
 ## 🌐 External Links Log (Unchecked)
 
 | Source File | Link Text | External URL |
 | :--- | :--- | :--- |
+| `docs\customer-journey-audit\link-analysis.md` | "https://nextjs.org/" | [https://nextjs.org/](https://nextjs.org/) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://nextjs.org/" | [https://nextjs.org/](https://nextjs.org/) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://www.typescriptlang.org/" | [https://www.typescriptlang.org/](https://www.typescriptlang.org/) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://www.typescriptlang.org/" | [https://www.typescriptlang.org/](https://www.typescriptlang.org/) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://eslint.org/" | [https://eslint.org/](https://eslint.org/) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://prettier.io" | [https://prettier.io](https://prettier.io) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/getting-started/installation#global-installation" | [https://turborepo.dev/docs/getting-started/installation#global-installation](https://turborepo.dev/docs/getting-started/installation#global-installation) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters" | [https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/getting-started/installation#global-installation" | [https://turborepo.dev/docs/getting-started/installation#global-installation](https://turborepo.dev/docs/getting-started/installation#global-installation) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/getting-started/installation#global-installation" | [https://turborepo.dev/docs/getting-started/installation#global-installation](https://turborepo.dev/docs/getting-started/installation#global-installation) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters" | [https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/getting-started/installation#global-installation" | [https://turborepo.dev/docs/getting-started/installation#global-installation](https://turborepo.dev/docs/getting-started/installation#global-installation) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache" | [https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/core-concepts/remote-caching" | [https://turborepo.dev/docs/core-concepts/remote-caching](https://turborepo.dev/docs/core-concepts/remote-caching) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://vercel.com/signup?utm_source=turborepo-examples" | [https://vercel.com/signup?utm_source=turborepo-examples](https://vercel.com/signup?utm_source=turborepo-examples) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/getting-started/installation#global-installation" | [https://turborepo.dev/docs/getting-started/installation#global-installation](https://turborepo.dev/docs/getting-started/installation#global-installation) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://vercel.com/docs/concepts/personal-accounts/overview" | [https://vercel.com/docs/concepts/personal-accounts/overview](https://vercel.com/docs/concepts/personal-accounts/overview) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/getting-started/installation#global-installation" | [https://turborepo.dev/docs/getting-started/installation#global-installation](https://turborepo.dev/docs/getting-started/installation#global-installation) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/crafting-your-repository/running-tasks" | [https://turborepo.dev/docs/crafting-your-repository/running-tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/crafting-your-repository/caching" | [https://turborepo.dev/docs/crafting-your-repository/caching](https://turborepo.dev/docs/crafting-your-repository/caching) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/core-concepts/remote-caching" | [https://turborepo.dev/docs/core-concepts/remote-caching](https://turborepo.dev/docs/core-concepts/remote-caching) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters" | [https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/reference/configuration" | [https://turborepo.dev/docs/reference/configuration](https://turborepo.dev/docs/reference/configuration) |
+| `docs\customer-journey-audit\link-analysis.md` | "https://turborepo.dev/docs/reference/command-line-reference" | [https://turborepo.dev/docs/reference/command-line-reference](https://turborepo.dev/docs/reference/command-line-reference) |
 | `docs\customer-journey-audit\link-analysis.md` | "https://nextjs.org/" | [https://nextjs.org/](https://nextjs.org/) |
 | `docs\customer-journey-audit\link-analysis.md` | "https://nextjs.org/" | [https://nextjs.org/](https://nextjs.org/) |
 | `docs\customer-journey-audit\link-analysis.md` | "https://www.typescriptlang.org/" | [https://www.typescriptlang.org/](https://www.typescriptlang.org/) |

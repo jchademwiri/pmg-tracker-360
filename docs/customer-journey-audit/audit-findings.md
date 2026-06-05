@@ -48,6 +48,21 @@ In the organization creation form, [create-organization-form.tsx](file:///D:/web
 In [overview/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/settings/overview/page.tsx), the server page component renders without validating the user session. 
 * **The Bug**: Unlike other settings pages, this page completely omits a call to `getCurrentUser()`. While it currently displays static layouts and mock settings data (e.g. Profile completion 85%), this lack of authorization gate exposes the route structure to unauthenticated sessions.
 
+#### 5. Critical Privilege Escalation in Admin Console (`createSystemAdmin`)
+In [actions.ts](file:///D:/websites/pmg-tracker-360/apps/admin/src/app/actions.ts#L152-L205), the public server action `createSystemAdmin` is exposed as an HTTP endpoint.
+* **The Bug**: While the setup page at `/setup` redirects users to `/login` if at least one administrator exists in the system, the server action `createSystemAdmin` itself performs no validation on the caller or database state.
+* **The Vulnerability**: Any unauthenticated client can send a direct POST request to invoke `createSystemAdmin` with a custom email and password. This will register a new user and escalate their role to `admin` (or promote an existing user to `admin`), completely bypassing initial setup guards and granting unauthorized full access to the admin console.
+
+#### 6. Missing Admin CSRF and Trusted Origins Configuration
+In [auth.ts](file:///D:/websites/pmg-tracker-360/apps/admin/src/lib/auth.ts), the Better Auth configuration does not specify a `trustedOrigins` parameter.
+* **The Bug**: Unlike the tracker app, the admin app lacks a list of trusted origins.
+* **The Vulnerability**: In cross-subdomain settings, Better Auth checks request origins against trusted origins for CSRF validation. The absence of `trustedOrigins` can result in CSRF protection bypasses or unexpected origin blockages during cross-subdomain redirections between the main site (`tendertrack360.co.za`) and the admin subdomain (`admin.tendertrack360.co.za`).
+
+#### 7. Session Caching and Redundant Database Queries (Performance Vulnerability)
+In [users.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/users.ts#L12-L35), the `getCurrentUser` server action retrieves the user session by calling `auth.api.getSession` and then queries the database for the user record.
+* **The Bug**: Neither the tracker app nor the admin app configures session caching (e.g. secondary storage like Redis/KV or cookieCache strategies). Furthermore, `getCurrentUser()` is called repeatedly across multiple React Server Components and layouts during a single page request cycle, but it is not wrapped in React's `cache` wrapper.
+* **The Impact**: This triggers redundant database roundtrips to retrieve the session and user data multiple times per page load, causing a performance bottleneck and exposing the application database to denial of service under modest traffic volumes.
+
 ---
 
 ## Phase 2: Client Management
@@ -188,6 +203,80 @@ Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tr
 
 ---
 
+## Phase 7: Performance and Technical SEO Audit
+
+### Current Implementation:
+* **Robots & Sitemap**: Basic [robots.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.ts) and [sitemap.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/sitemap.ts) exist but hardcode the production domain (`https://tendertrack360.co.za`) and fail to handle dynamic or missing routes.
+* **Layouts and Pages**: Set to `force-dynamic` in layout files (e.g. `layout.tsx` in `(dashboard)`) and all page components.
+* **SEO Metadata**: Configured in root layout and root landing page, referencing OpenGraph parameters.
+* **Query Deduplication**: Server calls (`checkUserSession()`, `getTenderStats()`, etc.) are imported directly into RSCs.
+
+### Gaps and Issues:
+
+#### 1. Private Route Crawl Vulnerabilities (Technical SEO Gap)
+The [robots.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.ts) configuration disallows `/dashboard/` and `/api/`. However, the app structure puts many authenticated panels at the root level using the `(dashboard)` route group:
+* `/clients` (Clients Directory)
+* `/tenders` and `/tenders/overview` (Tender Pipeline)
+* `/projects` and `/projects/purchase-orders` (Project Tracking)
+* `/calendar` (Calendar)
+* `/reports` (Reports)
+* `/settings/profile`, `/settings/notifications`, `/settings/overview` (Settings Pages)
+* `/organization` (Organization Management)
+* **The Bug**: These private routes are **NOT disallowed** in `robots.ts`. Search engine crawlers can attempt to crawl these internal routes. While they are auth-guarded and will redirect to `/login`, they cause unnecessary crawling overhead, pollute index requests, and could leak route names or structures to search indexers.
+
+#### 2. Missing Core Pages from Sitemap (Technical SEO Gap)
+The [sitemap.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/sitemap.ts) exports a static list of public routes, but excludes `/blog` and `/careers` which exist as public page files in the repository. Additionally, the sitemap URL and domain are hardcoded, making dev/staging indexing configurations fragile.
+
+#### 3. Missing and Broken Asset References in SEO Metadata (SEO Asset Gap)
+In the root layout [layout.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/layout.tsx#L9-L27), the metadata specifies:
+* `openGraph.images: [{ url: '/og-image.png', ... }]`
+* JSON-LD `logo: 'https://tendertrack360.co.za/icon.png'`
+* **The Bug**: The file `/og-image.png` and `/icon.png` **do not exist** in the `public/` directory (the only files present are `favicon.svg`, `logo.svg`, and basic next/vercel SVGs). This causes broken OG image previews when shared on LinkedIn, WhatsApp, or Twitter, and invalidates the organization structured data.
+
+#### 4. Multiple Duplicate Session DB Hits (RSC Performance Waterfall)
+Both the [MainDashboardLayout](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/layout.tsx#L22) and the individual page components (such as `DashboardPage` in [dashboard/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/dashboard/page.tsx#L50)) execute the async `checkUserSession()` function sequentially.
+* **The Bug**: Because `checkUserSession` is not cached or wrapped in React's `cache()`, Next.js fires two separate cookie parsing and Better Auth DB/API calls for every single authenticated page request.
+
+#### 5. Multiple Redundant Database Queries (RSC Query Waterfall)
+The `DashboardPage` renders multiple Suspended child components: `DashboardMetrics` and `DashboardCharts`.
+* **The Bug**: `DashboardMetrics` fetches `getTenderStats(organizationId)`. Immediately after, `DashboardCharts` also fetches `getTenderStats(organizationId)`. Because these data-fetching functions are not cached or deduped using `React.cache()`, they hit the Drizzle client with identical queries in parallel, wasting database connection pool capacity.
+
+#### 6. Promise waterfalls in Dashboard Headers (Header Blocking Waterfall)
+In `DashboardPage` [dashboard/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/dashboard/page.tsx#L80-L114), permission checks are awaited sequentially during rendering of header action buttons:
+```typescript
+const isPOAllowed = (await auth.api.hasPermission({ ... })).success; // awaits first
+const isProjectAllowed = (await auth.api.hasPermission({ ... })).success; // awaits second
+```
+* **The Waterfall**: Each `await` blocks execution of the remainder of the page, turning what could be concurrent API checks into a blocking sequential pipeline before any HTML is streamed.
+
+---
+
+## Phase 8: Database Deletion Constraints and Cascades
+
+### Current Implementation:
+* Foreign key relationships and delete constraints are defined in [schema.ts](file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts).
+* The `organization` table supports soft deletion through fields like `deletedAt`, `deletedBy`, and `deletionReason`.
+
+### Gaps and Issues:
+
+#### 1. User Deletion Blocks on Soft-Deleted Organizations
+In the `organization` table, `deletedBy` references `user.id` but does not define an `onDelete` constraint.
+* **The Bug**: If a user is deleted from the platform (e.g., via administrator action or GDPR request), and they had previously soft-deleted an organization, the database will raise a foreign key constraint violation (`deletedBy` refers to a non-existent user). This blocks user deletion.
+
+#### 2. User Deletion Blocks on Document Uploads
+In the `document` table, `uploadedBy` references `user.id` with `.notNull()` and without an `onDelete` cascade or fallback constraint.
+* **The Bug**: Deleting a user who has uploaded any documents to the platform will trigger a database constraint violation because the document table's `uploadedBy` column cannot be null, and no action is defined to handle user deletion. This blocks the user deletion flow.
+
+#### 3. Tender Deletion Blocks on Projects
+In the `project` table, `tenderId` references `tender.id` but does not define an `onDelete` constraint.
+* **The Bug**: Deleting a tender that has associated projects will trigger a database constraint violation, blocking tender deletion rather than decoupling the project from the originating tender.
+
+#### 4. Client Deletion Blocks on Projects
+In the `project` table, `clientId` references `client.id` but does not define an `onDelete` constraint.
+* **The Bug**: Similarly, deleting a client who has associated projects will raise a foreign key violation, blocking client deletion.
+
+---
+
 ## 3. Summary Matrix of Gaps and Severity
 
 | Journey Phase | Step | Identified Gap / Bug | Severity | Impact |
@@ -195,6 +284,9 @@ Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tr
 | **Onboarding** | Settings | Insecure settings overview route (missing session check). | **Low** | Unauthenticated rendering of route layout. |
 | **Onboarding** | Org Setup | Invite acceptance form is missing during onboarding. | **Medium** | Invited users forced to create fake orgs. |
 | **Onboarding** | Selector | Org selection doesn't invoke `setActive` API. | **High** | Multi-tenant context switching is broken. |
+| **Onboarding** | Admin Setup | Privilege escalation in `createSystemAdmin` server action. | **Critical** | Unauthenticated admin creation or role promotion. |
+| **Onboarding** | Security | Missing admin `trustedOrigins` CSRF protection. | **Medium** | Origin validation bypass or subdomain redirect issues. |
+| **Onboarding** | Performance | Missing session caching and React cache wrapper. | **High** | Heavy database load from redundant session lookups. |
 | **Clients** | CRUD | Server actions lack authentication checks. | **Critical** | Data exposure and unauthorized mutations. |
 | **Clients** | Schema | Single contact columns instead of multiple contacts. | **Low** | Limited contact log for large departments. |
 | **Tenders** | Schema | `value` column is stored as `text` string. | **High** | Aggregations require in-memory calculation. |
@@ -210,3 +302,13 @@ Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tr
 | **PO Tracking** | Actions | Cross-tenant authorization bypass in POs and documents. | **Critical** | Cross-tenant data access and unauthorized mutations. |
 | **PO Tracking** | Form | Timezone Date Shift on Calendar inputs (toISOString). | **Medium** | Dates shift back by one day on client view. |
 | **PO Tracking** | Finance | **No invoice table exists in the database.** | **Critical** | Cash flow and payment cycles are untracked. |
+| **SEO & Perf** | Robots.txt | Authenticated routes `/clients`, `/tenders`, `/projects`, etc. are not disallowed. | **High** | Crawlers attempt to index private dashboard spaces. |
+| **SEO & Perf** | Sitemap | Sitemap is missing `/blog` and `/careers` routes. | **Medium** | Public routes are not crawled / indexed. |
+| **SEO & Perf** | Metadata | Missing `/og-image.png` and `/icon.png` in static folder. | **Medium** | Broken social shares and schema verification errors. |
+| **SEO & Perf** | Session | Redundant `checkUserSession` calls in layout and pages. | **High** | Multiple duplicate session DB calls per request. |
+| **SEO & Perf** | Dashboard | Uncached Drizzle stats calls trigger duplicate queries. | **High** | Multiple parallel queries fetch same stats in RSCs. |
+| **SEO & Perf** | Dashboard | Blocking waterfall on permissions check. | **Medium** | Slower Initial Server Response times. |
+| **Database** | Schema | `deletedBy` on `organization` blocks user deletion. | **Medium** | Database constraint error when deleting a user. |
+| **Database** | Schema | `uploadedBy` on `document` blocks user deletion. | **Medium** | Database constraint error when deleting a user. |
+| **Database** | Schema | `tenderId`/`clientId` on `project` blocks deletion. | **Medium** | Database constraint error when deleting a tender/client. |
+
