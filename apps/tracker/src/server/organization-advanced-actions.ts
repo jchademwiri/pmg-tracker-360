@@ -321,7 +321,6 @@ export async function initiateOwnershipTransfer(
 
     // Revalidate organization pages
     revalidatePath('/organization', 'layout');
-    revalidatePath('/organization', 'layout');
 
     return createServerActionSuccess({
       transferId: result.transferId!,

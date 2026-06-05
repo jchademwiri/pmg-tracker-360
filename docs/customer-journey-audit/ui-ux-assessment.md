@@ -7,13 +7,13 @@ This document provides a UI/UX and accessibility audit of the PMG Tracker 360 cu
 ## 1. Visual Aesthetics & Styling Audit
 
 ### Current Status:
-* The application uses **Tailwind CSS 4** for styling and standard CSS variables inside [globals.css](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/globals.css).
+* The application uses **Tailwind CSS 4** for styling and standard CSS variables inside [globals.css](../../apps/tracker/src/app/globals.css).
 * The brand palette features Navy Blue (`--color-brand-navy: #1a3a52`) and Gold (`--color-brand-gold: #d4af37`), designed to appeal to professional South African businesses.
 
 ### Assessment & UI Critique:
 1. **Inconsistent Dark Mode Transitions**: While the CSS variables support OS-level dark mode (`prefers-color-scheme`), the components do not always use theme-aware background colors. For example, some cards utilize explicit `bg-white` classes, which creates eye strain when the rest of the application transitions to dark.
 2. **Basic / Generic Dashboard Widgets**: The dashboard widgets are flat cards with basic text statistics. A premium dashboard should use rich layouts, clean borders, glassmorphic cards (`backdrop-blur` with subtle translucent backgrounds), and dynamic animations for load states.
-3. **Status Badges Lack Visual Cohesion**: The status badges use tailwind colors like red, green, and blue, but they lack a unified style. In [tender-details.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-details.tsx), the statuses are styled with custom borders:
+3. **Status Badges Lack Visual Cohesion**: The status badges use tailwind colors like red, green, and blue, but they lack a unified style. In [tender-details.tsx](../../apps/tracker/src/components/tenders/tender-details.tsx), the statuses are styled with custom borders:
    * `open`: `bg-green-100/10 text-green-400 border border-green-500/20`
    * `closed`: `bg-zinc-800 text-zinc-400 border border-zinc-700/30`
    * However, on the table list views, the status badges look different, creating visual inconsistency.
@@ -33,12 +33,12 @@ This document provides a UI/UX and accessibility audit of the PMG Tracker 360 cu
 #### 1. ZAR Currency Formatting & Icons (Critical Input Friction)
 Public sector tenders and POs deal with large currency figures (e.g. millions of Rands). 
 * **The Issue**: Currently, the tender value and PO amount fields are raw inputs. The user has to type numbers without commas, or is allowed to type random characters. 
-* **Currency Sign Discrepancy**: In [tender-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx#L399), the form displays a `<DollarSign />` icon instead of a Rand representation (`R` or `ZAR`), which is inappropriate for a South African procurement context. The PO form lacks any visual currency prefix whatsoever.
+* **Currency Sign Discrepancy**: In [tender-form.tsx](../../apps/tracker/src/components/tenders/tender-form.tsx#L399), the form displays a `<DollarSign />` icon instead of a Rand representation (`R` or `ZAR`), which is inappropriate for a South African procurement context. The PO form lacks any visual currency prefix whatsoever.
 * **The UX Recommendation**: Replace the dollar sign with a Rand (`R`) prefix. Implement an input masking component or a ZAR currency formatter hook that displays formatted figures in real-time as the user types (e.g., displaying `R 150 000,00` instead of `150000`), while storing clean numeric floats in the database.
 
 #### 2. Long Form Cognitive Overload
 Creating a tender requires filling in basic details, client info, submission timelines, values, and uploading files. 
-* **The Issue**: Everything is presented on a single, long form page in [tender-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx). This creates high cognitive load and increases form abandonment or input errors.
+* **The Issue**: Everything is presented on a single, long form page in [tender-form.tsx](../../apps/tracker/src/components/tenders/tender-form.tsx). This creates high cognitive load and increases form abandonment or input errors.
 * **The UX Recommendation**: Transition long forms into a multi-step tabbed wizard (Step 1: Tender Details, Step 2: Client & Compliance, Step 3: Timelines & Value, Step 4: Documents).
 
 #### 3. Dynamic Client Creation UX
@@ -57,7 +57,7 @@ Date components in the Tender and PO forms display incorrect dates after saving.
 * **The UX Recommendation**: Use local timezone date string formatter utility functions (e.g. `YYYY-MM-DD` formatting based on local timezone offsets or native date methods like `.toLocaleDateString()` with custom formats) instead of converting directly to UTC via `.toISOString()`.
 
 #### 6. Critical Functional Blocker in Tender Extension Form
-* **The Issue**: In [extension-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/extension-form.tsx#L70-L81), the form submission logic strictly enforces that a file (the extension letter) must be uploaded (`if (!file) { toast.error('File Required'); return; }`). However, the UI JSX does not contain a file input element, rendering a static placeholder message instead: `"File upload is currently unavailable - Coming soon in a future update"`. This prevents users from ever submitting a tender extension.
+* **The Issue**: In [extension-form.tsx](../../apps/tracker/src/components/tenders/extension-form.tsx#L70-L81), the form submission logic strictly enforces that a file (the extension letter) must be uploaded (`if (!file) { toast.error('File Required'); return; }`). However, the UI JSX does not contain a file input element, rendering a static placeholder message instead: `"File upload is currently unavailable - Coming soon in a future update"`. This prevents users from ever submitting a tender extension.
 * **The UX Recommendation**: Add an actual file input element to the form, or make the file optional in the submission validation logic until the upload service is fully integrated.
 
 ---

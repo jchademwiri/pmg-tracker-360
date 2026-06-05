@@ -20,7 +20,7 @@ export default async function NewPurchaseOrderPage() {
   });
 
   if (!hasPermission) {
-    redirect('/projects/purchase-orders'); // Or just /dashboard if they cant see list
+    redirect('/projects/purchase-orders'); // Or just /projects if they cant see list
   }
 
   if (!session.activeOrganizationId) {

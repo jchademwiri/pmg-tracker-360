@@ -7,9 +7,9 @@ This document outlines the detailed audit findings for each phase of the PMG Tra
 ## Phase 1: Signup, Login, and Onboarding
 
 ### Current Implementation:
-* Users register via [sign-up-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/sign-up-form.tsx) or log in via [login-form.tsx](file:///D:/websites/pmg-tracke[...]
-* If the user doesn't have an active organization, they are redirected to `/onboarding` which uses [onboarding/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/onboarding/page.ts[...]
-* Organization selection is handled by the [OrganizationSelector](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/organization-selector.tsx) component.
+* Users register via [sign-up-form.tsx](../../apps/tracker/src/components/shared/forms/sign-up-form.tsx) or log in via [login-form.tsx](file:///D:/websites/pmg-tracke[...]
+* If the user doesn't have an active organization, they are redirected to `/onboarding` which uses [onboarding/page.tsx](../../apps/tracker/src/app/onboarding/page.ts[...]
+* Organization selection is handled by the [OrganizationSelector](../../apps/tracker/src/components/organization-selector.tsx) component.
 
 ### Gaps and Issues:
 
@@ -17,7 +17,7 @@ This document outlines the detailed audit findings for each phase of the PMG Tra
 If a user is invited to an organization via email (using Better Auth's invitation system), their registration process should lead to accepting the invitation. However, if they land on the onboardi[...]
 
 #### 2. Broken Organization Switcher (Functional Bug)
-In [organization-selector.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/organization-selector.tsx), when listing organizations that the user belongs to, the buttons are rend[...]
+In [organization-selector.tsx](../../apps/tracker/src/components/organization-selector.tsx), when listing organizations that the user belongs to, the buttons are rend[...]
 ```typescript
 <Button
   key={org.id}
@@ -33,7 +33,7 @@ In [organization-selector.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/
 * **The Bug**: Clicking these buttons simply navigates to `/dashboard` without updating the active organization in Better Auth. The client side never calls `authClient.organization.setActive({ org[...]
 
 #### 3. Mismatched Organization Slug Preview URL (UI/UX Bug)
-In the organization creation form, [create-organization-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/create-organization-form.tsx#L475-L484), the "URL Pre[...]
+In the organization creation form, [create-organization-form.tsx](../../apps/tracker/src/components/shared/forms/create-organization-form.tsx) (see URL Preview Badge), the "URL Pre[...]
 ```typescript
 <Badge variant="secondary" className="text-xs font-mono">
   /dashboard/settings/organization/{field.value}
@@ -45,21 +45,21 @@ In the organization creation form, [create-organization-form.tsx](file:///D:/web
 * **The Impact**: Users are shown an incorrect, broken URL preview during organization onboarding, which misleads them about the route structure.
 
 #### 4. Insecure Settings Overview Route (Security/Access Control Gap)
-In [overview/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/settings/overview/page.tsx), the server page component renders without validating the user session. 
+In [overview/page.tsx](../../apps/tracker/src/app/settings/overview/page.tsx), the server page component renders without validating the user session. 
 * **The Bug**: Unlike other settings pages, this page completely omits a call to `getCurrentUser()`. While it currently displays static layouts and mock settings data (e.g. Profile completion 85%)[...]
 
 #### 5. Critical Privilege Escalation in Admin Console (`createSystemAdmin`)
-In [actions.ts](file:///D:/websites/pmg-tracker-360/apps/admin/src/app/actions.ts#L152-L205), the public server action `createSystemAdmin` is exposed as an HTTP endpoint.
+In [actions.ts](../../apps/admin/src/app/actions.ts) (see createSystemAdmin in actions.ts), the public server action `createSystemAdmin` is exposed as an HTTP endpoint.
 * **The Bug**: While the setup page at `/setup` redirects users to `/login` if at least one administrator exists in the system, the server action `createSystemAdmin` itself performs no validation [...]
 * **The Vulnerability**: Any unauthenticated client can send a direct POST request to invoke `createSystemAdmin` with a custom email and password. This will register a new user and escalate their [...]
 
 #### 6. Missing Admin CSRF and Trusted Origins Configuration
-In [auth.ts](file:///D:/websites/pmg-tracker-360/apps/admin/src/lib/auth.ts), the Better Auth configuration does not specify a `trustedOrigins` parameter.
+In [auth.ts](../../apps/admin/src/lib/auth.ts), the Better Auth configuration does not specify a `trustedOrigins` parameter.
 * **The Bug**: Unlike the tracker app, the admin app lacks a list of trusted origins.
 * **The Vulnerability**: In cross-subdomain settings, Better Auth checks request origins against trusted origins for CSRF validation. The absence of `trustedOrigins` can result in CSRF protection [...]
 
 #### 7. Session Caching and Redundant Database Queries (Performance Vulnerability)
-In [users.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/users.ts#L12-L35), the `getCurrentUser` server action retrieves the user session by calling `auth.api.getSession` and then[...]
+In [users.ts](../../apps/tracker/src/server/users.ts) (see getCurrentUser in users.ts), the `getCurrentUser` server action retrieves the user session by calling `auth.api.getSession` and then[...]
 * **The Bug**: Neither the tracker app nor the admin app configures session caching (e.g. secondary storage like Redis/KV or cookieCache strategies). Furthermore, `getCurrentUser()` is called repe[...]
 * **The Impact**: This triggers redundant database roundtrips to retrieve the session and user data multiple times per page load, causing a performance bottleneck and exposing the application data[...]
 
@@ -68,13 +68,13 @@ In [users.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/users.
 ## Phase 2: Client Management
 
 ### Current Implementation:
-* Clients (government departments or private entities) are created and managed via server actions in [clients.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/clients.ts).
-* Clients are stored in the `client` table in [schema.ts](file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts).
+* Clients (government departments or private entities) are created and managed via server actions in [clients.ts](../../apps/tracker/src/server/clients.ts).
+* Clients are stored in the `client` table in [schema.ts](../../packages/db/src/schema.ts).
 
 ### Gaps and Issues:
 
 #### 1. Critical Authorization Bypass (Security Vulnerability)
-Server actions in [clients.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/clients.ts) (such as `createClient`, `updateClient`, `deleteClient`, `getClients`, and `searchClients`) *[...]
+Server actions in [clients.ts](../../apps/tracker/src/server/clients.ts) (such as `createClient`, `updateClient`, `deleteClient`, `getClients`, and `searchClients`) *[...]
 * **The Vulnerability**: Since Server Actions are public HTTP endpoints, any malicious client can POST a request to these actions with arbitrary organization IDs and create, edit, or delete client[...]
 
 #### 2. Embedded Contact Limitations (Data Design Gap)
@@ -89,13 +89,13 @@ The `client` table in the database schema stores contact details as flat columns
 ## Phase 3: Tender Opportunity and Bid Tracking
 
 ### Current Implementation:
-* Tenders are created and managed using [tender-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx) and server actions in [tenders.ts](file:///D:/web[...]
-* Status is resolved dynamically based on submission date using `resolveTenderStatus` in [tender-utils.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/lib/tender-utils.ts).
+* Tenders are created and managed using [tender-form.tsx](../../apps/tracker/src/components/tenders/tender-form.tsx) and server actions in [tenders.ts](file:///D:/web[...]
+* Status is resolved dynamically based on submission date using `resolveTenderStatus` in [tender-utils.ts](../../apps/tracker/src/lib/tender-utils.ts).
 
 ### Gaps and Issues:
 
 #### 1. Critical Authorization Bypass (Security Vulnerability)
-Similar to client actions, server actions in [tenders.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/tenders.ts) (including `createTender`, `updateTender`, `updateTenderStatus`, `[...]
+Similar to client actions, server actions in [tenders.ts](../../apps/tracker/src/server/tenders.ts) (including `createTender`, `updateTender`, `updateTenderStatus`, `[...]
 
 #### 2. Numerical Performance Bottleneck (Database Design Gap)
 The `tender.value` column is defined in the database as:
@@ -116,7 +116,7 @@ Submitting a public sector bid requires a strict compliance dossier:
 * **The Gap**: The customer journey provides no compliance checklist. Bidding teams must track documents externally, leading to administrative disqualifications.
 
 #### 5. Date Timezone Shift on Calendars (Data Integrity Bug)
-In [tender-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx#L369-L375), the `submissionDate` calendar value is formatted as:
+In [tender-form.tsx](../../apps/tracker/src/components/tenders/tender-form.tsx) (see submissionDate in tender-form.tsx), the `submissionDate` calendar value is formatted as:
 ```typescript
 value={
   field.value
@@ -134,7 +134,7 @@ value={
 ## Phase 4: Validity Extension Management
 
 ### Current Implementation:
-* Tenders validity can be extended via [tenderExtension](file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts) records, created in [extensions.ts](file:///D:/websites/pmg-tracker-360/app[...]
+* Tenders validity can be extended via [tenderExtension](../../packages/db/src/schema.ts) records, created in [extensions.ts](../../app[...]
 * Creating an extension automatically updates the tender's `evaluationDate` to the `newEvaluationDate`.
 
 ### Gaps and Issues:
@@ -161,20 +161,20 @@ Updating the status to "Awarded" instantly creates a project. However, winning a
 * **The Gap**: The system assumes the final contract value is equal to the bid value, and the project description matches the tender description. In reality, contracts are often awarded with alte[...]
 
 #### 2. SLA / Contract Fields Missing (Schema Gap)
-The `project` table in [schema.ts](file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts) lacks SLA tracking fields. It only stores `projectNumber`, `description`, `clientId`, and `status[...]
+The `project` table in [schema.ts](../../packages/db/src/schema.ts) lacks SLA tracking fields. It only stores `projectNumber`, `description`, `clientId`, and `status[...]
 
 ---
 
 ## Phase 6: Purchase Order (PO) Execution and Delivery
 
 ### Current Implementation:
-* Users track POs under projects using [po-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/purchase-orders/po-form.tsx) and [purchase-orders.ts](file:///D:/websites/pmg-[...]
+* Users track POs under projects using [po-form.tsx](../../apps/tracker/src/components/purchase-orders/po-form.tsx) and [purchase-orders.ts](file:///D:/websites/pmg-[...]
 
 ### Gaps and Issues:
 
 #### 1. Immutable Delivery Timestamp (Functional Bug)
-The `purchase_order` table in the database schema has a `deliveredAt` column, and [purchase-order.ts validations](file:///D:/websites/pmg-tracker-360/apps/tracker/src/lib/validations/purchase-ord[...]
-* **The Bug**: The `POForm` in [po-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/purchase-orders/po-form.tsx) and its internal `poFormSchema` **completely exclude the [...]
+The `purchase_order` table in the database schema has a `deliveredAt` column, and [purchase-order.ts validations](../../apps/tracker/src/lib/validations/purchase-ord[...]
+* **The Bug**: The `POForm` in [po-form.tsx](../../apps/tracker/src/components/purchase-orders/po-form.tsx) and its internal `poFormSchema` **completely exclude the [...]
 * **The UX Issue**: When a user clicks "Mark as Delivered" on the PO details page, the server action automatically sets `deliveredAt: new Date()` (the current timestamp). If the delivery occurred[...]
 
 #### 2. Flat PO Structure (Data Design Gap)
@@ -193,12 +193,12 @@ The customer journey stops entirely at PO delivery. In business operations, deli
 * **The Critical Gap**: The database has **no invoice table** whatsoever. Although the implementation plan outlines invoices, it was never added to the schema. Users cannot track when they got pa[...]
 
 #### 5. Cross-Tenant Authorization Bypass in Purchase Orders & Documents (Security Vulnerability)
-Server actions in [purchase-orders.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/purchase-orders.ts) and [documents.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/serv[...]
+Server actions in [purchase-orders.ts](../../apps/tracker/src/server/purchase-orders.ts) and [documents.ts](../../apps/tracker/src/serv[...]
 * **The Vulnerability**: While PO actions check for role permissions using `auth.api.hasPermission()`, they only verify if the user has permissions *within their own active organization*. They fa[...]
 * **The Impact**: Any authenticated user can read, create, update, or delete purchase orders and documents for *any* other organization by simply passing the target organization's ID in the HTTP [...]
 
 #### 6. Date Timezone Shift on PO Calendars (Data Integrity Bug)
-Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/purchase-orders/po-form.tsx#L289-L320) formats the `poDate` and `expectedDeli[...]
+Similar to the tender form, the PO form [po-form.tsx](../../apps/tracker/src/components/purchase-orders/po-form.tsx) (see date formatting in po-form.tsx) formats the `poDate` and `expectedDeli[...]
 * **The Bug**: Due to local timezone conversions to UTC, dates initialized at midnight shift back by one day on client rendering for South African users (UTC+2).
 
 ---
@@ -206,7 +206,7 @@ Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tr
 ## Phase 7: Performance and Technical SEO Audit
 
 ### Current Implementation:
-* **Robots & Sitemap**: Basic [robots.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.ts) and [sitemap.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/sitemap.ts)[...]
+* **Robots & Sitemap**: Basic [robots.ts](../../apps/tracker/src/app/robots.ts) and [sitemap.ts](../../apps/tracker/src/app/sitemap.ts)[...]
 * **Layouts and Pages**: Set to `force-dynamic` in layout files (e.g. `layout.tsx` in root) and all page components.
 * **SEO Metadata**: Configured in root layout and root landing page, referencing OpenGraph parameters.
 * **Query Deduplication**: Server calls (`checkUserSession()`, `getTenderStats()`, etc.) are imported directly into RSCs.
@@ -214,7 +214,7 @@ Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tr
 ### Gaps and Issues:
 
 #### 1. Private Route Crawl Vulnerabilities (Technical SEO Gap)
-The [robots.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.ts) configuration disallows `/dashboard/` and `/api/`. However, the app structure puts many authenticated panels at[...]
+The [robots.ts](../../apps/tracker/src/app/robots.ts) configuration disallows `/dashboard/` and `/api/`. However, the app structure puts many authenticated panels at[...]
 * `/clients` (Clients Directory)
 * `/tenders` and `/tenders/overview` (Tender Pipeline)
 * `/projects` and `/projects/purchase-orders` (Project Tracking)
@@ -225,16 +225,16 @@ The [robots.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/robots.
 * **The Bug**: These private routes are **NOT disallowed** in `robots.ts`. Search engine crawlers can attempt to crawl these internal routes. While they are auth-guarded and will redirect to `/lo[...]
 
 #### 2. Missing Core Pages from Sitemap (Technical SEO Gap)
-The [sitemap.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/sitemap.ts) exports a static list of public routes, but excludes `/blog` and `/careers` which exist as public page files [...]
+The [sitemap.ts](../../apps/tracker/src/app/sitemap.ts) exports a static list of public routes, but excludes `/blog` and `/careers` which exist as public page files [...]
 
 #### 3. Missing and Broken Asset References in SEO Metadata (SEO Asset Gap)
-In the root layout [layout.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/layout.tsx#L9-L27), the metadata specifies:
+In the root layout [layout.tsx](../../apps/tracker/src/app/layout.tsx) (see metadata definition in layout.tsx), the metadata specifies:
 * `openGraph.images: [{ url: '/og-image.png', ... }]`
 * JSON-LD `logo: 'https://tendertrack360.co.za/icon.png'`
 * **The Bug**: The file `/og-image.png` and `/icon.png` **do not exist** in the `public/` directory (the only files present are `favicon.svg`, `logo.svg`, and basic next/vercel SVGs). This causes[...]
 
 #### 4. Multiple Duplicate Session DB Hits (RSC Performance Waterfall)
-Both the root [layout.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/layout.tsx) and the individual page components (such as `DashboardPage` in [dashboard/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/dashboard/page.tsx)) call `checkUserSession()` independently.
+Both the root [layout.tsx](../../apps/tracker/src/app/layout.tsx) and the individual page components (such as `DashboardPage` in [dashboard/page.tsx](../../apps/tracker/src/app/dashboard/page.tsx)) call `checkUserSession()` independently.
 * **The Bug**: Because `checkUserSession` is not cached or wrapped in React's `cache()`, Next.js fires two separate cookie parsing and Better Auth DB/API calls for every single authenticated page[...]
 
 #### 5. Multiple Redundant Database Queries (RSC Query Waterfall)
@@ -242,7 +242,7 @@ The `DashboardPage` renders multiple Suspended child components: `DashboardMetri
 * **The Bug**: `DashboardMetrics` fetches `getTenderStats(organizationId)`. Immediately after, `DashboardCharts` also fetches `getTenderStats(organizationId)`. Because these data-fetching functio[...]
 
 #### 6. Promise waterfalls in Dashboard Headers (Header Blocking Waterfall)
-In `DashboardPage` [dashboard/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/dashboard/page.tsx#L80-L114), permission checks are awaited sequentially during re[...]
+In `DashboardPage` [dashboard/page.tsx](../../apps/tracker/src/app/dashboard/page.tsx) (see sequential permission checks in dashboard/page.tsx), permission checks are awaited sequentially during re[...]
 ```typescript
 const isPOAllowed = (await auth.api.hasPermission({ ... })).success; // awaits first
 const isProjectAllowed = (await auth.api.hasPermission({ ... })).success; // awaits second
@@ -254,7 +254,7 @@ const isProjectAllowed = (await auth.api.hasPermission({ ... })).success; // awa
 ## Phase 8: Database Deletion Constraints and Cascades
 
 ### Current Implementation:
-* Foreign key relationships and delete constraints are defined in [schema.ts](file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts).
+* Foreign key relationships and delete constraints are defined in [schema.ts](../../packages/db/src/schema.ts).
 * The `organization` table supports soft deletion through fields like `deletedAt`, `deletedBy`, and `deletionReason`.
 
 ### Gaps and Issues:

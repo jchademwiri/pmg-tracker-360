@@ -14,7 +14,7 @@ This document delivers a detailed product and architectural audit of **PMG Track
 * B2B enterprises requiring clean tenant-level isolation for tracking multiple bidding teams, clients, projects, and sub-contractor POs.
 
 ### What the Application Does:
-1. **Multi-Tenant Organization Workspaces**: Supports independent organizational environments secured via **Better Auth** and [packages/db/src/schema.ts](file:///D:/websites/pmg-tracker-360/packages/db/src/schema.ts). Users can invite team members with specific roles (`owner`, `admin`, `manager`, `member`).
+1. **Multi-Tenant Organization Workspaces**: Supports independent organizational environments secured via **Better Auth** and [packages/db/src/schema.ts](../../packages/db/src/schema.ts). Users can invite team members with specific roles (`owner`, `admin`, `manager`, `member`).
 2. **Client Directory**: Centralizes buyer profiles (municipalities, state-owned enterprises, private corporates) with contact coordinates, notes, and historical tenders.
 3. **Tender Pipeline Tracking**: Tracks bid opportunities from draft stage, submission deadlines, estimated values, and evaluation periods.
 4. **Validity Extension Logs**: Tracks bid validity extensions requested by clients—including new evaluation dates and contact records—to prevent bid expiration.
