@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@pmg/db';
+import { validateSessionAndOrg } from './utils';
 import { purchaseOrder, project, client } from '@pmg/db/schema';
 import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -24,6 +25,7 @@ export async function getPurchaseOrders(
   status?: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const { auth } = await import('@/lib/auth');
     const { headers } = await import('next/headers');
 
@@ -118,9 +120,9 @@ export async function getPurchaseOrders(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching purchase orders:', error);
-    throw new Error('Failed to fetch purchase orders');
+    throw error;
   }
 }
 
@@ -130,6 +132,7 @@ export async function createPurchaseOrder(
   data: PurchaseOrderCreateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const { auth } = await import('@/lib/auth');
     const { headers } = await import('next/headers');
 
@@ -200,7 +203,7 @@ export async function createPurchaseOrder(
     revalidatePath('/projects/purchase-orders');
     revalidatePath(`/projects/${validatedData.projectId}`);
     return { success: true, purchaseOrder: newPurchaseOrder[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating purchase order:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -209,7 +212,7 @@ export async function createPurchaseOrder(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to create purchase order' };
+    return { success: false, error: error.message || 'Failed to create purchase order' };
   }
 }
 
@@ -219,6 +222,7 @@ export async function getPurchaseOrderById(
   poId: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const { auth } = await import('@/lib/auth');
     const { headers } = await import('next/headers');
 
@@ -275,9 +279,9 @@ export async function getPurchaseOrderById(
     }
 
     return { success: true, purchaseOrder: poData[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching purchase order:', error);
-    return { success: false, error: 'Failed to fetch purchase order' };
+    return { success: false, error: error.message || 'Failed to fetch purchase order' };
   }
 }
 
@@ -288,6 +292,7 @@ export async function updatePurchaseOrder(
   data: PurchaseOrderUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const { auth } = await import('@/lib/auth');
     const { headers } = await import('next/headers');
 
@@ -385,7 +390,7 @@ export async function updatePurchaseOrder(
       revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, purchaseOrder: updatedPO[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating purchase order:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -394,7 +399,7 @@ export async function updatePurchaseOrder(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update purchase order' };
+    return { success: false, error: error.message || 'Failed to update purchase order' };
   }
 }
 
@@ -405,6 +410,7 @@ export async function updatePurchaseOrderStatus(
   data: PurchaseOrderStatusUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = PurchaseOrderStatusUpdateSchema.parse(data);
 
@@ -472,7 +478,7 @@ export async function updatePurchaseOrderStatus(
       revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, purchaseOrder: updatedPO[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating purchase order status:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -481,7 +487,7 @@ export async function updatePurchaseOrderStatus(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update purchase order status' };
+    return { success: false, error: error.message || 'Failed to update purchase order status' };
   }
 }
 
@@ -491,6 +497,7 @@ export async function deletePurchaseOrder(
   poId: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const { auth } = await import('@/lib/auth');
     const { headers } = await import('next/headers');
 
@@ -540,8 +547,8 @@ export async function deletePurchaseOrder(
       revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, message: 'Purchase order deleted successfully' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting purchase order:', error);
-    return { success: false, error: 'Failed to delete purchase order' };
+    return { success: false, error: error.message || 'Failed to delete purchase order' };
   }
 }

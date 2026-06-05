@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@pmg/db';
+import { validateSessionAndOrg } from './utils';
 import {
   document,
   tender,
@@ -28,6 +29,7 @@ export async function uploadDocument(
   }
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // 1. Check Session
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -172,9 +174,9 @@ export async function uploadDocument(
     }
 
     return { success: true, document: newDocument[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading document:', error);
-    return { success: false, error: 'Failed to upload document' };
+    return { success: false, error: error.message || 'Failed to upload document' };
   }
 }
 
@@ -185,6 +187,7 @@ export async function getDocuments(
   entityId: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const whereCondition = and(
       eq(document.organizationId, organizationId),
       entityType === 'tender'
@@ -209,9 +212,9 @@ export async function getDocuments(
     );
 
     return { success: true, documents: enhancedDocs };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching documents:', error);
-    return { success: false, error: 'Failed to fetch documents' };
+    return { success: false, error: error.message || 'Failed to fetch documents' };
   }
 }
 
@@ -221,6 +224,7 @@ export async function deleteDocument(
   documentId: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // 1. Check Session
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -259,8 +263,8 @@ export async function deleteDocument(
       revalidatePath(`/tenders/${docToDelete.tenderId}`);
 
     return { success: true, message: 'Document deleted' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting document:', error);
-    return { success: false, error: 'Failed to delete document' };
+    return { success: false, error: error.message || 'Failed to delete document' };
   }
 }

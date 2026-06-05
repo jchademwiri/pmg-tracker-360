@@ -8,6 +8,7 @@ import {
   purchaseOrder,
   organization,
 } from '@pmg/db/schema';
+import { validateSessionAndOrg } from './utils';
 import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -30,6 +31,7 @@ export async function getProjects(
   status?: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     let whereCondition = and(
@@ -95,9 +97,9 @@ export async function getProjects(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching projects:', error);
-    throw new Error('Failed to fetch projects');
+    throw error;
   }
 }
 
@@ -107,6 +109,7 @@ export async function createProject(
   data: ProjectCreateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = ProjectCreateSchema.parse(data);
 
@@ -180,7 +183,7 @@ export async function createProject(
 
     revalidatePath('/projects');
     return { success: true, project: newProject[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating project:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -189,7 +192,7 @@ export async function createProject(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to create project' };
+    return { success: false, error: error.message || 'Failed to create project' };
   }
 }
 
@@ -199,6 +202,7 @@ export async function getProjectById(
   projectId: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const projectData = await db
       .select({
         id: project.id,
@@ -239,9 +243,9 @@ export async function getProjectById(
     }
 
     return { success: true, project: projectData[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching project:', error);
-    return { success: false, error: 'Failed to fetch project' };
+    return { success: false, error: error.message || 'Failed to fetch project' };
   }
 }
 
@@ -251,6 +255,7 @@ export async function getRecentProjectActivities(
   limit: number = 10
 ): Promise<RecentActivity[]> {
   try {
+    await validateSessionAndOrg(organizationId);
     const activities: RecentActivity[] = [];
 
     // Get organization name
@@ -404,9 +409,9 @@ export async function getRecentProjectActivities(
     return activities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching recent project activities:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -417,6 +422,7 @@ export async function updateProject(
   data: ProjectUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = ProjectUpdateSchema.parse(data);
 
@@ -517,7 +523,7 @@ export async function updateProject(
     revalidatePath('/projects');
     revalidatePath(`/projects/${projectId}`);
     return { success: true, project: updatedProject[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating project:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -526,7 +532,7 @@ export async function updateProject(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update project' };
+    return { success: false, error: error.message || 'Failed to update project' };
   }
 }
 
@@ -537,6 +543,7 @@ export async function updateProjectStatus(
   data: ProjectStatusUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = ProjectStatusUpdateSchema.parse(data);
 
@@ -569,7 +576,7 @@ export async function updateProjectStatus(
     revalidatePath('/projects');
     revalidatePath(`/projects/${projectId}`);
     return { success: true, project: updatedProject[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating project status:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -578,13 +585,14 @@ export async function updateProjectStatus(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update project status' };
+    return { success: false, error: error.message || 'Failed to update project status' };
   }
 }
 
 // Soft delete project
 export async function deleteProject(organizationId: string, projectId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Check if project exists and belongs to organization
     const existingProject = await db
       .select()
@@ -632,15 +640,16 @@ export async function deleteProject(organizationId: string, projectId: string) {
 
     revalidatePath('/projects');
     return { success: true, message: 'Project deleted successfully' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting project:', error);
-    return { success: false, error: 'Failed to delete project' };
+    return { success: false, error: error.message || 'Failed to delete project' };
   }
 }
 
 // Get project statistics for dashboard
 export async function getProjectStats(organizationId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Get project stats
     const projectStats = await db
       .select({
@@ -730,11 +739,11 @@ export async function getProjectStats(organizationId: string) {
         growth: Math.round(growth * 100) / 100, // Round to 2 decimal places
       },
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching project stats:', error);
     return {
       success: false,
-      error: 'Failed to fetch project statistics',
+      error: error.message || 'Failed to fetch project statistics',
       stats: {
         totalProjects: 0,
         statusCounts: {

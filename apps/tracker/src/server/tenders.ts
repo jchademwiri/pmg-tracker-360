@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@pmg/db';
+import { validateSessionAndOrg } from './utils';
 import { tender, client, project, tenderExtension } from '@pmg/db/schema';
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -90,6 +91,7 @@ export async function getTenders(
   status?: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     let whereCondition = and(
@@ -159,9 +161,9 @@ export async function getTenders(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tenders:', error);
-    throw new Error('Failed to fetch tenders');
+    throw error;
   }
 }
 
@@ -171,6 +173,7 @@ export async function createTender(
   data: TenderCreateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = TenderCreateSchema.parse(data);
 
@@ -236,7 +239,7 @@ export async function createTender(
 
     revalidatePath('/tenders');
     return { success: true, tender: newTender[0], projectId };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating tender:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -245,13 +248,14 @@ export async function createTender(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to create tender' };
+    return { success: false, error: error.message || 'Failed to create tender' };
   }
 }
 
 // Get tender by ID with client information
 export async function getTenderById(organizationId: string, tenderId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     const tenderData = await db
       .select({
         id: tender.id,
@@ -290,9 +294,9 @@ export async function getTenderById(organizationId: string, tenderId: string) {
     };
 
     return { success: true, tender: resolvedTender };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tender:', error);
-    return { success: false, error: 'Failed to fetch tender' };
+    return { success: false, error: error.message || 'Failed to fetch tender' };
   }
 }
 
@@ -303,6 +307,7 @@ export async function updateTender(
   data: TenderUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = TenderUpdateSchema.parse(data);
 
@@ -410,7 +415,7 @@ export async function updateTender(
     revalidatePath('/tenders');
     revalidatePath(`/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0], projectId };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating tender:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -419,7 +424,7 @@ export async function updateTender(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update tender' };
+    return { success: false, error: error.message || 'Failed to update tender' };
   }
 }
 
@@ -430,6 +435,7 @@ export async function updateTenderStatus(
   data: TenderStatusUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = TenderStatusUpdateSchema.parse(data);
 
@@ -467,7 +473,7 @@ export async function updateTenderStatus(
     revalidatePath('/tenders');
     revalidatePath(`/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0], projectId };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating tender status:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -476,13 +482,14 @@ export async function updateTenderStatus(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update tender status' };
+    return { success: false, error: error.message || 'Failed to update tender status' };
   }
 }
 
 // Soft delete tender
 export async function deleteTender(organizationId: string, tenderId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Check if tender exists and belongs to organization
     const existingTender = await db
       .select()
@@ -525,9 +532,9 @@ export async function deleteTender(organizationId: string, tenderId: string) {
 
     revalidatePath('/tenders');
     return { success: true, message: 'Tender deleted successfully' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting tender:', error);
-    return { success: false, error: 'Failed to delete tender' };
+    return { success: false, error: error.message || 'Failed to delete tender' };
   }
 }
 
@@ -539,6 +546,7 @@ export async function searchTenders(
   limit: number = 10
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
     const validatedParams = TenderSearchSchema.parse(searchParams);
 
@@ -628,7 +636,7 @@ export async function searchTenders(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error searching tenders:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -643,7 +651,7 @@ export async function searchTenders(
     }
     return {
       success: false,
-      error: 'Failed to search tenders',
+      error: error.message || 'Failed to search tenders',
       tenders: [],
       totalCount: 0,
       currentPage: page,
@@ -665,6 +673,7 @@ export async function getTendersWithSorting(
   limit: number = 10
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     const whereCondition = and(
@@ -734,11 +743,11 @@ export async function getTendersWithSorting(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tenders with sorting:', error);
     return {
       success: false,
-      error: 'Failed to fetch tenders',
+      error: error.message || 'Failed to fetch tenders',
       tenders: [],
       totalCount: 0,
       currentPage: page,
@@ -755,6 +764,7 @@ export async function getAvailableTendersForProjects(
   limit: number = 100
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     let whereCondition = and(
@@ -809,15 +819,16 @@ export async function getAvailableTendersForProjects(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching available tenders for projects:', error);
-    throw new Error('Failed to fetch available tenders');
+    throw error;
   }
 }
 
 // Get tender statistics for dashboard
 export async function getTenderStats(organizationId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     const stats = await db
       .select({
         status: tender.status,
@@ -935,11 +946,11 @@ export async function getTenderStats(organizationId: string) {
         },
       },
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tender stats:', error);
     return {
       success: false,
-      error: 'Failed to fetch tender statistics',
+      error: error.message || 'Failed to fetch tender statistics',
       stats: {
         totalTenders: 0,
         statusCounts: {
@@ -965,6 +976,7 @@ export async function getRecentActivity(
   limit: number = 10
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Get recent tenders
     const recentTenders = await db
       .select({
@@ -1019,11 +1031,11 @@ export async function getRecentActivity(
         recentChanges,
       },
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching recent activity:', error);
     return {
       success: false,
-      error: 'Failed to fetch recent activity',
+      error: error.message || 'Failed to fetch recent activity',
       activity: {
         recentTenders: [],
         recentChanges: [],
@@ -1038,6 +1050,7 @@ export async function getUpcomingDeadlines(
   limit: number = 10
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const now = new Date();
     const thirtyDaysFromNow = new Date(
       now.getTime() + 30 * 24 * 60 * 60 * 1000
@@ -1083,11 +1096,11 @@ export async function getUpcomingDeadlines(
       success: true,
       deadlines: tendersWithDays,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching upcoming deadlines:', error);
     return {
       success: false,
-      error: 'Failed to fetch upcoming deadlines',
+      error: error.message || 'Failed to fetch upcoming deadlines',
       deadlines: [],
     };
   }
@@ -1101,6 +1114,7 @@ export async function getTendersWithCustomSorting(
   search?: string
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     let whereCondition = and(
@@ -1178,11 +1192,11 @@ export async function getTendersWithCustomSorting(
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tenders with custom sorting:', error);
     return {
       success: false,
-      error: 'Failed to fetch tenders',
+      error: error.message || 'Failed to fetch tenders',
       tenders: [],
       totalCount: 0,
       currentPage: page,
@@ -1205,6 +1219,7 @@ export async function getTendersOverview(
   limit: number = 20
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     let whereCondition = and(
@@ -1298,11 +1313,11 @@ export async function getTendersOverview(
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching tenders overview:', error);
     return {
       success: false,
-      error: 'Failed to fetch tenders overview',
+      error: error.message || 'Failed to fetch tenders overview',
       tenders: [],
       totalCount: 0,
       currentPage: page,
