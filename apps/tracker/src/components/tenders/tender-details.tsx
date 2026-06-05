@@ -35,6 +35,9 @@ interface TenderWithClient {
   submissionDate: Date | null;
   value: string | null;
   status: string;
+  evaluationDate: Date | null;
+  validityDays: number | null;
+  validityDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   client: {
@@ -145,6 +148,15 @@ export function TenderDetails({
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    }).format(new Date(date));
+  };
+
+  const formatDateOnly = (date: Date | null) => {
+    if (!date) return 'Not set';
+    return new Intl.DateTimeFormat('en-ZA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     }).format(new Date(date));
   };
 
@@ -274,10 +286,28 @@ export function TenderDetails({
 
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
-                        Submission Date
+                        Closing Date
                       </label>
                       <p className="text-foreground">
                         {formatDate(tender.submissionDate)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Tender Validity (Initial)
+                      </label>
+                      <p className="text-foreground">
+                        {tender.validityDays ? `${tender.validityDays} Days` : formatDateOnly(tender.validityDate)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Current Validity Deadline
+                      </label>
+                      <p className="text-foreground font-semibold text-blue-600">
+                        {formatDateOnly(tender.evaluationDate)}
                       </p>
                     </div>
                   </div>
@@ -563,7 +593,7 @@ export function TenderDetails({
                   {tender.submissionDate && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
-                        Submission Date
+                        Closing Date
                       </label>
                       <p className="text-sm">
                         {formatDate(tender.submissionDate)}

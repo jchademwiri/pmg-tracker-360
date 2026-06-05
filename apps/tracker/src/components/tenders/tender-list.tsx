@@ -338,7 +338,7 @@ export function TenderList({
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Value</TableHead>
-                    <TableHead>Submission Date</TableHead>
+                    <TableHead>Closing Date</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>

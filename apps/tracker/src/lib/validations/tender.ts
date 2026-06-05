@@ -4,9 +4,11 @@ export const TenderCreateSchema = z.object({
   tenderNumber: z.string().min(1, 'Tender number is required'),
   description: z.string().optional(),
   clientId: z.string().min(1, 'Client is required'),
-  submissionDate: z.date().optional(),
+  submissionDate: z.date().optional().nullable(),
   value: z.string().optional(),
   status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost']),
+  validityDays: z.number().int().nonnegative().nullable().optional(),
+  validityDate: z.coerce.date().optional().nullable(),
 });
 
 export const TenderUpdateSchema = TenderCreateSchema.partial().extend({

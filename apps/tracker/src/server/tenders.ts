@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { tender, client, project } from '@pmg/db/schema';
+import { tender, client, project, tenderExtension } from '@pmg/db/schema';
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -51,6 +51,36 @@ async function autoCreateProjectForTender(
   }
 }
 
+async function resolveEvaluationDate(
+  tenderId: string | undefined,
+  submissionDate: Date | null | undefined,
+  validityDays: number | null | undefined,
+  validityDate: Date | null | undefined
+): Promise<Date | null> {
+  if (tenderId) {
+    const latestExtension = await db
+      .select()
+      .from(tenderExtension)
+      .where(and(eq(tenderExtension.tenderId, tenderId), isNull(tenderExtension.deletedAt)))
+      .orderBy(desc(tenderExtension.newEvaluationDate))
+      .limit(1);
+
+    if (latestExtension.length > 0) {
+      return latestExtension[0].newEvaluationDate;
+    }
+  }
+
+  if (validityDate) {
+    return new Date(validityDate);
+  }
+  if (submissionDate && validityDays) {
+    const calcDate = new Date(submissionDate);
+    calcDate.setDate(calcDate.getDate() + validityDays);
+    return calcDate;
+  }
+  return null;
+}
+
 // Get tenders with pagination, search, and client joins
 export async function getTenders(
   organizationId: string,
@@ -92,6 +122,9 @@ export async function getTenders(
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        evaluationDate: tender.evaluationDate,
+        validityDays: tender.validityDays,
+        validityDate: tender.validityDate,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -178,12 +211,20 @@ export async function createTender(
       return { success: false, error: 'Client not found' };
     }
 
+    const evaluationDate = await resolveEvaluationDate(
+      undefined,
+      validatedData.submissionDate,
+      validatedData.validityDays,
+      validatedData.validityDate
+    );
+
     const newTender = await db
       .insert(tender)
       .values({
         id: randomUUID(),
         organizationId,
         ...validatedData,
+        evaluationDate,
         tenderNumber: validatedData.tenderNumber.toUpperCase(),
       })
       .returning();
@@ -219,6 +260,9 @@ export async function getTenderById(organizationId: string, tenderId: string) {
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        evaluationDate: tender.evaluationDate,
+        validityDays: tender.validityDays,
+        validityDate: tender.validityDate,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -322,10 +366,30 @@ export async function updateTender(
       }
     }
 
+    const mergedSubmissionDate = validatedData.hasOwnProperty('submissionDate')
+      ? validatedData.submissionDate
+      : existingTender[0].submissionDate;
+
+    const mergedValidityDays = validatedData.hasOwnProperty('validityDays')
+      ? validatedData.validityDays
+      : existingTender[0].validityDays;
+
+    const mergedValidityDate = validatedData.hasOwnProperty('validityDate')
+      ? validatedData.validityDate
+      : existingTender[0].validityDate;
+
+    const evaluationDate = await resolveEvaluationDate(
+      tenderId,
+      mergedSubmissionDate,
+      mergedValidityDays,
+      mergedValidityDate
+    );
+
     const updatedTender = await db
       .update(tender)
       .set({
         ...validatedData,
+        evaluationDate,
         tenderNumber: validatedData.tenderNumber
           ? validatedData.tenderNumber.toUpperCase()
           : undefined,
@@ -632,6 +696,9 @@ export async function getTendersWithSorting(
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        evaluationDate: tender.evaluationDate,
+        validityDays: tender.validityDays,
+        validityDate: tender.validityDate,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -1064,6 +1131,9 @@ export async function getTendersWithCustomSorting(
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        evaluationDate: tender.evaluationDate,
+        validityDays: tender.validityDays,
+        validityDate: tender.validityDate,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -1191,6 +1261,9 @@ export async function getTendersOverview(
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        evaluationDate: tender.evaluationDate,
+        validityDays: tender.validityDays,
+        validityDate: tender.validityDate,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {

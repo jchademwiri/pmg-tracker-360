@@ -49,6 +49,9 @@ interface TenderWithClient {
   submissionDate: Date | null;
   value: string | null;
   status: string;
+  validityDays: number | null;
+  validityDate: Date | null;
+  evaluationDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   client: {
@@ -81,6 +84,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
+  const [validityType, setValidityType] = useState<'days' | 'date'>(
+    tender?.validityDays ? 'days' : (tender?.validityDate ? 'date' : 'days')
+  );
 
   const form = useForm<TenderCreateInput>({
     resolver: zodResolver(TenderCreateSchema),
@@ -90,6 +96,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
       clientId: tender?.client?.id || '',
       submissionDate: tender?.submissionDate || undefined,
       value: tender?.value || '',
+      validityDays: tender?.validityDays || undefined,
+      validityDate: tender?.validityDate || undefined,
       status:
         (tender?.status as
           | 'open'
@@ -119,14 +127,28 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   const onSubmit = (data: TenderCreateInput) => {
     setError(null);
 
+    if (validityType === 'days' && data.validityDays && !data.submissionDate) {
+      form.setError('submissionDate', {
+        type: 'manual',
+        message: 'Closing Date is required to calculate validity in days',
+      });
+      return;
+    }
+
+    const payload = {
+      ...data,
+      validityDays: validityType === 'days' ? data.validityDays : null,
+      validityDate: validityType === 'date' ? data.validityDate : null,
+    };
+
     startTransition(async () => {
       try {
         let result;
 
         if (mode === 'create') {
-          result = await createTender(organizationId, data);
+          result = await createTender(organizationId, payload);
         } else if (tender) {
-          result = await updateTender(organizationId, tender.id, data);
+          result = await updateTender(organizationId, tender.id, payload);
         }
 
         if (result?.success) {
@@ -358,7 +380,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                   name="submissionDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Submission Date</FormLabel>
+                      <FormLabel>Closing Date</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -387,6 +409,95 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-3">
+                  <FormLabel>Tender Validity *</FormLabel>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={validityType === 'days' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setValidityType('days');
+                        form.setValue('validityDate', undefined);
+                      }}
+                      className="flex-1"
+                      disabled={isPending}
+                    >
+                      In Days
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={validityType === 'date' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setValidityType('date');
+                        form.setValue('validityDays', undefined);
+                      }}
+                      className="flex-1"
+                      disabled={isPending}
+                    >
+                      Specific Date
+                    </Button>
+                  </div>
+
+                  {validityType === 'days' ? (
+                    <FormField
+                      control={form.control}
+                      name="validityDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Enter number of days (e.g. 90)"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                field.onChange(val);
+                              }}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="validityDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                              <Input
+                                type="date"
+                                className="pl-10 rounded-md"
+                                {...field}
+                                value={
+                                  field.value
+                                    ? new Date(field.value)
+                                        .toISOString()
+                                        .split('T')[0]
+                                    : ''
+                                }
+                                onChange={(e) => {
+                                  const date = e.target.value
+                                    ? new Date(e.target.value)
+                                    : undefined;
+                                  field.onChange(date);
+                                }}
+                                disabled={isPending}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
 
                 <FormField
                   control={form.control}

@@ -121,7 +121,7 @@ export async function DashboardMetrics({
         <MetricCard
           title="Overdue Items"
           value={formatNumber(tenderStats.overdueCount)}
-          description="Tenders past submission date"
+          description="Tenders past closing date"
         />
       </div>
     </>

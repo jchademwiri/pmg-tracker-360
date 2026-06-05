@@ -7,6 +7,7 @@ import {
   pgEnum,
   primaryKey,
   unique,
+  integer,
 } from 'drizzle-orm/pg-core';
 
 /* =========================
@@ -318,6 +319,8 @@ export const tender = pgTable('tender', {
   value: text('value'), // String for currency formatting
   status: text('status').default('draft').notNull(), // draft, submitted, won, lost, pending
   evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
+  validityDays: integer('validity_days'),
+  validityDate: timestamp('validity_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'), // Soft deletion

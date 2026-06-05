@@ -144,7 +144,7 @@ export function TendersTable({
                         Value
                       </TableHead> */}
                       <TableHead className="min-w-[120px] hidden lg:table-cell">
-                        Submission Date
+                        Closing Date
                       </TableHead>
                       <TableHead className="min-w-[100px] hidden sm:table-cell">
                         Days Left
