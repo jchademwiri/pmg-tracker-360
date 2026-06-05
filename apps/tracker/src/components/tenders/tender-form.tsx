@@ -148,9 +148,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
           }
 
           if (data.status === 'awarded' && result.projectId) {
-            router.push(`/dashboard/projects/${result.projectId}/edit`);
+            router.push(`/projects/${result.projectId}/edit`);
           } else {
-            router.push('/dashboard/tenders');
+            router.push('/tenders');
           }
           router.refresh();
         } else {

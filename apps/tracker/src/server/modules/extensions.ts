@@ -107,7 +107,7 @@ export async function createTenderExtension(
       }
     }
 
-    revalidatePath(`/dashboard/tenders/${validatedData.tenderId}`);
+    revalidatePath(`/tenders/${validatedData.tenderId}`);
     return { success: true, extension: newExtension };
   } catch (error) {
     console.error('Error creating tender extension:', error);

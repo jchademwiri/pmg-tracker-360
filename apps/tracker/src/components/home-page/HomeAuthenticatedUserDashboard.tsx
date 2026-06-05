@@ -58,10 +58,10 @@ export function HomeAuthenticatedUserDashboard({
               <Link href="/dashboard">View Dashboard</Link>
             </Button>
             <Button variant={'outline'}>
-              <Link href="/dashboard/tenders/overview">View Tenders</Link>
+              <Link href="/tenders/overview">View Tenders</Link>
             </Button>
             <Button variant={'outline'}>
-              <Link href="/dashboard/projects/overview">
+              <Link href="/projects/overview">
                 View Purchase Orders
               </Link>
             </Button>

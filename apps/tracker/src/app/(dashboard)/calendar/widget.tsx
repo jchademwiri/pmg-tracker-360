@@ -75,9 +75,9 @@ export function CalendarClient() {
     (info: EventClickArg) => {
       // Basic routing heuristic: tenders vs POs by CSS class
       if (info.event.classNames.includes('event-tender_submission')) {
-        router.push(`/dashboard/tenders`);
+        router.push(`/tenders`);
       } else {
-        router.push(`/dashboard/projects`);
+        router.push(`/projects`);
       }
     },
     [router]

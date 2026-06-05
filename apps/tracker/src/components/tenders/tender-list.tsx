@@ -319,7 +319,7 @@ export function TenderList({
             </p>
             {!searchQuery && statusFilter === 'all' && (
               <Button asChild size={'lg'}>
-                <Link href="/dashboard/tenders/create">
+                <Link href="/tenders/create">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Tender
                 </Link>
@@ -348,7 +348,7 @@ export function TenderList({
                       key={tender.id}
                       className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
                       onClick={() =>
-                        router.push(`/dashboard/tenders/${tender.id}`)
+                        router.push(`/tenders/${tender.id}`)
                       }
                     >
                       <TableCell>
@@ -412,7 +412,7 @@ export function TenderList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/dashboard/tenders/${tender.id}`);
+                                router.push(`/tenders/${tender.id}`);
                               }}
                             >
                               View Details
@@ -421,7 +421,7 @@ export function TenderList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/dashboard/tenders/${tender.id}/edit`
+                                  `/tenders/${tender.id}/edit`
                                 );
                               }}
                             >
@@ -452,7 +452,7 @@ export function TenderList({
                 <Card
                   key={tender.id}
                   className="cursor-pointer hover:bg-accent transition-colors duration-200 group rounded-lg border hover:ring-1 hover:ring-ring"
-                  onClick={() => router.push(`/dashboard/tenders/${tender.id}`)}
+                  onClick={() => router.push(`/tenders/${tender.id}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -518,7 +518,7 @@ export function TenderList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/dashboard/tenders/${tender.id}`);
+                              router.push(`/tenders/${tender.id}`);
                             }}
                           >
                             View Details
@@ -527,7 +527,7 @@ export function TenderList({
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(
-                                `/dashboard/tenders/${tender.id}/edit`
+                                `/tenders/${tender.id}/edit`
                               );
                             }}
                           >

@@ -84,7 +84,7 @@ export async function createClient(
       })
       .returning();
 
-    revalidatePath('/dashboard/clients');
+    revalidatePath('/clients');
     return { success: true, client: newClient[0] };
   } catch (error) {
     console.error('Error creating client:', error);
@@ -161,8 +161,8 @@ export async function updateClient(
       .where(eq(client.id, clientId))
       .returning();
 
-    revalidatePath('/dashboard/clients');
-    revalidatePath(`/dashboard/clients/${clientId}`);
+    revalidatePath('/clients');
+    revalidatePath(`/clients/${clientId}`);
     return { success: true, client: updatedClient[0] };
   } catch (error) {
     console.error('Error updating client:', error);
@@ -220,7 +220,7 @@ export async function deleteClient(organizationId: string, clientId: string) {
       })
       .where(eq(client.id, clientId));
 
-    revalidatePath('/dashboard/clients');
+    revalidatePath('/clients');
     return { success: true, message: 'Client deleted successfully' };
   } catch (error) {
     console.error('Error deleting client:', error);

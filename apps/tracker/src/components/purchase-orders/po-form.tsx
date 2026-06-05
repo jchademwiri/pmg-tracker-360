@@ -132,7 +132,7 @@ export function POForm({
             if (onSuccess) {
               onSuccess();
             } else {
-              router.push('/dashboard/projects/purchase-orders');
+              router.push('/projects/purchase-orders');
             }
           } else {
             alert(result.error || 'Failed to update purchase order');
@@ -144,7 +144,7 @@ export function POForm({
             if (onSuccess) {
               onSuccess();
             } else {
-              router.push('/dashboard/projects/purchase-orders');
+              router.push('/projects/purchase-orders');
             }
           } else {
             alert(result.error || 'Failed to create purchase order');

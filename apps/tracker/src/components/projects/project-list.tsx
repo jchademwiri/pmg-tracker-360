@@ -233,7 +233,7 @@ export function ProjectList({
             </p>
             {!searchQuery && statusFilter === 'all' && (
               <Button
-                onClick={() => router.push('/dashboard/projects/create')}
+                onClick={() => router.push('/projects/create')}
                 className="cursor-pointer"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -263,7 +263,7 @@ export function ProjectList({
                       key={project.id}
                       className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
                       onClick={() =>
-                        router.push(`/dashboard/projects/${project.id}`)
+                        router.push(`/projects/${project.id}`)
                       }
                     >
                       <TableCell>
@@ -334,7 +334,7 @@ export function ProjectList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/dashboard/projects/${project.id}`
+                                  `/projects/${project.id}`
                                 );
                               }}
                             >
@@ -344,7 +344,7 @@ export function ProjectList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/dashboard/projects/${project.id}/edit`
+                                  `/projects/${project.id}/edit`
                                 );
                               }}
                             >
@@ -376,7 +376,7 @@ export function ProjectList({
                   key={project.id}
                   className="cursor-pointer hover:bg-accent transition-colors duration-200 group rounded-lg border hover:ring-1 hover:ring-ring"
                   onClick={() =>
-                    router.push(`/dashboard/projects/${project.id}`)
+                    router.push(`/projects/${project.id}`)
                   }
                 >
                   <CardContent className="p-4">
@@ -439,7 +439,7 @@ export function ProjectList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(`/dashboard/projects/${project.id}`);
+                              router.push(`/projects/${project.id}`);
                             }}
                           >
                             View Details
@@ -448,7 +448,7 @@ export function ProjectList({
                             onClick={(e) => {
                               e.stopPropagation();
                               router.push(
-                                `/dashboard/projects/${project.id}/edit`
+                                `/projects/${project.id}/edit`
                               );
                             }}
                           >

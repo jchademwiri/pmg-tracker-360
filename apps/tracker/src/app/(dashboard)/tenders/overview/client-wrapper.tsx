@@ -113,7 +113,7 @@ export function TendersOverviewClient({
   const handleViewTender = useCallback(
     (tenderId: string) => {
       // Navigate to tender detail page
-      router.push(`/dashboard/tenders/${tenderId}`);
+      router.push(`/tenders/${tenderId}`);
     },
     [router]
   );
@@ -121,7 +121,7 @@ export function TendersOverviewClient({
   const handleEditTender = useCallback(
     (tenderId: string) => {
       // Navigate to tender edit page
-      router.push(`/dashboard/tenders/${tenderId}/edit`);
+      router.push(`/tenders/${tenderId}/edit`);
     },
     [router]
   );
@@ -133,7 +133,7 @@ export function TendersOverviewClient({
   const handleRowClick = useCallback(
     (tenderId: string) => {
       // Navigate to tender detail page on row click
-      router.push(`/dashboard/tenders/${tenderId}`);
+      router.push(`/tenders/${tenderId}`);
     },
     [router]
   );

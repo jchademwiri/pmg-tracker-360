@@ -52,7 +52,7 @@ export function UpcomingDeadlinesList({
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/dashboard/tenders/${item.id}`}
+                    href={`/tenders/${item.id}`}
                     className="font-medium hover:underline truncate"
                   >
                     {item.tenderNumber}
@@ -81,7 +81,7 @@ export function UpcomingDeadlinesList({
                 asChild
                 aria-label="View tender details"
               >
-                <Link href={`/dashboard/tenders/${item.id}`}>
+                <Link href={`/tenders/${item.id}`}>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -91,7 +91,7 @@ export function UpcomingDeadlinesList({
       </ScrollArea>
       <div className="pt-2 border-t">
         <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
-          <Link href="/dashboard/tenders?sort=deadline">
+          <Link href="/tenders?sort=deadline">
             View All Deadlines
           </Link>
         </Button>

@@ -255,8 +255,8 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                       key={event.id}
                       href={
                         event.type === 'tender_submission'
-                          ? '/dashboard/tenders'
-                          : '/dashboard/projects'
+                          ? '/tenders'
+                          : '/projects'
                       }
                       className="block"
                     >
