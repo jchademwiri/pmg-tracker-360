@@ -7,7 +7,9 @@ This document presents proposed technical solutions for all findings, security g
 ## 1. Solution: Secure Server Actions (Auth & Tenant Validation)
 
 ### Problem:
-Server actions in [tenders.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/tenders.ts), [clients.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/clients.ts), and [projects.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/projects.ts) do not validate if the user is authenticated and belongs to the organization whose ID is passed in the request.
+Server actions in [tenders.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/tenders.ts), [clients.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/clients.ts), and [projects.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/projects.ts) do not validate if the user is authenticated and belongs to the organization whose ID is passed in the request. 
+
+Furthermore, server actions in [purchase-orders.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/purchase-orders.ts) and [documents.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/documents.ts) check general session permissions but fail to verify that the target `organizationId` matching the database query is the user's active session organization, leading to cross-tenant access vulnerabilities.
 
 ### Solution:
 Introduce a reusable validation helper `validateSessionAndOrg` that performs session verification and confirms organization membership using the Better Auth instance. Wrap all mutation and query server actions with this helper.
@@ -148,7 +150,33 @@ export function OrganizationSelector({
 
 ---
 
-## 3. Solution: Add the Missing `invoice` Table
+## 3. Solution: Correct Organization Slug URL Preview
+
+### Problem:
+The URL Preview in the organization creation form, [create-organization-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/create-organization-form.tsx#L475-L484), shows a non-existent path (`/dashboard/settings/organization/{slug}`).
+
+### Solution:
+Modify the preview component inside [create-organization-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/create-organization-form.tsx) to render the correct `/dashboard/organization/{slug}` path.
+
+#### Form File Code Modification:
+```diff
+                 {/* URL Preview */}
+                 {field.value && (
+                   <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                     <span className="text-xs text-muted-foreground">
+                       URL Preview:
+                     </span>
+                     <Badge variant="secondary" className="text-xs font-mono">
+-                      /dashboard/settings/organization/{field.value}
++                      /dashboard/organization/{field.value}
+                     </Badge>
+                   </div>
+                 )}
+```
+
+---
+
+## 4. Solution: Add the Missing `invoice` Table
 
 ### Problem:
 The application lacks an `invoice` table to track PO fulfillment billing, payment cycles, and overdue ZAR balances.
@@ -307,4 +335,84 @@ export const purchaseOrderItem = pgTable('purchase_order_item', {
   unitPrice: text('unit_price').notNull(), // Price per unit
   totalAmount: text('total_amount').notNull(), // Calculated total
 });
+```
+
+---
+
+## 6. Solution: Timezone-Safe Local Date Formatter for Forms
+
+### Problem:
+Forms formatting calendar dates using `.toISOString().split('T')[0]` shift dates back by one day for South African users (UTC+2) because `.toISOString()` converts the local midnight timestamp (00:00:00) to UTC (e.g. 22:00:00 the previous day).
+
+### Solution:
+Introduce a timezone-safe formatting helper `formatLocalDate` in the frontend utility folder and use it in form date fields to extract the local YYYY-MM-DD components without UTC timezone conversion.
+
+#### Utility Helper (`apps/tracker/src/lib/date-utils.ts`):
+```typescript
+export function formatLocalDate(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  
+  // Format as YYYY-MM-DD based on local date values
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+```
+
+#### Form Implementation Example (`po-form.tsx`):
+```typescript
+<FormField
+  control={form.control}
+  name="poDate"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>PO Date</FormLabel>
+      <FormControl>
+        <Input
+          type="date"
+          {...field}
+          value={formatLocalDate(field.value)}
+          onChange={(e) => {
+            const date = e.target.value
+              ? new Date(e.target.value)
+              : undefined;
+            field.onChange(date);
+          }}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+---
+
+## 7. Solution: Secure Settings Overview Route
+
+### Problem:
+The settings overview route does not perform user session verification, allowing unauthenticated sessions to render the layout with placeholder settings details.
+
+### Solution:
+Secure the server component route by calling `getCurrentUser()` to enforce redirect behavior if no valid session is present.
+
+#### Updated Route Code (`apps/tracker/src/app/(dashboard)/settings/overview/page.tsx`):
+```typescript
+import { getCurrentUser } from '@/server';
+
+export const dynamic = 'force-dynamic';
+
+export default async function SettingsOverviewPage() {
+  // Enforce session check and redirect if unauthorized
+  await getCurrentUser();
+
+  return (
+    <div className="space-y-6">
+      {/* Page layout content remains unchanged */}
+    </div>
+  );
+}
 ```

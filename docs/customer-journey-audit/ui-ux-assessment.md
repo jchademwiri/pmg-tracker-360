@@ -42,6 +42,16 @@ When creating a tender, the user must select a Client. If the client doesn't exi
 * **The Issue**: While the inline creation dialog is a good idea, after creating the client, the dropdown does not visually highlight or animate the newly created client, leading to a brief moment of confusion about whether the client was successfully added and selected.
 * **The UX Recommendation**: Add a subtle toast notification ("Client 'City of Joburg' added and selected") and scroll the dropdown item into view with a highlighted flash animation.
 
+#### 4. Broken URL Preview in Organization Creation
+During onboarding, the user creates their organization and its URL slug.
+* **The Issue**: The "URL Preview" displays a path that does not exist in the application workspace (`/dashboard/settings/organization/[slug]`). The actual route structure utilizes `/dashboard/organization/[slug]`. This misleads the user regarding their organization workspace location.
+* **The UX Recommendation**: Correct the preview string to display `/dashboard/organization/[slug]` to ensure the onboarding experience is accurate.
+
+#### 5. Date Timezone Shift on Calendar Inputs
+Date components in the Tender and PO forms display incorrect dates after saving.
+* **The Issue**: Form values are converted using `.toISOString().split('T')[0]`. Since South Africa runs on SAST (UTC+2), a Date representing local midnight (00:00:00) gets converted to the previous day at 22:00:00 UTC, causing the date input to retroactively shift back by one day on the UI calendar.
+* **The UX Recommendation**: Use local timezone date string formatter utility functions (e.g. `YYYY-MM-DD` formatting based on local timezone offsets or native date methods like `.toLocaleDateString()` with custom formats) instead of converting directly to UTC via `.toISOString()`.
+
 ---
 
 ## 3. User Feedback & Interactive State Loops
@@ -89,3 +99,4 @@ if (!confirm('Are you sure you want to delete this tender? ...')) return;
 - [ ] **Mobile-Friendly Cards**: Collapse desktop tables into card layouts on screen widths below `768px`.
 - [ ] **Unified Status Badges**: Standardize status badge sizes, typography, and theme variables across all dashboard tables and detail headers.
 - [ ] **Organization Switcher Fix**: Bind the organization selector items to a click handler that invokes the `authClient.organization.setActive()` method before redirecting.
+- [ ] **Local Calendar Date Picker**: Implement a timezone-safe local date formatter for date pickers to prevent the one-day backward shifting issue.

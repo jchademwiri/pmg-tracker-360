@@ -92,6 +92,7 @@ This audit report is divided into several sections for detailed reading:
 2. **[Detailed Audit Findings](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/audit-findings.md)**: A step-by-step breakdown of every step in the journey, code auditing, security checks, and logic errors.
 3. **[UI/UX Assessment & Recommendations](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/ui-ux-assessment.md)**: Evaluation of the UI/UX flows, ZAR currency formatting, feedback loops, responsiveness, and aesthetic updates.
 4. **[Proposed Technical Solutions](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/proposed-solutions.md)**: Detailed code templates, database schemas, and migration path snippets to resolve all audited issues.
+5. **[Link Analysis Report](file:///D:/websites/pmg-tracker-360/docs/customer-journey-audit/link-analysis.md)**: An automated scan validating all internal references, files, and paths.
 
 ---
 

@@ -32,6 +32,22 @@ In [organization-selector.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/
 ```
 * **The Bug**: Clicking these buttons simply navigates to `/dashboard` without updating the active organization in Better Auth. The client side never calls `authClient.organization.setActive({ organizationId: org.id })`. If a user belongs to multiple organizations, they cannot switch between them, and the dashboard will continue showing the data of whichever organization happens to be cached as active.
 
+#### 3. Mismatched Organization Slug Preview URL (UI/UX Bug)
+In the organization creation form, [create-organization-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/shared/forms/create-organization-form.tsx#L475-L484), the "URL Preview" displays `/dashboard/settings/organization/{slug}`:
+```typescript
+<Badge variant="secondary" className="text-xs font-mono">
+  /dashboard/settings/organization/{field.value}
+</Badge>
+```
+* **The Bug**: There is no `/dashboard/settings/organization/[slug]` route in the application workspace. The actual organization workspace and settings routes are:
+  - Organization Dashboard: `/dashboard/organization/[slug]`
+  - Organization Settings: `/dashboard/organization/[slug]/settings`
+* **The Impact**: Users are shown an incorrect, broken URL preview during organization onboarding, which misleads them about the route structure.
+
+#### 4. Insecure Settings Overview Route (Security/Access Control Gap)
+In [overview/page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/app/%28dashboard%29/settings/overview/page.tsx), the server page component renders without validating the user session. 
+* **The Bug**: Unlike other settings pages, this page completely omits a call to `getCurrentUser()`. While it currently displays static layouts and mock settings data (e.g. Profile completion 85%), this lack of authorization gate exposes the route structure to unauthenticated sessions.
+
 ---
 
 ## Phase 2: Client Management
@@ -83,6 +99,20 @@ Submitting a public sector bid requires a strict compliance dossier:
 * Municipal rates clearance certificate
 * Standard Bidding Documents (MBD 4, 6.1, 8, 9)
 * **The Gap**: The customer journey provides no compliance checklist. Bidding teams must track documents externally, leading to administrative disqualifications.
+
+#### 5. Date Timezone Shift on Calendars (Data Integrity Bug)
+In [tender-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/tenders/tender-form.tsx#L369-L375), the `submissionDate` calendar value is formatted as:
+```typescript
+value={
+  field.value
+    ? new Date(field.value)
+        .toISOString()
+        .split('T')[0]
+    : ''
+}
+```
+* **The Bug**: Using `new Date(field.value).toISOString()` converts the Date object to a UTC string. For users in South Africa (SAST, UTC+2), a Date representing midnight (e.g., `2026-06-05 00:00:00`) translates to `2026-06-04T22:00:00.000Z` in UTC. Splitting by `'T'` extracts `"2026-06-04"`, shifting the date on the calendar back by one full day.
+* **The Impact**: This causes serious date discrepancies and errors when viewing or editing existing tender submission dates.
 
 ---
 
@@ -147,12 +177,22 @@ The customer journey stops entirely at PO delivery. In business operations, deli
 3. Tracking the payment terms (typically a 30-day payment cycle).
 * **The Critical Gap**: The database has **no invoice table** whatsoever. Although the implementation plan outlines invoices, it was never added to the schema. Users cannot track when they got paid, what payments are overdue (a major issue with South African government departments), and cannot generate cash flow projections.
 
+#### 5. Cross-Tenant Authorization Bypass in Purchase Orders & Documents (Security Vulnerability)
+Server actions in [purchase-orders.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/purchase-orders.ts) and [documents.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/documents.ts) contain critical multi-tenant access control flaws.
+* **The Vulnerability**: While PO actions check for role permissions using `auth.api.hasPermission()`, they only verify if the user has permissions *within their own active organization*. They fail to check if the `organizationId` passed as an argument matches the active organization in the session.
+* **The Impact**: Any authenticated user can read, create, update, or delete purchase orders and documents for *any* other organization by simply passing the target organization's ID in the HTTP payload. Furthermore, `getDocuments` in [documents.ts](file:///D:/websites/pmg-tracker-360/apps/tracker/src/server/documents.ts#L182) completely omits any authentication or organization validation checks.
+
+#### 6. Date Timezone Shift on PO Calendars (Data Integrity Bug)
+Similar to the tender form, the PO form [po-form.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/src/components/purchase-orders/po-form.tsx#L289-L320) formats the `poDate` and `expectedDeliveryDate` inputs using `.toISOString().split('T')[0]`.
+* **The Bug**: Due to local timezone conversions to UTC, dates initialized at midnight shift back by one day on client rendering for South African users (UTC+2).
+
 ---
 
 ## 3. Summary Matrix of Gaps and Severity
 
 | Journey Phase | Step | Identified Gap / Bug | Severity | Impact |
 | :--- | :--- | :--- | :--- | :--- |
+| **Onboarding** | Settings | Insecure settings overview route (missing session check). | **Low** | Unauthenticated rendering of route layout. |
 | **Onboarding** | Org Setup | Invite acceptance form is missing during onboarding. | **Medium** | Invited users forced to create fake orgs. |
 | **Onboarding** | Selector | Org selection doesn't invoke `setActive` API. | **High** | Multi-tenant context switching is broken. |
 | **Clients** | CRUD | Server actions lack authentication checks. | **Critical** | Data exposure and unauthorized mutations. |
@@ -161,9 +201,12 @@ The customer journey stops entirely at PO delivery. In business operations, deli
 | **Tenders** | Actions | Server actions lack authentication checks. | **Critical** | Data exposure and unauthorized mutations. |
 | **Tenders** | Bid Prep | Briefing/Clarification meeting dates are not tracked. | **Medium** | Risk of administrative disqualification. |
 | **Tenders** | Bid Prep | Bid compliance checklists are missing. | **Medium** | Risk of missing compliance items. |
+| **Tenders** | Form | Timezone Date Shift on Calendar inputs (toISOString). | **Medium** | Dates shift back by one day on client view. |
 | **Extensions** | CRUD | Extensions cannot be edited or deleted. | **Medium** | Typos in dates are immutable. |
 | **Transition** | Award | Abrupt project creation without confirming SLA details. | **Medium** | Projects initialized with inaccurate values. |
 | **PO Tracking** | Form | `deliveredAt` input field is missing from form. | **High** | Cannot record past delivery timestamps. |
 | **PO Tracking** | Schema | Flat PO amount and description (no line items). | **Medium** | Cannot track quantities ordered vs. received. |
 | **PO Tracking** | Delivery | Proof of Delivery (POD) upload is not enforced. | **Medium** | Compliance gaps for payment verification. |
+| **PO Tracking** | Actions | Cross-tenant authorization bypass in POs and documents. | **Critical** | Cross-tenant data access and unauthorized mutations. |
+| **PO Tracking** | Form | Timezone Date Shift on Calendar inputs (toISOString). | **Medium** | Dates shift back by one day on client view. |
 | **PO Tracking** | Finance | **No invoice table exists in the database.** | **Critical** | Cash flow and payment cycles are untracked. |
