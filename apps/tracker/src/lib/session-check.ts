@@ -2,6 +2,9 @@
 
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { db } from '@pmg/db';
+import { member, organization } from '@pmg/db/schema';
+import { and, eq, isNull } from 'drizzle-orm';
 
 export async function checkUserSession() {
   try {
@@ -13,13 +16,24 @@ export async function checkUserSession() {
       return { hasSession: false, hasOrganization: false };
     }
 
-    // Check if user has an active organization
+    const memberships = await db
+      .select({ organizationId: member.organizationId })
+      .from(member)
+      .innerJoin(organization, eq(member.organizationId, organization.id))
+      .where(
+        and(
+          eq(member.userId, session.user.id),
+          isNull(organization.deletedAt)
+        )
+      );
+
     const hasOrganization = !!session.session.activeOrganizationId;
 
     return {
       hasSession: true,
       hasOrganization,
       activeOrganizationId: session.session.activeOrganizationId,
+      organizationCount: memberships.length,
     };
   } catch (error) {
     console.error('Session check error:', error);

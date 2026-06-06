@@ -29,6 +29,7 @@ export const user = pgTable('user', {
     .notNull(),
   plan: text('plan').default('free').notNull(),
   role: text('role').default('user').notNull(),
+  lastActiveOrganizationId: text('last_active_organization_id'),
 });
 
 export type User = typeof user.$inferSelect;
@@ -321,6 +322,9 @@ export const tender = pgTable('tender', {
   evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
   validityDays: integer('validity_days'),
   validityDate: timestamp('validity_date'),
+  contactName: text('contact_name'),
+  contactEmail: text('contact_email'),
+  contactPhone: text('contact_phone'),
   briefingDate: timestamp('briefing_date'),
   briefingLocation: text('briefing_location'),
   isBriefingMandatory: boolean('is_briefing_mandatory').default(false).notNull(),

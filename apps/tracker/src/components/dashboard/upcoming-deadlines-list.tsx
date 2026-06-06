@@ -24,6 +24,25 @@ interface UpcomingDeadlinesListProps {
 export function UpcomingDeadlinesList({
   deadlines,
 }: UpcomingDeadlinesListProps) {
+  const formatDeadline = (date: Date | null) => {
+    if (!date) return 'No date';
+
+    return new Intl.DateTimeFormat('en-ZA', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  };
+
+  const formatDaysUntil = (days: number | null) => {
+    if (days === null) return 'No date';
+    if (days <= 0) return 'Today';
+    if (days === 1) return '1 day';
+    return `${days} days`;
+  };
+
   if (!deadlines || deadlines.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -61,7 +80,7 @@ export function UpcomingDeadlinesList({
                     variant="outline"
                     className="text-[10px] px-1 py-0 h-5"
                   >
-                    {item.daysUntilDeadline} days
+                    {formatDaysUntil(item.daysUntilDeadline)}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
@@ -69,9 +88,7 @@ export function UpcomingDeadlinesList({
                 </p>
                 <div className="flex items-center text-xs text-muted-foreground">
                   <Calendar className="mr-1 h-3 w-3" />
-                  {item.submissionDate
-                    ? new Date(item.submissionDate).toLocaleDateString()
-                    : 'No date'}
+                  {formatDeadline(item.submissionDate)}
                 </div>
               </div>
               <Button

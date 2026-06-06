@@ -8,6 +8,44 @@ import { db } from '@pmg/db';
 import { user, verification } from '@pmg/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
+const ADMIN_PRODUCTION_URL = 'https://admin.tendertrack360.co.za';
+
+function getOrigin(value?: string) {
+  if (!value) return null;
+
+  try {
+    const url = new URL(
+      value.startsWith('http://') || value.startsWith('https://')
+        ? value
+        : `https://${value}`
+    );
+
+    return url.origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAdminOrigin(value?: string) {
+  const origin = getOrigin(value);
+  if (!origin) return null;
+
+  return new URL(origin).hostname.startsWith('admin.') ? origin : null;
+}
+
+function getAdminBaseURL() {
+  return (
+    getOrigin(process.env.NEXT_PUBLIC_ADMIN_URL) ||
+    getOrigin(process.env.ADMIN_PUBLIC_URL) ||
+    getAdminOrigin(process.env.NEXT_PUBLIC_URL) ||
+    getAdminOrigin(process.env.BETTER_AUTH_URL) ||
+    getAdminOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
+    getAdminOrigin(process.env.VERCEL_URL) ||
+    (process.env.NODE_ENV === 'production'
+      ? ADMIN_PRODUCTION_URL
+      : 'http://localhost:3001')
+  );
+}
 
 
 /**
@@ -76,7 +114,7 @@ export async function adminSendMagicLink(email: string) {
     await auth.api.signInMagicLink({
       body: {
         email: foundUser.email,
-        callbackURL: '/',
+        callbackURL: getAdminBaseURL(),
       },
       headers: await headers(),
     });
@@ -203,5 +241,4 @@ export async function createSystemAdmin(name: string, email: string, password: s
     return { success: false, error: e.message || 'An error occurred during account creation' };
   }
 }
-
 

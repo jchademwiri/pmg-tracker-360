@@ -3,6 +3,7 @@
 import { authClient } from '@/lib/auth-client';
 import { toast } from 'sonner';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { rememberActiveOrganization } from '@/server/organizations';
 
 export interface OrganizationSwitchOptions {
   organizationId: string;
@@ -47,6 +48,8 @@ export async function switchOrganization({
 
     if (response.ok) {
       const result = await response.json();
+
+      await rememberActiveOrganization(organizationId);
 
       // Step 2: Force session refresh to ensure server components get updated data
       try {

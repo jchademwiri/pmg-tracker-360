@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+const optionalText = z
+  .string()
+  .trim()
+  .transform((value) => value || null)
+  .optional()
+  .nullable();
+
+const optionalEmail = z
+  .union([z.string().trim().email('Enter a valid email address'), z.literal('')])
+  .transform((value) => value || null)
+  .optional()
+  .nullable();
+
 export const TenderCreateSchema = z.object({
   tenderNumber: z.string().min(1, 'Tender number is required'),
   description: z.string().optional(),
@@ -9,6 +22,9 @@ export const TenderCreateSchema = z.object({
   status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']),
   validityDays: z.number().int().nonnegative().nullable().optional(),
   validityDate: z.coerce.date().optional().nullable(),
+  contactName: optionalText,
+  contactEmail: optionalEmail,
+  contactPhone: optionalText,
   briefingDate: z.coerce.date().optional().nullable(),
   briefingLocation: z.string().optional().nullable(),
   isBriefingMandatory: z.boolean().default(false),

@@ -45,6 +45,10 @@ export default async function DashboardPage() {
   }
 
   if (!sessionCheck.hasOrganization) {
+    if (sessionCheck.organizationCount && sessionCheck.organizationCount > 0) {
+      redirect('/organization/select');
+    }
+
     redirect('/onboarding');
   }
 

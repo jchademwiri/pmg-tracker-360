@@ -10,6 +10,8 @@ import {
   FileText,
   User,
   Calendar,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +35,12 @@ import {
 
 import { createTender, updateTender } from '@/server/tenders';
 import { getClients } from '@/server/clients';
-import { toLocalDateString, fromLocalDateString } from '@/lib/tender-utils';
+import {
+  fromLocalDateString,
+  fromLocalDateTimeString,
+  toLocalDateString,
+  toLocalDateTimeString,
+} from '@/lib/tender-utils';
 import {
   TenderCreateSchema,
   type TenderCreateInput,
@@ -52,6 +59,9 @@ interface TenderWithClient {
   validityDays: number | null;
   validityDate: Date | null;
   evaluationDate: Date | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
   briefingDate?: Date | null;
   briefingLocation?: string | null;
   isBriefingMandatory?: boolean;
@@ -102,6 +112,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
       value: tender?.value || '',
       validityDays: tender?.validityDays || undefined,
       validityDate: tender?.validityDate || undefined,
+      contactName: tender?.contactName || '',
+      contactEmail: tender?.contactEmail || '',
+      contactPhone: tender?.contactPhone || '',
       briefingDate: tender?.briefingDate || undefined,
       briefingLocation: tender?.briefingLocation || '',
       isBriefingMandatory: tender?.isBriefingMandatory || false,
@@ -389,17 +402,19 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                   name="submissionDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Closing Date</FormLabel>
+                      <FormLabel>Closing Date & Time</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                           <Input
-                            type="date"
+                            type="datetime-local"
                             className="pl-10 rounded-md"
                             {...field}
-                            value={toLocalDateString(field.value)}
+                            value={toLocalDateTimeString(field.value)}
                             onChange={(e) => {
-                              field.onChange(fromLocalDateString(e.target.value));
+                              field.onChange(
+                                fromLocalDateTimeString(e.target.value)
+                              );
                             }}
                             disabled={isPending}
                           />
@@ -547,6 +562,91 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     })()}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Tender Follow-up Contact */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <User className="h-5 w-5 mr-2 text-amber-600" />
+                  Tender Follow-up Contact
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Tender-specific enquiry or validity follow-up details
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6 p-6">
+                <FormField
+                  control={form.control}
+                  name="contactName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Person</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="e.g. Supply Chain Officer"
+                            className="pl-10 rounded-md"
+                            {...field}
+                            value={field.value || ''}
+                            disabled={isPending}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            type="email"
+                            placeholder="e.g. enquiries@client.co.za"
+                            className="pl-10 rounded-md"
+                            {...field}
+                            value={field.value || ''}
+                            disabled={isPending}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            type="tel"
+                            placeholder="e.g. +27 11 555 0123"
+                            className="pl-10 rounded-md"
+                            {...field}
+                            value={field.value || ''}
+                            disabled={isPending}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 

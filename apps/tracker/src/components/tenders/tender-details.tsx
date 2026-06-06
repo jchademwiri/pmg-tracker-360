@@ -38,6 +38,9 @@ interface TenderWithClient {
   evaluationDate: Date | null;
   validityDays: number | null;
   validityDate: Date | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
   createdAt: Date;
   updatedAt: Date;
   client: {
@@ -338,6 +341,75 @@ export function TenderDetails({
                 </CardContent>
               </Card>
 
+              {/* Tender Follow-up Contact */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <User className="h-5 w-5 mr-2 text-amber-600" />
+                    Tender Follow-up Contact
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {tender.contactName || tender.contactEmail || tender.contactPhone ? (
+                    <div className="space-y-3">
+                      {tender.contactName && (
+                        <div className="flex items-center space-x-3">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">
+                              Contact Person
+                            </label>
+                            <p className="text-foreground">{tender.contactName}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {tender.contactEmail && (
+                        <div className="flex items-center space-x-3">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">
+                              Email Address
+                            </label>
+                            <p className="text-foreground">
+                              <Link
+                                href={`mailto:${tender.contactEmail}`}
+                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {tender.contactEmail}
+                              </Link>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {tender.contactPhone && (
+                        <div className="flex items-center space-x-3">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">
+                              Phone Number
+                            </label>
+                            <p className="text-foreground">
+                              <Link
+                                href={`tel:${tender.contactPhone}`}
+                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {tender.contactPhone}
+                              </Link>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      No tender-specific follow-up contact added.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Client Information */}
               <Card className="rounded-lg shadow-sm">
                 <CardHeader>
@@ -463,34 +535,34 @@ export function TenderDetails({
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Tender
                   </Button>
-                  {tender.client?.contactEmail && (
+                  {(tender.contactEmail || tender.client?.contactEmail) && (
                     <Button
                       variant="outline"
                       className="w-full justify-start cursor-pointer"
                       onClick={() =>
                         window.open(
-                          `mailto:${tender.client?.contactEmail}`,
+                          `mailto:${tender.contactEmail || tender.client?.contactEmail}`,
                           '_blank'
                         )
                       }
                     >
                       <Mail className="h-4 w-4 mr-2" />
-                      Email Client
+                      Email Follow-up Contact
                     </Button>
                   )}
-                  {tender.client?.contactPhone && (
+                  {(tender.contactPhone || tender.client?.contactPhone) && (
                     <Button
                       variant="outline"
                       className="w-full justify-start cursor-pointer"
                       onClick={() =>
                         window.open(
-                          `tel:${tender.client?.contactPhone}`,
+                          `tel:${tender.contactPhone || tender.client?.contactPhone}`,
                           '_blank'
                         )
                       }
                     >
                       <Phone className="h-4 w-4 mr-2" />
-                      Call Client
+                      Call Follow-up Contact
                     </Button>
                   )}
                 </CardContent>
