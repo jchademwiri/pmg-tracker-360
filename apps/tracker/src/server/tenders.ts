@@ -1376,6 +1376,17 @@ export async function getTendersOverview(
         : sortOrder === 'desc'
           ? desc(sortColumn)
           : sortColumn;
+    const isRegisterDefaultSort =
+      (!filters.status || filters.status === 'all') &&
+      sortBy === 'submissionDate' &&
+      sortOrder === 'asc';
+    const orderByExpressions = isRegisterDefaultSort
+      ? [
+          sql`case when ${tender.status} = 'open' then 0 else 1 end`,
+          sql`${tender.submissionDate} asc nulls last`,
+          desc(tender.createdAt),
+        ]
+      : [orderByExpression];
 
     const tenders = await db
       .select({
@@ -1398,7 +1409,7 @@ export async function getTendersOverview(
       .from(tender)
       .leftJoin(client, eq(tender.clientId, client.id))
       .where(whereCondition)
-      .orderBy(orderByExpression)
+      .orderBy(...orderByExpressions)
       .limit(limit)
       .offset(offset);
 

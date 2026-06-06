@@ -32,12 +32,12 @@ function parseTenderFilters(searchParams: SearchParams) {
   const status = searchParams.status || 'all';
   const sortBy = validSortBy.includes(searchParams.sortBy as any)
     ? (searchParams.sortBy as (typeof validSortBy)[number])
-    : status === 'open'
+    : status === 'open' || status === 'all'
       ? 'submissionDate'
       : 'createdAt';
   const sortOrder = validSortOrder.includes(searchParams.sortOrder as any)
     ? (searchParams.sortOrder as (typeof validSortOrder)[number])
-    : status === 'open'
+    : status === 'open' || status === 'all'
       ? 'asc'
       : 'desc';
   const page = Math.max(Number(searchParams.page || '1') || 1, 1);
