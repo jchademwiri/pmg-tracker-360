@@ -8,6 +8,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
 import { randomUUID } from 'crypto';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -297,6 +299,40 @@ export async function getTenderById(organizationId: string, tenderId: string) {
   } catch (error: any) {
     console.error('Error fetching tender:', error);
     return { success: false, error: error.message || 'Failed to fetch tender' };
+  }
+}
+
+export async function getTenderBreadcrumbLabel(tenderId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const organizationId = session?.session.activeOrganizationId;
+
+    if (!session?.user || !organizationId) {
+      return null;
+    }
+
+    await validateSessionAndOrg(organizationId);
+
+    const tenderData = await db
+      .select({
+        tenderNumber: tender.tenderNumber,
+      })
+      .from(tender)
+      .where(
+        and(
+          eq(tender.id, tenderId),
+          eq(tender.organizationId, organizationId),
+          isNull(tender.deletedAt)
+        )
+      )
+      .limit(1);
+
+    return tenderData[0]?.tenderNumber ?? null;
+  } catch (error) {
+    console.error('Error fetching tender breadcrumb label:', error);
+    return null;
   }
 }
 
