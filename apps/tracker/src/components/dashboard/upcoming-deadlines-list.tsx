@@ -5,6 +5,10 @@ import { Calendar, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  getDeadlineUrgencyClass,
+  getDeadlineUrgencyLabel,
+} from '@/lib/deadline-display';
 
 interface UpcomingDeadlineItem {
   id: string;
@@ -34,13 +38,6 @@ export function UpcomingDeadlinesList({
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
-  };
-
-  const formatDaysUntil = (days: number | null) => {
-    if (days === null) return 'No date';
-    if (days <= 0) return 'Today';
-    if (days === 1) return '1 day';
-    return `${days} days`;
   };
 
   if (!deadlines || deadlines.length === 0) {
@@ -77,10 +74,11 @@ export function UpcomingDeadlinesList({
                     {item.tenderNumber}
                   </Link>
                   <Badge
-                    variant="outline"
-                    className="text-[10px] px-1 py-0 h-5"
+                    className={`text-[10px] px-1.5 py-0 h-5 ${getDeadlineUrgencyClass(
+                      item.daysUntilDeadline
+                    )}`}
                   >
-                    {formatDaysUntil(item.daysUntilDeadline)}
+                    {getDeadlineUrgencyLabel(item.daysUntilDeadline)}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
