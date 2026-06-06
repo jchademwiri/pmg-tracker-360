@@ -125,10 +125,7 @@ export default async function SettingsOverviewPage() {
             </div>
             <Separator />
             <Button asChild className="w-full">
-              <Link
-                href="/settings"
-                as="/settings/organization"
-              >
+              <Link href="/organization">
                 Manage Organisation
               </Link>
             </Button>
