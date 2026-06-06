@@ -147,9 +147,9 @@ export function OrganizationManagementTabs({
                 <Building2 className="h-4 w-4" />
                 <span>
                   Created{' '}
-                  {new Intl.DateTimeFormat('en-US', {
-                    month: 'short',
+                  {new Intl.DateTimeFormat('en-GB', {
                     day: 'numeric',
+                    month: 'short',
                     year: 'numeric',
                   }).format(organization.createdAt)}
                 </span>

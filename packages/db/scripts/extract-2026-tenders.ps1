@@ -1,5 +1,6 @@
 param(
-  [string]$SourceRoot = "C:\Users\JacobC\Sithembe Transportation & Projects\Sithembe - Documents\01 Tender Documents\2026",
+  [Parameter(Mandatory = $true)]
+  [string]$SourceRoot,
   [string]$UserEmail = "accounts@livhuandmusa.co.za",
   [string]$OutputPath = "data\tenders-2026-accounts-livhuandmusa.json",
   [string]$SummaryPath = "data\tenders-2026-accounts-livhuandmusa.summary.json",

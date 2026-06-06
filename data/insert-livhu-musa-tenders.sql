@@ -62,7 +62,7 @@ tenders_with_clients AS (
   FROM deduped_tenders
   INNER JOIN client
     ON client.organization_id = '8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU'
-   AND client.name = deduped_tenders.client_name
+   AND lower(trim(client.name)) = lower(trim(deduped_tenders.client_name))
    AND client.deleted_at IS NULL
 )
 INSERT INTO tender (

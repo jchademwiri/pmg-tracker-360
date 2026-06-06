@@ -289,9 +289,9 @@ export function MembersTable({
                 <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {new Date(member.createdAt).toLocaleDateString('en-US', {
-                  month: 'short',
+                {new Date(member.createdAt).toLocaleDateString('en-GB', {
                   day: 'numeric',
+                  month: 'short',
                   year: 'numeric',
                 })}
               </TableCell>

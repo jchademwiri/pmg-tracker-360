@@ -160,7 +160,7 @@ export default async function AdminUsersPage() {
                   <td className="py-4.5 px-6 text-zinc-400 text-xs">
                     <div className="flex items-center gap-2 font-medium">
                       <Calendar className="h-4 w-4 text-zinc-600" />
-                      {new Date(u.createdAt).toLocaleDateString()}
+                      {new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                   </td>
                 </tr>

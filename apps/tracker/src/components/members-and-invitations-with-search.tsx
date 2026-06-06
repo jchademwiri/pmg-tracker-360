@@ -188,8 +188,8 @@ export function MembersAndInvitationsWithSearch({
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {member.joinedAt
-                        ? member.joinedAt.toLocaleDateString()
-                        : member.createdAt.toLocaleDateString()}
+                        ? member.joinedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : member.createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell>
                       {onMemberAction && (
@@ -266,7 +266,7 @@ export function MembersAndInvitationsWithSearch({
                         {invitation.inviterName}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {invitation.expiresAt.toLocaleDateString()}
+                        {invitation.expiresAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </TableCell>
                       <TableCell>
                         {onInvitationAction && (

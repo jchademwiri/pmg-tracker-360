@@ -4,7 +4,7 @@ import { ChevronRight, type LucideIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 import {
   Collapsible,
@@ -35,7 +35,26 @@ type NavItem = {
 
 export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label?: string }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isHydrated, setIsHydrated] = useState(false);
+
+  const isNavUrlActive = (url: string) => {
+    if (url === '#') return false;
+    const [targetPath, targetQuery] = url.split('?');
+
+    if (pathname !== targetPath && !pathname.startsWith(`${targetPath}/`)) {
+      return false;
+    }
+
+    if (!targetQuery) {
+      return !searchParams.has('status');
+    }
+
+    const targetParams = new URLSearchParams(targetQuery);
+    return Array.from(targetParams.entries()).every(
+      ([key, value]) => searchParams.get(key) === value
+    );
+  };
 
   // Initialize state for each collapsible item - start with server-safe defaults
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(() => {
@@ -59,7 +78,7 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
       items.forEach((item) => {
         if (item.items && item.items.length > 0) {
           const hasActiveSubItem = item.items.some((subItem) =>
-            pathname.startsWith(subItem.url)
+            isNavUrlActive(subItem.url)
           );
           if (hasActiveSubItem) {
             newState[item.title] = true;
@@ -68,7 +87,7 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
       });
       return newState;
     });
-  }, [pathname, items]);
+  }, [pathname, searchParams, items]);
 
   const toggleItem = (itemTitle: string) => {
     setOpenItems((prev) => ({
@@ -93,6 +112,7 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton
                   tooltip={item.title}
+                  isActive={isNavUrlActive(item.url)}
                   asChild={!item.items || item.items.length === 0}
                 >
                   {!item.items || item.items.length === 0 ? (
@@ -118,7 +138,10 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
                   <SidebarMenuSub>
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={isNavUrlActive(subItem.url)}
+                        >
                           <Link href={subItem.url as Route}>
                             <span className="group-data-[collapsible=icon]:hidden">
                               {subItem.title}

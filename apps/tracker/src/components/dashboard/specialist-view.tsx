@@ -29,10 +29,10 @@ export async function SpecialistView({ organizationId }: SpecialistViewProps) {
 
   const formatDate = (date: Date | null) => {
     if (!date) return '-';
-    return new Intl.DateTimeFormat('en-ZA', {
-      year: 'numeric',
-      month: 'short',
+    return new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
     }).format(new Date(date));
   };
 

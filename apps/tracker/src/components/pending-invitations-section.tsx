@@ -96,9 +96,9 @@ function getRoleBadgeVariant(role: string) {
 
 // Helper function to format date
 function formatDate(date: Date) {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
+  return new Date(date).toLocaleDateString('en-GB', {
     day: 'numeric',
+    month: 'short',
     year: 'numeric',
   });
 }

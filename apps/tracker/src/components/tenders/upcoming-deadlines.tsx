@@ -111,7 +111,7 @@ export function UpcomingDeadlines({
                 </div>
                 {deadline.submissionDate && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Due: {deadline.submissionDate.toLocaleDateString()}
+                    Due: {deadline.submissionDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 )}
               </div>

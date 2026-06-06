@@ -186,7 +186,7 @@ export default async function AdminDashboardPage() {
                   </span>
                   <div className="text-[10px] text-zinc-500 flex items-center gap-1 font-medium">
                     <Clock className="h-3 w-3 text-zinc-600" />
-                    {new Date(u.createdAt).toLocaleDateString()}
+                    {new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default async function AdminDashboardPage() {
                   </span>
                   <div className="text-[10px] text-zinc-500 flex items-center gap-1 font-medium">
                     <Clock className="h-3 w-3 text-zinc-600" />
-                    {new Date(o.createdAt).toLocaleDateString()}
+                    {new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
                 </div>
               </div>

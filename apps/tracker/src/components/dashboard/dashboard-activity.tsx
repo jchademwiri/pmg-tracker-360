@@ -69,7 +69,7 @@ export async function DashboardActivity({
                 <div className="flex-1">
                   <p className="text-sm font-medium">{activity.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(activity.timestamp).toLocaleDateString()}
+                    {new Date(activity.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
               </div>

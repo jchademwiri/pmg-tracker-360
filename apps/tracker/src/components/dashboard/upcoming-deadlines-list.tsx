@@ -31,10 +31,10 @@ export function UpcomingDeadlinesList({
   const formatDeadline = (date: Date | null) => {
     if (!date) return 'No date';
 
-    return new Intl.DateTimeFormat('en-ZA', {
-      year: 'numeric',
-      month: 'short',
+    return new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));

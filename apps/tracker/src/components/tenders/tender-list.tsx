@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/select';
 
 import { getTenders, deleteTender } from '@/server/tenders';
+import { formatDate } from '@/lib/format';
 import Link from 'next/link';
 
 interface TenderWithClient {
@@ -207,16 +208,7 @@ export function TenderList({
     });
   };
 
-  // Format date for display
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(date));
-  };
-
+  // Format date for display — uses shared formatDate from @/lib/format
   // Format currency value
   const formatValue = (value: string | null) => {
     if (!value) return 'Not set';

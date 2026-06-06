@@ -510,17 +510,17 @@ export function InvitationsTab({
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>Invited by {invitation.inviterName}</span>
                           <span>
-                            {new Intl.DateTimeFormat('en-US', {
-                              month: 'short',
+                            {new Intl.DateTimeFormat('en-GB', {
                               day: 'numeric',
+                              month: 'short',
                               year: 'numeric',
                             }).format(invitation.invitedAt)}
                           </span>
                           <span>
                             Expires{' '}
-                            {new Intl.DateTimeFormat('en-US', {
-                              month: 'short',
+                            {new Intl.DateTimeFormat('en-GB', {
                               day: 'numeric',
+                              month: 'short',
                               year: 'numeric',
                             }).format(invitation.expiresAt)}
                           </span>

@@ -26,7 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Tender {
   id: string;
@@ -84,11 +84,6 @@ function getStatusColor(status: string): string {
   }
 }
 
-
-function formatDate(date: Date | null): string {
-  if (!date) return '-';
-  return date.toLocaleDateString();
-}
 
 function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   if (!submissionDate) return null;
@@ -173,7 +168,7 @@ export function TendersTable({
                           <TableCell className="font-medium">
                             <Link
                               href={`/tenders/${tender.id}`}
-                              className="text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                              className="text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
                               onClick={(event) => event.stopPropagation()}
                             >
                               {tender.tenderNumber}

@@ -113,10 +113,10 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
+    return new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));

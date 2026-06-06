@@ -29,24 +29,64 @@ const validSortBy = ['tenderNumber', 'createdAt', 'submissionDate', 'status'] as
 const validSortOrder = ['asc', 'desc'] as const;
 
 function parseTenderFilters(searchParams: SearchParams) {
+  const status = searchParams.status || 'all';
   const sortBy = validSortBy.includes(searchParams.sortBy as any)
     ? (searchParams.sortBy as (typeof validSortBy)[number])
-    : 'createdAt';
+    : status === 'open'
+      ? 'submissionDate'
+      : 'createdAt';
   const sortOrder = validSortOrder.includes(searchParams.sortOrder as any)
     ? (searchParams.sortOrder as (typeof validSortOrder)[number])
-    : 'desc';
+    : status === 'open'
+      ? 'asc'
+      : 'desc';
   const page = Math.max(Number(searchParams.page || '1') || 1, 1);
 
   return {
     filters: {
       search: searchParams.search || '',
-      status: searchParams.status || 'all',
+      status,
       clientId: searchParams.clientId || 'all',
       sortBy,
       sortOrder,
     },
     page,
   };
+}
+
+function getRegisterCopy(status: string) {
+  switch (status) {
+    case 'open':
+      return {
+        title: 'Open Tenders',
+        description: 'Track tender opportunities that are still open for submission.',
+      };
+    case 'evaluation':
+      return {
+        title: 'Under Evaluation',
+        description: 'Monitor submitted tenders that are currently under evaluation.',
+      };
+    case 'closed':
+      return {
+        title: 'Closed',
+        description: 'Review tenders marked as closed.',
+      };
+    case 'awarded':
+      return {
+        title: 'Awarded Tenders',
+        description: 'Review successful tenders and appointed work.',
+      };
+    case 'lost':
+      return {
+        title: 'Lost / Rejected Tenders',
+        description: 'Review unsuccessful tender outcomes.',
+      };
+    default:
+      return {
+        title: 'Tender Register',
+        description: 'Search, filter, and manage all tender records from one place.',
+      };
+  }
 }
 
 export default async function TendersOverviewPage({
@@ -56,6 +96,7 @@ export default async function TendersOverviewPage({
 }) {
   const { session } = await getCurrentUser();
   const { filters, page } = parseTenderFilters(await searchParams);
+  const registerCopy = getRegisterCopy(filters.status);
 
   if (!session.activeOrganizationId) {
     return (
@@ -122,20 +163,15 @@ export default async function TendersOverviewPage({
         totalPages: 0,
       };
 
-  const activeCount =
-    stats.statusCounts.open +
-    stats.statusCounts.closed +
-    stats.statusCounts.evaluation;
-
   return (
     <div className="space-y-6">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Tender Management Overview
+            {registerCopy.title}
           </h1>
           <p className="text-muted-foreground">
-            Manage your tender applications and track submission progress.
+            {registerCopy.description}
           </p>
         </div>
         <Button asChild size={'lg'}>
@@ -163,17 +199,30 @@ export default async function TendersOverviewPage({
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Tenders
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Open Tenders</CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {activeCount}
+              {stats.statusCounts.open}
+            </div>
+            <p className="text-xs text-muted-foreground">Currently open</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Under Evaluation
+            </CardTitle>
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">
+              {stats.statusCounts.evaluation}
             </div>
             <p className="text-xs text-muted-foreground">
-              Currently in progress
+              Tenders currently under evaluation
             </p>
           </CardContent>
         </Card>
@@ -193,7 +242,9 @@ export default async function TendersOverviewPage({
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Estimated Total Value
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -201,24 +252,7 @@ export default async function TendersOverviewPage({
               ${stats.totalValue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Combined tender value
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Under Evaluation
-            </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
-              {stats.statusCounts.evaluation}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Tenders currently under evaluation
+              Estimated value of all tenders
             </p>
           </CardContent>
         </Card>
