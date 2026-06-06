@@ -11,6 +11,10 @@ import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
 import OrganizationInvitation from '@/emails/organization-invitation';
 
+const senderName = process.env.SENDER_NAME || 'Tender Track 360';
+const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
+const SENDER = `${senderName} <${senderEmail}>`;
+
 // Server Action Result type for consistent error handling
 export interface ServerActionResult<T = unknown> {
   success: boolean;
@@ -176,7 +180,7 @@ export async function inviteMember(
       const inviteLink = `${base}/invite/accept/${newInvitation[0].id}`;
 
       await resend.emails.send({
-        from: `${process.env.SENDER_NAME} <${process.env.SENDER_EMAIL}>`,
+        from: SENDER,
         to: email,
         subject: `You're invited to join ${userMembership.organization.name}`,
         replyTo: process.env.REPLY_TO_EMAIL || 'info@tendertrack360.co.za',
@@ -398,7 +402,7 @@ export async function resendInvitation(
       const inviteLink = `${base}/invite/accept/${invitationId}`;
 
       await resend.emails.send({
-        from: `${process.env.SENDER_NAME} <${process.env.SENDER_EMAIL}>`,
+        from: SENDER,
         to: invitationRecord.email,
         subject: `You're invited to join ${userMembership.organization.name}`,
         replyTo: process.env.REPLY_TO_EMAIL || 'info@tendertrack360.co.za',

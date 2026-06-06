@@ -7,15 +7,14 @@ import { checkUserSession } from '@/lib/session-check';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { DashboardMetrics } from '@/components/dashboard/dashboard-metrics';
-import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
-import { DashboardActivity } from '@/components/dashboard/dashboard-activity';
-import { DashboardDeadlines } from '@/components/dashboard/dashboard-deadlines';
+import { AdminView } from '@/components/dashboard/admin-view';
+import { SpecialistView } from '@/components/dashboard/specialist-view';
+import { validateSessionAndOrg } from '@/server/utils';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-function MetricsSkeleton() {
+function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -23,20 +22,12 @@ function MetricsSkeleton() {
           <Skeleton key={i} className="h-[120px] rounded-xl" />
         ))}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-[100px] rounded-xl" />
-        ))}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Skeleton className="h-[400px] rounded-xl" />
+        </div>
+        <Skeleton className="h-[400px] rounded-xl" />
       </div>
-    </div>
-  );
-}
-
-function ChartsSkeleton() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Skeleton className="h-[300px] rounded-xl" />
-      <Skeleton className="h-[300px] rounded-xl" />
     </div>
   );
 }
@@ -59,6 +50,17 @@ export default async function DashboardPage() {
 
   const organizationId = sessionCheck.activeOrganizationId!;
 
+  // Fetch membership role
+  let role = 'member';
+  try {
+    const sessionDetails = await validateSessionAndOrg(organizationId);
+    role = sessionDetails.role;
+  } catch (error) {
+    console.error('Failed to validate session role:', error);
+  }
+
+  const isAdmin = role === 'owner' || role === 'admin' || role === 'manager';
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -66,8 +68,9 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back! Here's an overview of your tender management
-            activities.
+            {isAdmin
+              ? "Welcome back! Here's an overview of your organization's procurement pipeline."
+              : "Welcome back! Here's your operational checklist and bidding activity overview."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -121,27 +124,13 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <Suspense fallback={<MetricsSkeleton />}>
-        <DashboardMetrics organizationId={organizationId} />
+      <Suspense fallback={<DashboardSkeleton />}>
+        {isAdmin ? (
+          <AdminView organizationId={organizationId} />
+        ) : (
+          <SpecialistView organizationId={organizationId} />
+        )}
       </Suspense>
-
-      <Suspense fallback={<ChartsSkeleton />}>
-        <DashboardCharts organizationId={organizationId} />
-      </Suspense>
-
-      {/* Bottom Section */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Suspense fallback={<Skeleton className="h-[400px] rounded-xl" />}>
-            <DashboardActivity organizationId={organizationId} />
-          </Suspense>
-        </div>
-        <div>
-          <Suspense fallback={<Skeleton className="h-[400px] rounded-xl" />}>
-            <DashboardDeadlines organizationId={organizationId} />
-          </Suspense>
-        </div>
-      </div>
     </div>
   );
 }

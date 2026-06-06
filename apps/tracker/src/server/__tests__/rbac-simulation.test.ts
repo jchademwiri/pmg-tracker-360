@@ -36,6 +36,14 @@ jest.mock('@/lib/auth', () => ({
   },
 }));
 
+jest.mock('../utils', () => ({
+  validateSessionAndOrg: jest.fn(async () => ({
+    userId: 'user-1',
+    session: { user: { id: 'user-1' } },
+    role: 'admin',
+  })),
+}));
+
 jest.mock('next/headers', () => ({
   headers: async () => ({}),
 }));

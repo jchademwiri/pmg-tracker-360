@@ -8,7 +8,8 @@ import {
   type TenderFilters,
 } from '@/components/tenders/tenders-search-filters';
 import { TendersTable } from '@/components/tenders/tenders-table';
-import { getTendersOverview } from '@/server/tenders';
+import { getTendersOverview, deleteTender } from '@/server/tenders';
+import { toast } from 'sonner';
 
 interface Tender {
   id: string;
@@ -126,9 +127,40 @@ export function TendersOverviewClient({
     [router]
   );
 
-  const handleDeleteTender = useCallback((tenderId: string) => {
-    // TODO: Implement delete functionality
-  }, []);
+  const handleDeleteTender = useCallback(
+    async (tenderId: string) => {
+      if (!confirm('Are you sure you want to delete this tender?')) {
+        return;
+      }
+      try {
+        setLoading(true);
+        const result = await deleteTender(organizationId, tenderId);
+        if (result.success) {
+          toast.success('Tender deleted successfully');
+          // Refresh list by re-fetching overview
+          const refreshResult = await getTendersOverview(
+            organizationId,
+            filters,
+            currentPage,
+            20
+          );
+          if (refreshResult.success) {
+            setTenders(refreshResult.tenders);
+            setTotalCount(refreshResult.totalCount);
+            setTotalPages(refreshResult.totalPages);
+          }
+        } else {
+          toast.error(result.error || 'Failed to delete tender');
+        }
+      } catch (error) {
+        console.error('Error deleting tender:', error);
+        toast.error('An error occurred while deleting the tender');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [organizationId, filters, currentPage]
+  );
 
   const handleRowClick = useCallback(
     (tenderId: string) => {

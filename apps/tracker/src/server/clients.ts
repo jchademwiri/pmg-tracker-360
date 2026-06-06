@@ -2,6 +2,7 @@
 
 import { db } from '@pmg/db';
 import { client, tender } from '@pmg/db/schema';
+import { validateSessionAndOrg } from './utils';
 import { eq, and, isNull, ilike, or, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -20,6 +21,7 @@ export async function getClients(
   limit: number = 10
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     let whereCondition = and(
@@ -60,9 +62,9 @@ export async function getClients(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching clients:', error);
-    throw new Error('Failed to fetch clients');
+    throw error;
   }
 }
 
@@ -72,6 +74,7 @@ export async function createClient(
   data: ClientCreateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = ClientCreateSchema.parse(data);
 
@@ -86,7 +89,7 @@ export async function createClient(
 
     revalidatePath('/clients');
     return { success: true, client: newClient[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating client:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -95,13 +98,14 @@ export async function createClient(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to create client' };
+    return { success: false, error: error.message || 'Failed to create client' };
   }
 }
 
 // Get client by ID
 export async function getClientById(organizationId: string, clientId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     const clientData = await db
       .select()
       .from(client)
@@ -119,9 +123,9 @@ export async function getClientById(organizationId: string, clientId: string) {
     }
 
     return { success: true, client: clientData[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching client:', error);
-    return { success: false, error: 'Failed to fetch client' };
+    return { success: false, error: error.message || 'Failed to fetch client' };
   }
 }
 
@@ -132,6 +136,7 @@ export async function updateClient(
   data: ClientUpdateInput
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = ClientUpdateSchema.parse(data);
 
@@ -164,7 +169,7 @@ export async function updateClient(
     revalidatePath('/clients');
     revalidatePath(`/clients/${clientId}`);
     return { success: true, client: updatedClient[0] };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating client:', error);
     if (error instanceof z.ZodError) {
       return {
@@ -173,13 +178,14 @@ export async function updateClient(
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to update client' };
+    return { success: false, error: error.message || 'Failed to update client' };
   }
 }
 
 // Soft delete client
 export async function deleteClient(organizationId: string, clientId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     // Check if client exists and belongs to organization
     const existingClient = await db
       .select()
@@ -222,9 +228,9 @@ export async function deleteClient(organizationId: string, clientId: string) {
 
     revalidatePath('/clients');
     return { success: true, message: 'Client deleted successfully' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting client:', error);
-    return { success: false, error: 'Failed to delete client' };
+    return { success: false, error: error.message || 'Failed to delete client' };
   }
 }
 
@@ -235,6 +241,7 @@ export async function searchClients(
   limit: number = 20
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     if (!query.trim()) {
       return { success: true, clients: [] };
     }
@@ -260,9 +267,9 @@ export async function searchClients(
       .limit(limit);
 
     return { success: true, clients };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error searching clients:', error);
-    return { success: false, error: 'Failed to search clients', clients: [] };
+    return { success: false, error: error.message || 'Failed to search clients', clients: [] };
   }
 }
 
@@ -275,6 +282,7 @@ export async function getClientsWithSorting(
   limit: number = 10
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
     const whereCondition = and(
@@ -316,11 +324,11 @@ export async function getClientsWithSorting(
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching clients with sorting:', error);
     return {
       success: false,
-      error: 'Failed to fetch clients',
+      error: error.message || 'Failed to fetch clients',
       clients: [],
       totalCount: 0,
       currentPage: page,
@@ -332,6 +340,7 @@ export async function getClientsWithSorting(
 // Get client statistics for dashboard
 export async function getClientStats(organizationId: string) {
   try {
+    await validateSessionAndOrg(organizationId);
     const stats = await db
       .select({
         total: client.id,
@@ -353,11 +362,11 @@ export async function getClientStats(organizationId: string) {
         clientsWithoutContact: totalClients - clientsWithContact,
       },
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching client stats:', error);
     return {
       success: false,
-      error: 'Failed to fetch client statistics',
+      error: error.message || 'Failed to fetch client statistics',
       stats: {
         totalClients: 0,
         clientsWithContact: 0,

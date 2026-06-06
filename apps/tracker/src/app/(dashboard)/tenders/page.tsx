@@ -34,9 +34,9 @@ export default async function TendersPage() {
     );
   }
 
-  // Fetch initial draft tenders and stats (show only drafts by default)
+  // Fetch initial open tenders and stats (show only open by default)
   const [tendersResult, statsResult] = await Promise.all([
-    getTenders(session.activeOrganizationId, '', 1, 10, 'draft'),
+    getTenders(session.activeOrganizationId, '', 1, 10, 'open'),
     getTenderStats(session.activeOrganizationId),
   ]);
 
@@ -149,7 +149,7 @@ export default async function TendersPage() {
         organizationId={session.activeOrganizationId}
         initialTenders={tendersResult.tenders}
         initialTotalCount={tendersResult.totalCount}
-        defaultStatusFilter="draft"
+        defaultStatusFilter="open"
         showStatusToggle={true}
         pageType="active"
       />

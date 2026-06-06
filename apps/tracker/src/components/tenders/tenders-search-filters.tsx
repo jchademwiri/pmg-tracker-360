@@ -39,7 +39,7 @@ const STATUS_OPTIONS = [
 const SORT_OPTIONS = [
   { value: 'createdAt', label: 'Date Created' },
   { value: 'tenderNumber', label: 'Tender Number' },
-  { value: 'submissionDate', label: 'Submission Date' },
+  { value: 'submissionDate', label: 'Closing Date' },
   { value: 'status', label: 'Status' },
 ];
 
