@@ -1,0 +1,16 @@
+{
+  "sourceRoot": "C:\\Users\\JacobC\\Sithembe Transportation & Projects\\Sithembe - Documents\\01 Tender Documents\\2026",
+  "userEmail": "accounts@livhuandmusa.co.za",
+  "generatedAt": "2026-06-06T12:15:00+02:00",
+  "tenderRecords": 50,
+  "recordsNeedingDocumentCheck": 10,
+  "duplicateTenderNumbers": [
+    "A-WS-03-2026"
+  ],
+  "verificationMethod": "Curated from the user-provided table and checked against matching filenames/folders in the 2026 tender document directory where possible.",
+  "notes": [
+    "Rows marked needsDocumentCheck have null clientName or an uncertain tender number and should be reviewed before database import.",
+    "A-WS-03-2026 appears twice: original water meters tender and later erratum/revised pricing. The database tender_number is unique, so import handling must merge/update or rename the erratum record.",
+    "Closing dates were stored as submissionDate because the tender schema uses submission_date for the deadline."
+  ]
+}

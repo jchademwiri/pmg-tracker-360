@@ -1,0 +1,502 @@
+[
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "35/2025",
+    "clientName": null,
+    "description": "Tender document / quotation support",
+    "submissionDate": "2026-01-14",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check. Verified matching folder/file evidence under 01 January/14/35.2025."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "36/2025",
+    "clientName": null,
+    "description": "Plant hire",
+    "submissionDate": "2026-01-15",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check. Verified matching file: Tender 36_2025 Plant hire tender document.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "37/2025",
+    "clientName": null,
+    "description": "Roads material",
+    "submissionDate": "2026-01-16",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check. Verified matching file: Tender 37_2025 Roads Material tender document .pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "JHB-25-27",
+    "clientName": "City of Johannesburg",
+    "description": "Tender document",
+    "submissionDate": "2026-01-22",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching file: tender-document-jhb-25-27.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "GT-GDE-069-2025",
+    "clientName": "Gauteng Department of Education",
+    "description": "Tender document",
+    "submissionDate": "2026-01-23",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under GT-GDE-069-2025 DOCUMENT."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "PS-EWM-05-2026",
+    "clientName": null,
+    "description": "Maintenance of aquatic facilities",
+    "submissionDate": "2026-01-28",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check. Verified matching file: FINAL-BID-DOCUMENT-PS-EWM-05-2026-MAINTENANCE-OF-AQUATIC (1).pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "GPM-17-2025/26",
+    "clientName": null,
+    "description": "Tender document",
+    "submissionDate": "2026-02-17",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check. Verified matching file: GPM-17-2025_26-TENDER-DOCUMENT-003.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 10-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-18",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under EEBU 10 -2025.26."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 15-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-18",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under EEBU 15-2025.26."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 08-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "3-year primary substation tender",
+    "submissionDate": "2026-02-19",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching file: EEBU08-2025-26 TENDER DOCUMENT.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "ROC 04-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-20",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under ROC 04 2025-26."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EAM 05-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-24",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under EAM 05 2025-26."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "HS 03-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-24",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under HS 03 2025-26."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "IEM(IWM) 04-2026",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-24",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under IEM(IWM) 04-2026."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "IEM(IWM) 06-2026",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-24",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under IEM(IWM) 06-2026."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "IDS (R&T) 10-2026",
+    "clientName": "City of Tshwane",
+    "description": "Tender document / pricing",
+    "submissionDate": "2026-02-25",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under IDS (R&T) 10-2026."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "WSBU 08-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-02-26",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching file: Tender doc WSBU 08-2025_26.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "RFQ Skid Steer",
+    "clientName": null,
+    "description": "Skid steer / bobcat equipment",
+    "submissionDate": "2026-03-09",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check. Verified matching file: bobcat_skidsteer_equipment_specification_.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "DRT 03 01 2026",
+    "clientName": "Gauteng Department of Roads and Transport",
+    "description": "Tender document",
+    "submissionDate": "2026-03-13",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files: DRT 03 01 2026 SCANNED.pdf and Tender Document _DRT 03 01 2026 pdf.pdf."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "Road Maintenance",
+    "clientName": "eMakhazeni Local Municipality / Belfast",
+    "description": "Road maintenance",
+    "submissionDate": "2026-03-23",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Needs final tender number verification from source document."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "07-2026",
+    "clientName": null,
+    "description": "Supply of MV/LV circuit breakers",
+    "submissionDate": "2026-03-30",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "A-WS-04-2026",
+    "clientName": "City of Ekurhuleni",
+    "description": "Cleaning and repairs to sewer pipelines",
+    "submissionDate": "2026-04-15",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under A-WS-04-2026."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "A-WS-03-2026",
+    "clientName": "City of Ekurhuleni",
+    "description": "Water meters",
+    "submissionDate": "2026-04-16",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files under A-WS-03-2026."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 16-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document / pricing",
+    "submissionDate": "2026-04-17",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching files: EEBU 16 PRICE.pdf and EEBU 16 PRICING LME.xlsx."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "A-WS-05-2026",
+    "clientName": "City of Ekurhuleni",
+    "description": "Water network",
+    "submissionDate": "2026-04-20",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 21-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-04-20",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 22-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Amended tender document",
+    "submissionDate": "2026-04-20",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "GFS 06-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-04-21",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "200420265907",
+    "clientName": "Eskom / Medupi Power Station",
+    "description": "Office cleaning, park homes, ablution facilities, mobile toilets",
+    "submissionDate": "2026-04-24",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "RFT81-10-2025/26",
+    "clientName": "Madibeng Local Municipality",
+    "description": "Tender document",
+    "submissionDate": "2026-04-30",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "T21-2026",
+    "clientName": "Dr Pixley Ka Isaka Seme Local Municipality",
+    "description": "Roads material, Volksrust Ward 4",
+    "submissionDate": "2026-04-30",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "A-WS-03-2026",
+    "clientName": "City of Ekurhuleni",
+    "description": "Water meters, erratum/revised pricing",
+    "submissionDate": "2026-05-07",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Duplicate tender number from erratum/revised pricing. Review before import because tender_number is unique."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "RFQ E&M 2026",
+    "clientName": null,
+    "description": "Construction equipment",
+    "submissionDate": "2026-05-10",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "A-WM-03-2026",
+    "clientName": "City of Ekurhuleni",
+    "description": "New wheelie bins and accessories",
+    "submissionDate": "2026-05-13",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "COM38-2026",
+    "clientName": null,
+    "description": "Stores material supply, delivery and off-loading",
+    "submissionDate": "2026-05-18",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name needs document check."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "8-2-4-244",
+    "clientName": "Midvaal Local Municipality",
+    "description": "Bid document",
+    "submissionDate": "2026-05-19",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "8-2-4-245",
+    "clientName": "Midvaal Local Municipality",
+    "description": "Bid document",
+    "submissionDate": "2026-05-20",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "8-2-4-246",
+    "clientName": "Midvaal Local Municipality",
+    "description": "Bid document",
+    "submissionDate": "2026-05-22",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "E16 of 2026",
+    "clientName": "Msunduzi Municipality",
+    "description": "Supply and delivery of steel street lighting poles and accessories",
+    "submissionDate": "2026-05-26",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "ROC-03-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-05-26",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "GFS-07-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-05-29",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "BSM 103/26",
+    "clientName": "Stellenbosch Municipality",
+    "description": "Mowing / grass cutting of open spaces within WC024 ending 30 June 2029",
+    "submissionDate": "2026-06-01",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "PM37-25/26",
+    "clientName": "Polokwane Municipality",
+    "description": "Tender document / BOQ",
+    "submissionDate": "2026-06-02",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "RLM-DTIS-0118-2025/26",
+    "clientName": "Rustenburg Local Municipality",
+    "description": "Streetlight poles",
+    "submissionDate": "2026-06-02",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "A-WS-06-2026",
+    "clientName": "City of Ekurhuleni",
+    "description": "Mobile water tankers",
+    "submissionDate": "2026-06-04",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "11-2026",
+    "clientName": "Lesedi Local Municipality",
+    "description": "Supply of cables",
+    "submissionDate": "2026-06-08",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "Re-advert HV/MV/LV Cables",
+    "clientName": null,
+    "description": "HV, MV and LV cables and conductors",
+    "submissionDate": "2026-06-10",
+    "status": "draft",
+    "needsDocumentCheck": true,
+    "sourceNotes": "Client name and final tender number need document check."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "TSD04-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tow truck tender",
+    "submissionDate": "2026-06-11",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "IDS (R&T) 14-2026",
+    "clientName": "City of Tshwane",
+    "description": "Final tender document",
+    "submissionDate": "2026-06-17",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  },
+  {
+    "userEmail": "accounts@livhuandmusa.co.za",
+    "tenderNumber": "EEBU 24-2025/26",
+    "clientName": "City of Tshwane",
+    "description": "Tender document",
+    "submissionDate": "2026-06-23",
+    "status": "draft",
+    "needsDocumentCheck": false,
+    "sourceNotes": "Verified matching folder/file evidence from source search."
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "id": "client_baa11ca37dda68a821c0027ddf0572c6",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "City of Ekurhuleni",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "2f97c872-bdfc-4cec-be2f-542d7ce8a133",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "City of Johannesburg",
+    "contact_name": "",
+    "contact_email": "",
+    "contact_phone": ""
+  },
+  {
+    "id": "ac966b51-ee83-46f2-b7d8-07400948de61",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "City of Tshwane",
+    "contact_name": "City of Tshwane",
+    "contact_email": "",
+    "contact_phone": ""
+  },
+  {
+    "id": "client_3b0886001bfee6f5618362475667e2ae",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Dr Pixley Ka Isaka Seme Local Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_3781bdc68da6fb7363fbe25adfbfaa95",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Eskom / Medupi Power Station",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_df71357bb467cc3fa3bcb5f31faef690",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Gauteng Department of Education",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_014d93adb4262c7d28a20f0ec82281b4",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Gauteng Department of Roads and Transport",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_984ecc0462ab24013ccb599f61f3b0ac",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Lesedi Local Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_fcbefe077e46e93875dbccc2105953c7",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Madibeng Local Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_5b8900bde7ddf05308a787d9a7663308",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Midvaal Local Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_f8c2c9ec6bc39a84f772d3d7d5d0f8d6",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Msunduzi Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_271322d43bb59b3f101076c47f2ac19e",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Polokwane Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_7fa580805e2d61a27571b8176cd8d4ac",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Rustenburg Local Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_7b1d113be940df0a4133668359efa6b0",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "Stellenbosch Municipality",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  },
+  {
+    "id": "client_1378caefa76603aaf8aca0c52867afbe",
+    "organization_id": "8XE1555PnWFzLZsa2qlNfFjlDMwFaQTU",
+    "name": "eMakhazeni Local Municipality / Belfast",
+    "contact_name": null,
+    "contact_email": null,
+    "contact_phone": null
+  }
+]
