@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Loader2, Users } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { OrganizationWithStats } from '@/server/organizations';
 import { rememberActiveOrganization } from '@/server/organizations';
@@ -115,9 +114,9 @@ export function OrganizationSelectClient({
                   {isSelected ? (
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   ) : (
-                    <Button size="sm" variant="outline" tabIndex={-1}>
+                    <span className="inline-flex h-8 items-center justify-center rounded-md border bg-background px-3 text-sm font-medium shadow-xs">
                       Select
-                    </Button>
+                    </span>
                   )}
                 </button>
               );

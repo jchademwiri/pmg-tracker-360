@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MetricCard } from '@/components/ui/metric-card';
 import { DashboardDeadlines } from '@/components/dashboard/dashboard-deadlines';
 import { DashboardBriefings } from '@/components/dashboard/dashboard-briefings';
+import { DashboardActivity } from '@/components/dashboard/dashboard-activity';
 
 import { getSpecialistDashboardStats } from '@/server/dashboard';
 import { FileText, Clock, AlertTriangle, Calendar } from 'lucide-react';
@@ -79,6 +80,10 @@ export async function SpecialistView({ organizationId }: SpecialistViewProps) {
 
         {/* Right Side: Expiry Warnings */}
         <div className="space-y-6">
+          <Suspense fallback={<Skeleton className="h-[320px] rounded-xl bg-card/50 border border-border/20" />}>
+            <DashboardActivity organizationId={organizationId} />
+          </Suspense>
+
           {/* Validity Expiry Approaching List */}
           <Card className="backdrop-blur-md bg-card/70 border-border/40 shadow-sm">
             <CardHeader>

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { DashboardMetrics } from '@/components/dashboard/dashboard-metrics';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
-import { DashboardActivity } from '@/components/dashboard/dashboard-activity';
 import { DashboardDeadlines } from '@/components/dashboard/dashboard-deadlines';
 import { BarChart3, Users, CreditCard, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,10 +30,10 @@ export async function AdminView({ organizationId }: AdminViewProps) {
 
       {/* Admin Funnel & Quick Links Grid */}
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Recent Activity Widget */}
+        {/* Upcoming Deadlines Widget */}
         <div className="md:col-span-2">
           <Suspense fallback={<Skeleton className="h-[400px] rounded-xl bg-card/50 border border-border/20" />}>
-            <DashboardActivity organizationId={organizationId} />
+            <DashboardDeadlines organizationId={organizationId} />
           </Suspense>
         </div>
 
@@ -95,12 +94,6 @@ export async function AdminView({ organizationId }: AdminViewProps) {
         <DashboardCharts organizationId={organizationId} />
       </Suspense>
 
-      {/* Bottom Section */}
-      <div>
-        <Suspense fallback={<Skeleton className="h-[300px] rounded-xl bg-card/50 border border-border/20" />}>
-          <DashboardDeadlines organizationId={organizationId} />
-        </Suspense>
-      </div>
     </div>
   );
 }
