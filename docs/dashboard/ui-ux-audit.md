@@ -1,6 +1,6 @@
 # UI/UX Audit & Improvements: Dashboard Module
 
-This document presents a comprehensive UI/UX audit of the primary dashboard, contrasting the needs of the **Tender Admin** against the **Tender Specialist**, and outlines concrete layout and feature improvements aligned with our revised tender lifecycle status design.
+This document presents a comprehensive UI/UX audit of the primary dashboard, contrasting the needs of the **Tender Admin** against the **Tender Specialist**, and outlines concrete layout and feature improvements.
 
 ---
 
@@ -15,10 +15,10 @@ The main dashboard ([page.tsx](file:///D:/websites/pmg-tracker-360/apps/tracker/
    * **Active Projects**: Numeric count of Appointed / Awarded tenders converted to projects.
    * **Upcoming Deadlines**: Countdown of tenders closing in the next 30 days.
 2. **Secondary Metrics**:
-   * **Total Tenders**: General count with status distribution.
+   * **Total Tenders**: General count with inline draft vs. evaluation distribution.
    * **Client Engagement**: Ratio of clients with complete contact information.
    * **Purchase Orders**: Total count of active POs and their combined ZAR value.
-   * **Overdue Items**: Tenders past their closing date that were not submitted (should transition to `closed`).
+   * **Overdue Items**: Bids past their closing/submission date.
 3. **Widgets & Actions**:
    * Quick action buttons at the top: `Create Tender`, `Create PO`, `Create Project`, `Create Client` (guarded by role permissions).
    * **Status Distribution**: Breakdown of active status percentages.
@@ -42,35 +42,7 @@ The current single-view dashboard blends high-level management stats with day-to
 
 ---
 
-## 3. Revised Tender Status Lifecycle
-
-Our system uses the following six distinct statuses to track bids, replacing the legacy draft concepts with a more operationally accurate workflow:
-
-```mermaid
-stateDiagram-v2
-    [*] --> open : Tender Created
-    open --> closed : Due Date Passes (Unsubmitted)
-    open --> evaluation : Bid Submitted
-    evaluation --> appointed_awarded : Won Bid
-    evaluation --> rejected_lost : Lost Bid
-    open --> cancelled : Cancelled by Us/Client
-    evaluation --> cancelled : Cancelled by Us/Client
-    appointed_awarded --> [*]
-    rejected_lost --> [*]
-    closed --> [*]
-    cancelled --> [*]
-```
-
-1. **open**: All tenders where we can still submit (closing date has not passed yet).
-2. **closed**: All tenders where the closing date has passed and the bid was not submitted. *Status must auto-set to closed when the closing date passes.*
-3. **evaluation**: All tenders that have been submitted and are currently under evaluation.
-4. **appointed/awarded**: Bids won and successfully awarded.
-5. **rejected/lost**: Bids lost or rejected.
-6. **cancelled**: Tenders cancelled by either the organization or the client.
-
----
-
-## 4. Proposed Improvements
+## 3. Proposed Improvements
 
 To maximize usability, we propose implementing **Role-Based Dashboard Layouts** that automatically adapt to the user's role in the organization.
 
@@ -83,23 +55,32 @@ graph TD
     ShowAdmin --> AdminKPIs["KPIs: Pipeline Value, PO Totals, Active Projects"]
     ShowAdmin --> AdminLinks["Quick Links: Reports, Client Directory, Billing"]
     
-    ShowSpecialist --> SpecKPIs["KPIs: Open Tenders, Expiry Warnings, Active Evaluations"]
-    ShowSpecialist --> SpecLinks["Quick Links: Open Bids, Compliance Checklist"]
+    ShowSpecialist --> SpecKPIs["KPIs: Draft Countdown, Expiry Warnings, Assigned Tasks"]
+    ShowSpecialist --> SpecLinks["Quick Links: Draft Bids, Compliance Checklist"]
 ```
 
-### 4.1. Tender Admin Dashboard Enhancements
-1. **Financial Funnel Chart**: Replace the monthly trends placeholder with a conversion funnel chart displaying ZAR value transitions from `Open ➔ Evaluation ➔ Appointed/Awarded`.
+### 3.1. Tender Admin Dashboard Enhancements
+1. **Financial Funnel Chart**: Replace the monthly trends placeholder with a conversion funnel chart displaying ZAR value transitions from `Draft ➔ Open ➔ Evaluation ➔ Awarded`. (on tender status, we do not have draft anymore, we have submission open, evaluation, awarded, lost)
 2. **Quick Navigation Hub**: Add dedicated navigation links to key operational areas:
    * 🔗 `Go to Reports & Analytics`
    * 🔗 `Manage Organization Members & Roles`
    * 🔗 `View Financial Invoices & Billing`
 3. **Actionable Alerts**: Highlight overdue PO deliveries or unlinked purchase orders.
 
-### 4.2. Tender Specialist Dashboard Layout
+### 3.2. Tender Specialist Dashboard Layout
 1. **Operational Metrics Bar**:
-   * **Open Tenders**: Number of active opportunities currently in `open` status (closing date in the future).
-   * **Tenders Under Evaluation**: Count of submitted bids with `evaluation` status awaiting response.
+   * **Open Tenders**: Number of bids currently in open status.
+   * **Tenders Under Evaluation**: Count of submitted with status of evaluation bids awaiting response.
    * **Validity Expiry Warnings**: Bids whose validity deadline is approaching and need extension checks.
    * **My Tasks / Pending Docs**: Checklist of compliance documents needing upload.
 2. **Submission Calendar Widget**: Replace the generic activity feed with an interactive calendar highlighting immediate closing dates.
-3. **Compliance Health Checklist**: A visual list showing which active tenders are missing mandatory South African compliance docs (e.g., CSD report, BBBEE certificate, Tax pin).
+
+
+our updated tender status look like this:
+
+1. open - all tenders where we can still submit, due date has not passed yet
+2. closed - all tenders where we can no longer submit, due date has passed and we have not submitted yet, status must auto set to closed when due date passes
+3. evaluation - all tenders that we submitted and are now under evaluation
+4. appointed/awarded - we won the bid and have been awarded
+5. rejected/lost - we lost the bid
+6. cancelled - tenders that were canseled by either us or client
