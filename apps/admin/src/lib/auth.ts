@@ -15,7 +15,7 @@ const REPLY_TO = process.env.REPLY_TO_EMAIL || 'info@contact.tendertrack360.co.z
 const ADMIN_PRODUCTION_URL = 'https://admin.tendertrack360.co.za';
 const LOCAL_AUTH_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 
-function getNonLocalOrigin(value?: string) {
+function getOrigin(value?: string) {
   if (!value) return null;
 
   try {
@@ -25,10 +25,6 @@ function getNonLocalOrigin(value?: string) {
         : `https://${value}`
     );
 
-    if (LOCAL_AUTH_HOSTNAMES.has(url.hostname)) {
-      return null;
-    }
-
     return url.origin;
   } catch {
     return null;
@@ -36,45 +32,41 @@ function getNonLocalOrigin(value?: string) {
 }
 
 function getAdminOrigin(value?: string) {
-  const origin = getNonLocalOrigin(value);
+  const origin = getOrigin(value);
   if (!origin) return null;
 
   return new URL(origin).hostname.startsWith('admin.') ? origin : null;
 }
 
-function getPublicEmailOrigin() {
+function getAdminBaseURL() {
   return (
-    getNonLocalOrigin(process.env.NEXT_PUBLIC_ADMIN_URL) ||
-    getNonLocalOrigin(process.env.ADMIN_PUBLIC_URL) ||
+    getOrigin(process.env.NEXT_PUBLIC_ADMIN_URL) ||
+    getOrigin(process.env.ADMIN_PUBLIC_URL) ||
     getAdminOrigin(process.env.NEXT_PUBLIC_URL) ||
-    getNonLocalOrigin(process.env.BETTER_AUTH_URL) ||
-    getNonLocalOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
-    getNonLocalOrigin(process.env.VERCEL_URL) ||
-    (process.env.NODE_ENV === 'production' ? ADMIN_PRODUCTION_URL : null)
+    getAdminOrigin(process.env.BETTER_AUTH_URL) ||
+    getAdminOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
+    getAdminOrigin(process.env.VERCEL_URL) ||
+    (process.env.NODE_ENV === 'production'
+      ? ADMIN_PRODUCTION_URL
+      : 'http://localhost:3001')
   );
 }
 
-function getPublicAuthEmailUrl(url: string) {
-  const publicOrigin = getPublicEmailOrigin();
-  if (!publicOrigin) return url;
-
-  try {
-    const authUrl = new URL(url);
-    if (!LOCAL_AUTH_HOSTNAMES.has(authUrl.hostname)) {
-      return url;
-    }
-
-    return new URL(
-      `${authUrl.pathname}${authUrl.search}${authUrl.hash}`,
-      publicOrigin
-    ).toString();
-  } catch {
-    return url;
-  }
+function getAdminMagicLinkUrl(token: string) {
+  const adminBaseURL = getAdminBaseURL();
+  const magicLinkUrl = new URL('/api/auth/magic-link/verify', adminBaseURL);
+  magicLinkUrl.searchParams.set('token', token);
+  magicLinkUrl.searchParams.set('callbackURL', adminBaseURL);
+  return magicLinkUrl.toString();
 }
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
+  baseURL: getAdminBaseURL(),
+  trustedOrigins: [
+    getAdminBaseURL(),
+    'http://localhost:3001',
+    'https://admin.tendertrack360.co.za',
+  ],
   rateLimit: {
     enabled: true,
     window: 60, // 1 minute
@@ -124,10 +116,10 @@ export const auth = betterAuth({
   plugins: [
     nextCookies(),
     magicLink({
-      sendMagicLink: async ({ email, url, token }) => {
+      sendMagicLink: async ({ email, token }) => {
         try {
           const otp = Math.floor(100000 + Math.random() * 900000).toString();
-          const magicLinkUrl = getPublicAuthEmailUrl(url);
+          const magicLinkUrl = getAdminMagicLinkUrl(token);
 
           await db.insert(schema.verification).values({
             id: crypto.randomUUID(),

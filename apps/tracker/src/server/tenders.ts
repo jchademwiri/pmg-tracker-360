@@ -127,6 +127,9 @@ export async function getTenders(
         evaluationDate: tender.evaluationDate,
         validityDays: tender.validityDays,
         validityDate: tender.validityDate,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -267,6 +270,9 @@ export async function getTenderById(organizationId: string, tenderId: string) {
         evaluationDate: tender.evaluationDate,
         validityDays: tender.validityDays,
         validityDate: tender.validityDate,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -606,6 +612,9 @@ export async function searchTenders(
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -708,6 +717,9 @@ export async function getTendersWithSorting(
         evaluationDate: tender.evaluationDate,
         validityDays: tender.validityDays,
         validityDate: tender.validityDate,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -788,6 +800,9 @@ export async function getAvailableTendersForProjects(
         submissionDate: tender.submissionDate,
         value: tender.value,
         status: tender.status,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -1212,6 +1227,9 @@ export async function getTendersWithCustomSorting(
         evaluationDate: tender.evaluationDate,
         validityDays: tender.validityDays,
         validityDate: tender.validityDate,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {

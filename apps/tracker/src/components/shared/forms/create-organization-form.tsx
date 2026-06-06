@@ -17,7 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { authClient } from '@/lib/auth-client';
-import { checkOrganizationSlugAvailability } from '@/server/organizations';
+import {
+  checkOrganizationSlugAvailability,
+  rememberActiveOrganization,
+} from '@/server/organizations';
 import { toast } from 'sonner';
 import { useState, useEffect, useCallback } from 'react';
 import { Loader, Check, X, AlertCircle, Eye } from 'lucide-react';
@@ -264,6 +267,7 @@ export function CreateOrganizationForm({
       await authClient.organization.setActive({
         organizationId: result.data.id,
       });
+      await rememberActiveOrganization(result.data.id);
 
       // Show success state with animation
       setIsSuccess(true);

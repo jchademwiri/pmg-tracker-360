@@ -26,15 +26,7 @@ export function resolveTenderStatus(
   const now = new Date();
   const submission = new Date(submissionDate);
 
-  // Normalize to midnights for safe date comparison
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const closingDay = new Date(
-    submission.getFullYear(),
-    submission.getMonth(),
-    submission.getDate()
-  );
-
-  if (today <= closingDay) {
+  if (now <= submission) {
     return 'open';
   } else {
     return 'closed';
@@ -65,4 +57,23 @@ export function fromLocalDateString(dateStr: string | null | undefined): Date | 
   const [year, month, day] = dateStr.split('-').map(Number);
   if (!year || !month || !day) return null;
   return new Date(Date.UTC(year, month - 1, day));
+}
+
+export function toLocalDateTimeString(
+  date: Date | string | null | undefined
+): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+
+  const offset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+}
+
+export function fromLocalDateTimeString(
+  dateTimeStr: string | null | undefined
+): Date | null {
+  if (!dateTimeStr) return null;
+  const date = new Date(dateTimeStr);
+  return isNaN(date.getTime()) ? null : date;
 }

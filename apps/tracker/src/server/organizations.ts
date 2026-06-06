@@ -188,19 +188,103 @@ export async function getOrganizationsForProvider() {
 }
 
 export async function getActiveOrganization(userId: string) {
-  const memberUser = await db.query.member.findFirst({
-    where: eq(member.userId, userId),
+  const currentUser = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: {
+      lastActiveOrganizationId: true,
+    },
   });
 
-  if (!memberUser) {
+  if (currentUser?.lastActiveOrganizationId) {
+    const savedMembership = await db.query.member.findFirst({
+      where: and(
+        eq(member.userId, userId),
+        eq(member.organizationId, currentUser.lastActiveOrganizationId)
+      ),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (savedMembership && !savedMembership.organization.deletedAt) {
+      return savedMembership.organization;
+    }
+  }
+
+  const memberships = await db.query.member.findMany({
+    where: eq(member.userId, userId),
+    with: {
+      organization: true,
+    },
+  });
+
+  const activeMemberships = memberships.filter(
+    (membership) => !membership.organization.deletedAt
+  );
+
+  if (activeMemberships.length !== 1) {
     return null;
   }
 
-  const activeOrganization = await db.query.organization.findFirst({
-    where: eq(organization.id, memberUser.organizationId),
-  });
+  const activeOrganization = activeMemberships[0].organization;
+
+  await db
+    .update(user)
+    .set({ lastActiveOrganizationId: activeOrganization.id })
+    .where(eq(user.id, userId));
 
   return activeOrganization;
+}
+
+export async function getOrganizationSelectionState() {
+  const { currentUser, session } = await getCurrentUser();
+  const organizations = await getActiveOrganizations();
+
+  return {
+    currentUser,
+    activeOrganizationId: session.activeOrganizationId,
+    organizations,
+  };
+}
+
+export async function rememberActiveOrganization(organizationId: string) {
+  try {
+    const { currentUser } = await getCurrentUser();
+
+    const membership = await db.query.member.findFirst({
+      where: and(
+        eq(member.userId, currentUser.id),
+        eq(member.organizationId, organizationId)
+      ),
+      with: {
+        organization: true,
+      },
+    });
+
+    if (!membership || membership.organization.deletedAt) {
+      return {
+        success: false,
+        error: 'You do not have access to this organization',
+      };
+    }
+
+    await db
+      .update(user)
+      .set({ lastActiveOrganizationId: organizationId })
+      .where(eq(user.id, currentUser.id));
+
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('Error remembering active organization:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to save organization preference',
+    };
+  }
 }
 
 export async function getUserOrganizationMembership(

@@ -106,6 +106,20 @@
       "when": 1768795690259,
       "tag": "0014_blue_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791288000000,
+      "tag": "0015_add_tender_contact_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791288060000,
+      "tag": "0016_add_user_last_active_organization",
+      "breakpoints": true
     }
   ]
 }
