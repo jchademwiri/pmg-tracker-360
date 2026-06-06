@@ -74,6 +74,7 @@ const statusColors = {
   evaluation: 'bg-blue-100/10 text-blue-400 border border-blue-500/20',
   awarded: 'bg-amber-100/10 text-amber-400 border border-amber-500/20',
   lost: 'bg-red-100/10 text-red-400 border border-red-500/20',
+  cancelled: 'bg-zinc-100/10 text-zinc-400 border border-zinc-500/20',
 };
 
 const statusLabels = {
@@ -82,6 +83,7 @@ const statusLabels = {
   evaluation: 'Evaluation',
   awarded: 'Appointed / Awarded',
   lost: 'Rejected / Lost',
+  cancelled: 'Cancelled',
 };
 
 export function TenderDetails({

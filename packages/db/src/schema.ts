@@ -321,6 +321,10 @@ export const tender = pgTable('tender', {
   evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
   validityDays: integer('validity_days'),
   validityDate: timestamp('validity_date'),
+  briefingDate: timestamp('briefing_date'),
+  briefingLocation: text('briefing_location'),
+  isBriefingMandatory: boolean('is_briefing_mandatory').default(false).notNull(),
+  briefingAttended: boolean('briefing_attended').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'), // Soft deletion

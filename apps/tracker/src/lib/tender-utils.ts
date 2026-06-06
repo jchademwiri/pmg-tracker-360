@@ -6,7 +6,7 @@
 export function resolveTenderStatus(
   status: string,
   submissionDate: Date | null
-): 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost' {
+): 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost' | 'cancelled' {
   const currentStatus =
     status === 'draft' || status === 'pending' || status === 'won'
       ? status === 'won'
@@ -18,8 +18,8 @@ export function resolveTenderStatus(
     return currentStatus as any;
   }
 
-  // If status is locked in evaluation, awarded, or lost, respect that choice
-  if (['evaluation', 'awarded', 'lost'].includes(currentStatus)) {
+  // If status is locked in evaluation, awarded, lost, or cancelled, respect that choice
+  if (['evaluation', 'awarded', 'lost', 'cancelled'].includes(currentStatus)) {
     return currentStatus as any;
   }
 
@@ -39,4 +39,30 @@ export function resolveTenderStatus(
   } else {
     return 'closed';
   }
+}
+
+/**
+ * Formats a Date object to a YYYY-MM-DD string timezone-safely using South African Standard Time (SAST).
+ */
+export function toLocalDateString(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Johannesburg',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+/**
+ * Parses a YYYY-MM-DD string into a UTC midnight Date object to prevent browser timezone offsets.
+ */
+export function fromLocalDateString(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(Date.UTC(year, month - 1, day));
 }

@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
-import { MiniCalendarWidget } from '@/components/dashboard/mini-calendar-widget';
+import { ClientCalendar } from '@/components/dashboard/client-calendar';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,7 @@ export default async function CalendarPage() {
 
       <Card className="flex flex-col flex-1 border-white/10 bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden min-h-0">
         <CardContent className="p-4 flex-1 min-h-0 bg-background/40">
-          <MiniCalendarWidget className="h-full" />
+          <ClientCalendar className="h-full" />
         </CardContent>
       </Card>
     </div>

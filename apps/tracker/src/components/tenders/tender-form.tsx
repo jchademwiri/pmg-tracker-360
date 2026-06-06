@@ -10,7 +10,6 @@ import {
   FileText,
   User,
   Calendar,
-  DollarSign,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +33,7 @@ import {
 
 import { createTender, updateTender } from '@/server/tenders';
 import { getClients } from '@/server/clients';
+import { toLocalDateString, fromLocalDateString } from '@/lib/tender-utils';
 import {
   TenderCreateSchema,
   type TenderCreateInput,
@@ -52,6 +52,10 @@ interface TenderWithClient {
   validityDays: number | null;
   validityDate: Date | null;
   evaluationDate: Date | null;
+  briefingDate?: Date | null;
+  briefingLocation?: string | null;
+  isBriefingMandatory?: boolean;
+  briefingAttended?: boolean;
   createdAt: Date;
   updatedAt: Date;
   client: {
@@ -89,7 +93,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   );
 
   const form = useForm<TenderCreateInput>({
-    resolver: zodResolver(TenderCreateSchema),
+    resolver: zodResolver(TenderCreateSchema) as any,
     defaultValues: {
       tenderNumber: tender?.tenderNumber || '',
       description: tender?.description || '',
@@ -98,13 +102,18 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
       value: tender?.value || '',
       validityDays: tender?.validityDays || undefined,
       validityDate: tender?.validityDate || undefined,
+      briefingDate: tender?.briefingDate || undefined,
+      briefingLocation: tender?.briefingLocation || '',
+      isBriefingMandatory: tender?.isBriefingMandatory || false,
+      briefingAttended: tender?.briefingAttended || false,
       status:
         (tender?.status as
           | 'open'
           | 'closed'
           | 'evaluation'
           | 'awarded'
-          | 'lost') || 'open',
+          | 'lost'
+          | 'cancelled') || 'open',
     },
   });
 
@@ -388,18 +397,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                             type="date"
                             className="pl-10 rounded-md"
                             {...field}
-                            value={
-                              field.value
-                                ? new Date(field.value)
-                                    .toISOString()
-                                    .split('T')[0]
-                                : ''
-                            }
+                            value={toLocalDateString(field.value)}
                             onChange={(e) => {
-                              const date = e.target.value
-                                ? new Date(e.target.value)
-                                : undefined;
-                              field.onChange(date);
+                              field.onChange(fromLocalDateString(e.target.value));
                             }}
                             disabled={isPending}
                           />
@@ -475,18 +475,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                                 type="date"
                                 className="pl-10 rounded-md"
                                 {...field}
-                                value={
-                                  field.value
-                                    ? new Date(field.value)
-                                        .toISOString()
-                                        .split('T')[0]
-                                    : ''
-                                }
+                                value={toLocalDateString(field.value)}
                                 onChange={(e) => {
-                                  const date = e.target.value
-                                    ? new Date(e.target.value)
-                                    : undefined;
-                                  field.onChange(date);
+                                  field.onChange(fromLocalDateString(e.target.value));
                                 }}
                                 disabled={isPending}
                               />
@@ -507,7 +498,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                       <FormLabel>Tender Value</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <span className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground font-semibold text-sm">
+                            R
+                          </span>
                           <Input
                             type="text"
                             placeholder="Enter tender value"
@@ -554,6 +547,129 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     })()}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Clarification & Briefing Session */}
+            <Card className="backdrop-blur-md bg-card/70 border-border/40 shadow-sm mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <Calendar className="h-5 w-5 mr-2 text-indigo-500" />
+                  Clarification Meeting & Briefing Session
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Clarification meeting schedule and mandatory attendance tracking
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="briefingDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Briefing Date & Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            className="rounded-md"
+                            {...field}
+                            value={
+                              field.value
+                                ? new Date(
+                                    new Date(field.value).getTime() -
+                                      new Date(field.value).getTimezoneOffset() * 60000
+                                  )
+                                    .toISOString()
+                                    .slice(0, 16)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(val ? new Date(val) : null);
+                            }}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="briefingLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Venue / Meeting Link</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g. Boardroom A or Microsoft Teams link"
+                            className="rounded-md"
+                            {...field}
+                            value={field.value || ''}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-t pt-4">
+                  <FormField
+                    control={form.control}
+                    name="isBriefingMandatory"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            checked={field.value || false}
+                            onChange={field.onChange}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="font-semibold text-sm">
+                            Mandatory Briefing
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Attendance is compulsory for bid validity
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="briefingAttended"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            checked={field.value || false}
+                            onChange={field.onChange}
+                            disabled={isPending}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="font-semibold text-sm">
+                            Briefing Attended
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            Clarification register signed/attended
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

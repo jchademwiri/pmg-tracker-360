@@ -25,6 +25,7 @@ import {
   MoreHorizontal,
   Trash2,
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/format';
 
 interface Tender {
   id: string;
@@ -60,6 +61,7 @@ const statusLabels = {
   evaluation: 'Evaluation',
   awarded: 'Appointed / Awarded',
   lost: 'Rejected / Lost',
+  cancelled: 'Cancelled',
 };
 
 function getStatusColor(status: string): string {
@@ -74,6 +76,8 @@ function getStatusColor(status: string): string {
       return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
     case 'lost':
       return 'bg-red-500/10 text-red-400 border border-red-500/20';
+    case 'cancelled':
+      return 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20';
     default:
       return 'bg-zinc-800 text-zinc-400 border border-zinc-700/30';
   }
@@ -140,9 +144,9 @@ export function TendersTable({
                         Description
                       </TableHead>
                       <TableHead className="min-w-[100px]">Status</TableHead>
-                      {/* <TableHead className="min-w-[100px] hidden md:table-cell">
+                      <TableHead className="min-w-[100px] hidden md:table-cell">
                         Value
-                      </TableHead> */}
+                      </TableHead>
                       <TableHead className="min-w-[120px] hidden lg:table-cell">
                         Closing Date
                       </TableHead>
@@ -179,9 +183,9 @@ export function TendersTable({
                               {statusLabels[tender.status as keyof typeof statusLabels] || tender.status}
                             </Badge>
                           </TableCell>
-                          {/* <TableCell className="hidden md:table-cell">
-                            {formatCurrency(tender.value)}
-                          </TableCell> */}
+                          <TableCell className="hidden md:table-cell">
+                            {formatCurrency(Number(tender.value || 0))}
+                          </TableCell>
                           <TableCell className="hidden lg:table-cell">
                             {formatDate(tender.submissionDate)}
                           </TableCell>

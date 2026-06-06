@@ -3,7 +3,7 @@
 import { db } from '@pmg/db';
 import { validateSessionAndOrg } from './utils';
 import { tender, client, project, tenderExtension } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, gte, lte, ne } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
@@ -1106,6 +1106,70 @@ export async function getUpcomingDeadlines(
   }
 }
 
+// Get upcoming briefing sessions for dashboard
+export async function getUpcomingBriefings(
+  organizationId: string,
+  limit: number = 10
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(
+      now.getTime() + 30 * 24 * 60 * 60 * 1000
+    );
+
+    const upcomingBriefings = await db
+      .select({
+        id: tender.id,
+        tenderNumber: tender.tenderNumber,
+        description: tender.description,
+        briefingDate: tender.briefingDate,
+        briefingLocation: tender.briefingLocation,
+        isBriefingMandatory: tender.isBriefingMandatory,
+        briefingAttended: tender.briefingAttended,
+        status: tender.status,
+        client: {
+          name: client.name,
+        },
+      })
+      .from(tender)
+      .leftJoin(client, eq(tender.clientId, client.id))
+      .where(
+        and(
+          eq(tender.organizationId, organizationId),
+          isNull(tender.deletedAt),
+          gte(tender.briefingDate, now),
+          lte(tender.briefingDate, thirtyDaysFromNow)
+        )
+      )
+      .orderBy(tender.briefingDate)
+      .limit(limit);
+
+    // Calculate days until briefing
+    const briefingsWithDays = upcomingBriefings.map((briefing) => ({
+      ...briefing,
+      daysUntilBriefing: briefing.briefingDate
+        ? Math.ceil(
+            (briefing.briefingDate.getTime() - now.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : null,
+    }));
+
+    return {
+      success: true,
+      briefings: briefingsWithDays,
+    };
+  } catch (error: any) {
+    console.error('Error fetching upcoming briefings:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch upcoming briefings',
+      briefings: [],
+    };
+  }
+}
+
 // Get tenders with custom status sorting for submitted tenders page
 export async function getTendersWithCustomSorting(
   organizationId: string,
@@ -1323,5 +1387,30 @@ export async function getTendersOverview(
       currentPage: page,
       totalPages: 0,
     };
+  }
+}
+
+// Auto-close expired tenders whose closing date is in the past and status is open
+export async function autoCloseExpiredTenders(organizationId: string) {
+  try {
+    const now = new Date();
+    const result = await db
+      .update(tender)
+      .set({
+        status: 'closed',
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(tender.organizationId, organizationId),
+          eq(tender.status, 'open'),
+          isNull(tender.deletedAt),
+          lt(tender.submissionDate, now)
+        )
+      );
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error auto-closing expired tenders:', error);
+    return { success: false, error: error.message || 'Failed to auto-close expired tenders' };
   }
 }
