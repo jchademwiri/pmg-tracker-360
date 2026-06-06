@@ -22,6 +22,7 @@ export interface TenderFilters {
 }
 
 export interface TendersSearchFiltersProps {
+  filters?: TenderFilters;
   onFiltersChange: (filters: TenderFilters) => void;
   clients?: Array<{ id: string; name: string }>;
   className?: string;
@@ -49,22 +50,24 @@ const SORT_ORDER_OPTIONS = [
 ];
 
 export function TendersSearchFilters({
+  filters: controlledFilters,
   onFiltersChange,
   clients = [],
   className = '',
 }: TendersSearchFiltersProps) {
-  const [filters, setFilters] = useState<TenderFilters>({
+  const [internalFilters, setInternalFilters] = useState<TenderFilters>({
     search: '',
     status: 'all',
     clientId: 'all',
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
+  const filters = controlledFilters ?? internalFilters;
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<TenderFilters>) => {
       const updatedFilters = { ...filters, ...newFilters };
-      setFilters(updatedFilters);
+      setInternalFilters(updatedFilters);
       onFiltersChange(updatedFilters);
     },
     [filters, onFiltersChange]
@@ -113,7 +116,7 @@ export function TendersSearchFilters({
       sortBy: 'createdAt',
       sortOrder: 'desc',
     };
-    setFilters(clearedFilters);
+    setInternalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   }, [onFiltersChange]);
 

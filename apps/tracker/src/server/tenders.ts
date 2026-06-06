@@ -112,7 +112,12 @@ export async function getTenders(
     }
 
     // Add status filter if provided
-    if (status && status !== 'all') {
+    if (status === 'submitted-pending') {
+      whereCondition = and(
+        whereCondition,
+        or(eq(tender.status, 'evaluation'), eq(tender.status, 'closed'))
+      );
+    } else if (status && status !== 'all') {
       whereCondition = and(whereCondition, eq(tender.status, status));
     }
 
@@ -1314,7 +1319,7 @@ export async function getTendersOverview(
       whereCondition = and(whereCondition, eq(tender.status, filters.status));
     }
 
-    if (filters.clientId) {
+    if (filters.clientId && filters.clientId !== 'all') {
       whereCondition = and(
         whereCondition,
         eq(tender.clientId, filters.clientId)

@@ -106,7 +106,7 @@ export function UpcomingDeadlinesList({
       </ScrollArea>
       <div className="pt-2 border-t">
         <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
-          <Link href="/tenders?sort=deadline">
+          <Link href="/tenders/overview?sortBy=submissionDate&sortOrder=asc">
             View All Deadlines
           </Link>
         </Button>

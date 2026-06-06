@@ -175,8 +175,8 @@ Modify the preview component inside [create-organization-form.tsx](file:///D:/we
 ```
 
 ---
-
-## 4. Solution: Add the Missing `invoice` Table
+<!-- We will not have invoicing at this moment -->
+<!-- ## 4. Solution: Add the Missing `invoice` Table
 
 ### Problem:
 The application lacks an `invoice` table to track PO fulfillment billing, payment cycles, and overdue ZAR balances.
@@ -239,7 +239,7 @@ export const invoiceRelations = relations(invoice, ({ one }) => ({
 }));
 ```
 
----
+--- -->
 
 ## 5. Solution: Rectify the `deliveredAt` PO Form Input
 

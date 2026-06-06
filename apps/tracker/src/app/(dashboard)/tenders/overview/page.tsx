@@ -16,8 +16,46 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-export default async function TendersOverviewPage() {
+type SearchParams = {
+  search?: string;
+  status?: string;
+  clientId?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: string;
+};
+
+const validSortBy = ['tenderNumber', 'createdAt', 'submissionDate', 'status'] as const;
+const validSortOrder = ['asc', 'desc'] as const;
+
+function parseTenderFilters(searchParams: SearchParams) {
+  const sortBy = validSortBy.includes(searchParams.sortBy as any)
+    ? (searchParams.sortBy as (typeof validSortBy)[number])
+    : 'createdAt';
+  const sortOrder = validSortOrder.includes(searchParams.sortOrder as any)
+    ? (searchParams.sortOrder as (typeof validSortOrder)[number])
+    : 'desc';
+  const page = Math.max(Number(searchParams.page || '1') || 1, 1);
+
+  return {
+    filters: {
+      search: searchParams.search || '',
+      status: searchParams.status || 'all',
+      clientId: searchParams.clientId || 'all',
+      sortBy,
+      sortOrder,
+    },
+    page,
+  };
+}
+
+export default async function TendersOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const { session } = await getCurrentUser();
+  const { filters, page } = parseTenderFilters(await searchParams);
 
   if (!session.activeOrganizationId) {
     return (
@@ -46,7 +84,7 @@ export default async function TendersOverviewPage() {
     getRecentActivity(session.activeOrganizationId, 3),
     getUpcomingDeadlines(session.activeOrganizationId, 3),
     getClients(session.activeOrganizationId),
-    getTendersOverview(session.activeOrganizationId, {}, 1, 20),
+    getTendersOverview(session.activeOrganizationId, filters, page, 20),
   ]);
 
   const stats = statsResult.success
@@ -201,6 +239,7 @@ export default async function TendersOverviewPage() {
         initialTotalCount={tendersData.totalCount}
         initialCurrentPage={tendersData.currentPage}
         initialTotalPages={tendersData.totalPages}
+        initialFilters={filters}
         clients={clients}
         organizationId={session.activeOrganizationId}
       />

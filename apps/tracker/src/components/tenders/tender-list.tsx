@@ -115,7 +115,7 @@ export function TenderList({
       : tenders;
 
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(filteredTenders.length / itemsPerPage);
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   // Fetch tenders with search, status filter, and pagination
   const fetchTenders = useCallback(
@@ -150,12 +150,8 @@ export function TenderList({
     setShowAllStatuses(defaultStatusFilter === 'all');
     setCurrentPage(1);
 
-    // Fetch fresh data for the new organization
-    // Pass undefined for 'submitted-pending' - we filter client-side
     const serverStatus =
-      defaultStatusFilter === 'submitted-pending'
-        ? undefined
-        : defaultStatusFilter === 'all'
+      defaultStatusFilter === 'all'
           ? undefined
           : defaultStatusFilter;
 
@@ -176,13 +172,7 @@ export function TenderList({
     setStatusFilter(status);
     setCurrentPage(1);
 
-    // Handle special submitted-pending filter
-    if (status === 'submitted-pending') {
-      // For submitted page, filter to only submitted and pending
-      fetchTenders(searchQuery, 1, undefined); // Will be filtered client-side
-    } else {
-      fetchTenders(searchQuery, 1, status === 'all' ? undefined : status);
-    }
+    fetchTenders(searchQuery, 1, status === 'all' ? undefined : status);
   };
 
   // Handle status toggle for active tenders page
@@ -266,7 +256,7 @@ export function TenderList({
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
-              {showAllStatuses ? 'Show Drafts Only' : 'Show All Tenders'}
+              {showAllStatuses ? 'Show Open Only' : 'Show All Tenders'}
             </Button>
           )}
 
@@ -558,8 +548,8 @@ export function TenderList({
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-muted-foreground">
                   Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                  {Math.min(currentPage * itemsPerPage, filteredTenders.length)}{' '}
-                  of {filteredTenders.length} tenders
+                  {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
+                  {totalCount} tenders
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button

@@ -25,6 +25,7 @@ import {
   MoreHorizontal,
   Trash2,
 } from 'lucide-react';
+import Link from 'next/link';
 import { formatCurrency } from '@/lib/format';
 
 interface Tender {
@@ -170,7 +171,13 @@ export function TendersTable({
                           onClick={() => onRowClick?.(tender.id)}
                         >
                           <TableCell className="font-medium">
-                            {tender.tenderNumber}
+                            <Link
+                              href={`/tenders/${tender.id}`}
+                              className="text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {tender.tenderNumber}
+                            </Link>
                           </TableCell>
                           <TableCell>
                             {tender.client?.name || 'Unknown Client'}
