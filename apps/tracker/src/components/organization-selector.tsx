@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { OrganizationWithStats } from '@/server/organizations';
 
 interface OrganizationSelectorProps {
@@ -15,13 +15,29 @@ export function OrganizationSelector({
   organizations,
   fallbackContent,
 }: OrganizationSelectorProps) {
+  const router = useRouter();
   const { data: activeOrganization, isPending: isLoading } =
     authClient.useActiveOrganization();
   const [isClient, setIsClient] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleSelectOrg = async (orgId: string) => {
+    setIsSwitching(true);
+    try {
+      await authClient.organization.setActive({
+        organizationId: orgId,
+      });
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      console.error('Failed to switch organization:', err);
+      setIsSwitching(false);
+    }
+  };
 
   // Prevent hydration mismatch
   if (!isClient) {
@@ -36,12 +52,14 @@ export function OrganizationSelector({
   }
 
   // Show loading state while checking organization
-  if (isLoading) {
+  if (isLoading || isSwitching) {
     return (
       <section className="grid place-items-center min-h-[600px] text-center">
         <div>
           <h1 className="text-4xl font-bold">Tender Track 360</h1>
-          <p className="mt-4 text-lg">Loading your organization...</p>
+          <p className="mt-4 text-lg">
+            {isSwitching ? 'Switching organization...' : 'Loading your organization...'}
+          </p>
         </div>
       </section>
     );
@@ -72,15 +90,14 @@ export function OrganizationSelector({
             {organizations.map((org) => (
               <Button
                 key={org.id}
-                asChild
                 variant={
                   activeOrganization?.id === org.id ? 'default' : 'outline'
                 }
-                className="w-full justify-start"
+                className="w-full justify-start cursor-pointer"
+                onClick={() => handleSelectOrg(org.id)}
+                disabled={isSwitching}
               >
-                <Link href="/dashboard">
-                  <span className="font-medium">{org.name}</span>
-                </Link>
+                <span className="font-medium">{org.name}</span>
               </Button>
             ))}
           </div>
