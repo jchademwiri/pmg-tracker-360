@@ -7,18 +7,7 @@ import { supportTickets, securityAuditLog } from '@pmg/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { PLATFORM_ORG_ID } from '@/lib/constants';
-
-/**
- * Pure helper — exported for PBT testing (Property 5).
- * Returns true only for valid forward transitions: open→in_progress, in_progress→closed
- */
-export function validateStatusTransition(current: string, requested: string): boolean {
-  const TRANSITIONS: Record<string, string> = {
-    open: 'in_progress',
-    in_progress: 'closed',
-  };
-  return TRANSITIONS[current] === requested;
-}
+import { validateStatusTransition } from './ticket-utils';
 
 export async function updateTicketStatus(ticketId: string, newStatus: string): Promise<void> {
   // 1. Re-verify admin session

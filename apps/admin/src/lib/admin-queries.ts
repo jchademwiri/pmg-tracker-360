@@ -352,33 +352,11 @@ export async function getRecentActivity(limit: number): Promise<ActivityEntry[]>
 }
 
 /**
- * getOrganizationsWithCounts — all orgs (excluding sentinel) with correlated subquery aggregates
+ * getOrganizationsWithCounts — all orgs (excluding sentinel) with aggregated counts.
+ * Uses LEFT JOINs with GROUP BY instead of correlated subqueries to avoid
+ * Drizzle sql`` parameter-vs-column-reference issues.
  */
 export async function getOrganizationsWithCounts(): Promise<OrgWithCounts[]> {
-  const memberCountSq = db
-    .select({ cnt: count() })
-    .from(member)
-    .where(eq(member.organizationId, organization.id))
-    .as('memberCountSq');
-
-  const tenderCountSq = db
-    .select({ cnt: count() })
-    .from(tender)
-    .where(eq(tender.organizationId, organization.id))
-    .as('tenderCountSq');
-
-  const projectCountSq = db
-    .select({ cnt: count() })
-    .from(project)
-    .where(eq(project.organizationId, organization.id))
-    .as('projectCountSq');
-
-  const poCountSq = db
-    .select({ cnt: count() })
-    .from(purchaseOrder)
-    .where(eq(purchaseOrder.organizationId, organization.id))
-    .as('poCountSq');
-
   const rows = await db
     .select({
       id: organization.id,
@@ -390,13 +368,28 @@ export async function getOrganizationsWithCounts(): Promise<OrgWithCounts[]> {
       deletedAt: organization.deletedAt,
       deletionReason: organization.deletionReason,
       permanentDeletionScheduledAt: organization.permanentDeletionScheduledAt,
-      memberCount: sql<number>`(${memberCountSq})`,
-      tenderCount: sql<number>`(${tenderCountSq})`,
-      projectCount: sql<number>`(${projectCountSq})`,
-      poCount: sql<number>`(${poCountSq})`,
+      memberCount: sql<number>`COUNT(DISTINCT ${member.id})`,
+      tenderCount: sql<number>`COUNT(DISTINCT ${tender.id})`,
+      projectCount: sql<number>`COUNT(DISTINCT ${project.id})`,
+      poCount: sql<number>`COUNT(DISTINCT ${purchaseOrder.id})`,
     })
     .from(organization)
+    .leftJoin(member, eq(member.organizationId, organization.id))
+    .leftJoin(tender, eq(tender.organizationId, organization.id))
+    .leftJoin(project, eq(project.organizationId, organization.id))
+    .leftJoin(purchaseOrder, eq(purchaseOrder.organizationId, organization.id))
     .where(sql`${organization.id} != ${PLATFORM_ORG_ID}`)
+    .groupBy(
+      organization.id,
+      organization.name,
+      organization.slug,
+      organization.logo,
+      organization.metadata,
+      organization.createdAt,
+      organization.deletedAt,
+      organization.deletionReason,
+      organization.permanentDeletionScheduledAt,
+    )
     .orderBy(asc(organization.createdAt));
 
   return rows.map((row) => ({

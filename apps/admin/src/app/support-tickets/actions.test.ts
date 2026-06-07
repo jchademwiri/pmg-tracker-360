@@ -1,17 +1,9 @@
 // Feature: admin-console, Property 5: Ticket status transitions are forward-only
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 
-// Stub out server-only modules so the pure helper can be imported without a DB connection.
-vi.mock('@pmg/db', () => ({ db: {} }));
-vi.mock('@pmg/db/schema', () => ({ supportTickets: {}, securityAuditLog: {} }));
-vi.mock('next/headers', () => ({ headers: vi.fn() }));
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
-vi.mock('@/lib/auth', () => ({ auth: { api: { getSession: vi.fn() } } }));
-vi.mock('@/lib/constants', () => ({ PLATFORM_ORG_ID: 'org_platform_admin' }));
-
-import { validateStatusTransition } from './actions';
+import { validateStatusTransition } from './ticket-utils';
 
 const VALID_STATUSES = ['open', 'in_progress', 'closed'] as const;
 
