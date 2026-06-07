@@ -22,6 +22,7 @@ export interface TenderFilters {
 }
 
 export interface TendersSearchFiltersProps {
+  filters?: TenderFilters;
   onFiltersChange: (filters: TenderFilters) => void;
   clients?: Array<{ id: string; name: string }>;
   className?: string;
@@ -49,22 +50,24 @@ const SORT_ORDER_OPTIONS = [
 ];
 
 export function TendersSearchFilters({
+  filters: controlledFilters,
   onFiltersChange,
   clients = [],
   className = '',
 }: TendersSearchFiltersProps) {
-  const [filters, setFilters] = useState<TenderFilters>({
+  const [internalFilters, setInternalFilters] = useState<TenderFilters>({
     search: '',
     status: 'all',
     clientId: 'all',
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
+  const filters = controlledFilters ?? internalFilters;
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<TenderFilters>) => {
       const updatedFilters = { ...filters, ...newFilters };
-      setFilters(updatedFilters);
+      setInternalFilters(updatedFilters);
       onFiltersChange(updatedFilters);
     },
     [filters, onFiltersChange]
@@ -113,7 +116,7 @@ export function TendersSearchFilters({
       sortBy: 'createdAt',
       sortOrder: 'desc',
     };
-    setFilters(clearedFilters);
+    setInternalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   }, [onFiltersChange]);
 
@@ -154,7 +157,7 @@ export function TendersSearchFilters({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Search and Filter Controls */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row lg:flex-wrap gap-4">
         {/* Search Input */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -235,40 +238,42 @@ export function TendersSearchFilters({
             Clear Filters
           </Button>
         )}
-      </div>
 
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
-          {activeFilters.map((filter) => (
-            <Badge
-              key={filter.key}
-              variant="secondary"
-              className="flex items-center gap-1"
-            >
-              <span className="font-medium">{filter.label}:</span>
-              <span>{filter.value}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 ml-1 hover:bg-transparent cursor-pointer"
-                onClick={() => {
-                  if (filter.key === 'search') {
-                    handleFilterChange({ search: '' });
-                  } else if (filter.key === 'status') {
-                    handleFilterChange({ status: 'all' });
-                  } else if (filter.key === 'client') {
-                    handleFilterChange({ clientId: 'all' });
-                  }
-                }}
+        {/* Active Filters Display */}
+        {hasActiveFilters && (
+          <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1">
+            <span className="text-sm text-muted-foreground">
+              Active filters:
+            </span>
+            {activeFilters.map((filter) => (
+              <Badge
+                key={filter.key}
+                variant="secondary"
+                className="flex items-center gap-1"
               >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-      )}
+                <span className="font-medium">{filter.label}:</span>
+                <span>{filter.value}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-0 ml-1 hover:bg-transparent cursor-pointer"
+                  onClick={() => {
+                    if (filter.key === 'search') {
+                      handleFilterChange({ search: '' });
+                    } else if (filter.key === 'status') {
+                      handleFilterChange({ status: 'all' });
+                    } else if (filter.key === 'client') {
+                      handleFilterChange({ clientId: 'all' });
+                    }
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

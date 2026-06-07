@@ -22,10 +22,10 @@ export async function DashboardBriefings({
 
   const formatDate = (date: Date | null) => {
     if (!date) return '-';
-    return new Intl.DateTimeFormat('en-ZA', {
-      year: 'numeric',
-      month: 'short',
+    return new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));

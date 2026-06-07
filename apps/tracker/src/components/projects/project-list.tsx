@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 
 import { getProjects, deleteProject } from '@/server/projects';
+import { formatDate } from '@/lib/format';
 
 interface ProjectWithRelations {
   id: string;
@@ -171,16 +172,7 @@ export function ProjectList({
     });
   };
 
-  // Format date for display
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(date));
-  };
-
+  // Format date for display — uses shared formatDate from @/lib/format
   return (
     <Card className="rounded-lg shadow-sm">
       <CardHeader>

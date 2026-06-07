@@ -119,9 +119,9 @@ export async function DashboardMetrics({
           description={`Total: ${formatCurrency(projectStats.totalPOAmount)}`}
         />
         <MetricCard
-          title="Overdue Items"
-          value={formatNumber(tenderStats.overdueCount)}
-          description="Tenders past closing date"
+          title="Under Evaluation"
+          value={formatNumber(tenderStats.statusCounts.evaluation)}
+          description="Tenders currently under evaluation"
         />
       </div>
     </>

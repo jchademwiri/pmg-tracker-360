@@ -96,7 +96,7 @@ export default async function AdminOrganizationsPage() {
                   <td className="py-4.5 px-6 text-zinc-400 text-xs">
                     <div className="flex items-center gap-2 font-medium">
                       <Clock className="h-4 w-4 text-zinc-600" />
-                      {new Date(o.createdAt).toLocaleDateString()}
+                      {new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                   </td>
                 </tr>

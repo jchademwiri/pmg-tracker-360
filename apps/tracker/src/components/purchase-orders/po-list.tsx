@@ -41,6 +41,7 @@ import {
   getPurchaseOrders,
   deletePurchaseOrder,
 } from '@/server/purchase-orders';
+import { formatDate } from '@/lib/format';
 import Link from 'next/link';
 
 interface PurchaseOrderWithProject {
@@ -176,16 +177,7 @@ export function POList({
     });
   };
 
-  // Format date for display
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(date));
-  };
-
+  // Format date for display — uses shared formatDate from @/lib/format
   // Format currency value
   const formatValue = (value: string | null) => {
     if (!value) return 'Not set';

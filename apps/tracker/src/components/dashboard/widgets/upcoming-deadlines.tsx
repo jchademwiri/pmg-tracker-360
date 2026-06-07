@@ -2,6 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { Calendar, Clock } from 'lucide-react'
+import {
+  getDeadlineUrgencyClass,
+  getDeadlineUrgencyLabel,
+} from '@/lib/deadline-display'
 
 interface Deadline {
   id: string
@@ -21,18 +25,6 @@ interface UpcomingDeadlinesProps {
 }
 
 export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
-  const getUrgencyBadge = (daysUntilDeadline: number | null) => {
-    if (daysUntilDeadline === null) return { variant: 'secondary' as const, text: 'No deadline' }
-
-    if (daysUntilDeadline <= 3) {
-      return { variant: 'destructive' as const, text: 'Urgent' }
-    } else if (daysUntilDeadline <= 7) {
-      return { variant: 'default' as const, text: 'Soon' }
-    } else {
-      return { variant: 'secondary' as const, text: 'Upcoming' }
-    }
-  }
-
   if (deadlines.length === 0) {
     return (
       <Card>
@@ -64,13 +56,16 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
       <CardContent>
         <div className="space-y-3">
           {deadlines.map((deadline) => {
-            const urgency = getUrgencyBadge(deadline.daysUntilDeadline)
             return (
               <div key={deadline.id} className="flex items-start justify-between p-3 border rounded-lg">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={urgency.variant} className="text-xs">
-                      {urgency.text}
+                    <Badge
+                      className={`text-xs ${getDeadlineUrgencyClass(
+                        deadline.daysUntilDeadline
+                      )}`}
+                    >
+                      {getDeadlineUrgencyLabel(deadline.daysUntilDeadline)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {deadline.tenderNumber}

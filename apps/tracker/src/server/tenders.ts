@@ -3,12 +3,13 @@
 import { db } from '@pmg/db';
 import { validateSessionAndOrg } from './utils';
 import { tender, client, project, tenderExtension } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
 import { randomUUID } from 'crypto';
-import { resolveTenderStatus } from '@/lib/tender-utils';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -112,7 +113,12 @@ export async function getTenders(
     }
 
     // Add status filter if provided
-    if (status && status !== 'all') {
+    if (status === 'submitted-pending') {
+      whereCondition = and(
+        whereCondition,
+        or(eq(tender.status, 'evaluation'), eq(tender.status, 'closed'))
+      );
+    } else if (status && status !== 'all') {
       whereCondition = and(whereCondition, eq(tender.status, status));
     }
 
@@ -153,13 +159,8 @@ export async function getTenders(
       .from(tender)
       .where(whereCondition);
 
-    const resolvedTenders = tenders.map((t) => ({
-      ...t,
-      status: resolveTenderStatus(t.status, t.submissionDate),
-    }));
-
     return {
-      tenders: resolvedTenders,
+      tenders,
       totalCount: totalCount.length,
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
@@ -294,15 +295,44 @@ export async function getTenderById(organizationId: string, tenderId: string) {
       )
       .limit(1);
 
-    const resolvedTender = {
-      ...tenderData[0],
-      status: resolveTenderStatus(tenderData[0].status, tenderData[0].submissionDate),
-    };
-
-    return { success: true, tender: resolvedTender };
+    return { success: true, tender: tenderData[0] };
   } catch (error: any) {
     console.error('Error fetching tender:', error);
     return { success: false, error: error.message || 'Failed to fetch tender' };
+  }
+}
+
+export async function getTenderBreadcrumbLabel(tenderId: string) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const organizationId = session?.session.activeOrganizationId;
+
+    if (!session?.user || !organizationId) {
+      return null;
+    }
+
+    await validateSessionAndOrg(organizationId);
+
+    const tenderData = await db
+      .select({
+        tenderNumber: tender.tenderNumber,
+      })
+      .from(tender)
+      .where(
+        and(
+          eq(tender.id, tenderId),
+          eq(tender.organizationId, organizationId),
+          isNull(tender.deletedAt)
+        )
+      )
+      .limit(1);
+
+    return tenderData[0]?.tenderNumber ?? null;
+  } catch (error) {
+    console.error('Error fetching tender breadcrumb label:', error);
+    return null;
   }
 }
 
@@ -733,7 +763,7 @@ export async function getTendersWithSorting(
       .from(tender)
       .leftJoin(client, eq(tender.clientId, client.id))
       .where(whereCondition)
-      .orderBy(sortOrder === 'desc' ? desc(sortColumn) : sortColumn)
+      .orderBy(desc(tender.createdAt))
       .limit(limit)
       .offset(offset);
 
@@ -743,14 +773,9 @@ export async function getTendersWithSorting(
       .from(tender)
       .where(whereCondition);
 
-    const resolvedTenders = tenders.map((t) => ({
-      ...t,
-      status: resolveTenderStatus(t.status, t.submissionDate),
-    }));
-
     return {
       success: true,
-      tenders: resolvedTenders,
+      tenders,
       totalCount: totalCount.length,
       currentPage: page,
       totalPages: Math.ceil(totalCount.length / limit),
@@ -859,8 +884,7 @@ export async function getTenderStats(organizationId: string) {
     const totalTenders = stats.length;
     const statusCounts = stats.reduce(
       (acc, tender) => {
-        const resolved = resolveTenderStatus(tender.status, tender.submissionDate);
-        acc[resolved] = (acc[resolved] || 0) + 1;
+        acc[tender.status] = (acc[tender.status] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -909,8 +933,7 @@ export async function getTenderStats(organizationId: string) {
     // Status counts for previous period
     const previousStatusCounts = previousStats.reduce(
       (acc, tender) => {
-        const resolved = resolveTenderStatus(tender.status, tender.submissionDate);
-        acc[resolved] = (acc[resolved] || 0) + 1;
+        acc[tender.status] = (acc[tender.status] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -1262,14 +1285,9 @@ export async function getTendersWithCustomSorting(
 
     const totalCount = totalCountResult.length;
 
-    const resolvedTenders = tenders.map((t) => ({
-      ...t,
-      status: resolveTenderStatus(t.status, t.submissionDate),
-    }));
-
     return {
       success: true,
-      tenders: resolvedTenders,
+      tenders,
       totalCount,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
@@ -1314,7 +1332,7 @@ export async function getTendersOverview(
       whereCondition = and(whereCondition, eq(tender.status, filters.status));
     }
 
-    if (filters.clientId) {
+    if (filters.clientId && filters.clientId !== 'all') {
       whereCondition = and(
         whereCondition,
         eq(tender.clientId, filters.clientId)
@@ -1350,6 +1368,26 @@ export async function getTendersOverview(
         sortColumn = tender.createdAt;
     }
 
+    const orderByExpression =
+      sortBy === 'submissionDate'
+        ? sortOrder === 'desc'
+          ? sql`${tender.submissionDate} desc nulls last`
+          : sql`${tender.submissionDate} asc nulls last`
+        : sortOrder === 'desc'
+          ? desc(sortColumn)
+          : sortColumn;
+    const isRegisterDefaultSort =
+      (!filters.status || filters.status === 'all') &&
+      sortBy === 'submissionDate' &&
+      sortOrder === 'asc';
+    const orderByExpressions = isRegisterDefaultSort
+      ? [
+          sql`case when ${tender.status} = 'open' then 0 else 1 end`,
+          sql`${tender.submissionDate} asc nulls last`,
+          desc(tender.createdAt),
+        ]
+      : [orderByExpression];
+
     const tenders = await db
       .select({
         id: tender.id,
@@ -1371,7 +1409,7 @@ export async function getTendersOverview(
       .from(tender)
       .leftJoin(client, eq(tender.clientId, client.id))
       .where(whereCondition)
-      .orderBy(sortOrder === 'desc' ? desc(sortColumn) : sortColumn)
+      .orderBy(...orderByExpressions)
       .limit(limit)
       .offset(offset);
 
@@ -1383,14 +1421,9 @@ export async function getTendersOverview(
 
     const totalCount = totalCountResult.length;
 
-    const resolvedTenders = tenders.map((t) => ({
-      ...t,
-      status: resolveTenderStatus(t.status, t.submissionDate),
-    }));
-
     return {
       success: true,
-      tenders: resolvedTenders,
+      tenders,
       totalCount,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),

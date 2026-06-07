@@ -5,6 +5,10 @@ import { Calendar, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  getDeadlineUrgencyClass,
+  getDeadlineUrgencyLabel,
+} from '@/lib/deadline-display';
 
 interface UpcomingDeadlineItem {
   id: string;
@@ -27,20 +31,13 @@ export function UpcomingDeadlinesList({
   const formatDeadline = (date: Date | null) => {
     if (!date) return 'No date';
 
-    return new Intl.DateTimeFormat('en-ZA', {
-      year: 'numeric',
-      month: 'short',
+    return new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
-  };
-
-  const formatDaysUntil = (days: number | null) => {
-    if (days === null) return 'No date';
-    if (days <= 0) return 'Today';
-    if (days === 1) return '1 day';
-    return `${days} days`;
   };
 
   if (!deadlines || deadlines.length === 0) {
@@ -77,10 +74,11 @@ export function UpcomingDeadlinesList({
                     {item.tenderNumber}
                   </Link>
                   <Badge
-                    variant="outline"
-                    className="text-[10px] px-1 py-0 h-5"
+                    className={`text-[10px] px-1.5 py-0 h-5 ${getDeadlineUrgencyClass(
+                      item.daysUntilDeadline
+                    )}`}
                   >
-                    {formatDaysUntil(item.daysUntilDeadline)}
+                    {getDeadlineUrgencyLabel(item.daysUntilDeadline)}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
@@ -108,7 +106,7 @@ export function UpcomingDeadlinesList({
       </ScrollArea>
       <div className="pt-2 border-t">
         <Button variant="ghost" size="sm" className="w-full text-xs" asChild>
-          <Link href="/tenders?sort=deadline">
+          <Link href="/tenders/overview?sortBy=submissionDate&sortOrder=asc">
             View All Deadlines
           </Link>
         </Button>

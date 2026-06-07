@@ -148,7 +148,7 @@ export function PrivacyControls() {
           // Add new export to list
           const newExport: DataExport = {
             id: Date.now().toString(),
-            name: `Account Data Export - ${new Date().toLocaleDateString()}`,
+            name: `Account Data Export - ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`,
             description: `Complete account data export in ${format.toUpperCase()} format`,
             size: '2.1 MB',
             format,
@@ -223,10 +223,10 @@ export function PrivacyControls() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
+    return date.toLocaleDateString('en-GB', {
       day: 'numeric',
+      month: 'short',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });

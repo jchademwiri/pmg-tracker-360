@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { getClients, deleteClient } from '@/server';
+import { formatDate } from '@/lib/format';
 import type { Client } from '@pmg/db/schema';
 import Link from 'next/link';
 
@@ -114,15 +115,7 @@ export function ClientList({
     });
   };
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(new Date(date));
-  };
-
+  // Format date for display — uses shared formatDate from @/lib/format
   return (
     <Card className="rounded-lg shadow-sm">
       <CardHeader>

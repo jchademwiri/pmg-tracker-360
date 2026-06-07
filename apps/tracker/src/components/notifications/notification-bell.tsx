@@ -160,7 +160,7 @@ export function NotificationBell({
                     {notification.message}
                   </p>
                   <p className="text-[10px] text-muted-foreground w-full text-right mt-1">
-                    {new Date(notification.createdAt).toLocaleDateString()}
+                    {new Date(notification.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </DropdownMenuItem>
               ))}

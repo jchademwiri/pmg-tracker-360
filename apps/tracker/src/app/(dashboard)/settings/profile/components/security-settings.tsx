@@ -126,7 +126,7 @@ export function SecuritySettings({
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays} days ago`;
 
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   const getDeviceIcon = (device: string) => {

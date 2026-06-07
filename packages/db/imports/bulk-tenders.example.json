@@ -1,0 +1,33 @@
+[
+  {
+    "tenderNumber": "TND-2026-001",
+    "description": "Supply and delivery of office equipment",
+    "clientName": "Example Municipality",
+    "clientNotes": "Main public-sector client",
+    "clientContactName": "Procurement Office",
+    "clientContactEmail": "procurement@example.gov.za",
+    "clientContactPhone": "+27 11 000 0000",
+    "submissionDate": "2026-07-15T10:00:00+02:00",
+    "value": "R 250,000.00",
+    "status": "draft",
+    "evaluationDate": "2026-08-15T00:00:00+02:00",
+    "validityDays": 90,
+    "validityDate": "2026-10-13T00:00:00+02:00",
+    "contactName": "Tender Contact",
+    "contactEmail": "tender.contact@example.gov.za",
+    "contactPhone": "+27 11 111 1111",
+    "briefingDate": "2026-06-20T11:00:00+02:00",
+    "briefingLocation": "City Hall, Room 3",
+    "isBriefingMandatory": true,
+    "briefingAttended": false
+  },
+  {
+    "tenderNumber": "TND-2026-002",
+    "description": "Annual maintenance services",
+    "clientName": "Example Municipality",
+    "submissionDate": "2026-07-22T12:00:00+02:00",
+    "value": "R 1,200,000.00",
+    "status": "draft",
+    "validityDays": 120
+  }
+]

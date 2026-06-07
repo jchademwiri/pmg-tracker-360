@@ -412,9 +412,9 @@ export function MembersTab({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Joined{' '}
-                      {new Intl.DateTimeFormat('en-US', {
-                        month: 'short',
+                      {new Intl.DateTimeFormat('en-GB', {
                         day: 'numeric',
+                        month: 'short',
                         year: 'numeric',
                       }).format(member.joinedAt)}
                     </p>

@@ -31,6 +31,7 @@ interface TendersOverviewClientProps {
   initialTotalCount: number;
   initialCurrentPage: number;
   initialTotalPages: number;
+  initialFilters: TenderFilters;
   clients: Array<{ id: string; name: string }>;
   organizationId: string;
 }
@@ -40,26 +41,42 @@ export function TendersOverviewClient({
   initialTotalCount,
   initialCurrentPage,
   initialTotalPages,
+  initialFilters,
   clients,
   organizationId,
 }: TendersOverviewClientProps) {
+  const router = useRouter();
   const [tenders, setTenders] = useState(initialTenders);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [currentPage, setCurrentPage] = useState(initialCurrentPage);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState<TenderFilters>({
-    search: '',
-    status: 'all',
-    clientId: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
+  const [filters, setFilters] = useState<TenderFilters>(initialFilters);
+
+  const syncUrl = useCallback(
+    (nextFilters: TenderFilters, nextPage: number) => {
+      const params = new URLSearchParams();
+
+      if (nextFilters.search) params.set('search', nextFilters.search);
+      if (nextFilters.status !== 'all') params.set('status', nextFilters.status);
+      if (nextFilters.clientId !== 'all') params.set('clientId', nextFilters.clientId);
+      if (nextFilters.sortBy !== 'createdAt') params.set('sortBy', nextFilters.sortBy);
+      if (nextFilters.sortOrder !== 'desc') params.set('sortOrder', nextFilters.sortOrder);
+      if (nextPage > 1) params.set('page', String(nextPage));
+
+      const query = params.toString();
+      router.replace(query ? `/tenders/overview?${query}` : '/tenders/overview', {
+        scroll: false,
+      });
+    },
+    [router]
+  );
 
   const handleFiltersChange = useCallback(
     async (newFilters: TenderFilters) => {
       setFilters(newFilters);
       setLoading(true);
+      syncUrl(newFilters, 1);
 
       try {
         const result = await getTendersOverview(
@@ -80,12 +97,13 @@ export function TendersOverviewClient({
         setLoading(false);
       }
     },
-    [organizationId]
+    [organizationId, syncUrl]
   );
 
   const handlePageChange = useCallback(
     async (page: number) => {
       setLoading(true);
+      syncUrl(filters, page);
 
       try {
         const result = await getTendersOverview(
@@ -108,8 +126,6 @@ export function TendersOverviewClient({
     },
     [organizationId, filters]
   );
-
-  const router = useRouter();
 
   const handleViewTender = useCallback(
     (tenderId: string) => {
@@ -173,6 +189,7 @@ export function TendersOverviewClient({
   return (
     <div className="space-y-4 ">
       <TendersSearchFilters
+        filters={filters}
         onFiltersChange={handleFiltersChange}
         clients={clients}
       />
@@ -186,7 +203,6 @@ export function TendersOverviewClient({
         onViewTender={handleViewTender}
         onEditTender={handleEditTender}
         onDeleteTender={handleDeleteTender}
-        onRowClick={handleRowClick}
       />
 
       {loading && (

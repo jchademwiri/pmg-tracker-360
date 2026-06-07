@@ -131,7 +131,7 @@ export function DocumentManager({
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatFileSize(parseInt(doc.size))} •{' '}
-                    {new Date(doc.createdAt).toLocaleDateString()}
+                    {new Date(doc.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
               </div>

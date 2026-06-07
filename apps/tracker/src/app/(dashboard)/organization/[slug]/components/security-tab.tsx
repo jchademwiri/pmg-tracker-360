@@ -331,9 +331,10 @@ export function SecurityTab({
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Last active:{' '}
-                        {new Intl.DateTimeFormat('en-US', {
-                          month: 'short',
+                        {new Intl.DateTimeFormat('en-GB', {
                           day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
                           hour: 'numeric',
                           minute: 'numeric',
                         }).format(session.lastActive)}
@@ -399,9 +400,10 @@ export function SecurityTab({
                       <span>User: {event.user}</span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {new Intl.DateTimeFormat('en-US', {
-                          month: 'short',
+                        {new Intl.DateTimeFormat('en-GB', {
                           day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
                           hour: 'numeric',
                           minute: 'numeric',
                         }).format(event.timestamp)}

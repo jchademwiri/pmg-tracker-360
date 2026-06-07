@@ -3,6 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Calendar, Clock } from 'lucide-react';
+import {
+  getDeadlineUrgencyClass,
+  getDeadlineUrgencyLabel,
+  isUrgentDeadline,
+} from '@/lib/deadline-display';
 
 interface UpcomingDeadline {
   id: string;
@@ -22,38 +27,18 @@ interface UpcomingDeadlinesProps {
   className?: string;
 }
 
-function getUrgencyColor(daysUntil: number | null): string {
-  if (daysUntil === null)
-    return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-  if (daysUntil <= 1)
-    return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-  if (daysUntil <= 3)
-    return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-  if (daysUntil <= 7)
-    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-  return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-}
-
 function getUrgencyIcon(daysUntil: number | null) {
   if (daysUntil === null) return <Calendar className="h-3 w-3" />;
   if (daysUntil <= 1) return <AlertTriangle className="h-3 w-3" />;
   return <Clock className="h-3 w-3" />;
 }
 
-function formatDaysUntil(daysUntil: number | null): string {
-  if (daysUntil === null) return 'No deadline';
-  if (daysUntil === 0) return 'Due today';
-  if (daysUntil === 1) return '1 day left';
-  if (daysUntil < 0) return `${Math.abs(daysUntil)} days overdue`;
-  return `${daysUntil} days left`;
-}
-
 export function UpcomingDeadlines({
   deadlines,
   className = '',
 }: UpcomingDeadlinesProps) {
-  const urgentDeadlines = deadlines.filter(
-    (d) => d.daysUntilDeadline !== null && d.daysUntilDeadline <= 3
+  const urgentDeadlines = deadlines.filter((d) =>
+    isUrgentDeadline(d.daysUntilDeadline)
   );
   const hasUrgent = urgentDeadlines.length > 0;
 
@@ -101,11 +86,13 @@ export function UpcomingDeadlines({
                     {deadline.tenderNumber}
                   </span>
                   <Badge
-                    className={getUrgencyColor(deadline.daysUntilDeadline)}
+                    className={getDeadlineUrgencyClass(
+                      deadline.daysUntilDeadline
+                    )}
                   >
                     {getUrgencyIcon(deadline.daysUntilDeadline)}
                     <span className="ml-1">
-                      {formatDaysUntil(deadline.daysUntilDeadline)}
+                      {getDeadlineUrgencyLabel(deadline.daysUntilDeadline)}
                     </span>
                   </Badge>
                 </div>
@@ -124,7 +111,7 @@ export function UpcomingDeadlines({
                 </div>
                 {deadline.submissionDate && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Due: {deadline.submissionDate.toLocaleDateString()}
+                    Due: {deadline.submissionDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 )}
               </div>
