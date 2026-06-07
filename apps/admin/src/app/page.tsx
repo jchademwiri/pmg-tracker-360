@@ -1,30 +1,57 @@
-import React from 'react';
-import { db } from '@pmg/db';
-import { user, organization, tender, project } from '@pmg/db/schema';
-import { count, desc, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { db } from '@pmg/db';
+import { user } from '@pmg/db/schema';
+import { count, eq } from 'drizzle-orm';
 import {
   Users,
   Building2,
   FileText,
-  Briefcase,
-  TrendingUp,
-  Clock,
+  FolderOpen,
+  Activity,
+  ShieldCheck,
+  LifeBuoy,
+  Users2,
   LogOut,
 } from 'lucide-react';
-import { adminSignOut } from './actions';
+import { adminSignOut } from '@/app/actions';
+import AlertTray from '@/components/AlertTray';
+import MetricCard from '@/components/MetricCard';
+import {
+  getDashboardMetrics,
+  getAlertCounts,
+  getRecentActivity,
+  getSuspiciousSessions,
+} from '@/lib/admin-queries';
+
+/* -------------------------------------------------------------------------- */
+/*  Pure helpers                                                               */
+/* -------------------------------------------------------------------------- */
+
+function formatRelativeTime(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Page                                                                       */
+/* -------------------------------------------------------------------------- */
 
 export default async function AdminDashboardPage() {
-  // 1. Session Verification
+  // 1. Auth guard
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!session || (session.user as any).role !== 'admin') {
-    // If no administrators exist in the database, redirect to initial setup
     const adminCountResult = await db
       .select({ count: count() })
       .from(user)
@@ -36,47 +63,99 @@ export default async function AdminDashboardPage() {
     redirect('/login');
   }
 
-  // 2. Direct Database Analytics Querying
-  const usersCountResult = await db.select({ count: count() }).from(user);
-  const orgsCountResult = await db.select({ count: count() }).from(organization);
-  const tendersCountResult = await db.select({ count: count() }).from(tender);
-  const projectsCountResult = await db.select({ count: count() }).from(project);
+  // 2. Data fetching
+  const [metrics, alertCounts, recentActivity, suspiciousSessions] =
+    await Promise.all([
+      getDashboardMetrics(),
+      getAlertCounts(),
+      getRecentActivity(20),
+      getSuspiciousSessions(),
+    ]);
 
-  const totalUsers = usersCountResult[0]?.count ?? 0;
-  const totalOrgs = orgsCountResult[0]?.count ?? 0;
-  const totalTenders = tendersCountResult[0]?.count ?? 0;
-  const totalProjects = projectsCountResult[0]?.count ?? 0;
+  // 3. Derived values
+  const verifiedPct = Math.round(
+    (metrics.verifiedCount / Math.max(metrics.totalUsers, 1)) * 100,
+  );
 
-  // 3. Fetch Recent Registrations
-  const recentUsers = await db
-    .select()
-    .from(user)
-    .orderBy(desc(user.createdAt))
-    .limit(5);
+  const totalTenders = metrics.totalTenders;
 
-  // 4. Fetch Active Tenant Organizations
-  const activeOrgs = await db
-    .select()
-    .from(organization)
-    .orderBy(desc(organization.createdAt))
-    .limit(5);
+  // Alert definitions
+  const alerts = [
+    {
+      id: 'suspicious',
+      label: `${alertCounts.suspiciousSessions} suspicious active session(s)`,
+      count: alertCounts.suspiciousSessions,
+      severity: 'critical' as const,
+      href: '/sessions',
+    },
+    {
+      id: 'unverified',
+      label: `${alertCounts.unverifiedRecentUsers} unverified user(s) registered in the last 7 days`,
+      count: alertCounts.unverifiedRecentUsers,
+      severity: 'high' as const,
+      href: '/users',
+    },
+    {
+      id: 'purge',
+      label: `${alertCounts.pendingPurgeOrgs} organisation(s) scheduled for deletion within 72 hours`,
+      count: alertCounts.pendingPurgeOrgs,
+      severity: 'high' as const,
+      href: '/organizations',
+    },
+    {
+      id: 'invitations',
+      label: `${alertCounts.expiringInvitations} invitation(s) expiring within 48 hours`,
+      count: alertCounts.expiringInvitations,
+      severity: 'medium' as const,
+      href: '/organizations',
+    },
+    {
+      id: 'transfers',
+      label: `${alertCounts.expiringTransfers} ownership transfer(s) expiring within 24 hours`,
+      count: alertCounts.expiringTransfers,
+      severity: 'medium' as const,
+      href: '/',
+    },
+    {
+      id: 'tickets',
+      label: `${alertCounts.openTickets} open support ticket(s)`,
+      count: alertCounts.openTickets,
+      severity: 'low' as const,
+      href: '/support-tickets',
+    },
+  ];
+
+  // Pipeline bar helper
+  const pipelineStatuses: Array<{
+    key: 'draft' | 'submitted' | 'won' | 'lost' | 'pending';
+    label: string;
+    color: string;
+  }> = [
+    { key: 'draft', label: 'Draft', color: 'bg-zinc-500' },
+    { key: 'submitted', label: 'Submitted', color: 'bg-indigo-500' },
+    { key: 'won', label: 'Won', color: 'bg-emerald-500' },
+    { key: 'lost', label: 'Lost', color: 'bg-red-500' },
+    { key: 'pending', label: 'Pending', color: 'bg-amber-500' },
+  ];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-sans">
-      {/* Page Header */}
+      {/* ------------------------------------------------------------------ */}
+      {/* a. Page header                                                      */}
+      {/* ------------------------------------------------------------------ */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            System Console
+            Platform Dashboard
           </h1>
           <p className="text-sm text-zinc-400">
-            Real-time analytics and platform administration controls.
+            Real-time platform health, alerts, and operational metrics.
           </p>
         </div>
         <form action={adminSignOut}>
           <button
             type="submit"
-            className="flex items-center gap-2 px-4.5 py-2.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:text-white rounded-xl text-sm font-semibold transition-all cursor-pointer text-zinc-300"
+            className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:text-white rounded-xl text-sm font-semibold transition-all cursor-pointer text-zinc-300"
           >
             <LogOut className="h-4 w-4" />
             End Session
@@ -84,148 +163,250 @@ export default async function AdminDashboardPage() {
         </form>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Users Metric */}
-        <div className="relative overflow-hidden p-6 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl shadow-lg backdrop-blur-sm group">
-          <div className="absolute right-4 top-4 h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-            <Users className="h-5 w-5 text-indigo-400" />
-          </div>
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            Total Users
-          </div>
-          <div className="text-3xl font-extrabold mt-3 text-white">
-            {totalUsers}
-          </div>
-          <div className="text-[10px] text-indigo-400 mt-2 font-medium flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            Registered accounts
-          </div>
-        </div>
+      {/* ------------------------------------------------------------------ */}
+      {/* b. Alert tray                                                       */}
+      {/* ------------------------------------------------------------------ */}
+      <AlertTray alerts={alerts} />
 
-        {/* Organizations Metric */}
-        <div className="relative overflow-hidden p-6 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl shadow-lg backdrop-blur-sm group">
-          <div className="absolute right-4 top-4 h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-            <Building2 className="h-5 w-5 text-amber-400" />
-          </div>
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            Active Orgs
-          </div>
-          <div className="text-3xl font-extrabold mt-3 text-white">
-            {totalOrgs}
-          </div>
-          <div className="text-[10px] text-amber-400 mt-2 font-medium flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            Tenant organizations
-          </div>
-        </div>
+      {/* ------------------------------------------------------------------ */}
+      {/* c. KPI grid — 8 cards, 4-col                                       */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="Total Users"
+          count={metrics.totalUsers}
+          icon={<Users className="h-5 w-5 text-indigo-400" />}
+          variant="primary"
+          secondaryNote={`+${metrics.newUsersThisWeek} this week`}
+        />
+        <MetricCard
+          label="Active Orgs"
+          count={metrics.activeOrgs}
+          icon={<Building2 className="h-5 w-5 text-emerald-400" />}
+          variant="success"
+          secondaryNote={`+${metrics.newOrgsThisWeek} this week`}
+        />
+        <MetricCard
+          label="Tenders Tracked"
+          count={metrics.totalTenders}
+          icon={<FileText className="h-5 w-5 text-amber-400" />}
+          variant="warning"
+          secondaryNote="See pipeline below"
+        />
+        <MetricCard
+          label="Active Projects"
+          count={metrics.activeProjects}
+          icon={<FolderOpen className="h-5 w-5 text-emerald-400" />}
+          variant="success"
+          secondaryNote="Active only"
+        />
+        <MetricCard
+          label="Live Sessions"
+          count={metrics.liveSessions}
+          icon={<Activity className="h-5 w-5 text-amber-400" />}
+          variant="warning"
+          secondaryNote={`${metrics.suspiciousCount} suspicious`}
+        />
+        <MetricCard
+          label="Email Verified"
+          count={`${verifiedPct}%`}
+          icon={<ShieldCheck className="h-5 w-5 text-emerald-400" />}
+          variant={metrics.unverifiedCount > 0 ? 'danger' : 'success'}
+          secondaryNote={`${metrics.unverifiedCount} unverified`}
+        />
+        <MetricCard
+          label="Open Tickets"
+          count={metrics.openTickets}
+          icon={<LifeBuoy className="h-5 w-5 text-red-400" />}
+          variant={metrics.openTickets > 0 ? 'danger' : 'success'}
+          secondaryNote={`${metrics.inProgressTickets} in progress`}
+        />
+        <MetricCard
+          label="Waitlist"
+          count={metrics.waitlistTotal}
+          icon={<Users2 className="h-5 w-5 text-indigo-400" />}
+          variant="primary"
+          secondaryNote={`+${metrics.newWaitlistThisWeek} this week`}
+        />
+      </div>
 
-        {/* Tenders Metric */}
-        <div className="relative overflow-hidden p-6 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl shadow-lg backdrop-blur-sm group">
-          <div className="absolute right-4 top-4 h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-            <FileText className="h-5 w-5 text-emerald-400" />
-          </div>
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            Tenders Tracked
-          </div>
-          <div className="text-3xl font-extrabold mt-3 text-white">
-            {totalTenders}
-          </div>
-          <div className="text-[10px] text-emerald-400 mt-2 font-medium flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            Active opportunities
-          </div>
-        </div>
-
-        {/* Projects Metric */}
-        <div className="relative overflow-hidden p-6 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl shadow-lg backdrop-blur-sm group">
-          <div className="absolute right-4 top-4 h-10 w-10 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
-            <Briefcase className="h-5 w-5 text-rose-400" />
-          </div>
-          <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-            Active Projects
-          </div>
-          <div className="text-3xl font-extrabold mt-3 text-white">
-            {totalProjects}
-          </div>
-          <div className="text-[10px] text-rose-400 mt-2 font-medium flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" />
-            In-progress contracts
-          </div>
+      {/* ------------------------------------------------------------------ */}
+      {/* d. Tender pipeline health                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-base font-semibold text-white">Tender Pipeline</h2>
+        <div className="space-y-3">
+          {pipelineStatuses.map(({ key, label, color }) => {
+            const cnt = metrics.tenderByStatus[key];
+            const pct =
+              totalTenders > 0
+                ? ((cnt / totalTenders) * 100).toFixed(1)
+                : '0';
+            return (
+              <div key={key} className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
+                  <span>{label}</span>
+                  <span>
+                    {cnt} ({pct}%)
+                  </span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-zinc-800">
+                  <div
+                    className={`h-2 rounded-full ${color}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Tables Section */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Recent Registrations Card */}
-        <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-2xl p-6 shadow-md backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-4 border-b border-zinc-800/80 pb-3">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Users className="h-4 w-4 text-[var(--primary)]" />
-              Recent System Registrations
-            </h3>
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
-              Last 5
-            </span>
-          </div>
-
-          <div className="divide-y divide-zinc-800/60 space-y-4">
-            {recentUsers.map((u) => (
-              <div key={u.id} className="flex items-center justify-between pt-4 first:pt-0">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-white">{u.name}</p>
-                  <p className="text-xs text-zinc-400">{u.email}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    u.role === 'admin' 
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
-                      : 'bg-zinc-800 text-zinc-300'
-                  }`}>
-                    {u.role}
+      {/* ------------------------------------------------------------------ */}
+      {/* e. Plan distribution                                               */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-base font-semibold text-white">Plan Distribution</h2>
+        <div className="space-y-3">
+          {(
+            [
+              { key: 'free' as const, label: 'Free', color: 'bg-blue-500' },
+              { key: 'pro' as const, label: 'Pro', color: 'bg-purple-500' },
+            ] as const
+          ).map(({ key, label, color }) => {
+            const cnt = metrics.planDistribution[key];
+            const pct =
+              metrics.totalUsers > 0
+                ? ((cnt / metrics.totalUsers) * 100).toFixed(1)
+                : '0';
+            return (
+              <div key={key} className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
+                  <span>{label}</span>
+                  <span>
+                    {cnt} ({pct}%)
                   </span>
-                  <div className="text-[10px] text-zinc-500 flex items-center gap-1 font-medium">
-                    <Clock className="h-3 w-3 text-zinc-600" />
-                    {new Date(u.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
+                </div>
+                <div className="h-2 w-full rounded-full bg-zinc-800">
+                  <div
+                    className={`h-2 rounded-full ${color}`}
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* f. Quick-status panels                                             */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Panel 1 — Suspicious Sessions */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-white">
+            Suspicious Sessions
+          </h3>
+          <p className="text-2xl font-bold text-red-400">
+            {alertCounts.suspiciousSessions}
+          </p>
+          {suspiciousSessions.length > 0 ? (
+            <ul className="space-y-1">
+              {suspiciousSessions.slice(0, 5).map((s) => (
+                <li key={s.id} className="text-xs text-zinc-400 truncate">
+                  {s.userEmail ?? '(unknown)'}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-zinc-500">No suspicious sessions.</p>
+          )}
+          <a
+            href="/sessions"
+            className="inline-block text-xs text-indigo-400 hover:underline mt-1"
+          >
+            View all sessions →
+          </a>
         </div>
 
-        {/* Recent Tenant Orgs Card */}
-        <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-2xl p-6 shadow-md backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-4 border-b border-zinc-800/80 pb-3">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-[var(--primary)]" />
-              Active System Organizations
-            </h3>
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
-              Last 5
-            </span>
+        {/* Panel 2 — Support Tickets */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-white">Support Tickets</h3>
+          <div className="space-y-1 text-xs text-zinc-400">
+            <div className="flex justify-between">
+              <span>Open</span>
+              <span className="font-semibold text-red-400">
+                {metrics.openTickets}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span>In Progress</span>
+              <span className="font-semibold text-amber-400">
+                {metrics.inProgressTickets}
+              </span>
+            </div>
           </div>
+          <a
+            href="/support-tickets"
+            className="inline-block text-xs text-indigo-400 hover:underline mt-1"
+          >
+            View all tickets →
+          </a>
+        </div>
 
-          <div className="divide-y divide-zinc-800/60 space-y-4">
-            {activeOrgs.map((o) => (
-              <div key={o.id} className="flex items-center justify-between pt-4 first:pt-0">
-                <div className="space-y-0.5">
-                  <p className="text-sm font-semibold text-white">{o.name}</p>
-                  <p className="text-xs text-zinc-400">slug: {o.slug}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    active
+        {/* Panel 3 — Ownership Transfers */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-white">
+            Ownership Transfers
+          </h3>
+          <p className="text-2xl font-bold text-amber-400">
+            {alertCounts.expiringTransfers}
+          </p>
+          <p className="text-xs text-zinc-500">
+            transfer(s) expiring within 24 hours
+          </p>
+          <p className="text-xs text-zinc-600">
+            Full transfer management available in the database.
+          </p>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* g. Recent activity feed                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-base font-semibold text-white">Recent Activity</h2>
+        {recentActivity.length === 0 ? (
+          <p className="text-xs text-zinc-500">No recent activity.</p>
+        ) : (
+          <ul className="space-y-2">
+            {recentActivity.map((entry) => {
+              const dotColor =
+                entry.severity === 'critical'
+                  ? 'bg-red-500'
+                  : entry.severity === 'warning'
+                    ? 'bg-amber-500'
+                    : 'bg-blue-500';
+              return (
+                <li key={entry.id} className="flex items-start gap-3 text-xs">
+                  <span
+                    className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dotColor}`}
+                  />
+                  <span className="font-medium text-zinc-300 shrink-0">
+                    {entry.userName ?? 'System'}
                   </span>
-                  <div className="text-[10px] text-zinc-500 flex items-center gap-1 font-medium">
-                    <Clock className="h-3 w-3 text-zinc-600" />
-                    {new Date(o.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                  <span className="text-zinc-400 flex-1 min-w-0 truncate">
+                    {entry.action}
+                  </span>
+                  <span className="text-zinc-600 shrink-0">
+                    {formatRelativeTime(entry.createdAt)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

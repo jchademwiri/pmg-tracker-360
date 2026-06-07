@@ -3,11 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import Link from 'next/link';
+import NavMenu from '@/components/NavMenu';
 import {
-  LayoutDashboard,
-  Users,
-  Building2,
   Database,
   Shield,
   Activity,
@@ -65,28 +62,8 @@ export default async function RootLayout({
               </div>
 
               {/* Sidebar Nav Items */}
-              <nav className="flex-1 px-4 py-6 space-y-2">
-                <Link
-                  href="/"
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-[oklch(0.25_0.02_255)] hover:text-white transition-all group"
-                >
-                  <LayoutDashboard className="h-4 w-4 text-[var(--sidebar-primary)] group-hover:scale-110 transition-transform" />
-                  Dashboard Overview
-                </Link>
-                <Link
-                  href="/users"
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-[oklch(0.25_0.02_255)] hover:text-white transition-all group"
-                >
-                  <Users className="h-4 w-4 text-[var(--sidebar-primary)] group-hover:scale-110 transition-transform" />
-                  Manage Users
-                </Link>
-                <Link
-                  href="/organizations"
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-[oklch(0.25_0.02_255)] hover:text-white transition-all group"
-                >
-                  <Building2 className="h-4 w-4 text-[var(--sidebar-primary)] group-hover:scale-110 transition-transform" />
-                  Manage Orgs
-                </Link>
+              <nav className="flex-1 px-4 py-6">
+                <NavMenu />
               </nav>
 
               {/* Sidebar Profile Card */}
