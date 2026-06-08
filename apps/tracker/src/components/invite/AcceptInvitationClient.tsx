@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { signOut } from '@/lib/auth-client';
 
 export default function AcceptInvitationClient({
   invitationId,
@@ -16,24 +16,41 @@ export default function AcceptInvitationClient({
   userExists: boolean;
   currentUserEmail?: string | null;
 }) {
-  const router = useRouter();
-  // If user doesn't exist and isn't logged in, default to showing signup
   const [showSignUp, setShowSignUp] = useState(!userExists && !currentUserEmail);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const acceptNow = () => {
-    window.location.href = `/api/accept-invitation/${invitationId}`;
-  };
 
   const currentPath = `/invite/accept/${invitationId}`;
   const loginHref = `/login?next=${encodeURIComponent(currentPath)}`;
 
-  // If logged in
+  // Full page navigation — fetch() drops Set-Cookie headers on redirects,
+  // which breaks the nextCookies() session write in the route handler.
+  const acceptNow = () => {
+    setIsAccepting(true);
+    window.location.href = `/api/accept-invitation/${invitationId}`;
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      // After sign-out, reload the invite page so the user can log in as the correct account
+      window.location.href = currentPath;
+    } catch {
+      toast.error('Sign out failed. Please try again.');
+      setIsSigningOut(false);
+    }
+  };
+
+  /* ── Case 1: Logged in ─────────────────────────────────────────────── */
   if (currentUserEmail) {
-    const isCorrectUser = currentUserEmail === inviteEmail;
+    const isCorrectUser =
+      currentUserEmail.toLowerCase() === inviteEmail.toLowerCase();
+
     return (
       <div className="space-y-4 rounded-md border p-6 bg-card">
         <div className="flex flex-col gap-2">
@@ -42,32 +59,35 @@ export default function AcceptInvitationClient({
           </p>
           {!isCorrectUser && (
             <div className="p-3 bg-yellow-50 text-yellow-800 rounded text-sm border border-yellow-200">
-              Warning: This invitation was sent to <strong>{inviteEmail}</strong>.
+              This invitation was sent to <strong>{inviteEmail}</strong>. Sign
+              out and log in as that account to accept it.
             </div>
           )}
         </div>
-        <div className="flex gap-3 pt-2">
+
+        <div className="flex gap-3 pt-2 flex-wrap">
+          {isCorrectUser && (
+            <button
+              onClick={acceptNow}
+              disabled={isAccepting}
+              className="rounded bg-primary px-6 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isAccepting ? 'Accepting…' : 'Accept Invitation'}
+            </button>
+          )}
           <button
-            onClick={acceptNow}
-            className="rounded bg-primary px-6 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="rounded border px-4 py-2 hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Accept Invitation
-          </button>
-          <button
-             onClick={async () => {
-               await fetch('/api/auth/sign-out', { method: 'POST' });
-               window.location.reload();
-             }}
-             className="rounded border px-4 py-2 hover:bg-muted transition-colors"
-          >
-            Sign out
+            {isSigningOut ? 'Signing out…' : 'Sign out'}
           </button>
         </div>
       </div>
     );
   }
 
-  // If user exists but not logged in
+  /* ── Case 2: Account exists, not logged in ─────────────────────────── */
   if (userExists) {
     return (
       <div className="space-y-4 rounded-md border p-6 bg-card">
@@ -76,7 +96,9 @@ export default function AcceptInvitationClient({
         </p>
         <div className="p-4 bg-blue-50 text-blue-800 rounded border border-blue-200">
           <p className="font-medium">You already have an account.</p>
-          <p className="text-sm mt-1">Please sign in to accept this invitation.</p>
+          <p className="text-sm mt-1">
+            Please sign in to accept this invitation.
+          </p>
         </div>
         <div className="pt-2">
           <Link
@@ -90,22 +112,25 @@ export default function AcceptInvitationClient({
     );
   }
 
-  // If user does NOT exist (New User Flow)
+  /* ── Case 3: New user — no account yet ─────────────────────────────── */
   return (
     <div className="space-y-4 rounded-md border p-6 bg-card">
       <p>
         Invitation sent to: <strong>{inviteEmail}</strong>
       </p>
-      
+
       {!showSignUp ? (
-        <div className="flex gap-3">
-           <button
+        <div className="flex gap-3 flex-wrap">
+          <button
             onClick={() => setShowSignUp(true)}
-            className="rounded bg-primary px-4 py-2 text-primary-foreground"
+            className="rounded bg-primary px-4 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
           >
-            Create Account & Accept
+            Create Account &amp; Accept
           </button>
-          <Link href={loginHref} className="rounded border px-4 py-2 hover:bg-muted">
+          <Link
+            href={loginHref}
+            className="rounded border px-4 py-2 hover:bg-muted transition-colors"
+          >
             Sign in instead
           </Link>
         </div>
@@ -118,8 +143,8 @@ export default function AcceptInvitationClient({
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-                className="border rounded p-2 w-full"
+                placeholder="Jane Smith"
+                className="border rounded p-2 w-full bg-background"
               />
             </div>
             <div className="grid gap-2">
@@ -129,11 +154,11 @@ export default function AcceptInvitationClient({
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 type="password"
-                className="border rounded p-2 w-full"
+                className="border rounded p-2 w-full bg-background"
               />
             </div>
-            
-            <div className="flex gap-3 pt-2">
+
+            <div className="flex gap-3 pt-2 flex-wrap">
               <button
                 onClick={async () => {
                   if (!name || !password) {
@@ -161,22 +186,26 @@ export default function AcceptInvitationClient({
                       setError(data?.message || 'Failed to create account');
                       toast.error(data?.message || 'Failed to create account');
                     }
-                  } catch (e) {
+                  } catch {
                     setError('Network error');
                     toast.error('Network error occurred');
                   } finally {
                     setIsSubmitting(false);
                   }
                 }}
-                className="rounded bg-primary px-6 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                 disabled={isSubmitting}
+                className="rounded bg-primary px-6 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Creating Account...' : 'Create & Accept'}
+                {isSubmitting ? 'Creating Account…' : 'Create & Accept'}
               </button>
-              <Link href={loginHref} className="flex items-center justify-center rounded border px-4 py-2 hover:bg-muted">
-                 I already have an account
+              <Link
+                href={loginHref}
+                className="flex items-center justify-center rounded border px-4 py-2 hover:bg-muted transition-colors"
+              >
+                I already have an account
               </Link>
             </div>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
         </div>
