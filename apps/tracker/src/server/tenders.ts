@@ -18,7 +18,15 @@ import { headers } from 'next/headers';
 async function autoCreateProjectForTender(
   organizationId: string,
   tenderId: string,
-  tenderData: { tenderNumber: string; description?: string | null; clientId: string }
+  tenderData: {
+    tenderNumber: string;
+    description?: string | null;
+    clientId: string;
+    awardValue?: string | null;
+    contractStartDate?: Date | null;
+    contractEndDate?: Date | null;
+    signedContractUrl?: string | null;
+  }
 ) {
   try {
     // Check if project already exists for this tender
@@ -41,6 +49,10 @@ async function autoCreateProjectForTender(
       tenderId,
       clientId: tenderData.clientId,
       status: 'active',
+      contractStartDate: tenderData.contractStartDate,
+      contractEndDate: tenderData.contractEndDate,
+      awardValue: tenderData.awardValue,
+      signedContractUrl: tenderData.signedContractUrl,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -171,93 +183,7 @@ export async function getTenders(
   }
 }
 
-// Create a new tender with tender number validation
-export async function createTender(
-  organizationId: string,
-  data: TenderCreateInput
-) {
-  try {
-    await validateSessionAndOrg(organizationId);
-    // Validate input
-    const validatedData = TenderCreateSchema.parse(data);
 
-    // Check if tender number is unique within organization
-    const existingTender = await db
-      .select()
-      .from(tender)
-      .where(
-        and(
-          eq(tender.tenderNumber, validatedData.tenderNumber.toUpperCase()),
-          eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
-      )
-      .limit(1);
-
-    if (existingTender.length > 0) {
-      return {
-        success: false,
-        error: 'Tender number already exists in this organization',
-      };
-    }
-
-    // Verify client exists and belongs to organization
-    const clientExists = await db
-      .select()
-      .from(client)
-      .where(
-        and(
-          eq(client.id, validatedData.clientId),
-          eq(client.organizationId, organizationId),
-
-    const tenders = await db
-      .select({
-        id: tender.id,
-        tenderNumber: tender.tenderNumber,
-        description: tender.description,
-        submissionDate: tender.submissionDate,
-        value: tender.value,
-        status: tender.status,
-        evaluationDate: tender.evaluationDate,
-        validityDays: tender.validityDays,
-        validityDate: tender.validityDate,
-        contactName: tender.contactName,
-        contactEmail: tender.contactEmail,
-        contactPhone: tender.contactPhone,
-        createdAt: tender.createdAt,
-        updatedAt: tender.updatedAt,
-        client: {
-          id: client.id,
-          name: client.name,
-          contactName: client.contactName,
-          contactEmail: client.contactEmail,
-          contactPhone: client.contactPhone,
-        },
-      })
-      .from(tender)
-      .leftJoin(client, eq(tender.clientId, client.id))
-      .where(whereCondition)
-      .orderBy(desc(tender.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    // Get total count for pagination
-    const totalCount = await db
-      .select({ count: tender.id })
-      .from(tender)
-      .where(whereCondition);
-
-    return {
-      tenders,
-      totalCount: totalCount.length,
-      currentPage: page,
-      totalPages: Math.ceil(totalCount.length / limit),
-    };
-  } catch (error: any) {
-    console.error('Error fetching tenders:', error);
-    throw error;
-  }
-}
 
 // Create a new tender with tender number validation
 export async function createTender(
@@ -655,7 +581,15 @@ export async function updateTenderStatus(
 
     let projectId: string | undefined;
     if (validatedData.status === 'awarded') {
-      projectId = await autoCreateProjectForTender(organizationId, tenderId, existingTender[0]);
+      projectId = await autoCreateProjectForTender(organizationId, tenderId, {
+        tenderNumber: existingTender[0].tenderNumber,
+        description: existingTender[0].description,
+        clientId: existingTender[0].clientId,
+        awardValue: validatedData.awardValue ?? existingTender[0].value,
+        contractStartDate: validatedData.contractStartDate,
+        contractEndDate: validatedData.contractEndDate,
+        signedContractUrl: validatedData.signedContractUrl,
+      });
     }
 
     revalidatePath('/tenders');
@@ -1564,6 +1498,44 @@ export async function getTendersOverview(
       .orderBy(...orderByExpressions)
       .limit(limit)
       .offset(offset);
+
+    // Get total count for pagination
+    const totalCountResult = await db
+      .select({ count: tender.id })
+      .from(tender)
+      .where(whereCondition);
+
+    const totalCount = totalCountResult.length;
+
+    return {
+      success: true,
+      tenders,
+      totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+  } catch (error: any) {
+    console.error('Error fetching tenders overview:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch tenders',
+      tenders: [],
+      totalCount: 0,
+      currentPage: page,
+      totalPages: 0,
+    };
+  }
+}
+
+// Auto-close expired tenders whose closing date is in the past and status is open
+export async function autoCloseExpiredTenders(organizationId: string) {
+  try {
+    const now = new Date();
+    const result = await db
+      .update(tender)
+      .set({
+        status: 'closed',
+        updatedAt: now,
       })
       .where(
         and(
