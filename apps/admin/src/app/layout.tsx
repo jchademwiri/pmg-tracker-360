@@ -10,6 +10,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
 import {
   Database,
   Activity,
@@ -73,6 +74,7 @@ export default async function RootLayout({
                       orientation="vertical"
                       className="mr-2 data-[orientation=vertical]:h-4"
                     />
+                    <AdminBreadcrumb />
                     <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest ml-auto">
                       <Database className="h-4 w-4 text-emerald-500" />
                       Live Cluster Nominal
