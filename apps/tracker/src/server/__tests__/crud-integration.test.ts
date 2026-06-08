@@ -16,7 +16,7 @@ import {
   updateClient,
   deleteClient,
 } from '@/server/clients';
-import { deleteTender } from '@/server/tenders';
+import { deleteTender, updateTenderStatus } from '@/server/tenders';
 import { deleteProject } from '@/server/projects';
 import { eq } from 'drizzle-orm';
 
@@ -268,5 +268,57 @@ describe('Client CRUD Integration Tests', () => {
       const clientResult = await deleteClient(testOrgId, clientId);
       expect(clientResult.success).toBe(true);
     }, 15000);
+  });
+
+  describe('Tender-to-Project Transition', () => {
+    let clientId: string;
+    let tenderId: string;
+
+    beforeAll(async () => {
+      // Create Client
+      const clientRes = await createClient(testOrgId, {
+        name: `${TEST_PREFIX}_Transition_Client`,
+      });
+      clientId = clientRes.client!.id;
+
+      // Create Tender
+      tenderId = `tender_trans_${Date.now()}`;
+      await db.insert(tender).values({
+        id: tenderId,
+        organizationId: testOrgId,
+        tenderNumber: `TND_TRANS_${Date.now()}`,
+        clientId: clientId,
+        description: 'Transition Test Tender',
+        value: '120000.50',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+
+    it('should transition tender to awarded and create project with custom contract details', async () => {
+      const awardDetails = {
+        status: 'awarded' as const,
+        awardValue: '150000.00',
+        contractStartDate: new Date('2026-06-01'),
+        contractEndDate: new Date('2027-06-01'),
+        signedContractUrl: 'https://storage.example.com/contracts/signed_sla.pdf',
+      };
+
+      const result = await updateTenderStatus(testOrgId, tenderId, awardDetails);
+
+      expect(result.success).toBe(true);
+      expect(result.projectId).toBeDefined();
+
+      // Check that the project has the contract details
+      const dbProject = await db.query.project.findFirst({
+        where: eq(project.id, result.projectId!),
+      });
+
+      expect(dbProject).toBeDefined();
+      expect(dbProject?.awardValue).toBe(awardDetails.awardValue);
+      expect(dbProject?.contractStartDate?.toISOString()).toBe(awardDetails.contractStartDate.toISOString());
+      expect(dbProject?.contractEndDate?.toISOString()).toBe(awardDetails.contractEndDate.toISOString());
+      expect(dbProject?.signedContractUrl).toBe(awardDetails.signedContractUrl);
+    });
   });
 });

@@ -37,6 +37,10 @@ export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
 
 export const TenderStatusUpdateSchema = z.object({
   status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']),
+  awardValue: z.string().optional().nullable(),
+  contractStartDate: z.coerce.date().optional().nullable(),
+  contractEndDate: z.coerce.date().optional().nullable(),
+  signedContractUrl: z.string().optional().nullable(),
 });
 
 export const TenderSearchSchema = z.object({

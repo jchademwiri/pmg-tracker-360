@@ -9,6 +9,7 @@ import {
   unique,
   integer,
   uniqueIndex,
+  decimal,
 } from 'drizzle-orm/pg-core';
 
 /* =========================
@@ -337,7 +338,7 @@ export const tender = pgTable(
       .notNull()
       .references(() => client.id, { onDelete: 'cascade' }),
     submissionDate: timestamp('submission_date'),
-    value: text('value'), // String for currency formatting
+    value: decimal('value', { precision: 15, scale: 2 }),
     status: text('status').default('open').notNull(), // open, closed, evaluation, awarded, lost, cancelled
     evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
     validityDays: integer('validity_days'),
@@ -374,6 +375,10 @@ export const project = pgTable(
     tenderId: text('tender_id').references(() => tender.id), // Optional link to originating tender
     clientId: text('client_id').references(() => client.id), // Inherited from tender or custom
     status: text('status').default('active').notNull(), // active, completed, cancelled
+    contractStartDate: timestamp('contract_start_date'),
+    contractEndDate: timestamp('contract_end_date'),
+    awardValue: decimal('award_value', { precision: 15, scale: 2 }),
+    signedContractUrl: text('signed_contract_url'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'), // Soft deletion
@@ -398,7 +403,7 @@ export const purchaseOrder = pgTable('purchase_order', {
   poNumber: text('po_number').notNull().unique(), // Unique PO number
   supplierName: text('supplier_name'), // Optional supplier name
   description: text('description').notNull(),
-  totalAmount: text('total_amount').notNull(), // String for currency
+  totalAmount: decimal('total_amount', { precision: 15, scale: 2 }).notNull(),
   status: text('status').default('open').notNull(), // open, sent, delivered
   // Calendar-related dates
   poDate: timestamp('po_date'), // Purchase order date
@@ -408,6 +413,19 @@ export const purchaseOrder = pgTable('purchase_order', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'), // Soft deletion
+});
+
+export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
+  id: text('id').primaryKey(),
+  purchaseOrderId: text('purchase_order_id')
+    .notNull()
+    .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
+  description: text('description').notNull(),
+  quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
+  subtotal: decimal('subtotal', { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const tenderExtension = pgTable('tender_extension', {
@@ -622,7 +640,7 @@ export const projectRelations = relations(project, ({ one, many }) => ({
   purchaseOrders: many(purchaseOrder),
 }));
 
-export const purchaseOrderRelations = relations(purchaseOrder, ({ one }) => ({
+export const purchaseOrderRelations = relations(purchaseOrder, ({ one, many }) => ({
   organization: one(organization, {
     fields: [purchaseOrder.organizationId],
     references: [organization.id],
@@ -631,7 +649,18 @@ export const purchaseOrderRelations = relations(purchaseOrder, ({ one }) => ({
     fields: [purchaseOrder.projectId],
     references: [project.id],
   }),
+  lineItems: many(purchaseOrderLineItem),
 }));
+
+export const purchaseOrderLineItemRelations = relations(
+  purchaseOrderLineItem,
+  ({ one }) => ({
+    purchaseOrder: one(purchaseOrder, {
+      fields: [purchaseOrderLineItem.purchaseOrderId],
+      references: [purchaseOrder.id],
+    }),
+  })
+);
 
 export const tenderExtensionRelations = relations(
   tenderExtension,
