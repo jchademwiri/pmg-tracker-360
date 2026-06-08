@@ -3,11 +3,17 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import NavMenu from '@/components/NavMenu';
+import { Separator } from '@/components/ui/separator';
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import { AdminSidebar } from '@/components/AdminSidebar';
 import {
   Database,
-  Shield,
   Activity,
+  Menu,
 } from 'lucide-react';
 
 const geistSans = Geist({
@@ -31,7 +37,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth.api.getSession({
-    // Better Auth Next.js server session loading requires request headers
     headers: await headers(),
   });
 
@@ -50,61 +55,45 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         {isAdmin ? (
-          <div className="flex flex-1 min-h-screen font-sans">
-            {/* 1. BRANDED PLATFORM SIDEBAR */}
-            <aside className="w-64 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] border-r border-[var(--sidebar-border)] flex flex-col">
-              {/* Sidebar Header */}
-              <div className="h-16 px-6 border-b border-[var(--sidebar-border)] flex items-center gap-3 bg-[oklch(0.16_0.02_255)]">
-                <Shield className="h-6 w-6 text-[var(--sidebar-primary)] animate-pulse" />
-                <span className="font-bold text-lg tracking-wider text-white">
-                  PLATFORM <span className="text-[var(--sidebar-primary)]">ADMIN</span>
-                </span>
-              </div>
-
-              {/* Sidebar Nav Items */}
-              <nav className="flex-1 px-4 py-6">
-                <NavMenu />
-              </nav>
-
-              {/* Sidebar Profile Card */}
-              <div className="p-4 border-t border-[var(--sidebar-border)] bg-[oklch(0.16_0.02_255)]">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-[var(--sidebar-primary)] text-[var(--sidebar-primary-foreground)] flex items-center justify-center font-bold text-sm">
-                    {user?.name?.[0]?.toUpperCase() ?? 'A'}
+          <div className="h-screen flex w-full">
+            <SidebarProvider>
+              <AdminSidebar
+                userName={user?.name}
+                userEmail={user?.email}
+              />
+              <SidebarInset className="flex-1 flex flex-col">
+                {/* Header Bar */}
+                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                  <div className="flex items-center gap-2 px-4 w-full">
+                    <SidebarTrigger className="-ml-1">
+                      <Menu className="size-4" />
+                      <span className="sr-only">Toggle Sidebar</span>
+                    </SidebarTrigger>
+                    <Separator
+                      orientation="vertical"
+                      className="mr-2 data-[orientation=vertical]:h-4"
+                    />
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest ml-auto">
+                      <Database className="h-4 w-4 text-emerald-500" />
+                      Live Cluster Nominal
+                    </div>
+                    <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
+                        <span>Beta v1.0</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">
-                      {user?.name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {user?.email}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </aside>
+                </header>
 
-            {/* 2. MAIN APPLICATION CONTENT WRAPPER */}
-            <div className="flex-1 flex flex-col min-w-0 bg-background overflow-y-auto">
-              {/* Header Bar */}
-              <header className="h-16 px-8 border-b border-border/60 flex items-center justify-between bg-card/40 backdrop-blur-md sticky top-0 z-40">
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                  <Database className="h-4 w-4 text-emerald-500" />
-                  Live Cluster Nominal
+                {/* Main Panel Body */}
+                <div className="flex-1 flex flex-col gap-4 p-4 pt-0 overflow-y-auto">
+                  <main className="flex-1 max-w-7xl w-full mx-auto space-y-8 py-4">
+                    {children}
+                  </main>
                 </div>
-                <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
-                    <span>Beta v1.0</span>
-                  </div>
-                </div>
-              </header>
-
-              {/* Main Panel Body */}
-              <main className="flex-1 p-8 max-w-7xl w-full mx-auto space-y-8">
-                {children}
-              </main>
-            </div>
+              </SidebarInset>
+            </SidebarProvider>
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-screen justify-center items-center font-sans bg-zinc-950">
