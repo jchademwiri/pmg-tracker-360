@@ -428,6 +428,31 @@ export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const purchaseOrderDeliveryNote = pgTable('purchase_order_delivery_note', {
+  id: text('id').primaryKey(),
+  purchaseOrderId: text('purchase_order_id')
+    .notNull()
+    .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
+  deliveryNoteNumber: text('delivery_note_number').notNull(),
+  recipientName: text('recipient_name').notNull(),
+  receivedAt: timestamp('received_at').notNull(),
+  status: text('status').default('received').notNull(), // received, verified, disputed
+  podFileUrl: text('pod_file_url'), // Link to uploaded PDF/Image in storage
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const purchaseOrderDeliveryItem = pgTable('purchase_order_delivery_item', {
+  id: text('id').primaryKey(),
+  deliveryNoteId: text('delivery_note_id')
+    .notNull()
+    .references(() => purchaseOrderDeliveryNote.id, { onDelete: 'cascade' }),
+  lineItemId: text('line_item_id')
+    .notNull()
+    .references(() => purchaseOrderLineItem.id, { onDelete: 'cascade' }),
+  quantityDelivered: decimal('quantity_delivered', { precision: 10, scale: 2 }).notNull(),
+});
+
 export const tenderExtension = pgTable('tender_extension', {
   id: text('id').primaryKey(),
   organizationId: text('organization_id')
@@ -650,14 +675,41 @@ export const purchaseOrderRelations = relations(purchaseOrder, ({ one, many }) =
     references: [project.id],
   }),
   lineItems: many(purchaseOrderLineItem),
+  deliveryNotes: many(purchaseOrderDeliveryNote),
 }));
 
 export const purchaseOrderLineItemRelations = relations(
   purchaseOrderLineItem,
-  ({ one }) => ({
+  ({ one, many }) => ({
     purchaseOrder: one(purchaseOrder, {
       fields: [purchaseOrderLineItem.purchaseOrderId],
       references: [purchaseOrder.id],
+    }),
+    deliveryItems: many(purchaseOrderDeliveryItem),
+  })
+);
+
+export const purchaseOrderDeliveryNoteRelations = relations(
+  purchaseOrderDeliveryNote,
+  ({ one, many }) => ({
+    purchaseOrder: one(purchaseOrder, {
+      fields: [purchaseOrderDeliveryNote.purchaseOrderId],
+      references: [purchaseOrder.id],
+    }),
+    items: many(purchaseOrderDeliveryItem),
+  })
+);
+
+export const purchaseOrderDeliveryItemRelations = relations(
+  purchaseOrderDeliveryItem,
+  ({ one }) => ({
+    deliveryNote: one(purchaseOrderDeliveryNote, {
+      fields: [purchaseOrderDeliveryItem.deliveryNoteId],
+      references: [purchaseOrderDeliveryNote.id],
+    }),
+    lineItem: one(purchaseOrderLineItem, {
+      fields: [purchaseOrderDeliveryItem.lineItemId],
+      references: [purchaseOrderLineItem.id],
     }),
   })
 );
@@ -728,6 +780,9 @@ export const schema = {
   tender,
   project,
   purchaseOrder,
+  purchaseOrderLineItem,
+  purchaseOrderDeliveryNote,
+  purchaseOrderDeliveryItem,
   tenderExtension,
   document,
   // Relations
@@ -744,6 +799,9 @@ export const schema = {
   tenderRelations,
   projectRelations,
   purchaseOrderRelations,
+  purchaseOrderLineItemRelations,
+  purchaseOrderDeliveryNoteRelations,
+  purchaseOrderDeliveryItemRelations,
   tenderExtensionRelations,
   documentRelations,
   // Other
@@ -754,3 +812,5 @@ export const schema = {
 
 export type Feedback = typeof feedback.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
+export type PurchaseOrderDeliveryNote = typeof purchaseOrderDeliveryNote.$inferSelect;
+export type PurchaseOrderDeliveryItem = typeof purchaseOrderDeliveryItem.$inferSelect;
