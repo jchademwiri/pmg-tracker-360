@@ -120,6 +120,13 @@
       "when": 1791288060000,
       "tag": "0016_add_user_last_active_organization",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1780932490917,
+      "tag": "0017_minor_overlord",
+      "breakpoints": true
     }
   ]
 }

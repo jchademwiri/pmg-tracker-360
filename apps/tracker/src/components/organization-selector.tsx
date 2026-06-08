@@ -5,6 +5,7 @@ import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import type { OrganizationWithStats } from '@/server/organizations';
+import { switchOrganization } from '@/lib/organization-utils';
 
 interface OrganizationSelectorProps {
   organizations: OrganizationWithStats[];
@@ -28,11 +29,16 @@ export function OrganizationSelector({
   const handleSelectOrg = async (orgId: string) => {
     setIsSwitching(true);
     try {
-      await authClient.organization.setActive({
+      const org = organizations.find((o) => o.id === orgId);
+      const res = await switchOrganization({
         organizationId: orgId,
+        organizationName: org?.name || '',
+        router,
+        redirectUrl: '/dashboard',
       });
-      router.push('/dashboard');
-      router.refresh();
+      if (!res.success) {
+        setIsSwitching(false);
+      }
     } catch (err) {
       console.error('Failed to switch organization:', err);
       setIsSwitching(false);

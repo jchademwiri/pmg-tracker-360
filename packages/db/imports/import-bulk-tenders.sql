@@ -168,7 +168,7 @@ FROM normalized_tenders
 JOIN upserted_clients
   ON upserted_clients.organization_id = normalized_tenders.organization_id
  AND upserted_clients.name = normalized_tenders.client_name
-ON CONFLICT (tender_number) DO UPDATE SET
+ON CONFLICT (organization_id, tender_number) DO UPDATE SET
   organization_id = EXCLUDED.organization_id,
   description = EXCLUDED.description,
   client_id = EXCLUDED.client_id,

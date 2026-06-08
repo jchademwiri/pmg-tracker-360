@@ -1,44 +1,33 @@
-'use client';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrganizationForm } from '@/components/shared/forms/create-organization-form';
-import { authClient } from '@/lib/auth-client';
-import { useEffect, useState } from 'react';
+import { getCurrentUser } from '@/server';
+import { db } from '@pmg/db';
+import { invitation, member } from '@pmg/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
 
-export default function OnboardingPage() {
-  const [organizations, setOrganizations] = useState<{ id: string; name: string; slug: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const dynamic = 'force-dynamic';
 
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        const result = await authClient.organization.list();
-        if (result.data) {
-          setOrganizations(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching organizations:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+export default async function OnboardingPage() {
+  const { currentUser } = await getCurrentUser();
 
-    fetchOrganizations();
-  }, []);
+  // Check for pending invitations
+  const pendingInvite = await db.query.invitation.findFirst({
+    where: and(
+      eq(sql`lower(${invitation.email})`, currentUser.email.toLowerCase()),
+      eq(invitation.status, 'pending')
+    ),
+  });
 
-  if (isLoading) {
-    return (
-      <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-2xl">
-          <Card>
-            <CardContent className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  if (pendingInvite) {
+    redirect(`/invite/accept/${pendingInvite.id}`);
   }
+
+  // Fetch organizations user belongs to
+  const userMemberships = await db
+    .select()
+    .from(member)
+    .where(eq(member.userId, currentUser.id));
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
@@ -53,7 +42,7 @@ export default function OnboardingPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
-            <CreateOrganizationForm currentOrganizationCount={organizations.length} />
+            <CreateOrganizationForm currentOrganizationCount={userMemberships.length} />
           </CardContent>
         </Card>
       </div>

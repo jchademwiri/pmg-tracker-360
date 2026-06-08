@@ -189,6 +189,14 @@ export async function adminSignOut() {
  */
 export async function createSystemAdmin(name: string, email: string, password: string) {
   try {
+    // Check if the current user is authorized (must be admin)
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (!session || !session.user || (session.user as any).role !== 'admin') {
+      return { success: false, error: 'Access Denied: Unauthorized.' };
+    }
+
     // 1. Check if user already exists (case-insensitive)
     const existing = await db
       .select()

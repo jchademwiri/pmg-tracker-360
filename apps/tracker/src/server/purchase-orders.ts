@@ -172,14 +172,14 @@ export async function createPurchaseOrder(
       return { success: false, error: 'Project not found' };
     }
 
-    // Check if PO number is unique within organization
+    // Check if PO number is globally unique
     const existingPO = await db
       .select()
       .from(purchaseOrder)
       .where(
         and(
           eq(purchaseOrder.poNumber, validatedData.poNumber),
-          eq(purchaseOrder.organizationId, organizationId)
+          isNull(purchaseOrder.deletedAt)
         )
       )
       .limit(1);
@@ -187,7 +187,7 @@ export async function createPurchaseOrder(
     if (existingPO.length > 0) {
       return {
         success: false,
-        error: 'PO Number already exists in this organization',
+        error: 'This PO number is already in use. PO numbers must be unique across all organizations.',
       };
     }
 
@@ -340,7 +340,6 @@ export async function updatePurchaseOrder(
         .where(
           and(
             eq(purchaseOrder.poNumber, validatedData.poNumber),
-            eq(purchaseOrder.organizationId, organizationId),
             isNull(purchaseOrder.deletedAt),
             // Exclude current PO from uniqueness check
             ne(purchaseOrder.id, poId)
@@ -351,7 +350,7 @@ export async function updatePurchaseOrder(
       if (duplicatePO.length > 0) {
         return {
           success: false,
-          error: 'PO Number already exists in this organization',
+          error: 'This PO number is already in use. PO numbers must be unique across all organizations.',
         };
       }
     }

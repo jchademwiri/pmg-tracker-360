@@ -41,6 +41,9 @@ jest.mock('@/server/organizations', () => ({
   checkOrganizationSlugAvailability: jest
     .fn()
     .mockResolvedValue({ available: true }),
+  rememberActiveOrganization: jest
+    .fn()
+    .mockResolvedValue({ success: true }),
 }));
 
 describe('CreateorganizationForm - Basic Functionality', () => {
@@ -53,10 +56,11 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       data: { id: 'org-1' },
     });
 
-    const { checkOrganizationSlugAvailability } = require(
+    const { checkOrganizationSlugAvailability, rememberActiveOrganization } = require(
       '@/server/organizations'
     );
     checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
+    rememberActiveOrganization.mockResolvedValue({ success: true });
   });
 
   describe('Form Rendering', () => {
@@ -155,7 +159,7 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       // Should show URL preview
       await waitFor(() => {
         expect(
-          screen.getByText('/organization/test-org')
+          screen.getByText('/dashboard/organization/test-org')
         ).toBeInTheDocument();
       });
     });
