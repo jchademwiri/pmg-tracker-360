@@ -27,7 +27,7 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transformIgnorePatterns: [
-    String.raw`[/\\]node_modules[/\\](?!((\.bun[/\\](@t3-oss\+env-core|@t3-oss\+env-nextjs|better-auth)@)|(@t3-oss[/\\](env-core|env-nextjs))|better-auth[/\\]))`,
+    String.raw`[/\\]node_modules[/\\](?!((\.bun[/\\](@t3-oss\+env-core|@t3-oss\+env-nextjs|better-auth|@react-email\+.*|resend\+.*)@)|(@t3-oss[/\\](env-core|env-nextjs))|better-auth[/\\]|@react-email[/\\]|resend[/\\]))`,
   ],
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
@@ -44,5 +44,12 @@ const customJestConfig = {
   ],
 };
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(customJestConfig);
+const jestConfig = async () => {
+  const config = await createJestConfig(customJestConfig)();
+  config.transformIgnorePatterns = [
+    String.raw`[/\\]node_modules[/\\](?!((\.bun[/\\](@t3-oss\+.*|@better-auth\+.*|better-auth|@react-email\+.*|resend\+.*|@noble\+.*)@)|(@t3-oss[/\\]|@better-auth[/\\]|better-auth[/\\]|@react-email[/\\]|resend[/\\]|@noble[/\\])))`,
+  ];
+  return config;
+};
+
+export default jestConfig;

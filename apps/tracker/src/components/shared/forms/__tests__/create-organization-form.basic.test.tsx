@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CreateOrganizationForm } from '../create-organization-form';
 
@@ -41,6 +41,9 @@ jest.mock('@/server/organizations', () => ({
   checkOrganizationSlugAvailability: jest
     .fn()
     .mockResolvedValue({ available: true }),
+  rememberActiveOrganization: jest
+    .fn()
+    .mockResolvedValue({ success: true }),
 }));
 
 describe('CreateorganizationForm - Basic Functionality', () => {
@@ -53,10 +56,11 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       data: { id: 'org-1' },
     });
 
-    const { checkOrganizationSlugAvailability } = require(
+    const { checkOrganizationSlugAvailability, rememberActiveOrganization } = require(
       '@/server/organizations'
     );
     checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
+    rememberActiveOrganization.mockResolvedValue({ success: true });
   });
 
   describe('Form Rendering', () => {
@@ -155,7 +159,7 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       // Should show URL preview
       await waitFor(() => {
         expect(
-          screen.getByText('/organization/test-org')
+          screen.getByText('/dashboard/organization/test-org')
         ).toBeInTheDocument();
       });
     });
@@ -173,8 +177,7 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       const slugInput = screen.getByLabelText(/organization slug/i);
       expect(slugInput).not.toBeDisabled();
 
-      await user.clear(slugInput);
-      await user.type(slugInput, 'custom-slug');
+      fireEvent.change(slugInput, { target: { value: 'custom-slug' } });
 
       expect(slugInput).toHaveValue('custom-slug');
     });

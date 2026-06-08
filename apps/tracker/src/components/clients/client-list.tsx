@@ -8,6 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -99,19 +109,20 @@ export function ClientList({
   };
 
   // Handle delete client
-  const handleDeleteClient = async (clientId: string) => {
-    if (!confirm('Are you sure you want to delete this client?')) {
-      return;
-    }
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+
+  const confirmDeleteClient = async () => {
+    if (!deleteClientId) return;
 
     startTransition(async () => {
-      const result = await deleteClient(organizationId, clientId);
+      const result = await deleteClient(organizationId, deleteClientId);
       if (result.success) {
-        // Refresh the current page
         fetchClients(searchQuery, currentPage);
+        toast.success('Client deleted successfully');
       } else {
-        alert(result.error || 'Failed to delete client');
+        toast.error(result.error || 'Failed to delete client');
       }
+      setDeleteClientId(null);
     });
   };
 
@@ -273,7 +284,7 @@ export function ClientList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteClient(client.id);
+                                setDeleteClientId(client.id);
                               }}
                               className="text-red-600"
                               disabled={isPending}
@@ -365,17 +376,16 @@ export function ClientList({
                             }}
                           >
                             Edit Client
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClient(client.id);
-                            }}
-                            className="text-red-600"
-                            disabled={isPending}
-                          >
-                            Delete Client
-                          </DropdownMenuItem>
+                          </DropdownMenuItem>                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteClientId(client.id);
+                              }}
+                              className="text-red-600"
+                              disabled={isPending}
+                            >
+                              Delete Client
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -418,6 +428,28 @@ export function ClientList({
           </>
         )}
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteClientId} onOpenChange={(open) => !open && setDeleteClientId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Client</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this client? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteClient}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

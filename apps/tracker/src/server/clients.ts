@@ -3,7 +3,7 @@
 import { db } from '@pmg/db';
 import { client, tender } from '@pmg/db/schema';
 import { validateSessionAndOrg } from './utils';
-import { eq, and, isNull, ilike, or, desc } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import {
@@ -77,6 +77,26 @@ export async function createClient(
     await validateSessionAndOrg(organizationId);
     // Validate input
     const validatedData = ClientCreateSchema.parse(data);
+
+    // Check if client name is unique within organization
+    const existingClient = await db
+      .select()
+      .from(client)
+      .where(
+        and(
+          eq(client.organizationId, organizationId),
+          eq(client.name, validatedData.name),
+          isNull(client.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existingClient.length > 0) {
+      return {
+        success: false,
+        error: 'A client with this name already exists in your organization',
+      };
+    }
 
     const newClient = await db
       .insert(client)
@@ -155,6 +175,29 @@ export async function updateClient(
 
     if (existingClient.length === 0) {
       return { success: false, error: 'Client not found' };
+    }
+
+    // If name is being updated, check uniqueness within organization
+    if (validatedData.name) {
+      const duplicateClient = await db
+        .select()
+        .from(client)
+        .where(
+          and(
+            eq(client.organizationId, organizationId),
+            eq(client.name, validatedData.name),
+            isNull(client.deletedAt),
+            ne(client.id, clientId)
+          )
+        )
+        .limit(1);
+
+      if (duplicateClient.length > 0) {
+        return {
+          success: false,
+          error: 'A client with this name already exists in your organization',
+        };
+      }
     }
 
     const updatedClient = await db

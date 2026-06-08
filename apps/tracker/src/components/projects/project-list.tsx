@@ -16,6 +16,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -156,19 +166,20 @@ export function ProjectList({
   };
 
   // Handle delete project
-  const handleDeleteProject = async (projectId: string) => {
-    if (!confirm('Are you sure you want to delete this project?')) {
-      return;
-    }
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+
+  const confirmDeleteProject = async () => {
+    if (!deleteProjectId) return;
 
     startTransition(async () => {
-      const result = await deleteProject(organizationId, projectId);
+      const result = await deleteProject(organizationId, deleteProjectId);
       if (result.success) {
-        // Refresh the current page
         fetchProjects(searchQuery, currentPage, statusFilter);
+        toast.success('Project deleted successfully');
       } else {
-        alert(result.error || 'Failed to delete project');
+        toast.error(result.error || 'Failed to delete project');
       }
+      setDeleteProjectId(null);
     });
   };
 
@@ -345,7 +356,7 @@ export function ProjectList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteProject(project.id);
+                                setDeleteProjectId(project.id);
                               }}
                               className="text-red-600"
                               disabled={isPending}
@@ -449,7 +460,7 @@ export function ProjectList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteProject(project.id);
+                              setDeleteProjectId(project.id);
                             }}
                             className="text-red-600"
                             disabled={isPending}
@@ -498,6 +509,28 @@ export function ProjectList({
           </>
         )}
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteProjectId} onOpenChange={(open) => !open && setDeleteProjectId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this project? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProject}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

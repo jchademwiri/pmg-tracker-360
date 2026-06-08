@@ -18,7 +18,15 @@ import { headers } from 'next/headers';
 async function autoCreateProjectForTender(
   organizationId: string,
   tenderId: string,
-  tenderData: { tenderNumber: string; description?: string | null; clientId: string }
+  tenderData: {
+    tenderNumber: string;
+    description?: string | null;
+    clientId: string;
+    awardValue?: string | null;
+    contractStartDate?: Date | null;
+    contractEndDate?: Date | null;
+    signedContractUrl?: string | null;
+  }
 ) {
   try {
     // Check if project already exists for this tender
@@ -41,6 +49,10 @@ async function autoCreateProjectForTender(
       tenderId,
       clientId: tenderData.clientId,
       status: 'active',
+      contractStartDate: tenderData.contractStartDate,
+      contractEndDate: tenderData.contractEndDate,
+      awardValue: tenderData.awardValue,
+      signedContractUrl: tenderData.signedContractUrl,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -171,6 +183,8 @@ export async function getTenders(
   }
 }
 
+
+
 // Create a new tender with tender number validation
 export async function createTender(
   organizationId: string,
@@ -216,6 +230,27 @@ export async function createTender(
 
     if (clientExists.length === 0) {
       return { success: false, error: 'Client not found' };
+    }
+
+    if (validatedData.status === 'awarded') {
+      const existingProj = await db
+        .select()
+        .from(project)
+        .where(
+          and(
+            eq(project.projectNumber, validatedData.tenderNumber.toUpperCase()),
+            eq(project.organizationId, organizationId),
+            isNull(project.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (existingProj.length > 0) {
+        return {
+          success: false,
+          error: `Project ${validatedData.tenderNumber.toUpperCase()} already exists. This tender may have already been converted to a project.`,
+        };
+      }
     }
 
     const evaluationDate = await resolveEvaluationDate(
@@ -407,6 +442,28 @@ export async function updateTender(
       }
     }
 
+    if (validatedData.status === 'awarded') {
+      const tenderNum = validatedData.tenderNumber || existingTender[0].tenderNumber;
+      const existingProj = await db
+        .select()
+        .from(project)
+        .where(
+          and(
+            eq(project.projectNumber, tenderNum.toUpperCase()),
+            eq(project.organizationId, organizationId),
+            isNull(project.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (existingProj.length > 0) {
+        return {
+          success: false,
+          error: `Project ${tenderNum.toUpperCase()} already exists. This tender may have already been converted to a project.`,
+        };
+      }
+    }
+
     const mergedSubmissionDate = validatedData.hasOwnProperty('submissionDate')
       ? validatedData.submissionDate
       : existingTender[0].submissionDate;
@@ -492,6 +549,27 @@ export async function updateTenderStatus(
       return { success: false, error: 'Tender not found' };
     }
 
+    if (validatedData.status === 'awarded') {
+      const existingProj = await db
+        .select()
+        .from(project)
+        .where(
+          and(
+            eq(project.projectNumber, existingTender[0].tenderNumber.toUpperCase()),
+            eq(project.organizationId, organizationId),
+            isNull(project.deletedAt)
+          )
+        )
+        .limit(1);
+
+      if (existingProj.length > 0) {
+        return {
+          success: false,
+          error: `Project ${existingTender[0].tenderNumber.toUpperCase()} already exists. This tender may have already been converted to a project.`,
+        };
+      }
+    }
+
     const updatedTender = await db
       .update(tender)
       .set({
@@ -503,7 +581,15 @@ export async function updateTenderStatus(
 
     let projectId: string | undefined;
     if (validatedData.status === 'awarded') {
-      projectId = await autoCreateProjectForTender(organizationId, tenderId, existingTender[0]);
+      projectId = await autoCreateProjectForTender(organizationId, tenderId, {
+        tenderNumber: existingTender[0].tenderNumber,
+        description: existingTender[0].description,
+        clientId: existingTender[0].clientId,
+        awardValue: validatedData.awardValue ?? existingTender[0].value,
+        contractStartDate: validatedData.contractStartDate,
+        contractEndDate: validatedData.contractEndDate,
+        signedContractUrl: validatedData.signedContractUrl,
+      });
     }
 
     revalidatePath('/tenders');
@@ -1432,7 +1518,7 @@ export async function getTendersOverview(
     console.error('Error fetching tenders overview:', error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch tenders overview',
+      error: error.message || 'Failed to fetch tenders',
       tenders: [],
       totalCount: 0,
       currentPage: page,

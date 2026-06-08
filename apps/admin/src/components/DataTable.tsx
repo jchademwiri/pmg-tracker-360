@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, type ReactNode } from 'react';
+import { TableSkeleton } from '@/components/TableSkeleton';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 export type Column<T> = {
@@ -149,11 +150,7 @@ function DataTableInner<T>({
 export default function DataTable<T>(props: DataTableProps<T>) {
   return (
     <Suspense
-      fallback={
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-8 text-center text-zinc-500 text-sm">
-          Loading…
-        </div>
-      }
+      fallback={<TableSkeleton columns={props.columns.length} />}
     >
       <DataTableInner {...props} />
     </Suspense>

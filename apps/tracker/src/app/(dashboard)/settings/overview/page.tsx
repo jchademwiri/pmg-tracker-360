@@ -1,3 +1,5 @@
+import { getCurrentUser } from '@/server';
+import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -29,6 +31,10 @@ import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsOverviewPage() {
+  const { session } = await getCurrentUser();
+  if (!session.activeOrganizationId) {
+    redirect('/onboarding');
+  }
   return (
     <div className="space-y-6">
       <div>

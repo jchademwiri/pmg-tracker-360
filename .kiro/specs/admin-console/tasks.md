@@ -78,7 +78,7 @@ Tasks are ordered in strict dependency waves: infrastructure first, then shared 
   - **Requirement references:** Requirements 12.1, 12.2, 12.5
 
 - [x] 3. Create `src/proxy.ts` — Route-level authentication proxy
-  - Create `apps/admin/src/proxy.ts` exporting a named `proxy` function following Next.js 16 proxy conventions
+  - Create `apps/admin/src/proxy.ts` exporting a n amed `proxy` function following Next.js 16 proxy conventions
   - Implement exact-match public path set: `/login`, `/setup`, `/favicon.ico`
   - Implement prefix-match public path array: `/api/auth`, `/_next/static`, `/_next/image`
   - Check for both cookie names: `tender-track-360.session_token` and `better-auth.session_token`

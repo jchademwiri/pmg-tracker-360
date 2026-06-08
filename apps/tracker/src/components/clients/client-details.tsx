@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -24,6 +24,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { deleteClient } from '@/server';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Client } from '@pmg/db/schema';
 import Link from 'next/link';
 
@@ -40,23 +51,19 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
     router.push(`/clients/${client.id}/edit`);
   };
 
-  const handleDelete = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this client? This action cannot be undone.'
-      )
-    ) {
-      return;
-    }
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const confirmDelete = async () => {
     startTransition(async () => {
       const result = await deleteClient(organizationId, client.id);
       if (result.success) {
+        toast.success('Client deleted successfully');
         router.push('/clients');
         router.refresh();
       } else {
-        alert(result.error || 'Failed to delete client');
+        toast.error(result.error || 'Failed to delete client');
       }
+      setShowDeleteDialog(false);
     });
   };
 
@@ -117,7 +124,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
                 Edit Client
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={handleDelete}
+                onClick={() => setShowDeleteDialog(true)}
                 className="text-red-600 cursor-pointer"
                 disabled={isPending}
               >
@@ -368,6 +375,27 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Client</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this client? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

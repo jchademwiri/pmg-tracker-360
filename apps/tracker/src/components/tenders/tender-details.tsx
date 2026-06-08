@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -63,6 +63,7 @@ interface Document {
 }
 
 import { ExtensionList, ExtendedTenderExtension } from './extension-list';
+import { TenderToProjectDialog } from './tender-to-project-dialog';
 
 interface TenderDetailsProps {
   tender: TenderWithClient;
@@ -97,6 +98,7 @@ export function TenderDetails({
 }: TenderDetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [showAwardDialog, setShowAwardDialog] = useState(false);
 
   const handleEdit = () => {
     router.push(`/tenders/${tender.id}/edit`);
@@ -123,11 +125,18 @@ export function TenderDetails({
   };
 
   const handleStatusUpdate = async (
-    newStatus: 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost'
+    newStatus: 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost',
+    contractDetails?: {
+      awardValue?: string | null;
+      contractStartDate?: Date | null;
+      contractEndDate?: Date | null;
+      signedContractUrl?: string | null;
+    }
   ) => {
     startTransition(async () => {
       const result = await updateTenderStatus(organizationId, tender.id, {
         status: newStatus,
+        ...contractDetails,
       });
       if (result.success) {
         if (newStatus === 'awarded' && result.projectId) {
@@ -598,7 +607,7 @@ export function TenderDetails({
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('awarded')}
+                      onClick={() => setShowAwardDialog(true)}
                       disabled={isPending}
                     >
                       Mark as Appointed / Awarded
@@ -701,6 +710,18 @@ export function TenderDetails({
           />
         </TabsContent>
       </Tabs>
+
+      <TenderToProjectDialog
+        open={showAwardDialog}
+        onOpenChange={setShowAwardDialog}
+        tenderNumber={tender.tenderNumber}
+        estimatedValue={tender.value}
+        onSubmit={(data) => {
+          handleStatusUpdate('awarded', data);
+          setShowAwardDialog(false);
+        }}
+        isPending={isPending}
+      />
     </div>
   );
 }

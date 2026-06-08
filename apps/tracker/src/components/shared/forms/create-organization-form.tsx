@@ -482,7 +482,7 @@ export function CreateOrganizationForm({
                       URL Preview:
                     </span>
                     <Badge variant="secondary" className="text-xs font-mono">
-                      /organization/{field.value}
+                      /dashboard/organization/{field.value}
                     </Badge>
                   </div>
                 )}

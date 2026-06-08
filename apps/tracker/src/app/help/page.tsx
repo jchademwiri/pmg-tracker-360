@@ -62,7 +62,7 @@ export default function HelpPage() {
     },
     {
       q: 'Can members and managers delete existing tenders?',
-      a: 'Yes, but only under safe operational conditions. Managers and members can only delete tenders in "open" or legacy "draft" states. Once a tender is locked in "evaluation", "closed", "awarded", or "lost" status, only the organization Owner or Admin can delete the record.',
+      a: 'Yes, but only under safe operational conditions. Managers and members can only delete tenders in the "open" state. Once a tender is locked in "evaluation", "closed", "awarded", or "lost" status, only the organization Owner or Admin can delete the record.',
     },
     {
       q: 'How are my CSD and B-BBEE compliance files secured?',

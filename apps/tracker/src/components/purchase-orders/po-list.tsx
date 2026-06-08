@@ -72,13 +72,13 @@ interface POListProps {
 }
 
 const statusColors = {
-  draft: 'bg-gray-100 text-gray-800',
+  open: 'bg-gray-100 text-gray-800',
   sent: 'bg-blue-100 text-blue-800',
   delivered: 'bg-green-100 text-green-800',
 };
 
 const statusLabels = {
-  draft: 'Draft',
+  open: 'Open',
   sent: 'Sent',
   delivered: 'Delivered',
 };
@@ -213,7 +213,7 @@ export function POList({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
               <SelectItem value="sent">Sent</SelectItem>
               <SelectItem value="delivered">Delivered</SelectItem>
             </SelectContent>

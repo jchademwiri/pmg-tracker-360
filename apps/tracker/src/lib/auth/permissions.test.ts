@@ -23,7 +23,6 @@ function can(role: any, resource: string, action: string, data?: any) {
   return false;
 }
 
-const DRAFT_TENDER = { status: 'draft' };
 const OPEN_TENDER = { status: 'open' };
 const SUBMITTED_TENDER = { status: 'submitted' };
 const EVALUATION_TENDER = { status: 'evaluation' };
@@ -47,8 +46,7 @@ describe('Access Control', () => {
       expect(can(manager, 'project', 'delete')).toBe(false);
     });
 
-    it('should be able to delete DRAFT/OPEN tenders', () => {
-      expect(can(manager, 'tender', 'delete', DRAFT_TENDER)).toBe(true);
+    it('should be able to delete OPEN tenders', () => {
       expect(can(manager, 'tender', 'delete', OPEN_TENDER)).toBe(true);
     });
 
@@ -71,8 +69,7 @@ describe('Access Control', () => {
       expect(can(member, 'tender', 'update')).toBe(true);
     });
 
-    it('should be able to delete DRAFT/OPEN tenders', () => {
-      expect(can(member, 'tender', 'delete', DRAFT_TENDER)).toBe(true);
+    it('should be able to delete OPEN tenders', () => {
       expect(can(member, 'tender', 'delete', OPEN_TENDER)).toBe(true);
     });
 

@@ -1,8 +1,8 @@
 import { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@pmg/db';
-import { user } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
+import { user, member, invitation } from '@pmg/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,23 +36,55 @@ export async function POST(request: NextRequest) {
       // Continue, as account is created
     }
 
-    // signUpResult may include headers with Set-Cookie values
-    const signUpHeaders: Headers | undefined = signUpResult?.headers;
-
-    // Attempt to accept the invitation using the headers returned from signup (so the request is authenticated)
+    // Now call signInEmail to get a verified session
+    let signInResult: any = null;
     try {
-      const acceptInvitationOptions: any = {
-        body: { invitationId },
-      };
+      signInResult = await auth.api.signInEmail({
+        body: { email, password },
+      });
+    } catch (signInErr) {
+      console.error('Sign in failed after signup/verification:', signInErr);
+    }
 
-      if (signUpHeaders) {
-        acceptInvitationOptions.headers = signUpHeaders;
+    const sessionHeaders: Headers | undefined = signInResult?.headers || signUpResult?.headers;
+
+    // Accept invitation directly in the DB to bypass flaky header-forwarding issues
+    try {
+      const invite = await db.query.invitation.findFirst({
+        where: eq(invitation.id, invitationId),
+      });
+
+      if (invite && invite.status === 'pending') {
+        const dbUser = await db.query.user.findFirst({
+          where: eq(user.email, email.toLowerCase().trim()),
+        });
+        const userId = signUpResult?.user?.id || dbUser?.id;
+
+        if (userId) {
+          // Add user to the organization
+          await db.insert(member).values({
+            id: crypto.randomUUID(),
+            organizationId: invite.organizationId,
+            userId: userId,
+            role: invite.role ?? 'member',
+            createdAt: new Date(),
+          });
+
+          // Mark invitation as accepted
+          await db
+            .update(invitation)
+            .set({ status: 'accepted' })
+            .where(eq(invitation.id, invitationId));
+
+          console.log(`Direct DB: accepted invitation ${invitationId} for user ${userId}`);
+        } else {
+          console.error('Direct DB: Could not find user to accept invitation');
+        }
+      } else {
+        console.warn('Direct DB: Invitation not found or not pending:', invitationId);
       }
-
-      await auth.api.acceptInvitation(acceptInvitationOptions);
     } catch (acceptErr) {
-      console.error('Accept invitation failed after signup:', acceptErr);
-      // proceed — user was created; we can still return success and let user re-try accept in UI
+      console.error('Direct DB: Acceptance failed:', acceptErr);
     }
 
     // Build a JSON response and forward any Set-Cookie headers so the browser receives the session cookie
@@ -61,10 +93,10 @@ export async function POST(request: NextRequest) {
       redirectUrl: `/dashboard?invitationId=${invitationId}`,
     });
 
-    if (signUpHeaders) {
-      // Copy Set-Cookie headers from signUpHeaders into our response
+    if (sessionHeaders) {
+      // Copy Set-Cookie headers from sessionHeaders into our response
       try {
-        signUpHeaders.forEach((value, key) => {
+        sessionHeaders.forEach((value, key) => {
           if (key.toLowerCase() === 'set-cookie') {
             res.headers.append('set-cookie', value);
           }
