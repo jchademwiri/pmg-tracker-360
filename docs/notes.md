@@ -209,6 +209,330 @@ After applying the migration, verify the fix:
 
 ---
 
+## FUTURE-PROOFING: Organization-Scoped Uniqueness Pattern
+
 **Status:** Ready for implementation
 **Priority:** High (blocks multi-organization use case)
 **Estimated Effort:** 30 minutes
+
+---
+
+### Overview
+
+This fix establishes a critical architectural pattern that **must be applied consistently** to all entities that should have organization-scoped uniqueness. This prevents similar bugs from appearing with other resources as the application grows.
+
+### Business Rules for Entity Uniqueness
+
+#### 📋 Tender Numbers
+- **Uniqueness Scope:** Per organization
+- **Business Rule:** One organization may work on the same tender as another organization
+- **Constraint:** Tender number must be unique within same organization only
+- **Database Constraint:** `UNIQUE(organization_id, tender_number)`
+- **Schema Status:** ✅ Fixed (this PR)
+
+#### 📋 Project Numbers
+- **Uniqueness Scope:** Per organization
+- **Business Rule:** One organization may work on the same project as another organization
+- **Constraint:** Project number must be unique within same organization only
+- **Database Constraint:** `UNIQUE(organization_id, project_number)`
+- **Schema Status:** 🔴 Needs fix
+
+#### 📋 Client Names
+- **Uniqueness Scope:** Per organization
+- **Business Rule:** Different organizations can have clients with the same name
+- **Constraint:** Client name must be unique within same organization only
+- **Database Constraint:** `UNIQUE(organization_id, name)`
+- **Schema Status:** ❌ No constraint (should add)
+
+#### 📋 Purchase Order Numbers
+- **Uniqueness Scope:** GLOBAL (across all organizations & clients)
+- **Business Rule:** PO number must NEVER be the same from the same client, and must always be globally unique
+- **Constraint:** PO number must be globally unique (no organization or client scoping)
+- **Database Constraint:** `UNIQUE(po_number)` - Keep as global unique ✅
+- **Schema Status:** ✅ Already correct (keep existing `.unique()`)
+
+### Entities Requiring Organization-Scoped Uniqueness
+
+#### ✅ Already Fixed
+- **Tender:** `tenderNumber` (via this fix)
+
+#### 🔴 Requires Fix
+- **Client:** `name` - Should be unique per organization
+- **Project:** `projectNumber` - Should be unique per organization
+
+#### ✅ Already Correct (No Changes Needed)
+- **PurchaseOrder:** `poNumber` - Must remain GLOBALLY unique (across all orgs and clients)
+
+### Current Schema Issues & Fixes
+
+#### 1. **Tender Table** (lines 308-335) ✅ FIXED
+```typescript
+export const tender = pgTable('tender', {
+  // ... fields ...
+  tenderNumber: text('tender_number').notNull(), // ✅ Removed .unique()
+  // ... more fields ...
+}, (table) => ({
+  tenderNumberOrgUnique: unique('tender_organization_id_tender_number_unique').on(
+    table.organizationId,
+    table.tenderNumber
+  ),
+}));
+```
+
+#### 2. **Client Table** (lines 292-306) 🔴 NEEDS FIX
+```typescript
+export const client = pgTable('client', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull()...
+  name: text('name').notNull(),
+  // ❌ PROBLEM: No uniqueness constraint - allows duplicates within same org
+  // ✅ SOLUTION: Add composite unique on (organizationId, name)
+  ...
+});
+```
+
+**Fix:**
+```typescript
+export const client = pgTable('client', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  notes: text('notes'),
+  contactName: text('contact_name'),
+  contactEmail: text('contact_email'),
+  contactPhone: text('contact_phone'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  // ✅ Add composite unique constraint
+  clientNameOrgUnique: unique('client_organization_id_name_unique').on(
+    table.organizationId,
+    table.name
+  ),
+}));
+```
+
+#### 3. **Project Table** (lines 338-351) 🔴 NEEDS FIX
+```typescript
+export const project = pgTable('project', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull()...
+  projectNumber: text('project_number').notNull(),
+  description: text('description'),
+  // ❌ PROBLEM: No uniqueness constraint on projectNumber
+  // ✅ SOLUTION: Add composite unique on (organizationId, projectNumber)
+  ...
+});
+```
+
+**Fix:**
+```typescript
+export const project = pgTable('project', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectNumber: text('project_number').notNull(),
+  description: text('description'),
+  tenderId: text('tender_id').references(() => tender.id),
+  clientId: text('client_id').references(() => client.id),
+  status: text('status').default('active').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  // ✅ Add composite unique constraint
+  projectNumberOrgUnique: unique('project_organization_id_project_number_unique').on(
+    table.organizationId,
+    table.projectNumber
+  ),
+}));
+```
+
+#### 4. **Purchase Order Table** (lines 354-375) ✅ KEEP AS IS
+```typescript
+export const purchaseOrder = pgTable('purchase_order', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull()...
+  poNumber: text('po_number').notNull().unique(), // ✅ CORRECT - Keep global unique!
+  supplierName: text('supplier_name'),
+  description: text('description').notNull(),
+  totalAmount: text('total_amount').notNull(),
+  status: text('status').default('draft').notNull(),
+  // ... more fields ...
+});
+```
+
+**Why it's correct:**
+- PO numbers must be globally unique across ALL organizations
+- Business rule: "There must never be same PO Number from same client"
+- This ensures integrity when dealing with suppliers/vendors globally
+- `UNIQUE(po_number)` is the correct constraint
+
+### Implementation Roadmap
+
+#### Phase 1: Tender Number Fix (CURRENT) ✅
+- Implement tender number organization-scoped uniqueness
+- Duration: 1 sprint
+- Priority: 🔴 Critical
+- Status: Ready for implementation
+
+#### Phase 2: Client Name Fix
+- Add unique constraint on client name per organization
+- Validate all validation logic in `apps/tracker/src/server/clients.ts`
+- Ensure validation includes `organizationId` in query
+- Duration: 1 day
+- Priority: 🟠 High
+- File: `apps/tracker/src/server/clients.ts` (check `createClient` validation)
+
+#### Phase 3: Project Number Fix
+- Add unique constraint on project number per organization
+- Validate all validation logic in `apps/tracker/src/server/projects.ts`
+- Ensure validation includes `organizationId` in query
+- Duration: 1 day
+- Priority: 🟠 High
+- File: `apps/tracker/src/server/projects.ts` (check `createProject` validation)
+
+#### Phase 4: PO Number Validation (VERIFICATION ONLY)
+- Verify PO number remains globally unique
+- Confirm validation logic in `apps/tracker/src/server/purchaseOrders.ts`
+- NO SCHEMA CHANGES - Already correct
+- Duration: 2 hours
+- Priority: 🟢 Low (audit)
+
+### General Pattern for Organization-Scoped Uniqueness
+
+When adding new unique fields to any table, follow this pattern:
+
+```typescript
+// ❌ WRONG - Global unique constraint (unless business rule requires it)
+export const someTable = pgTable('some_table', {
+  organizationId: text('organization_id').notNull()...
+  someField: text('some_field').notNull().unique(), // ❌ DON'T DO THIS
+  ...
+});
+
+// ✅ CORRECT - Organization-scoped unique constraint
+export const someTable = pgTable('some_table', {
+  organizationId: text('organization_id').notNull()...
+  someField: text('some_field').notNull(), // ✅ No global unique
+  ...
+}, (table) => ({
+  // ✅ Composite unique constraint
+  someFieldOrgUnique: unique('some_table_organization_id_some_field_unique').on(
+    table.organizationId,
+    table.someField
+  ),
+}));
+
+// ✅ EXCEPTION - Global unique constraint (when business rule requires it)
+export const someOtherTable = pgTable('some_other_table', {
+  organizationId: text('organization_id').notNull()...
+  globallyUniqueField: text('globally_unique_field').notNull().unique(), // ✅ DO THIS for global uniqueness
+  ...
+});
+```
+
+### Checklist for Future Entity Additions
+
+When adding new entities or fields that require uniqueness:
+
+- [ ] Clarify with product/business: Is this unique globally or per-organization?
+- [ ] If organization-scoped:
+  - [ ] Remove `.unique()` from the field definition
+  - [ ] Add composite unique constraint in table configuration
+  - [ ] Use naming convention: `{tableName}_{fieldNames}OrgUnique`
+  - [ ] Include `organizationId` in the constraint
+  - [ ] Update validation logic to include `organizationId` in queries
+  - [ ] Add tests for cross-organization scenarios
+- [ ] If globally unique:
+  - [ ] Keep `.unique()` on the field definition
+  - [ ] Document why global uniqueness is required
+  - [ ] Add validation tests
+- [ ] Update this documentation file
+
+### Validation Logic Pattern
+
+#### For Organization-Scoped Uniqueness:
+```typescript
+// ✅ CORRECT - Scoped to organization
+const existing = await db
+  .select()
+  .from(someTable)
+  .where(
+    and(
+      eq(someTable.organizationId, organizationId), // ✅ Must include
+      eq(someTable.someField, value),
+      isNull(someTable.deletedAt)
+    )
+  )
+  .limit(1);
+```
+
+#### For Global Uniqueness:
+```typescript
+// ✅ CORRECT - No organization scope (for global uniqueness)
+const existing = await db
+  .select()
+  .from(poTable)
+  .where(
+    and(
+      eq(poTable.poNumber, value), // ✅ Global check only
+      isNull(poTable.deletedAt)
+    )
+  )
+  .limit(1);
+```
+
+### Testing Requirements
+
+#### For Organization-Scoped Uniqueness:
+
+1. **Within Organization Test** (Should Fail):
+   ```
+   Org A: Create Tender "TN-001"
+   Org A: Try to create Tender "TN-001" again → ❌ Rejected
+   ```
+
+2. **Across Organizations Test** (Should Succeed):
+   ```
+   Org A: Create Tender "TN-001" ✅
+   Org B: Create Tender "TN-001" ✅ Allowed
+   ```
+
+3. **Database Integrity Test**:
+   ```sql
+   SELECT COUNT(*) FROM tender WHERE tender_number = 'TN-001' AND organization_id = 'org_a';
+   -- Should return 1 or 0, never > 1
+   ```
+
+#### For Global Uniqueness (PO Numbers):
+
+1. **Global Uniqueness Test** (Should Fail):
+   ```
+   Org A: Create PO "PO-2024-001"
+   Org B: Try to create PO "PO-2024-001" → ❌ Rejected (globally unique)
+   ```
+
+2. **Multiple Organizations Test** (Should Succeed with different PO):
+   ```
+   Org A: Create PO "PO-2024-001" ✅
+   Org B: Create PO "PO-2024-002" ✅ Different number allowed
+   ```
+
+3. **Database Integrity Test**:
+   ```sql
+   SELECT COUNT(*) FROM purchase_order WHERE po_number = 'PO-2024-001';
+   -- Should return exactly 1, never > 1
+   ```
+
+---
+
+**Last Updated:** 2026-06-08
+**Pattern Status:** Established
+**Tender Fix Status:** ✅ Ready for implementation
+**PO Number Status:** ✅ Already correct (no changes needed)
+**Next Review:** After Phase 1 completion
