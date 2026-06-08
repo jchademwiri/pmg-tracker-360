@@ -338,7 +338,7 @@ export const tender = pgTable(
       .references(() => client.id, { onDelete: 'cascade' }),
     submissionDate: timestamp('submission_date'),
     value: text('value'), // String for currency formatting
-    status: text('status').default('draft').notNull(), // draft, submitted, won, lost, pending
+    status: text('status').default('open').notNull(), // open, closed, evaluation, awarded, lost, cancelled
     evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
     validityDays: integer('validity_days'),
     validityDate: timestamp('validity_date'),
@@ -399,7 +399,7 @@ export const purchaseOrder = pgTable('purchase_order', {
   supplierName: text('supplier_name'), // Optional supplier name
   description: text('description').notNull(),
   totalAmount: text('total_amount').notNull(), // String for currency
-  status: text('status').default('draft').notNull(), // draft, sent, delivered
+  status: text('status').default('open').notNull(), // open, sent, delivered
   // Calendar-related dates
   poDate: timestamp('po_date'), // Purchase order date
   expectedDeliveryDate: timestamp('expected_delivery_date'),

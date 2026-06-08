@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Check, X, Clock, FileText, Send } from 'lucide-react';
 
 interface ProgressTrackerProps {
-  status: string; // draft, submitted, pending, won, lost
+  status: string; // open, closed, evaluation, awarded, lost, cancelled
   className?: string;
 }
 

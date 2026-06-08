@@ -58,7 +58,7 @@ const manager = ac.newRole({
     {
       action: 'delete',
       condition: (tender: { status: string }) =>
-        tender.status === 'draft' || tender.status === 'open',
+        tender.status === 'open',
     } as ConditionalPermission,
   ],
   task: ['create', 'read', 'update', 'delete'],
@@ -76,7 +76,7 @@ const member = ac.newRole({
     {
       action: 'delete',
       condition: (tender: { status: string }) =>
-        tender.status === 'draft' || tender.status === 'open',
+        tender.status === 'open',
     } as ConditionalPermission,
   ],
   task: ['create', 'read', 'update', 'delete'],

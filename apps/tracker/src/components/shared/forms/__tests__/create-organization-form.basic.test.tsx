@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CreateOrganizationForm } from '../create-organization-form';
 
@@ -177,8 +177,7 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       const slugInput = screen.getByLabelText(/organization slug/i);
       expect(slugInput).not.toBeDisabled();
 
-      await user.clear(slugInput);
-      await user.type(slugInput, 'custom-slug');
+      fireEvent.change(slugInput, { target: { value: 'custom-slug' } });
 
       expect(slugInput).toHaveValue('custom-slug');
     });

@@ -22,7 +22,7 @@ jest.mock('@pmg/db', () => ({
     }),
     insert: () => ({
       values: () => ({
-        returning: () => [{ id: 'po-1', status: 'draft' }],
+        returning: () => [{ id: 'po-1', status: 'open' }],
       }),
     }),
   },
@@ -65,7 +65,7 @@ describe('RBAC Verification: Purchase Orders', () => {
     poNumber: 'PO-001',
     description: 'Test PO',
     totalAmount: '1000',
-    status: 'draft' as const,
+    status: 'open' as const,
   };
 
   it('VERIFICATION: Member should now be BLOCKED from creating Purchase Order', async () => {
