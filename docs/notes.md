@@ -4,6 +4,244 @@ Each tender needs a tender validity, user can add in days or pick a date, that d
 
 ---
 
+## COMPREHENSIVE CODEBASE AUDIT: Global Uniqueness Issues
+
+### Executive Summary
+
+**Critical Issues Found: 3** ❌
+**High Priority Issues Found: 2** 🟠
+**Correct Implementation: 2** ✅
+**Global Constraints That Should Remain: 1** ✅
+
+---
+
+## CRITICAL ISSUES - MUST FIX IMMEDIATELY
+
+### 1. ❌ **Tender Number** - GLOBAL UNIQUE (Should be Per-Organization)
+
+**Status:** Critical Bug
+**Location:** `packages/db/src/schema.ts` line 314
+**Problem:** `.unique()` on `tenderNumber` enforces global uniqueness
+**Business Rule:** Organization-scoped uniqueness required
+
+```typescript
+// CURRENT (WRONG)
+tenderNumber: text('tender_number').notNull().unique(),
+
+// SHOULD BE
+tenderNumber: text('tender_number').notNull(),
+// With constraint:
+tenderNumberOrgUnique: unique('tender_organization_id_tender_number_unique').on(
+  table.organizationId,
+  table.tenderNumber
+),
+```
+
+**Impact:** Different organizations cannot use same tender number
+**Action:** Implement Phase 1 fix (documented in this file)
+
+---
+
+### 2. ❌ **PO Number** - GLOBAL UNIQUE (Correct, but Should Stay)
+
+**Status:** ✅ Already Correct (Keep As Is)
+**Location:** `packages/db/src/schema.ts` line 362
+**Current Implementation:** `.unique()` on `poNumber`
+**Business Rule:** PO numbers must ALWAYS be globally unique
+
+```typescript
+// CURRENT (CORRECT - KEEP IT)
+poNumber: text('po_number').notNull().unique(),
+```
+
+**Why It's Correct:**
+- Business rule: "PO number must never be same from same client"
+- PO numbers are inherently global across all organizations and clients
+- This is the correct behavior - NO CHANGES NEEDED
+
+**Impact:** Globally unique PO numbers enforced correctly
+**Action:** None required (verify in Phase 4)
+
+---
+
+## HIGH PRIORITY ISSUES - FIX AFTER TENDER
+
+### 3. 🟠 **Project Number** - NO UNIQUENESS CONSTRAINT (Should be Per-Organization)
+
+**Status:** Data Integrity Risk
+**Location:** `packages/db/src/schema.ts` line 338-351
+**Problem:** No uniqueness constraint at all on `projectNumber`
+**Business Rule:** Organization-scoped uniqueness required
+
+```typescript
+// CURRENT (MISSING CONSTRAINT)
+export const project = pgTable('project', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull()...
+  projectNumber: text('project_number').notNull(), // ❌ No constraint
+  // ... more fields ...
+});
+
+// SHOULD ADD
+export const project = pgTable('project', {
+  // ... fields ...
+  projectNumber: text('project_number').notNull(),
+  // ... more fields ...
+}, (table) => ({
+  projectNumberOrgUnique: unique('project_organization_id_project_number_unique').on(
+    table.organizationId,
+    table.projectNumber
+  ),
+}));
+```
+
+**Impact:** 
+- Same project number can be duplicated within same organization
+- Data quality issues
+- Potential reporting confusion
+
+**Action:** Implement Phase 3 fix (after tenant and client fixes)
+
+---
+
+### 4. 🟠 **Client Name** - NO UNIQUENESS CONSTRAINT (Should be Per-Organization)
+
+**Status:** Data Quality Risk
+**Location:** `packages/db/src/schema.ts` line 292-306
+**Problem:** No uniqueness constraint on `name`
+**Business Rule:** Organization-scoped uniqueness required
+
+```typescript
+// CURRENT (MISSING CONSTRAINT)
+export const client = pgTable('client', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id').notNull()...
+  name: text('name').notNull(), // ❌ No constraint
+  // ... more fields ...
+});
+
+// SHOULD ADD
+export const client = pgTable('client', {
+  // ... fields ...
+  name: text('name').notNull(),
+  // ... more fields ...
+}, (table) => ({
+  clientNameOrgUnique: unique('client_organization_id_name_unique').on(
+    table.organizationId,
+    table.name
+  ),
+}));
+```
+
+**Impact:**
+- Duplicate client names possible within same organization
+- User confusion when selecting clients
+- Potential data quality issues
+
+**Action:** Implement Phase 2 fix (after tender fix)
+
+---
+
+## GLOBAL UNIQUENESS CONSTRAINTS (Intentional - Keep As Is)
+
+### ✅ 1. **User Email** - GLOBAL UNIQUE (Correct)
+
+**Location:** `packages/db/src/schema.ts` line 19
+**Implementation:** `.unique()`
+**Rationale:** User emails are globally unique across entire platform
+**Status:** ✅ Correct - No changes needed
+
+```typescript
+email: text('email').notNull().unique(), // ✅ CORRECT
+```
+
+---
+
+### ✅ 2. **Session Token** - GLOBAL UNIQUE (Correct)
+
+**Location:** `packages/db/src/schema.ts` line 40
+**Implementation:** `.unique()`
+**Rationale:** Session tokens must be globally unique for security
+**Status:** ✅ Correct - No changes needed
+
+```typescript
+token: text('token').notNull().unique(), // ✅ CORRECT
+```
+
+---
+
+### ✅ 3. **Organization Slug** - GLOBAL UNIQUE (Correct)
+
+**Location:** `packages/db/src/schema.ts` line 85
+**Implementation:** `.unique()`
+**Rationale:** Organization slugs are globally unique URLs
+**Status:** ✅ Correct - No changes needed
+
+```typescript
+slug: text('slug').unique(), // ✅ CORRECT
+```
+
+---
+
+### ✅ 4. **Ownership Transfer Token** - GLOBAL UNIQUE (Correct)
+
+**Location:** `packages/db/src/schema.ts` line 201
+**Implementation:** `.unique()`
+**Rationale:** Transfer tokens must be globally unique for security
+**Status:** ✅ Correct - No changes needed
+
+```typescript
+transferToken: text('transfer_token').unique().notNull(), // ✅ CORRECT
+```
+
+---
+
+### ✅ 5. **Waitlist Email** - GLOBAL UNIQUE (Correct)
+
+**Location:** `packages/db/src/schema.ts` line 256
+**Implementation:** `.unique()`
+**Rationale:** Waitlist emails should be globally unique
+**Status:** ✅ Correct - No changes needed
+
+```typescript
+email: text('email').notNull().unique(), // ✅ CORRECT
+```
+
+---
+
+### ✅ 6. **Member Organization+User** - COMPOSITE UNIQUE (Correct)
+
+**Location:** `packages/db/src/schema.ts` line 112-117
+**Implementation:** Composite unique constraint
+**Rationale:** One user can only have one role per organization
+**Status:** ✅ Correct - No changes needed
+
+```typescript
+}, (table) => ({
+  orgUserUnique: unique('member_organization_id_user_id_unique').on(
+    table.organizationId,
+    table.userId
+  ),
+}));
+```
+
+---
+
+## Complete Findings Summary
+
+| Entity | Field | Current | Should Be | Priority | Phase |
+|--------|-------|---------|-----------|----------|-------|
+| Tender | tenderNumber | GLOBAL UNIQUE ❌ | Org-scoped | 🔴 Critical | 1 |
+| Client | name | NO CONSTRAINT ❌ | Org-scoped | 🟠 High | 2 |
+| Project | projectNumber | NO CONSTRAINT ❌ | Org-scoped | 🟠 High | 3 |
+| PurchaseOrder | poNumber | GLOBAL UNIQUE ✅ | GLOBAL UNIQUE | 🟢 Keep | - |
+| User | email | GLOBAL UNIQUE ✅ | GLOBAL UNIQUE | 🟢 Keep | - |
+| Session | token | GLOBAL UNIQUE ✅ | GLOBAL UNIQUE | 🟢 Keep | - |
+| Organization | slug | GLOBAL UNIQUE ✅ | GLOBAL UNIQUE | 🟢 Keep | - |
+| Member | (org, user) | COMPOSITE UNIQUE ✅ | COMPOSITE UNIQUE | 🟢 Keep | - |
+
+---
+
 ## BUG FIX: Tender Number Uniqueness Constraint
 
 ### Issue
@@ -532,7 +770,7 @@ const existing = await db
 ---
 
 **Last Updated:** 2026-06-08
-**Pattern Status:** Established
-**Tender Fix Status:** ✅ Ready for implementation
-**PO Number Status:** ✅ Already correct (no changes needed)
-**Next Review:** After Phase 1 completion
+**Codebase Audit Status:** Complete
+**Critical Issues Found:** 1 (Tender)
+**High Priority Issues Found:** 2 (Client, Project)
+**Ready for Implementation:** Yes
