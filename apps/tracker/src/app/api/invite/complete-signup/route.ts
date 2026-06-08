@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@pmg/db';
 import { user, member, invitation } from '@pmg/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,93 +16,123 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the user and request headers/cookies from the auth API
-    // Pass overrideDefaultEmailVerification to skip verification for invite-created accounts if supported
-    const signUpResult: any = await auth.api.signUpEmail({
-      body: { name, email, password },
-      // @ts-ignore - some SDKs accept this option as per docs
-      overrideDefaultEmailVerification: true,
+    // 1. Validate the invitation exists and is still pending
+    const invite = await db.query.invitation.findFirst({
+      where: eq(invitation.id, invitationId),
     });
 
-    // Verification step: Explicitly set emailVerified: true in DB
-    // Since invitation acceptance implies verification for this flow
-    try {
-      await db
-        .update(user)
-        .set({ emailVerified: true })
-        .where(eq(user.email, email));
-    } catch (verifyError) {
-      console.error('Failed to auto-verify email:', verifyError);
-      // Continue, as account is created
+    if (!invite || invite.status !== 'pending') {
+      return NextResponse.json(
+        { success: false, message: 'Invitation is no longer valid.' },
+        { status: 400 }
+      );
     }
 
-    // Now call signInEmail to get a verified session
-    let signInResult: any = null;
+    if (invite.email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json(
+        { success: false, message: 'Email does not match the invitation.' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Create the user account via Better Auth
+    // This fires sendVerificationEmail — we cannot stop it at this point,
+    // but we immediately mark emailVerified=true in the DB right after
+    // so any subsequent sign-in doesn't get blocked.
+    let signUpUserId: string | null = null;
     try {
-      signInResult = await auth.api.signInEmail({
+      const signUpResult: any = await auth.api.signUpEmail({
+        body: { name, email, password },
+      });
+      signUpUserId = signUpResult?.user?.id ?? null;
+    } catch (signUpErr: any) {
+      // If the account already exists (e.g. race condition), continue
+      const msg: string = signUpErr?.body?.message || signUpErr?.message || '';
+      if (!msg.toLowerCase().includes('already')) {
+        return NextResponse.json(
+          { success: false, message: msg || 'Failed to create account.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 3. Resolve the user ID (may come from sign-up result or DB lookup)
+    if (!signUpUserId) {
+      const dbUser = await db.query.user.findFirst({
+        where: eq(user.email, email.toLowerCase().trim()),
+      });
+      signUpUserId = dbUser?.id ?? null;
+    }
+
+    if (!signUpUserId) {
+      return NextResponse.json(
+        { success: false, message: 'Could not resolve user after sign-up.' },
+        { status: 500 }
+      );
+    }
+
+    const userId = signUpUserId;
+
+    // 4. Auto-verify the email — the invitation itself is proof of ownership.
+    //    Do this BEFORE sign-in so requireEmailVerification doesn't block the session.
+    await db
+      .update(user)
+      .set({ emailVerified: true })
+      .where(eq(user.id, userId));
+
+    // 5. Sign the user in to get a session cookie
+    let sessionHeaders: Headers | undefined;
+    try {
+      const signInResult: any = await auth.api.signInEmail({
         body: { email, password },
       });
+      sessionHeaders = signInResult?.headers;
     } catch (signInErr) {
-      console.error('Sign in failed after signup/verification:', signInErr);
+      console.error('Sign in after sign-up failed:', signInErr);
+      // Non-fatal — user can log in manually, but try to continue
     }
 
-    const sessionHeaders: Headers | undefined = signInResult?.headers || signUpResult?.headers;
-
-    // Accept invitation directly in the DB to bypass flaky header-forwarding issues
+    // 6. Add the user to the organisation and mark the invitation as accepted
     try {
-      const invite = await db.query.invitation.findFirst({
-        where: eq(invitation.id, invitationId),
+      // Guard against duplicate member rows
+      const existingMember = await db.query.member.findFirst({
+        where: eq(member.userId, userId),
       });
 
-      if (invite && invite.status === 'pending') {
-        const dbUser = await db.query.user.findFirst({
-          where: eq(user.email, email.toLowerCase().trim()),
+      if (!existingMember) {
+        await db.insert(member).values({
+          id: crypto.randomUUID(),
+          organizationId: invite.organizationId,
+          userId,
+          role: invite.role ?? 'member',
+          createdAt: new Date(),
         });
-        const userId = signUpResult?.user?.id || dbUser?.id;
-
-        if (userId) {
-          // Add user to the organization
-          await db.insert(member).values({
-            id: crypto.randomUUID(),
-            organizationId: invite.organizationId,
-            userId: userId,
-            role: invite.role ?? 'member',
-            createdAt: new Date(),
-          });
-
-          // Mark invitation as accepted
-          await db
-            .update(invitation)
-            .set({ status: 'accepted' })
-            .where(eq(invitation.id, invitationId));
-
-          console.log(`Direct DB: accepted invitation ${invitationId} for user ${userId}`);
-        } else {
-          console.error('Direct DB: Could not find user to accept invitation');
-        }
-      } else {
-        console.warn('Direct DB: Invitation not found or not pending:', invitationId);
       }
+
+      await db
+        .update(invitation)
+        .set({ status: 'accepted' })
+        .where(eq(invitation.id, invitationId));
     } catch (acceptErr) {
-      console.error('Direct DB: Acceptance failed:', acceptErr);
+      console.error('Failed to complete invitation acceptance in DB:', acceptErr);
+      // Non-fatal — account was created, member row may already exist
     }
 
-    // Build a JSON response and forward any Set-Cookie headers so the browser receives the session cookie
+    // 7. Return success and forward any session cookies
     const res = NextResponse.json({
       success: true,
       redirectUrl: `/dashboard?invitationId=${invitationId}`,
     });
 
     if (sessionHeaders) {
-      // Copy Set-Cookie headers from sessionHeaders into our response
       try {
-        sessionHeaders.forEach((value, key) => {
+        sessionHeaders.forEach((value: string, key: string) => {
           if (key.toLowerCase() === 'set-cookie') {
             res.headers.append('set-cookie', value);
           }
         });
-      } catch (e) {
-        console.warn('Failed to copy auth headers to response', e);
+      } catch {
+        // Ignore header copy failures
       }
     }
 
