@@ -3,6 +3,7 @@ import {
   getTenderStats,
   getRecentActivity,
   getUpcomingDeadlines,
+  getClosingSoonTenders,
 } from '@/server/tenders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -19,6 +20,8 @@ import {
 import { formatCurrency } from '@/lib/format';
 import { RecentActivity } from '@/components/tenders/recent-activity';
 import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
+import { ClosingSoonWidget } from '@/components/tenders/closing-soon-widget';
+import { PipelineFunnel } from '@/components/tenders/pipeline-funnel';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -51,11 +54,13 @@ export default async function TendersOverviewPage() {
   }
 
   // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult] = await Promise.all([
-    getTenderStats(session.activeOrganizationId),
-    getRecentActivity(session.activeOrganizationId, 3),
-    getUpcomingDeadlines(session.activeOrganizationId, 3),
-  ]);
+  const [statsResult, activityResult, deadlinesResult, closingSoonResult] =
+    await Promise.all([
+      getTenderStats(session.activeOrganizationId),
+      getRecentActivity(session.activeOrganizationId, 3),
+      getUpcomingDeadlines(session.activeOrganizationId, 3),
+      getClosingSoonTenders(session.activeOrganizationId),
+    ]);
 
   const stats = statsResult.success
     ? statsResult.stats
@@ -75,6 +80,7 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
+  const closingSoon = closingSoonResult.success ? closingSoonResult.tenders : [];
 
   return (
     <div className="space-y-6">
@@ -184,14 +190,20 @@ export default async function TendersOverviewPage() {
         </div>
       </div>
 
-      {/* Upcoming Deadlines and Recent Activity */}
+      {/* Pipeline Funnel */}
+      <PipelineFunnel statusCounts={stats.statusCounts} />
+
+      {/* Closing Soon and Upcoming Deadlines */}
       <div className="grid gap-6 md:grid-cols-2">
+        <ClosingSoonWidget tenders={closingSoon} />
         <UpcomingDeadlines deadlines={deadlines} />
-        <RecentActivity
-          recentTenders={activity.recentTenders}
-          recentChanges={activity.recentChanges}
-        />
       </div>
+
+      {/* Recent Activity */}
+      <RecentActivity
+        recentTenders={activity.recentTenders}
+        recentChanges={activity.recentChanges}
+      />
     </div>
   );
 }
