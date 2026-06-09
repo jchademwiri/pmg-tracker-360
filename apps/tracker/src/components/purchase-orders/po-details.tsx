@@ -398,7 +398,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                   <label className="text-sm font-medium text-muted-foreground">
                     Delivered At
                   </label>
-                  <p className="text-sm">{formatDate(po.deliveredAt)}</p>
+                  <p className="text-sm">{formatDateWithTime(po.deliveredAt)}</p>
                 </div>
               )}
             </CardContent>

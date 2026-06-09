@@ -21,6 +21,7 @@ import {
   type ProjectStatusUpdateInput,
 } from '@/lib/validations/project';
 import type { RecentActivity } from '@/types/activity';
+import { nowInSAST } from '@/lib/timezone';
 
 // Get projects with pagination, search, and client joins
 export async function getProjects(
@@ -702,7 +703,7 @@ export async function getProjectStats(organizationId: string) {
       }, 0);
 
     // Calculate growth (month-over-month project creation)
-    const now = new Date();
+    const now = nowInSAST();
     const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);

@@ -4,6 +4,7 @@ import { and, eq, isNull, gte, lte, or, sql } from 'drizzle-orm';
 import { validateSessionAndOrg } from './utils';
 import { resolveTenderStatus } from '@/lib/tender-utils';
 import { autoCloseExpiredTenders } from './tenders';
+import { nowInSAST } from '@/lib/timezone';
 
 export async function getSpecialistDashboardStats(organizationId: string) {
   try {
@@ -12,7 +13,7 @@ export async function getSpecialistDashboardStats(organizationId: string) {
     // Auto-close expired tenders before calculating stats
     await autoCloseExpiredTenders(organizationId);
 
-    const now = new Date();
+    const now = nowInSAST();
     const fourteenDaysFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
     // Fetch all active tenders for this organization
@@ -84,8 +85,6 @@ export async function getAdminDashboardStats(organizationId: string) {
 
     // Auto-close expired tenders before calculating stats
     await autoCloseExpiredTenders(organizationId);
-
-    const now = new Date();
 
     // Fetch all active tenders for this organization
     const tenders = await db
