@@ -46,19 +46,24 @@ export function TeamSwitcher({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = React.useState(false);
 
+  // Optimistic local state for the active org ID so the sidebar updates
+  // immediately when the user switches orgs, without waiting for
+  // useActiveOrganization() or router.refresh() to propagate.
+  const [optimisticOrgId, setOptimisticOrgId] = React.useState<
+    string | null
+  >(null);
+
   // Find the active organization from the list or use the first one as fallback
   const activeOrg = React.useMemo(() => {
     // Priority:
-    // 1. Client-side active organization (if available/switched)
-    // 2. Server-side active organization (passed via prop)
-    // 3. Fallback to first organization
-
-    // Note: We prioritize the prop for the initial render to match server HTML,
-    // but we need to verify if `activeOrganization` is already defined (e.g. from hydration state).
-    // Actually, to prevent hydration mismatch, we should rely on the Prop if `activeOrganization` is undefined,
-    // OR if we want to ensure the HTML matches, we should use the Prop as the default.
-
-    const targetId = activeOrganization?.id || activeOrganizationId;
+    // 1. Optimistic local state (set immediately on user click)
+    // 2. Client-side active organization from Better Auth hook
+    // 3. Server-side active organization (passed via prop)
+    // 4. Fallback to first organization
+    const targetId =
+      optimisticOrgId ||
+      activeOrganization?.id ||
+      activeOrganizationId;
 
     if (targetId) {
       return (
@@ -66,16 +71,30 @@ export function TeamSwitcher({
       );
     }
     return organizations[0];
-  }, [activeOrganization, organizations, activeOrganizationId]);
+  }, [
+    optimisticOrgId,
+    activeOrganization,
+    organizations,
+    activeOrganizationId,
+  ]);
 
   const handleOrganizationSwitch = async (
     organization: OrganizationWithStats
   ) => {
-    await switchOrganization({
+    // Optimistically update the sidebar immediately so the user sees
+    // the new org name without waiting for the server round-trip.
+    setOptimisticOrgId(organization.id);
+
+    const result = await switchOrganization({
       organizationId: organization.id,
       organizationName: organization.name,
       router,
     });
+
+    // If the switch failed, revert the optimistic update
+    if (!result.success) {
+      setOptimisticOrgId(null);
+    }
   };
 
   if (!activeOrg) {
