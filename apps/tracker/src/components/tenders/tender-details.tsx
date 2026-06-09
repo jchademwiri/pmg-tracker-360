@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { deleteTender, updateTenderStatus } from '@/server/tenders';
+import { formatCurrency, formatDate as sharedFormatDate, formatDateTime } from '@/lib/format';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocumentManager } from '@/components/documents/document-manager';
@@ -136,7 +137,10 @@ export function TenderDetails({
     startTransition(async () => {
       const result = await updateTenderStatus(organizationId, tender.id, {
         status: newStatus,
-        ...contractDetails,
+        awardValue: contractDetails?.awardValue ?? null,
+        contractStartDate: contractDetails?.contractStartDate,
+        contractEndDate: contractDetails?.contractEndDate,
+        signedContractUrl: contractDetails?.signedContractUrl,
       });
       if (result.success) {
         if (newStatus === 'awarded' && result.projectId) {
@@ -156,33 +160,15 @@ export function TenderDetails({
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
+    return formatDateTime(date, 'Not set');
   };
 
   const formatDateOnly = (date: Date | null) => {
     if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }).format(new Date(date));
+    return sharedFormatDate(date, 'Not set');
   };
 
-  const formatValue = (value: string | null) => {
-    if (!value) return 'Not set';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return value;
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-    }).format(numValue);
-  };
+
 
   return (
     <div className="w-full space-y-6">
@@ -294,7 +280,7 @@ export function TenderDetails({
                         Tender Value
                       </label>
                       <p className="text-lg font-medium">
-                        {formatValue(tender.value)}
+                        {formatCurrency(tender.value)}
                       </p>
                     </div>
 

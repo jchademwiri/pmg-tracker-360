@@ -10,6 +10,7 @@ import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, Tende
 import { randomUUID } from 'crypto';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { nowInSAST } from '@/lib/timezone';
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -990,7 +991,7 @@ export async function getTenderStats(organizationId: string) {
     const averageValue = totalTenders > 0 ? totalValue / totalTenders : 0;
 
     // Count upcoming deadlines (next 30 days)
-    const now = new Date();
+    const now = nowInSAST();
     const thirtyDaysFromNow = new Date(
       now.getTime() + 30 * 24 * 60 * 60 * 1000
     );
@@ -1175,7 +1176,7 @@ export async function getUpcomingDeadlines(
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const now = new Date();
+    const now = nowInSAST();
     const thirtyDaysFromNow = new Date(
       now.getTime() + 30 * 24 * 60 * 60 * 1000
     );
@@ -1237,7 +1238,7 @@ export async function getUpcomingBriefings(
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const now = new Date();
+    const now = nowInSAST();
     const thirtyDaysFromNow = new Date(
       now.getTime() + 30 * 24 * 60 * 60 * 1000
     );
@@ -1530,7 +1531,7 @@ export async function getTendersOverview(
 // Auto-close expired tenders whose closing date is in the past and status is open
 export async function autoCloseExpiredTenders(organizationId: string) {
   try {
-    const now = new Date();
+    const now = nowInSAST();
     const result = await db
       .update(tender)
       .set({

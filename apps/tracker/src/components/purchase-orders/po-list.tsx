@@ -7,7 +7,7 @@ import {
   Plus,
   MoreHorizontal,
   FileText,
-  DollarSign,
+  Banknote,
   Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ import {
   getPurchaseOrders,
   deletePurchaseOrder,
 } from '@/server/purchase-orders';
-import { formatDate } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
 import Link from 'next/link';
 
 interface PurchaseOrderWithProject {
@@ -177,17 +177,7 @@ export function POList({
     });
   };
 
-  // Format date for display — uses shared formatDate from @/lib/format
-  // Format currency value
-  const formatValue = (value: string | null) => {
-    if (!value) return 'Not set';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return value;
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-    }).format(numValue);
-  };
+
 
   return (
     <Card className="rounded-lg shadow-sm">
@@ -308,7 +298,7 @@ export function POList({
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {formatValue(po.totalAmount)}
+                          {formatCurrency(po.totalAmount)}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -420,8 +410,8 @@ export function POList({
 
                         <div className="space-y-1">
                           <div className="flex items-center text-sm text-muted-foreground">
-                            <DollarSign className="h-3 w-3 mr-1" />
-                            {formatValue(po.totalAmount)}
+                            <Banknote className="h-3 w-3 mr-1" />
+                            {formatCurrency(po.totalAmount)}
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
                             <Calendar className="h-3 w-3 mr-1" />

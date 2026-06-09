@@ -8,6 +8,7 @@ import {
   getDeadlineUrgencyLabel,
   isUrgentDeadline,
 } from '@/lib/deadline-display';
+import { formatCurrency } from '@/lib/format';
 
 interface UpcomingDeadline {
   id: string;
@@ -105,7 +106,7 @@ export function UpcomingDeadlines({
                   </p>
                   {deadline.value && (
                     <p className="text-xs font-medium">
-                      ${parseFloat(deadline.value).toLocaleString()}
+                      {formatCurrency(deadline.value)}
                     </p>
                   )}
                 </div>
