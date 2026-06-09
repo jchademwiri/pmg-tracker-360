@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { ChevronsUpDown, Plus, Building2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { switchOrganization } from '@/lib/organization-utils';
 
@@ -41,7 +40,6 @@ export function TeamSwitcher({
   activeOrganizationId?: string | null;
 }) {
   const { isMobile } = useSidebar();
-  const router = useRouter();
   const { data: activeOrganization } = authClient.useActiveOrganization();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = React.useState(false);
@@ -88,7 +86,6 @@ export function TeamSwitcher({
     const result = await switchOrganization({
       organizationId: organization.id,
       organizationName: organization.name,
-      router,
     });
 
     // If the switch failed, revert the optimistic update

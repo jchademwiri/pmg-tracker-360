@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { switchOrganization } from '@/lib/organization-utils';
 
@@ -15,7 +15,6 @@ export function OrganizationProvider({
   organizations = [],
 }: OrganizationProviderProps) {
   const { data: activeOrganization } = authClient.useActiveOrganization();
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -42,7 +41,6 @@ export function OrganizationProvider({
         switchOrganization({
           organizationId: urlOrganization.id,
           organizationName: urlOrganization.name,
-          router,
           showToast: false, // Don't show toast for automatic URL sync
         }).catch(() => {
           // Redirect to the correct organization URL on error
@@ -54,7 +52,7 @@ export function OrganizationProvider({
         window.location.href = `/organization/${activeOrganization.slug}`;
       }
     }
-  }, [pathname, activeOrganization, organizations, router]);
+  }, [pathname, activeOrganization, organizations]);
 
   return <>{children}</>;
 }
