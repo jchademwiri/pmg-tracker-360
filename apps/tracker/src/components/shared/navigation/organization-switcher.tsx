@@ -8,8 +8,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { authClient } from '@/lib/auth-client';
-import { useRouter, usePathname } from 'next/navigation';
 import { useTransition, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { switchOrganization } from '@/lib/organization-utils';
 import type { OrganizationWithStats } from '@/server/organizations';
@@ -22,7 +22,6 @@ function OrganizationSwitcherClient({
   organizations,
 }: OrganizationSwitcherProps) {
   const { data: activeOrganization } = authClient.useActiveOrganization();
-  const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
@@ -52,7 +51,6 @@ function OrganizationSwitcherClient({
       const result = await switchOrganization({
         organizationId: selectedOrg.id,
         organizationName: selectedOrg.name,
-        router,
         redirectUrl: newUrl,
       });
 

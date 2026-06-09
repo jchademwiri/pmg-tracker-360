@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
 import type { OrganizationWithStats } from '@/server/organizations';
 import { switchOrganization } from '@/lib/organization-utils';
 
@@ -16,7 +15,6 @@ export function OrganizationSelector({
   organizations,
   fallbackContent,
 }: OrganizationSelectorProps) {
-  const router = useRouter();
   const { data: activeOrganization, isPending: isLoading } =
     authClient.useActiveOrganization();
   const [isClient, setIsClient] = useState(false);
@@ -33,7 +31,6 @@ export function OrganizationSelector({
       const res = await switchOrganization({
         organizationId: orgId,
         organizationName: org?.name || '',
-        router,
         redirectUrl: '/dashboard',
       });
       if (!res.success) {
