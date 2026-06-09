@@ -242,12 +242,12 @@ export async function getTenderRegister(
   icon: ClipboardList,
   items: [
     { title: 'Overview', url: '/tenders/overview' },
-    { title: 'Tender Register', url: '/tenders/register' },
-    { title: 'Open Tenders', url: '/tenders/register?status=open' },
-    { title: 'Under Evaluation', url: '/tenders/register?status=evaluation' },
-    { title: 'Closed', url: '/tenders/register?status=closed' },
-    { title: 'Awarded', url: '/tenders/register?status=awarded' },
-    { title: 'Lost / Rejected', url: '/tenders/register?status=lost' },
+    { title: 'Tender Register', url: '/tenders' },
+    { title: 'Open Tenders', url: '/tenders?status=open' },
+    { title: 'Under Evaluation', url: '/tenders?status=evaluation' },
+    { title: 'Closed', url: '/tenders?status=closed' },
+    { title: 'Awarded', url: '/tenders?status=awarded' },
+    { title: 'Lost / Rejected', url: '/tenders?status=lost' },
   ],
 }
 ```

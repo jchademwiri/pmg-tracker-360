@@ -38,28 +38,32 @@ export const dashboadLinks = {
       icon: ClipboardList,
       items: [
         {
-          title: 'Tender Register',
+          title: 'Overview',
           url: '/tenders/overview',
         },
         {
+          title: 'Tender Register',
+          url: '/tenders',
+        },
+        {
           title: 'Open Tenders',
-          url: '/tenders/overview?status=open',
+          url: '/tenders?status=open',
         },
         {
           title: 'Under Evaluation',
-          url: '/tenders/overview?status=evaluation',
+          url: '/tenders?status=evaluation',
         },
         {
           title: 'Closed',
-          url: '/tenders/overview?status=closed',
+          url: '/tenders?status=closed',
         },
         {
           title: 'Awarded',
-          url: '/tenders/overview?status=awarded',
+          url: '/tenders?status=awarded',
         },
         {
           title: 'Lost / Rejected',
-          url: '/tenders/overview?status=lost',
+          url: '/tenders?status=lost',
         },
       ],
     },
