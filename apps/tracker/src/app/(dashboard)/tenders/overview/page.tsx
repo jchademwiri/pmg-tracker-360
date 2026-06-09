@@ -8,6 +8,7 @@ import {
 import { getClients } from '@/server/clients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Clock, TrendingUp, AlertTriangle, Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/format';
 import { RecentActivity } from '@/components/tenders/recent-activity';
 import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
 import { TendersOverviewClient } from './client-wrapper';
@@ -249,7 +250,7 @@ export default async function TendersOverviewPage({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${stats.totalValue.toLocaleString()}
+              {formatCurrency(stats.totalValue)}
             </div>
             <p className="text-xs text-muted-foreground">
               Estimated value of all tenders

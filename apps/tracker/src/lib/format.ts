@@ -1,5 +1,7 @@
+import { SAST_TIMEZONE } from './timezone';
+
 /**
- * Formats a date as "24 Feb 2026".
+ * Formats a date as "24 Feb 2026" in SAST timezone.
  * Pass a fallback string as the second argument (default '-').
  */
 export function formatDate(
@@ -11,11 +13,12 @@ export function formatDate(
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    timeZone: SAST_TIMEZONE,
   }).format(new Date(date));
 }
 
 /**
- * Formats a date + time as "24 Feb 2026, 10:00".
+ * Formats a date + time as "24 Feb 2026, 10:00" in SAST timezone.
  * Pass a fallback string as the second argument (default '-').
  */
 export function formatDateTime(
@@ -29,20 +32,34 @@ export function formatDateTime(
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: SAST_TIMEZONE,
   }).format(new Date(date));
 }
 
+/**
+ * Formats a monetary value as South African Rand (ZAR).
+ * Accepts number, numeric string, null, or undefined.
+ */
 export function formatCurrency(
-  amount: number,
+  amount: number | string | null | undefined,
   options: Intl.NumberFormatOptions = {}
 ): string {
+  if (amount === null || amount === undefined || amount === '') return 'R 0';
+
+  const numericAmount =
+    typeof amount === 'string'
+      ? parseFloat(amount.replace(/[Rr\s,]/g, ''))
+      : amount;
+
+  if (isNaN(numericAmount)) return 'R 0';
+
   return new Intl.NumberFormat('en-ZA', {
     style: 'currency',
     currency: 'ZAR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
     ...options,
-  }).format(amount);
+  }).format(numericAmount);
 }
 
 export function formatNumber(

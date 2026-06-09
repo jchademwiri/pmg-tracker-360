@@ -24,13 +24,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  createPurchaseOrder,
+} from '@/components/ui/select';import { createPurchaseOrder,
   updatePurchaseOrder,
 } from '@/server/purchase-orders';
 import { getProjects } from '@/server/projects';
 import { ProjectCreateDialog } from '@/components/projects/project-create-dialog';
+import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';
 
 const poFormSchema = z
   .object({
@@ -234,14 +233,20 @@ export function POForm({
                     name="totalAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Amount *</FormLabel>
+                        <FormLabel>Total Amount (ZAR) *</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            {...field}
-                          />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground font-semibold text-sm">
+                              R
+                            </span>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              className="pl-8"
+                              {...field}
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -285,16 +290,9 @@ export function POForm({
                         <Input
                           type="date"
                           {...field}
-                          value={
-                            field.value
-                              ? field.value.toISOString().split('T')[0]
-                              : ''
-                          }
+                          value={toSASTDateString(field.value)}
                           onChange={(e) => {
-                            const date = e.target.value
-                              ? new Date(e.target.value)
-                              : undefined;
-                            field.onChange(date);
+                            field.onChange(parseDateToUTC(e.target.value));
                           }}
                         />
                       </FormControl>
@@ -313,16 +311,9 @@ export function POForm({
                         <Input
                           type="date"
                           {...field}
-                          value={
-                            field.value
-                              ? field.value.toISOString().split('T')[0]
-                              : ''
-                          }
+                          value={toSASTDateString(field.value)}
                           onChange={(e) => {
-                            const date = e.target.value
-                              ? new Date(e.target.value)
-                              : undefined;
-                            field.onChange(date);
+                            field.onChange(parseDateToUTC(e.target.value));
                           }}
                         />
                       </FormControl>

@@ -41,6 +41,7 @@ import {
   toLocalDateString,
   toLocalDateTimeString,
 } from '@/lib/tender-utils';
+import { toSASTDateTimeString, parseDateTimeToUTC } from '@/lib/timezone';
 import {
   TenderCreateSchema,
   type TenderCreateInput,
@@ -521,6 +522,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                             placeholder="Enter tender value"
                             className="pl-10 rounded-md"
                             {...field}
+                            value={field.value || ''}
                             disabled={isPending}
                           />
                         </div>
@@ -674,19 +676,9 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                             type="datetime-local"
                             className="rounded-md"
                             {...field}
-                            value={
-                              field.value
-                                ? new Date(
-                                    new Date(field.value).getTime() -
-                                      new Date(field.value).getTimezoneOffset() * 60000
-                                  )
-                                    .toISOString()
-                                    .slice(0, 16)
-                                : ''
-                            }
+                            value={toSASTDateTimeString(field.value)}
                             onChange={(e) => {
-                              const val = e.target.value;
-                              field.onChange(val ? new Date(val) : null);
+                              field.onChange(parseDateTimeToUTC(e.target.value));
                             }}
                             disabled={isPending}
                           />

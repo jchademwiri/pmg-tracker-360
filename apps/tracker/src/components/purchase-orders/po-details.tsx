@@ -26,6 +26,7 @@ import {
   deletePurchaseOrder,
   updatePurchaseOrderStatus,
 } from '@/server/purchase-orders';
+import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 
 interface PurchaseOrderWithProject {
   id: string;
@@ -111,26 +112,11 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
     router.push('/projects/purchase-orders');
   };
 
-  const formatDate = (date: Date | null) => {
+  const formatDateWithTime = (date: Date | null) => {
     if (!date) return 'Not set';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
+    return formatDateTime(date, 'Not set');
   };
 
-  const formatValue = (value: string | null) => {
-    if (!value) return 'Not set';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return value;
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-    }).format(numValue);
-  };
 
   return (
     <div className="w-full space-y-6">
@@ -237,7 +223,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                     Total Amount
                   </label>
                   <p className="text-lg font-medium">
-                    {formatValue(po.totalAmount)}
+                    {formatCurrency(po.totalAmount)}
                   </p>
                 </div>
               </div>
@@ -381,7 +367,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                 <label className="text-sm font-medium text-muted-foreground">
                   Created
                 </label>
-                <p className="text-sm">{formatDate(po.createdAt)}</p>
+                <p className="text-sm">{formatDateWithTime(po.createdAt)}</p>
               </div>
               {po.poDate && (
                 <div>
@@ -395,7 +381,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                 <label className="text-sm font-medium text-muted-foreground">
                   Last Updated
                 </label>
-                <p className="text-sm">{formatDate(po.updatedAt)}</p>
+                <p className="text-sm">{formatDateWithTime(po.updatedAt)}</p>
               </div>
               {po.expectedDeliveryDate && (
                 <div>

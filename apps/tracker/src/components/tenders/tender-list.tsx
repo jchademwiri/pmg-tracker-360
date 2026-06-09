@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/select';
 
 import { getTenders, deleteTender } from '@/server/tenders';
-import { formatDate } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
 import Link from 'next/link';
 
 interface TenderWithClient {
@@ -208,17 +208,7 @@ export function TenderList({
     });
   };
 
-  // Format date for display — uses shared formatDate from @/lib/format
-  // Format currency value
-  const formatValue = (value: string | null) => {
-    if (!value) return 'Not set';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return value;
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-    }).format(numValue);
-  };
+
 
   return (
     <Card className="rounded-lg shadow-sm">
@@ -374,7 +364,7 @@ export function TenderList({
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {formatValue(tender.value)}
+                          {formatCurrency(tender.value)}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -474,7 +464,7 @@ export function TenderList({
                         <div className="space-y-1">
                           <div className="flex items-center text-sm text-muted-foreground">
                             <Banknote className="h-3 w-3 mr-1" />
-                            {formatValue(tender.value)}
+                            {formatCurrency(tender.value)}
                           </div>
                           <div className="flex items-center text-sm text-muted-foreground">
                             <Calendar className="h-3 w-3 mr-1" />

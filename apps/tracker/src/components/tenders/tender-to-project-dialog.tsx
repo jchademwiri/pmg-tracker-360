@@ -24,15 +24,25 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toLocalDateString, fromLocalDateString } from '@/lib/tender-utils';
-
-const ContractDetailsSchema = z.object({
-  awardValue: z.string().optional().nullable(),
+import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';const ContractDetailsSchema = z.object({
+  awardValue: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val || val.trim() === '') return null;
+      const cleaned = val.replace(/[^0-9.]/g, '');
+      const num = parseFloat(cleaned);
+      if (isNaN(num)) return null;
+      return cleaned;
+    }),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
   signedContractUrl: z.string().optional().nullable(),
 });
 
-type ContractDetailsInput = z.infer<typeof ContractDetailsSchema>;
+// Use input type for form values since the transform changes the output type
+type ContractDetailsInput = z.input<typeof ContractDetailsSchema>;
 
 interface TenderToProjectDialogProps {
   open: boolean;
@@ -139,9 +149,9 @@ export function TenderToProjectDialog({
                           type="date"
                           className="pl-10"
                           disabled={isPending}
-                          value={toLocalDateString(field.value)}
+                          value={toSASTDateString(field.value)}
                           onChange={(e) => {
-                            field.onChange(fromLocalDateString(e.target.value));
+                            field.onChange(parseDateToUTC(e.target.value));
                           }}
                         />
                       </div>
@@ -164,9 +174,9 @@ export function TenderToProjectDialog({
                           type="date"
                           className="pl-10"
                           disabled={isPending}
-                          value={toLocalDateString(field.value)}
+                          value={toSASTDateString(field.value)}
                           onChange={(e) => {
-                            field.onChange(fromLocalDateString(e.target.value));
+                            field.onChange(parseDateToUTC(e.target.value));
                           }}
                         />
                       </div>

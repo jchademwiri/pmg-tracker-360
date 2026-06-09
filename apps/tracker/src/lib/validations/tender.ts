@@ -18,7 +18,17 @@ export const TenderCreateSchema = z.object({
   description: z.string().optional(),
   clientId: z.string().min(1, 'Client is required'),
   submissionDate: z.coerce.date().optional().nullable(),
-  value: z.string().optional(),
+  value: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val || val.trim() === '') return null;
+      const cleaned = val.replace(/[^0-9.]/g, '');
+      const num = parseFloat(cleaned);
+      if (isNaN(num)) return null;
+      return cleaned;
+    }),
   status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']),
   validityDays: z.number().int().nonnegative().nullable().optional(),
   validityDate: z.coerce.date().optional().nullable(),
@@ -37,7 +47,17 @@ export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
 
 export const TenderStatusUpdateSchema = z.object({
   status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']),
-  awardValue: z.string().optional().nullable(),
+  awardValue: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val || val.trim() === '') return null;
+      const cleaned = val.replace(/[^0-9.]/g, '');
+      const num = parseFloat(cleaned);
+      if (isNaN(num)) return null;
+      return cleaned;
+    }),
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
   signedContractUrl: z.string().optional().nullable(),
