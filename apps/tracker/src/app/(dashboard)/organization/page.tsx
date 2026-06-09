@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { getorganizations } from '@/server/organizations';
+import { getCurrentUser } from '@/server';
 import { Building2, Users, Shield, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrganizationGrid } from '@/components/organization-grid';
@@ -9,6 +10,7 @@ export const dynamic = 'force-dynamic';
 
 async function OrganizationContent() {
   try {
+    const { session } = await getCurrentUser();
     const organizations = await getorganizations();
 
     // Calculate summary statistics
@@ -92,7 +94,7 @@ async function OrganizationContent() {
         )}
 
         {/* Organizations Grid */}
-        <OrganizationGrid organizations={organizations} />
+        <OrganizationGrid organizations={organizations} activeOrganizationId={session?.activeOrganizationId ?? undefined} />
       </div>
     );
   } catch (error) {
