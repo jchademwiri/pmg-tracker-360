@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import { authClient } from '@/lib/auth-client';
 import { useRouter, usePathname } from 'next/navigation';
-import { useTransition } from 'react';
+import { useTransition, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { switchOrganization } from '@/lib/organization-utils';
 import type { OrganizationWithStats } from '@/server/organizations';
@@ -26,11 +26,21 @@ function OrganizationSwitcherClient({
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
+  // Optimistic local state so the Select updates immediately on click,
+  // without waiting for useActiveOrganization() or router.refresh().
+  const [optimisticOrgId, setOptimisticOrgId] = useState<string | null>(null);
+
+  // Use the optimistic ID if set, otherwise fall back to the hook value
+  const displayOrgId = optimisticOrgId || activeOrganization?.id;
+
   const handleChangeOrganization = async (organizationId: string) => {
     const selectedOrg = organizations.find((org) => org.id === organizationId);
     if (!selectedOrg) {
       return;
     }
+
+    // Optimistically update the displayed org immediately
+    setOptimisticOrgId(organizationId);
 
     startTransition(async () => {
       // Handle URL navigation based on current page
@@ -39,12 +49,17 @@ function OrganizationSwitcherClient({
         selectedOrg.slug || selectedOrg.id
       );
 
-      await switchOrganization({
+      const result = await switchOrganization({
         organizationId: selectedOrg.id,
         organizationName: selectedOrg.name,
         router,
         redirectUrl: newUrl,
       });
+
+      // Revert optimistic state on failure
+      if (!result.success) {
+        setOptimisticOrgId(null);
+      }
     });
   };
 
@@ -77,7 +92,7 @@ function OrganizationSwitcherClient({
   return (
     <Select
       onValueChange={handleChangeOrganization}
-      value={activeOrganization?.id}
+      value={displayOrgId}
       disabled={isPending}
     >
       <SelectTrigger className="min-w-[180px]">
