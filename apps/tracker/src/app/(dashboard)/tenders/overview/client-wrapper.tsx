@@ -34,6 +34,7 @@ interface TendersOverviewClientProps {
   initialFilters: TenderFilters;
   clients: Array<{ id: string; name: string }>;
   organizationId: string;
+  basePath?: string;
 }
 
 export function TendersOverviewClient({
@@ -44,6 +45,7 @@ export function TendersOverviewClient({
   initialFilters,
   clients,
   organizationId,
+  basePath = '/tenders/overview',
 }: TendersOverviewClientProps) {
   const router = useRouter();
   const [tenders, setTenders] = useState(initialTenders);
@@ -65,7 +67,7 @@ export function TendersOverviewClient({
       if (nextPage > 1) params.set('page', String(nextPage));
 
       const query = params.toString();
-      router.replace(query ? `/tenders/overview?${query}` : '/tenders/overview', {
+      router.replace(query ? `${basePath}?${query}` : basePath, {
         scroll: false,
       });
     },
