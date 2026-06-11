@@ -45,26 +45,6 @@ export const dashboadLinks = {
           title: 'Tender Register',
           url: '/tenders',
         },
-        {
-          title: 'Open Tenders',
-          url: '/tenders?status=open',
-        },
-        {
-          title: 'Under Evaluation',
-          url: '/tenders?status=evaluation',
-        },
-        {
-          title: 'Closed',
-          url: '/tenders?status=closed',
-        },
-        {
-          title: 'Awarded',
-          url: '/tenders?status=awarded',
-        },
-        {
-          title: 'Lost / Rejected',
-          url: '/tenders?status=lost',
-        },
       ],
     },
     {
