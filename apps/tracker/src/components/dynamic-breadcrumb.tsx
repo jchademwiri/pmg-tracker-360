@@ -14,13 +14,12 @@ import { getTenderBreadcrumbLabel } from '@/server/tenders';
 
 const STATIC_SEGMENT_LABELS: Record<string, string> = {
   tenders: 'Tenders',
-  overview: 'Tender Register',
+  overview: 'Overview',
   create: 'Add Tender',
-  submitted: 'Under Evaluation',
   edit: 'Edit',
 };
 
-const TENDER_STATIC_ROUTES = new Set(['overview', 'create', 'submitted']);
+const TENDER_STATIC_ROUTES = new Set(['overview', 'create']);
 
 function formatSegmentName(segment: string) {
   return segment
