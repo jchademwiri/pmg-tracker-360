@@ -171,13 +171,13 @@ function countIssues(content: string, pattern: string): IssueCount[] {
       .split("|")
       .map((s) => s.trim())
       .filter(Boolean);
-    if (parts.length >= 5) {
+    if (parts.length >= 4) {
       issues.push({
         id: parts[0],
         issue: parts[1],
         location: parts[2],
         impact: parts[3],
-        effort: parts[4],
+        effort: parts[4] || "N/A",
       });
     }
   }
