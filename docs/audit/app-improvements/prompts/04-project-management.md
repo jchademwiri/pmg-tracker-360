@@ -75,6 +75,17 @@ Recommend the best UI for PO tables, PO detail pages, delivery tracking, and par
 
 ---
 
+## Output Format
+
+Write your findings to `docs/audit/app-improvements/[your-name]/project-management/findings.md` using the standard template defined in [`FINDINGS-TEMPLATE.md`](./FINDINGS-TEMPLATE.md).
+
+- Replace `[Prompt]` in the metadata with `04-project-management.md`
+- Fill in all sections — delete any that don't apply
+- Use the scoring rubric (1-10) consistently across all findings
+- List cross-referenced findings in the Cross-References section of the template
+
+---
+
 ## Cross-References
 
 - **Depends on:** [01-codebase-audit.md](./01-codebase-audit.md), [02-dashboard-audit.md](./02-dashboard-audit.md)

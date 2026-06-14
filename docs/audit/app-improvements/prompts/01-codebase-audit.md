@@ -131,6 +131,17 @@ Provide a clear summary of:
 
 ---
 
+## Output Format
+
+Write your findings to `docs/audit/app-improvements/[your-name]/codebase-audit/findings.md` using the standard template defined in [`FINDINGS-TEMPLATE.md`](./FINDINGS-TEMPLATE.md).
+
+- Replace `[Prompt]` in the metadata with `01-codebase-audit.md`
+- Fill in all sections — delete any that don't apply
+- Use the scoring rubric (1-10) consistently across all findings
+- List cross-referenced findings in the Cross-References section of the template
+
+---
+
 ## Cross-References
 
 - **Next:** [02-dashboard-audit.md](./02-dashboard-audit.md), [07-premium-ui.md](./07-premium-ui.md)

@@ -104,8 +104,21 @@ Document the ideal user journey for each persona:
 
 ---
 
+## Output Format
+
+Write your findings to `docs/audit/app-improvements/[your-name]/deliverables-roadmap/findings.md` using the standard template defined in [`FINDINGS-TEMPLATE.md`](./FINDINGS-TEMPLATE.md).
+
+- Replace `[Prompt]` in the metadata with `10-deliverables-roadmap.md`
+- Fill in all sections — delete any that don't apply
+- Use the scoring rubric (1-10) consistently across all findings
+- The Cross-References section should summarise key findings consumed from all previous prompts
+
+Additionally, produce the **FINAL-REPORT.md** in `docs/audit/app-improvements/[your-name]/` that synthesises all findings into the deliverable described in the task sections above.
+
+---
+
 ## Cross-References
 
 - **Depends on:** All sub-prompts (01–09)
-- **Output:** Final comprehensive report
+- **Output:** Final comprehensive report and FINAL-REPORT.md
 - **See also:** [00-index.md](./00-index.md) for full execution strategy

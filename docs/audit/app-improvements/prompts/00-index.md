@@ -49,6 +49,10 @@ Each sub-agent should receive:
 2. The `01-codebase-audit.md` findings (once available) as foundational context
 3. Any cross-referenced sub-prompt findings listed in the "Depends On" column
 
+### Findings Template
+
+All sub-agents must use [`FINDINGS-TEMPLATE.md`](./FINDINGS-TEMPLATE.md) when writing their `findings.md` files. This ensures consistent structure across all audit areas, making synthesis in Phase 5 straightforward.
+
 ### Final Synthesis
 
 After all sub-agents complete, the findings from `10-deliverables-roadmap.md` should be merged into a final comprehensive report.
