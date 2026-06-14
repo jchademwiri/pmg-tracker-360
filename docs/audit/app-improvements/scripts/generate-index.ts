@@ -143,7 +143,7 @@ function extractSummary(content: string): string {
 
 /** Extract a section between a ### heading and the next ### or ## heading */
 function extractSection(content: string, heading: string): string {
-  const regex = new RegExp(`###\\s+${escapeRegex(heading)}[\\s]*\\n`, "i");
+  const regex = new RegExp(`###\\s+${escapeRegex(heading)}[^\\n]*\\n`, "i");
   const match = content.match(regex);
   if (!match) return "";
 
