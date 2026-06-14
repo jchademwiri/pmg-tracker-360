@@ -30,6 +30,11 @@ For each sub-prompt:
 Save all results in docs/audit/app-improvements/[your-name]/ with subdirectories for each task.
 
 After all phases complete, use the final synthesis prompt (10-deliverables-roadmap.md) to produce a final summary in docs/audit/app-improvements/[your-name]/FINAL-REPORT.md.
+
+Finally, run the index generator to produce a consolidated findings index:
+bun run docs/audit/app-improvements/scripts/generate-index.ts docs/audit/app-improvements/[your-name]
+
+This will create an INDEX.md summarising all completed audits with scores, issue counts, quick wins, and missing audit tracking.
 ```
 
 ---
@@ -65,4 +70,5 @@ docs/audit/app-improvements/results/
   deliverables-roadmap/
     findings.md
   FINAL-REPORT.md
+  INDEX.md
 ```

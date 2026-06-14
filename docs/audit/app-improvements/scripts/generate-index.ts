@@ -220,10 +220,13 @@ async function main() {
 
   let files: string[];
   try {
-    await readdir(resultsDir);
     files = await findFindingsFiles(resultsDir);
-  } catch {
-    console.error(`❌ Directory not found: ${resultsDir}`);
+  } catch (err: any) {
+    if (err?.code === "ENOENT") {
+      console.error(`❌ Directory not found: ${resultsDir}`);
+    } else {
+      console.error(`❌ Error reading directory: ${err?.message || err}`);
+    }
     console.log(
       "\nUsage: bun run scripts/generate-index.ts [results-directory]"
     );
