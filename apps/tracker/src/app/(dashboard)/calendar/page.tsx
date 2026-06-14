@@ -1,5 +1,6 @@
+import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
-import { CalendarClientWrapper } from './calendar-client-wrapper';
+import { ClientCalendar } from '@/components/dashboard/client-calendar';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,9 +28,11 @@ export default async function CalendarPage() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 bg-background/20 rounded-xl border border-white/5 overflow-hidden">
-        <CalendarClientWrapper />
-      </div>
+      <Card className="flex flex-col flex-1 border-white/10 bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden min-h-0">
+        <CardContent className="p-4 flex-1 min-h-0 bg-background/40">
+          <ClientCalendar className="h-full" />
+        </CardContent>
+      </Card>
     </div>
   );
 }

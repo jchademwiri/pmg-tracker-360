@@ -23,11 +23,18 @@ interface MiniCalendarWidgetProps {
 export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
   const [isPending, startTransition] = useTransition();
   const [events, setEvents] = useState<EventInput[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const today = new Date();
+    return today.toLocaleString('default', {
+      month: 'long',
+      year: 'numeric',
+    });
+  });
 
   const headerToolbar = useMemo(
     () => ({
       left: 'prev',
-      center: 'title',
+      center: '',
       right: 'next',
     }),
     []
@@ -35,6 +42,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
 
   const handleDatesSet = useCallback(
     async (arg: DatesSetArg) => {
+      setCurrentMonth(arg.view.title);
       const startIso = arg.startStr;
       const endIso = arg.endStr;
       startTransition(async () => {
@@ -57,10 +65,6 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
   );
 
   const today = new Date();
-  const currentMonth = today.toLocaleString('default', {
-    month: 'long',
-    year: 'numeric',
-  });
 
   const upcomingEvents = useMemo(() => {
     const upcoming: Array<{
@@ -126,19 +130,57 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
     return days;
   };
 
+  const getEventEmoji = (type: CalendarType) => {
+    switch (type) {
+      case 'tender_submission': return '📝';
+      case 'po_expected_delivery': return '🚚';
+      case 'po_delivered': return '✅';
+      default: return '📅';
+    }
+  };
+
+  const getUrgencyBadge = (days: number) => {
+    if (days === 0) {
+      return (
+        <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse">
+          Today
+        </span>
+      );
+    }
+    if (days === 1) {
+      return (
+        <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          Tomorrow
+        </span>
+      );
+    }
+    if (days < 0) {
+      return (
+        <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          Overdue
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700/30">
+        in {days} days
+      </span>
+    );
+  };
+
   return (
-    <div className={cn('flex gap-4', className)}>
+    <div className={cn('flex flex-col md:flex-row gap-4 h-full', className)}>
       {/* Mini Calendar */}
-      <div className="w-1/2 min-w-[200px]">
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
+      <div className="w-full md:w-1/2 min-w-[200px] h-full">
+        <Card className="h-full border-white/10 bg-card/45 backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
+          <CardHeader className="pb-2 shrink-0">
+            <CardTitle className="text-sm font-semibold tracking-tight text-foreground/95">
               {currentMonth}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2">
+          <CardContent className="p-3 flex-1 min-h-0 bg-background/20 overflow-auto">
             {isPending && (
-              <div className="h-0.5 w-full bg-green-400 animate-pulse rounded-full mb-2" />
+              <div className="h-0.5 w-full bg-primary animate-pulse rounded-full mb-2" />
             )}
             <div className="mini-calendar text-xs">
               <FullCalendar
@@ -174,6 +216,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                 }
                 .mini-calendar .fc-button:hover {
                   background: rgba(255, 255, 255, 0.05);
+                  color: hsl(var(--foreground));
                 }
                 .mini-calendar .fc-theme-standard th {
                   border: none;
@@ -198,12 +241,14 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                 .mini-calendar .fc-daygrid-day-number {
                   font-size: 0.7rem;
                   padding: 2px;
+                  color: hsl(var(--foreground)/0.8);
                 }
                 .mini-calendar .fc-event {
                   font-size: 0.6rem;
                   padding: 1px 2px;
                   border-radius: 2px;
                   margin-bottom: 1px;
+                  border: none;
                 }
                 .mini-calendar .fc-day-today .fc-daygrid-day-number {
                   background-color: hsl(var(--primary));
@@ -234,20 +279,23 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
       </div>
 
       {/* Upcoming Events List */}
-      <div className="w-1/2 min-w-[200px]">
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
+      <div className="w-full md:w-1/2 min-w-[200px] h-full">
+        <Card className="h-full border-white/10 bg-card/45 backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
+          <CardHeader className="pb-2 shrink-0">
+            <CardTitle className="text-sm font-semibold tracking-tight text-foreground/95">
               Upcoming Events
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2">
+          <CardContent className="p-3 flex-1 min-h-0 bg-background/20 overflow-auto scrollbar-thin">
             {upcomingEvents.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                No upcoming events
-              </p>
+              <div className="flex flex-col items-center justify-center h-full py-8 text-center">
+                <span className="text-2xl mb-1 opacity-50">📅</span>
+                <p className="text-xs text-muted-foreground">
+                  No upcoming events scheduled
+                </p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {upcomingEvents.map((event) => {
                   const daysUntil = getDaysUntil(event.date);
                   return (
@@ -255,29 +303,24 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                       key={event.id}
                       href={
                         event.type === 'tender_submission'
-                          ? '/tenders'
-                          : '/projects'
+                          ? `/tenders/${event.id}`
+                          : `/projects/purchase-orders/${event.id}`
                       }
-                      className="block"
+                      className="block group"
                     >
-                      <div className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 transition-colors">
+                      <div className="group flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-background/30 hover:bg-muted/30 hover:border-white/10 hover:-translate-y-0.5 transform transition-all duration-300 ease-out">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium truncate">
-                            {event.title}
+                          <p className="text-xs font-semibold truncate flex items-center gap-1.5 text-foreground group-hover:text-primary transition-colors">
+                            <span className="text-sm shrink-0">{getEventEmoji(event.type)}</span>
+                            <span className="truncate">{event.title}</span>
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground ml-6 mt-0.5">
                             {formatDate(event.date)}
                           </p>
                         </div>
-                        <div className="flex flex-col items-end gap-1 ml-2">
+                        <div className="flex flex-col items-end gap-1.5 ml-2">
                           {getEventBadge(event.type)}
-                          <span className="text-xs text-muted-foreground">
-                            {daysUntil === 0
-                              ? 'Today'
-                              : daysUntil === 1
-                                ? 'Tomorrow'
-                                : `${daysUntil} days`}
-                          </span>
+                          {getUrgencyBadge(daysUntil)}
                         </div>
                       </div>
                     </Link>
