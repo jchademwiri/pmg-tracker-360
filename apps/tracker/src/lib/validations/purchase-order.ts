@@ -6,7 +6,7 @@ export const PurchaseOrderCreateSchema = z.object({
   supplierName: z.string().optional(),
   description: z.string().min(1, 'Description is required'),
   totalAmount: z.string().min(1, 'Total amount is required'),
-  status: z.enum(['open', 'sent', 'delivered']),
+  status: z.enum(['open', 'sent', 'partially_delivered', 'delivered', 'completed', 'cancelled', 'disputed']),
   poDate: z.date().optional(),
   expectedDeliveryDate: z.date().optional(),
   deliveredAt: z.date().optional(),
@@ -19,7 +19,7 @@ export const PurchaseOrderUpdateSchema =
   });
 
 export const PurchaseOrderStatusUpdateSchema = z.object({
-  status: z.enum(['open', 'sent', 'delivered']),
+  status: z.enum(['open', 'sent', 'partially_delivered', 'delivered', 'completed', 'cancelled', 'disputed']),
 });
 
 export type PurchaseOrderCreateInput = z.infer<

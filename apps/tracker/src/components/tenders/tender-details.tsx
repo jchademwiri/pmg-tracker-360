@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,23 +73,7 @@ interface TenderDetailsProps {
   extensions: ExtendedTenderExtension[];
 }
 
-const statusColors = {
-  open: 'bg-green-100/10 text-green-400 border border-green-500/20',
-  closed: 'bg-zinc-800 text-zinc-400 border border-zinc-700/30',
-  evaluation: 'bg-blue-100/10 text-blue-400 border border-blue-500/20',
-  awarded: 'bg-amber-100/10 text-amber-400 border border-amber-500/20',
-  lost: 'bg-red-100/10 text-red-400 border border-red-500/20',
-  cancelled: 'bg-zinc-100/10 text-zinc-400 border border-zinc-500/20',
-};
 
-const statusLabels = {
-  open: 'Open',
-  closed: 'Closed',
-  evaluation: 'Evaluation',
-  awarded: 'Appointed / Awarded',
-  lost: 'Rejected / Lost',
-  cancelled: 'Cancelled',
-};
 
 export function TenderDetails({
   tender,
@@ -259,19 +243,7 @@ export function TenderDetails({
                         Status
                       </label>
                       <div className="mt-1">
-                        <Badge
-                          className={
-                            statusColors[
-                              tender.status as keyof typeof statusColors
-                            ]
-                          }
-                        >
-                          {
-                            statusLabels[
-                              tender.status as keyof typeof statusLabels
-                            ]
-                          }
-                        </Badge>
+                        <StatusBadge status={tender.status} />
                       </div>
                     </div>
 
@@ -571,9 +543,7 @@ export function TenderDetails({
                 <CardContent className="space-y-2">
                   <div className="text-sm text-muted-foreground mb-3">
                     Current Status:{' '}
-                    <span className="font-medium">
-                      {statusLabels[tender.status as keyof typeof statusLabels]}
-                    </span>
+                    <StatusBadge status={tender.status} />
                   </div>
 
                    {tender.status !== 'evaluation' && (
@@ -676,16 +646,12 @@ export function TenderDetails({
         </TabsContent>
 
         <TabsContent value="documents" className="mt-6">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-2">
-                Document management is currently unavailable
-              </p>
-              <p className="text-sm text-muted-foreground/70">
-                Coming soon in a future update
-              </p>
-            </CardContent>
-          </Card>
+          <DocumentManager
+            organizationId={organizationId}
+            entityId={tender.id}
+            entityType="tender"
+            initialDocuments={documents}
+          />
         </TabsContent>
 
         <TabsContent value="extensions" className="mt-6">

@@ -430,11 +430,11 @@ export async function updatePurchaseOrderStatus(
       return { success: false, error: 'Purchase order not found' };
     }
 
-    // Check if PO is already delivered - cannot change status once delivered
-    if (existingPO[0].status === 'delivered') {
+    // Check if PO is in a terminal state - cannot change status once completed or cancelled
+    if (existingPO[0].status === 'completed' || existingPO[0].status === 'cancelled') {
       return {
         success: false,
-        error: 'Cannot change status of a delivered purchase order',
+        error: 'Cannot change status of a completed or cancelled purchase order',
       };
     }
 

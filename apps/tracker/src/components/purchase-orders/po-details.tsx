@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,17 +53,7 @@ interface PODetailsProps {
   organizationId: string;
 }
 
-const statusColors = {
-  open: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800',
-};
 
-const statusLabels = {
-  open: 'Open',
-  sent: 'Sent',
-  delivered: 'Delivered',
-};
 
 export function PODetails({ po, organizationId }: PODetailsProps) {
   const router = useRouter();
@@ -94,7 +84,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
   };
 
   const handleStatusUpdate = async (
-    newStatus: 'open' | 'sent' | 'delivered'
+    newStatus: 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed'
   ) => {
     startTransition(async () => {
       const result = await updatePurchaseOrderStatus(organizationId, po.id, {
@@ -199,13 +189,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                     Status
                   </label>
                   <div className="mt-1">
-                    <Badge
-                      className={
-                        statusColors[po.status as keyof typeof statusColors]
-                      }
-                    >
-                      {statusLabels[po.status as keyof typeof statusLabels]}
-                    </Badge>
+                    <StatusBadge status={po.status} />
                   </div>
                 </div>
 
@@ -321,12 +305,10 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
             <CardContent className="space-y-2">
               <div className="text-sm text-muted-foreground mb-3">
                 Current Status:{' '}
-                <span className="font-medium">
-                  {statusLabels[po.status as keyof typeof statusLabels]}
-                </span>
+                <StatusBadge status={po.status} />
               </div>
 
-              {po.status !== 'sent' && (
+              {po.status === 'open' && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -339,7 +321,20 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                 </Button>
               )}
 
-              {po.status !== 'delivered' && (
+              {po.status === 'sent' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start cursor-pointer"
+                  onClick={() => handleStatusUpdate('partially_delivered')}
+                  disabled={isPending}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Mark as Partially Delivered
+                </Button>
+              )}
+
+              {(po.status === 'sent' || po.status === 'partially_delivered') && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -349,6 +344,30 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                 >
                   <Package className="h-4 w-4 mr-2" />
                   Mark as Delivered
+                </Button>
+              )}
+
+              {po.status === 'delivered' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start cursor-pointer"
+                  onClick={() => handleStatusUpdate('completed')}
+                  disabled={isPending}
+                >
+                  Mark as Completed
+                </Button>
+              )}
+
+              {po.status !== 'cancelled' && po.status !== 'completed' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start cursor-pointer text-destructive hover:text-destructive"
+                  onClick={() => handleStatusUpdate('cancelled')}
+                  disabled={isPending}
+                >
+                  Mark as Cancelled
                 </Button>
               )}
             </CardContent>

@@ -86,7 +86,7 @@ export default async function EditPurchaseOrderPage({
           supplierName: po.supplierName || undefined,
           description: po.description,
           totalAmount: po.totalAmount,
-          status: po.status as 'open' | 'sent' | 'delivered',
+          status: po.status as 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed',
           poDate: po.poDate || undefined,
           expectedDeliveryDate: po.expectedDeliveryDate || undefined,
           deliveryAddress: po.deliveryAddress || undefined,

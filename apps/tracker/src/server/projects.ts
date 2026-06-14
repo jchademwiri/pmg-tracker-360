@@ -689,7 +689,7 @@ export async function getProjectStats(organizationId: string) {
       );
 
     // Active POs: sent and delivered
-    const activePOStatuses = ['sent', 'delivered'];
+    const activePOStatuses = ['open', 'sent', 'partially_delivered', 'delivered'];
     const activePOs = poStats.filter((po) =>
       activePOStatuses.includes(po.status)
     ).length;

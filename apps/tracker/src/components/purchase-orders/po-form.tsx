@@ -38,7 +38,7 @@ const poFormSchema = z
     supplierName: z.string().optional(),
     description: z.string().min(1, 'Description is required'),
     totalAmount: z.string().min(1, 'Total amount is required'),
-    status: z.enum(['open', 'sent', 'delivered']),
+    status: z.enum(['open', 'sent', 'partially_delivered', 'delivered', 'completed', 'cancelled', 'disputed']),
     poDate: z.date().optional(),
     expectedDeliveryDate: z.date().optional(),
     deliveryAddress: z.string().optional(),
@@ -67,7 +67,7 @@ interface POFormProps {
     supplierName?: string;
     description: string;
     totalAmount: string;
-    status: 'open' | 'sent' | 'delivered';
+    status: 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed';
     poDate?: Date;
     expectedDeliveryDate?: Date;
     deliveryAddress?: string;
@@ -271,7 +271,11 @@ export function POForm({
                           <SelectContent>
                              <SelectItem value="open">Open</SelectItem>
                              <SelectItem value="sent">Sent</SelectItem>
+                             <SelectItem value="partially_delivered">Partially Delivered</SelectItem>
                              <SelectItem value="delivered">Delivered</SelectItem>
+                             <SelectItem value="completed">Completed</SelectItem>
+                             <SelectItem value="cancelled">Cancelled</SelectItem>
+                             <SelectItem value="disputed">Disputed</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

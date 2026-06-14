@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { toast } from 'sonner';
 import {
   Table,
@@ -71,17 +71,7 @@ interface POListProps {
   projectId?: string; // Optional: filter by specific project
 }
 
-const statusColors = {
-  open: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800',
-};
 
-const statusLabels = {
-  open: 'Open',
-  sent: 'Sent',
-  delivered: 'Delivered',
-};
 
 export function POList({
   organizationId,
@@ -205,7 +195,11 @@ export function POList({
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="open">Open</SelectItem>
               <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="partially_delivered">Partially Delivered</SelectItem>
               <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="disputed">Disputed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -288,13 +282,7 @@ export function POList({
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          className={
-                            statusColors[po.status as keyof typeof statusColors]
-                          }
-                        >
-                          {statusLabels[po.status as keyof typeof statusLabels]}
-                        </Badge>
+                        <StatusBadge status={po.status} />
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
@@ -373,19 +361,7 @@ export function POList({
                           <h3 className="font-medium text-blue-600 group-hover:text-blue-700 transition-colors">
                             {po.poNumber}
                           </h3>
-                          <Badge
-                            className={
-                              statusColors[
-                                po.status as keyof typeof statusColors
-                              ]
-                            }
-                          >
-                            {
-                              statusLabels[
-                                po.status as keyof typeof statusLabels
-                              ]
-                            }
-                          </Badge>
+                          <StatusBadge status={po.status} />
                         </div>
 
                         <div className="text-sm text-gray-900 mb-1">

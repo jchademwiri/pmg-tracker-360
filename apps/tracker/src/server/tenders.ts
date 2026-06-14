@@ -878,9 +878,7 @@ export async function getTendersWithSorting(
       totalPages: 0,
     };
   }
-}
-
-// Get tenders available for project creation (won status, not linked to projects)
+}    // Get tenders available for project creation (awarded status, not linked to projects)
 export async function getAvailableTendersForProjects(
   organizationId: string,
   clientId?: string,
@@ -894,7 +892,7 @@ export async function getAvailableTendersForProjects(
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
       isNull(tender.deletedAt),
-      eq(tender.status, 'won'),
+      eq(tender.status, 'awarded'),
       // Exclude tenders that are already linked to projects
       isNull(project.tenderId)
     );

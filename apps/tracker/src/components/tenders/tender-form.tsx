@@ -779,14 +779,12 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
               </p>
             </CardHeader>
             <CardContent className="space-y-6 p-6">
-              <div className="text-center py-8 border-2 border-dashed rounded-lg bg-muted/30">
-                <p className="text-muted-foreground mb-2">
-                  Document upload is currently unavailable
-                </p>
-                <p className="text-sm text-muted-foreground/70">
-                  Coming soon in a future update
-                </p>
-              </div>
+              <FileUploader
+                value={files}
+                onValueChange={setFiles}
+                maxFiles={5}
+                disabled={isPending}
+              />
             </CardContent>
           </Card>
 

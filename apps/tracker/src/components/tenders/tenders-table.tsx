@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -56,33 +56,7 @@ interface TendersTableProps {
   className?: string;
 }
 
-const statusLabels = {
-  open: 'Open',
-  closed: 'Closed',
-  evaluation: 'Evaluation',
-  awarded: 'Appointed / Awarded',
-  lost: 'Rejected / Lost',
-  cancelled: 'Cancelled',
-};
 
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'open':
-      return 'bg-green-500/10 text-green-400 border border-green-500/20';
-    case 'closed':
-      return 'bg-zinc-800 text-zinc-400 border border-zinc-700/30';
-    case 'evaluation':
-      return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-    case 'awarded':
-      return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-    case 'lost':
-      return 'bg-red-500/10 text-red-400 border border-red-500/20';
-    case 'cancelled':
-      return 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20';
-    default:
-      return 'bg-zinc-800 text-zinc-400 border border-zinc-700/30';
-  }
-}
 
 
 function getDaysUntilDeadline(submissionDate: Date | null): number | null {
@@ -181,9 +155,7 @@ export function TendersTable({
                             {tender.description || '-'}
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusColor(tender.status)}>
-                              {statusLabels[tender.status as keyof typeof statusLabels] || tender.status}
-                            </Badge>
+                            <StatusBadge status={tender.status} />
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             {formatCurrency(Number(tender.value || 0))}
