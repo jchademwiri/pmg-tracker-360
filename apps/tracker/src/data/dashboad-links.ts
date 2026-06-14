@@ -28,12 +28,7 @@ export const dashboadLinks = {
   ],
   procurement: [
     {
-      title: 'Clients Directory',
-      url: '/clients',
-      icon: Users,
-    },
-    {
-      title: 'Tender Pipeline',
+      title: 'Tender Management',
       url: '#',
       icon: ClipboardList,
       items: [
@@ -48,7 +43,7 @@ export const dashboadLinks = {
       ],
     },
     {
-      title: 'Project Tracking',
+      title: 'Project Delivery',
       url: '#',
       icon: FolderKanban,
       items: [
@@ -65,6 +60,11 @@ export const dashboadLinks = {
           url: '/projects/purchase-orders',
         },
       ],
+    },
+    {
+      title: 'Clients Directory',
+      url: '/clients',
+      icon: Users,
     },
   ],
 };

@@ -71,7 +71,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={mainHubItems} label="Overview" />
-        <NavMain items={procurementItems} label="Procurement Cycle" />
+        <NavMain items={procurementItems} label="Operations" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
