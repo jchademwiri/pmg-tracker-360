@@ -7,6 +7,8 @@ import {
   tender,
   purchaseOrder,
   organization,
+  projectActivity,
+  projectRisk,
 } from '@pmg/db/schema';
 import { validateSessionAndOrg } from './utils';
 import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
@@ -16,9 +18,13 @@ import {
   ProjectCreateSchema,
   ProjectUpdateSchema,
   ProjectStatusUpdateSchema,
+  ProjectRiskSchema,
+  ProjectCloseOutSchema,
   type ProjectCreateInput,
   type ProjectUpdateInput,
   type ProjectStatusUpdateInput,
+  type ProjectRiskInput,
+  type ProjectCloseOutInput,
 } from '@/lib/validations/project';
 import type { RecentActivity } from '@/types/activity';
 import { nowInSAST } from '@/lib/timezone';
@@ -57,34 +63,40 @@ export async function getProjects(
       whereCondition = and(whereCondition, eq(project.status, status));
     }
 
-    const projects = await db
-      .select({
-        id: project.id,
-        projectNumber: project.projectNumber,
-        description: project.description,
-        status: project.status,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        client: {
-          id: client.id,
-          name: client.name,
-          contactName: client.contactName,
-          contactEmail: client.contactEmail,
-          contactPhone: client.contactPhone,
+    const projectsData = await db.query.project.findMany({
+      where: whereCondition,
+      orderBy: [desc(project.createdAt)],
+      limit,
+      offset,
+      with: {
+        client: true,
+        tender: true,
+        purchaseOrders: {
+          where: isNull(purchaseOrder.deletedAt),
         },
-        tender: {
-          id: tender.id,
-          tenderNumber: tender.tenderNumber,
-          description: tender.description,
-        },
-      })
-      .from(project)
-      .leftJoin(client, eq(project.clientId, client.id))
-      .leftJoin(tender, eq(project.tenderId, tender.id))
-      .where(whereCondition)
-      .orderBy(desc(project.createdAt))
-      .limit(limit)
-      .offset(offset);
+      },
+    });
+
+    const projects = projectsData.map((proj) => {
+      const pos = proj.purchaseOrders || [];
+      const totalPOAmount = pos.reduce((sum, po) => sum + parseFloat(po.totalAmount || '0'), 0);
+      const deliveredAmount = pos
+        .filter((po) => po.status === 'delivered' || po.status === 'completed')
+        .reduce((sum, po) => sum + parseFloat(po.totalAmount || '0'), 0);
+      const partialAmount = pos
+        .filter((po) => po.status === 'partially_delivered')
+        .reduce((sum, po) => sum + parseFloat(po.totalAmount || '0') * 0.5, 0);
+
+      const totalDelivered = deliveredAmount + partialAmount;
+      const completionPercentage = totalPOAmount > 0
+        ? Math.round((totalDelivered / totalPOAmount) * 100)
+        : 0;
+
+      return {
+        ...proj,
+        completionPercentage,
+      };
+    });
 
     // Get total count for pagination
     const totalCount = await db
@@ -759,3 +771,302 @@ export async function getProjectStats(organizationId: string) {
     };
   }
 }
+
+// Log project activity helper
+export async function logProjectActivity(
+  organizationId: string,
+  projectId: string,
+  activityType: string,
+  description: string,
+  userId?: string
+) {
+  try {
+    await db.insert(projectActivity).values({
+      id: crypto.randomUUID(),
+      organizationId,
+      projectId,
+      activityType,
+      description,
+      userId: userId || null,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error logging project activity:', error);
+    return { success: false, error };
+  }
+}
+
+// Get activities for a specific project
+export async function getProjectActivities(
+  organizationId: string,
+  projectId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const activities = await db.query.projectActivity.findMany({
+      where: and(
+        eq(projectActivity.projectId, projectId),
+        eq(projectActivity.organizationId, organizationId)
+      ),
+      orderBy: [desc(projectActivity.createdAt)],
+      with: {
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return { success: true, activities };
+  } catch (error: any) {
+    console.error('Error fetching project activities:', error);
+    return { success: false, error: error.message || 'Failed to fetch project activities' };
+  }
+}
+
+// Add a project risk
+export async function addProjectRisk(
+  organizationId: string,
+  projectId: string,
+  data: ProjectRiskInput
+) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+    const validatedData = ProjectRiskSchema.parse(data);
+
+    // Verify project exists
+    const proj = await db
+      .select({ id: project.id, projectNumber: project.projectNumber })
+      .from(project)
+      .where(and(eq(project.id, projectId), eq(project.organizationId, organizationId)))
+      .limit(1);
+
+    if (proj.length === 0) {
+      return { success: false, error: 'Project not found' };
+    }
+
+    const newRisk = await db
+      .insert(projectRisk)
+      .values({
+        id: crypto.randomUUID(),
+        organizationId,
+        projectId,
+        title: validatedData.title,
+        description: validatedData.description,
+        severity: validatedData.severity,
+        mitigationPlan: validatedData.mitigationPlan || null,
+        status: 'open',
+      })
+      .returning();
+
+    // Log activity
+    await logProjectActivity(
+      organizationId,
+      projectId,
+      'risk_recorded',
+      `Risk logged: "${validatedData.title}" (${validatedData.severity} severity)`,
+      userId
+    );
+
+    revalidatePath(`/projects/${projectId}`);
+    return { success: true, risk: newRisk[0] };
+  } catch (error: any) {
+    console.error('Error adding project risk:', error);
+    if (error instanceof z.ZodError) {
+      return { success: false, error: 'Invalid input data', details: error.errors };
+    }
+    return { success: false, error: error.message || 'Failed to add project risk' };
+  }
+}
+
+// Get risks for a specific project
+export async function getProjectRisks(
+  organizationId: string,
+  projectId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const risks = await db.query.projectRisk.findMany({
+      where: and(
+        eq(projectRisk.projectId, projectId),
+        eq(projectRisk.organizationId, organizationId)
+      ),
+      orderBy: [desc(projectRisk.createdAt)],
+    });
+
+    return { success: true, risks };
+  } catch (error: any) {
+    console.error('Error fetching project risks:', error);
+    return { success: false, error: error.message || 'Failed to fetch project risks' };
+  }
+}
+
+// Update project risk status/mitigation
+export async function updateProjectRiskStatus(
+  organizationId: string,
+  projectId: string,
+  riskId: string,
+  status: 'open' | 'mitigated' | 'closed',
+  mitigationPlan?: string
+) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+
+    // Verify risk exists
+    const riskData = await db
+      .select()
+      .from(projectRisk)
+      .where(and(eq(projectRisk.id, riskId), eq(projectRisk.projectId, projectId)))
+      .limit(1);
+
+    if (riskData.length === 0) {
+      return { success: false, error: 'Risk not found' };
+    }
+
+    const updatedRisk = await db
+      .update(projectRisk)
+      .set({
+        status,
+        mitigationPlan: mitigationPlan !== undefined ? mitigationPlan : undefined,
+        updatedAt: new Date(),
+      })
+      .where(eq(projectRisk.id, riskId))
+      .returning();
+
+    // Log activity
+    await logProjectActivity(
+      organizationId,
+      projectId,
+      'risk_recorded',
+      `Risk "${riskData[0].title}" status updated to ${status}`,
+      userId
+    );
+
+    revalidatePath(`/projects/${projectId}`);
+    return { success: true, risk: updatedRisk[0] };
+  } catch (error: any) {
+    console.error('Error updating project risk:', error);
+    return { success: false, error: error.message || 'Failed to update project risk' };
+  }
+}
+
+// Submit project close-out
+export async function submitProjectCloseOut(
+  organizationId: string,
+  projectId: string,
+  data: ProjectCloseOutInput
+) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+    const validatedData = ProjectCloseOutSchema.parse(data);
+
+    // Verify project exists
+    const proj = await db
+      .select({ id: project.id, projectNumber: project.projectNumber })
+      .from(project)
+      .where(and(eq(project.id, projectId), eq(project.organizationId, organizationId)))
+      .limit(1);
+
+    if (proj.length === 0) {
+      return { success: false, error: 'Project not found' };
+    }
+
+    const updatedProject = await db
+      .update(project)
+      .set({
+        status: 'completed',
+        closeOutDate: new Date(),
+        closeOutNotes: validatedData.closeOutNotes,
+        closeOutSubmittedBy: userId,
+        updatedAt: new Date(),
+      })
+      .where(eq(project.id, projectId))
+      .returning();
+
+    // Log activity
+    await logProjectActivity(
+      organizationId,
+      projectId,
+      'close_out',
+      `Project closed out. Notes: "${validatedData.closeOutNotes.slice(0, 60)}${validatedData.closeOutNotes.length > 60 ? '...' : ''}"`,
+      userId
+    );
+
+    revalidatePath('/projects');
+    revalidatePath(`/projects/${projectId}`);
+    return { success: true, project: updatedProject[0] };
+  } catch (error: any) {
+    console.error('Error closing out project:', error);
+    if (error instanceof z.ZodError) {
+      return { success: false, error: 'Invalid input data', details: error.errors };
+    }
+    return { success: false, error: error.message || 'Failed to close out project' };
+  }
+}
+
+// Get project details, POs, activities, risks, and documents for the workspace
+export async function getProjectWorkspaceData(
+  organizationId: string,
+  projectId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const projectData = await db.query.project.findFirst({
+      where: and(
+        eq(project.id, projectId),
+        eq(project.organizationId, organizationId),
+        isNull(project.deletedAt)
+      ),
+      with: {
+        client: true,
+        tender: true,
+        purchaseOrders: {
+          where: isNull(purchaseOrder.deletedAt),
+        },
+        activities: {
+          orderBy: [desc(projectActivity.createdAt)],
+          with: {
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        risks: {
+          orderBy: [desc(projectRisk.createdAt)],
+        },
+        documents: {
+          with: {
+            uploader: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!projectData) {
+      return { success: false, error: 'Project not found' };
+    }
+
+    return { success: true, project: projectData };
+  } catch (error: any) {
+    console.error('Error fetching project workspace data:', error);
+    return { success: false, error: error.message || 'Failed to fetch project workspace data' };
+  }
+}
+
+

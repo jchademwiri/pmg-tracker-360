@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Clock, FileWarning, Truck, Briefcase, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Clock, FileWarning, Truck, Briefcase, ChevronRight, FileText, Calendar } from 'lucide-react';
 import { getOperationalRisks } from '@/server/dashboard';
 
 interface OperationalRisksProps {
@@ -16,7 +16,9 @@ export async function OperationalRisks({ organizationId }: OperationalRisksProps
     risks.overdueDeliveries.count +
     risks.awardedAwaitingConversion.count +
     risks.expiringValidity.count +
-    risks.missingDocuments.count;
+    risks.missingDocuments.count +
+    (risks.awaitingPOs?.count || 0) +
+    (risks.delayedProjects?.count || 0);
 
   if (totalRisks === 0) {
     return null; // Don't show the risk panel if there are no operational risks
@@ -60,7 +62,7 @@ export async function OperationalRisks({ organizationId }: OperationalRisksProps
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {/* 1. Overdue Deliveries */}
           <Card className="bg-background/40 hover:bg-accent/40 border-border/40 transition-all flex flex-col justify-between">
             <CardHeader className="pb-2">
@@ -198,6 +200,76 @@ export async function OperationalRisks({ organizationId }: OperationalRisksProps
                       </div>
                       <span className="text-[10px] text-muted-foreground truncate">{t.description || 'No description'}</span>
                       <span className="text-[9px] text-pink-500 mt-1">Requires upload</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 5. Awaiting PO Setup */}
+          <Card className="bg-background/40 hover:bg-accent/40 border-border/40 transition-all flex flex-col justify-between">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Awaiting PO Setup</span>
+                <FileText className="h-4 w-4 text-amber-500" />
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl font-bold tracking-tight">{risks.awaitingPOs?.count || 0}</span>
+                <span className="text-xs text-muted-foreground">Active project{risks.awaitingPOs?.count !== 1 ? 's' : ''}</span>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 flex-grow">
+              {(!risks.awaitingPOs || risks.awaitingPOs.count === 0) ? (
+                <p className="text-xs text-muted-foreground mt-2">All active projects have POs configured.</p>
+              ) : (
+                <div className="mt-3 space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                  {risks.awaitingPOs.items.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/projects/${p.id}`}
+                      className="group flex flex-col p-2 rounded border border-border/30 bg-background/30 hover:border-amber-500/30 transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-amber-500 uppercase">{p.projectNumber}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground truncate">{p.clientName}</span>
+                      <span className="text-[9px] text-zinc-500 mt-1">Created: {formatDate(p.createdAt)}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 6. Delayed Projects */}
+          <Card className="bg-background/40 hover:bg-accent/40 border-border/40 transition-all flex flex-col justify-between">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Delayed Projects</span>
+                <Calendar className="h-4 w-4 text-red-500" />
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl font-bold tracking-tight">{risks.delayedProjects?.count || 0}</span>
+                <span className="text-xs text-muted-foreground">Past end date</span>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 flex-grow">
+              {(!risks.delayedProjects || risks.delayedProjects.count === 0) ? (
+                <p className="text-xs text-muted-foreground mt-2">No projects have exceeded their timeline.</p>
+              ) : (
+                <div className="mt-3 space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                  {risks.delayedProjects.items.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/projects/${p.id}`}
+                      className="group flex flex-col p-2 rounded border border-border/30 bg-background/30 hover:border-red-500/30 transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-red-500 uppercase">{p.projectNumber}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground truncate">{p.clientName}</span>
+                      <span className="text-[9px] text-red-400 mt-1">Ended: {formatDate(p.contractEndDate)}</span>
                     </Link>
                   ))}
                 </div>

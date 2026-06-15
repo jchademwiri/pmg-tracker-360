@@ -197,13 +197,13 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 4.1 | **Add POs to project detail** | Project page doesn't show linked POs | M | `projects/[id]/page.tsx` | Pending |
-| 4.2 | **Add contract/linked tender summaries** | No context about originating tender | M | Project detail | Pending |
-| 4.3 | **Add project delivery/risk overview** | Delivery health invisible in project context | M | Project detail | Pending |
-| 4.4 | **Add activity timeline** | No activity log across lifecycle events | L | Project detail + schema | Pending |
-| 4.5 | **Add project progress tracking** | No way to see project completion % | M | Project register + detail | Pending |
-| 4.6 | **Add project close-out workflow** | Projects linger as "active" indefinitely | M | Project server actions | Pending |
-| 4.7 | **Add awaiting-PO and delayed-project queues** | Managers can't see project health | M | Dashboard | Pending |
+| 4.1 | **Add POs to project detail** | Project page doesn't show linked POs | M | `projects/[id]/page.tsx` | Completed |
+| 4.2 | **Add contract/linked tender summaries** | No context about originating tender | M | Project detail | Completed |
+| 4.3 | **Add project delivery/risk overview** | Delivery health invisible in project context | M | Project detail | Completed |
+| 4.4 | **Add activity timeline** | No activity log across lifecycle events | L | Project detail + schema | Completed |
+| 4.5 | **Add project progress tracking** | No way to see project completion % | M | Project register + detail | Completed |
+| 4.6 | **Add project close-out workflow** | Projects linger as "active" indefinitely | M | Project server actions | Completed |
+| 4.7 | **Add awaiting-PO and delayed-project queues** | Managers can't see project health | M | Dashboard | Completed |
 
 ### Project Detail Tabs
 
@@ -212,12 +212,12 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 ```
 
 ### Deliverables
-- [ ] Project detail shows linked POs with delivery status
-- [ ] Contract and originating tender summaries visible
-- [ ] Delivery progress overview with risk indicators
-- [ ] Activity timeline for all project events
-- [ ] Project completion tracking (percentage)
-- [ ] Project close-out workflow
+- [x] Project detail shows linked POs with delivery status
+- [x] Contract and originating tender summaries visible
+- [x] Delivery progress overview with risk indicators
+- [x] Activity timeline for all project events
+- [x] Project completion tracking (percentage)
+- [x] Project close-out workflow
 
 ---
 

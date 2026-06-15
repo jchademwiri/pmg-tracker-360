@@ -162,6 +162,13 @@
       "when": 1781491689230,
       "tag": "0022_violet_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1781494296397,
+      "tag": "0023_famous_vargas",
+      "breakpoints": true
     }
   ]
 }

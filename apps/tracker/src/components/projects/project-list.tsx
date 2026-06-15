@@ -70,6 +70,7 @@ interface ProjectWithRelations {
     tenderNumber: string;
     description: string | null;
   } | null;
+  completionPercentage?: number;
 }
 
 interface ProjectListProps {
@@ -254,6 +255,7 @@ export function ProjectList({
                   <TableRow>
                     <TableHead>Project Number</TableHead>
                     <TableHead>Client</TableHead>
+                    <TableHead>Delivery Progress</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Tender</TableHead>
@@ -285,6 +287,19 @@ export function ProjectList({
                               {project.client.contactName}
                             </div>
                           )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2 min-w-[120px]">
+                          <div className="relative w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                            <div 
+                              className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" 
+                              style={{ width: `${project.completionPercentage || 0}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-semibold text-zinc-300">
+                            {project.completionPercentage || 0}%
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -407,6 +422,19 @@ export function ProjectList({
                         <div className="text-sm text-gray-900 mb-1">
                           <strong>Client:</strong>{' '}
                           {project.client?.name || 'No Client'}
+                        </div>
+
+                        <div className="mb-3 space-y-1">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span>Delivery Progress:</span>
+                            <span className="font-semibold text-zinc-200">{project.completionPercentage || 0}%</span>
+                          </div>
+                          <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                            <div 
+                              className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" 
+                              style={{ width: `${project.completionPercentage || 0}%` }}
+                            />
+                          </div>
                         </div>
 
                         {project.description && (

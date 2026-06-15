@@ -158,6 +158,14 @@ export async function getOperationalRisks(organizationId: string): Promise<{
       count: number;
       items: { id: string; tenderNumber: string; description: string | null }[];
     };
+    awaitingPOs: {
+      count: number;
+      items: { id: string; projectNumber: string; clientName: string; createdAt: Date }[];
+    };
+    delayedProjects: {
+      count: number;
+      items: { id: string; projectNumber: string; clientName: string; contractEndDate: Date | null }[];
+    };
   };
 }> {
   try {
@@ -276,6 +284,45 @@ export async function getOperationalRisks(organizationId: string): Promise<{
       description: t.description,
     }));
 
+    // 5. Active Projects Awaiting POs & Delayed Projects
+    const activeProjects = await db.query.project.findMany({
+      where: and(
+        eq(project.organizationId, organizationId),
+        eq(project.status, 'active'),
+        isNull(project.deletedAt)
+      ),
+      with: {
+        purchaseOrders: {
+          where: isNull(purchaseOrder.deletedAt),
+          columns: {
+            id: true,
+          },
+        },
+        client: {
+          columns: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    const awaitingPOsList = activeProjects.filter((p) => (p.purchaseOrders || []).length === 0);
+    const delayedProjectsList = activeProjects.filter((p) => p.contractEndDate && new Date(p.contractEndDate) < now);
+
+    const awaitingPOItems = awaitingPOsList.map((p) => ({
+      id: p.id,
+      projectNumber: p.projectNumber,
+      clientName: p.client?.name || 'Unknown Client',
+      createdAt: p.createdAt,
+    }));
+
+    const delayedProjectItems = delayedProjectsList.map((p) => ({
+      id: p.id,
+      projectNumber: p.projectNumber,
+      clientName: p.client?.name || 'Unknown Client',
+      contractEndDate: p.contractEndDate,
+    }));
+
     return {
       success: true,
       risks: {
@@ -301,6 +348,14 @@ export async function getOperationalRisks(organizationId: string): Promise<{
           count: missingDocItems.length,
           items: missingDocItems,
         },
+        awaitingPOs: {
+          count: awaitingPOItems.length,
+          items: awaitingPOItems,
+        },
+        delayedProjects: {
+          count: delayedProjectItems.length,
+          items: delayedProjectItems,
+        },
       },
     };
   } catch (error: any) {
@@ -312,6 +367,8 @@ export async function getOperationalRisks(organizationId: string): Promise<{
         awardedAwaitingConversion: { count: 0, items: [] },
         expiringValidity: { count: 0, items: [] },
         missingDocuments: { count: 0, items: [] },
+        awaitingPOs: { count: 0, items: [] },
+        delayedProjects: { count: 0, items: [] },
       },
     };
   }

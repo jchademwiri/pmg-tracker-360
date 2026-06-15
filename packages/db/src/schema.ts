@@ -384,6 +384,10 @@ export const project = pgTable(
     contractEndDate: timestamp('contract_end_date'),
     awardValue: decimal('award_value', { precision: 15, scale: 2 }),
     signedContractUrl: text('signed_contract_url'),
+    // Close-out details
+    closeOutDate: timestamp('close_out_date'),
+    closeOutNotes: text('close_out_notes'),
+    closeOutSubmittedBy: text('close_out_submitted_by').references(() => user.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'), // Soft deletion
@@ -456,6 +460,39 @@ export const purchaseOrderDeliveryItem = pgTable('purchase_order_delivery_item',
     .notNull()
     .references(() => purchaseOrderLineItem.id, { onDelete: 'cascade' }),
   quantityDelivered: decimal('quantity_delivered', { precision: 10, scale: 2 }).notNull(),
+});
+
+// Project Activity Timeline table
+export const projectActivity = pgTable('project_activity', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(), // e.g. status_change, po_added, document_uploaded, risk_recorded, close_out, project_created
+  description: text('description').notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Project Delivery Risk table
+export const projectRisk = pgTable('project_risk', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  severity: text('severity').default('medium').notNull(), // low, medium, high, critical
+  status: text('status').default('open').notNull(), // open, mitigated, closed
+  mitigationPlan: text('mitigation_plan'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const tenderExtension = pgTable('tender_extension', {
@@ -577,6 +614,8 @@ export type Project = typeof project.$inferSelect;
 export type PurchaseOrder = typeof purchaseOrder.$inferSelect;
 export type TenderExtension = typeof tenderExtension.$inferSelect;
 export type Document = typeof document.$inferSelect;
+export type ProjectActivity = typeof projectActivity.$inferSelect;
+export type ProjectRisk = typeof projectRisk.$inferSelect;
 
 // Notification Preferences Relations
 export const notificationPreferencesRelations = relations(
@@ -687,6 +726,9 @@ export const projectRelations = relations(project, ({ one, many }) => ({
     references: [client.id],
   }),
   purchaseOrders: many(purchaseOrder),
+  activities: many(projectActivity),
+  risks: many(projectRisk),
+  documents: many(document),
 }));
 
 export const purchaseOrderRelations = relations(purchaseOrder, ({ one, many }) => ({
@@ -769,6 +811,31 @@ export const tenderFollowUpRelations = relations(
     }),
   })
 );
+export const projectActivityRelations = relations(projectActivity, ({ one }) => ({
+  organization: one(organization, {
+    fields: [projectActivity.organizationId],
+    references: [organization.id],
+  }),
+  project: one(project, {
+    fields: [projectActivity.projectId],
+    references: [project.id],
+  }),
+  user: one(user, {
+    fields: [projectActivity.userId],
+    references: [user.id],
+  }),
+}));
+
+export const projectRiskRelations = relations(projectRisk, ({ one }) => ({
+  organization: one(organization, {
+    fields: [projectRisk.organizationId],
+    references: [organization.id],
+  }),
+  project: one(project, {
+    fields: [projectRisk.projectId],
+    references: [project.id],
+  }),
+}));
 
 export const documentRelations = relations(document, ({ one }) => ({
   organization: one(organization, {
@@ -817,6 +884,8 @@ export const schema = {
   client,
   tender,
   project,
+  projectActivity,
+  projectRisk,
   purchaseOrder,
   purchaseOrderLineItem,
   purchaseOrderDeliveryNote,
@@ -837,6 +906,8 @@ export const schema = {
   clientRelations,
   tenderRelations,
   projectRelations,
+  projectActivityRelations,
+  projectRiskRelations,
   purchaseOrderRelations,
   purchaseOrderLineItemRelations,
   purchaseOrderDeliveryNoteRelations,
