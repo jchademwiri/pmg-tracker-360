@@ -197,13 +197,13 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 4.1 | **Add POs to project detail** | Project page doesn't show linked POs | M | `projects/[id]/page.tsx` | Completed |
-| 4.2 | **Add contract/linked tender summaries** | No context about originating tender | M | Project detail | Completed |
-| 4.3 | **Add project delivery/risk overview** | Delivery health invisible in project context | M | Project detail | Completed |
-| 4.4 | **Add activity timeline** | No activity log across lifecycle events | L | Project detail + schema | Completed |
-| 4.5 | **Add project progress tracking** | No way to see project completion % | M | Project register + detail | Completed |
-| 4.6 | **Add project close-out workflow** | Projects linger as "active" indefinitely | M | Project server actions | Completed |
-| 4.7 | **Add awaiting-PO and delayed-project queues** | Managers can't see project health | M | Dashboard | Completed |
+| 4.1 | **Add POs to project detail** | Project page doesn't show linked POs | M | `projects/[id]/page.tsx` | ✅ Done |
+| 4.2 | **Add contract/linked tender summaries** | No context about originating tender | M | Project detail | ✅ Done |
+| 4.3 | **Add project delivery/risk overview** | Delivery health invisible in project context | M | Project detail | ✅ Done |
+| 4.4 | **Add activity timeline** | No activity log across lifecycle events | L | Project detail + schema | ✅ Done |
+| 4.5 | **Add project progress tracking** | No way to see project completion % | M | Project register + detail | ✅ Done |
+| 4.6 | **Add project close-out workflow** | Projects linger as "active" indefinitely | M | Project server actions | ✅ Done |
+| 4.7 | **Add awaiting-PO and delayed-project queues** | Managers can't see project health | M | Dashboard | ✅ Done |
 
 ### Project Detail Tabs
 
