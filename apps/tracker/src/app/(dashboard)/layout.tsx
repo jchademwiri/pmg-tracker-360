@@ -10,6 +10,7 @@ import {
 import { checkUserSession } from '@/lib/session-check';
 import { getNotifications } from '@/server/notifications';
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { MobileBottomNav } from '@/components/ui/mobile-bottom-nav';
 import {
   getActiveOrganizations,
   getUserOrganizationMembership,
@@ -78,9 +79,10 @@ export default async function MainDashboardLayout({
               </div>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-y-auto">
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pb-20 md:pb-4 overflow-y-auto">
             {children}
           </div>
+          <MobileBottomNav />
         </SidebarInset>
       </SidebarProvider>
     </div>

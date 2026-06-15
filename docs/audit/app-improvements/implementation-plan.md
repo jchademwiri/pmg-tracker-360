@@ -316,7 +316,7 @@ Hardware kit      kit       R1,200.00      0               Active
 | 6.1 | **Shared mobile card component** | Tables overflow on mobile | M | `apps/tracker/src/components/ui/mobile-card.tsx` | ✅ Done |
 | 6.2 | **Mobile filter drawer/bottom sheet** | Desktop search filters don't work on mobile | M | `apps/tracker/src/components/ui/mobile-filter-drawer.tsx` | ✅ Done |
 | 6.3 | **Sticky mobile action bars** | No quick actions on mobile detail pages | S | `apps/tracker/src/components/ui/mobile-action-bar.tsx` | ✅ Done |
-| 6.4 | **Mobile bottom navigation** | Sidebar collapses — no mobile nav pattern | M | App layout | Pending |
+| 6.4 | **Mobile bottom navigation** | Sidebar collapses — no mobile nav pattern | M | `apps/tracker/src/components/ui/mobile-bottom-nav.tsx`, layout | ✅ Done |
 | 6.5 | **Convert remaining forms to steppers** | Complex forms still single-page on mobile | L | Tender/PO forms | Pending |
 | 6.6 | **Add draft/autosave to all forms** | Form abandonment risk | M | Form infrastructure | Pending |
 | 6.7 | **Pull-to-refresh on mobile registers** | No mobile refresh pattern | S | Register components | Pending |
@@ -343,7 +343,7 @@ Hardware kit      kit       R1,200.00      0               Active
 - [✓] Sticky mobile action bar on PO detail page
 - [ ] Filter drawers on mobile
 - [ ] Sticky action bars on detail pages
-- [ ] Bottom navigation for mobile
+- [✓] Bottom navigation for mobile (4 primary items + overflow menu)
 - [ ] Multi-step forms on mobile
 - [ ] Draft saving with autosave
 
