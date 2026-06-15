@@ -14,6 +14,7 @@ import {
   Edit, 
   Plus, 
   File,
+  Package,
   ShieldAlert,
   ArrowRight,
   TrendingUp,
@@ -110,6 +111,14 @@ interface ProjectRiskType {
   createdAt: Date;
 }
 
+interface ProjectLineItemType {
+  id: string;
+  description: string;
+  unit: string;
+  unitPrice: string;
+  updatedAt: Date;
+}
+
 interface ProjectWorkspaceProps {
   project: {
     id: string;
@@ -130,6 +139,7 @@ interface ProjectWorkspaceProps {
   };
   purchaseOrders: PurchaseOrderType[];
   documents: DocumentType[];
+  lineItems: ProjectLineItemType[];
   activities: ProjectActivityType[];
   risks: ProjectRiskType[];
   organizationId: string;
@@ -140,6 +150,7 @@ export function ProjectWorkspace({
   project,
   purchaseOrders,
   documents,
+  lineItems,
   activities: initialActivities,
   risks: initialRisks,
   organizationId,
@@ -546,6 +557,15 @@ export function ProjectWorkspace({
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="items" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
+            <Package className="h-4 w-4 mr-2" />
+            Items
+            {lineItems.length > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.2 bg-white/10 rounded-full text-[10px] text-white font-semibold">
+                {lineItems.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="documents" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
             <FileText className="h-4 w-4 mr-2" />
             Documents
@@ -812,7 +832,74 @@ export function ProjectWorkspace({
             </Card>
           </TabsContent>
 
-          {/* TAB 3: DOCUMENTS */}
+          {/* TAB 3: ITEMS */}
+          <TabsContent value="items" className="space-y-6 outline-none">
+            <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold">Project Saved Items</CardTitle>
+                  <CardDescription className="text-zinc-500 text-xs">
+                    Saved line items available for purchase orders on this project
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Link href={`/projects/${project.id}/items`}>
+                    <Button size="sm" variant="outline" className="border-white/10 text-zinc-300 hover:text-white rounded-lg">
+                      Manage Items
+                    </Button>
+                  </Link>
+                  <Link href={`/projects/${project.id}/items/new`}>
+                    <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-500 rounded-lg">
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      Add Item
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {lineItems.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {lineItems.slice(0, 6).map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-white/5 bg-zinc-900/40 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-zinc-100">{item.description}</p>
+                            <p className="text-xs text-zinc-500">{item.unit}</p>
+                          </div>
+                          <p className="text-sm font-semibold text-emerald-400">
+                            {formatCurrency(item.unitPrice)}
+                          </p>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                          <Link href={`/projects/${project.id}/items/${item.id}/edit`}>
+                            <Button size="sm" variant="ghost" className="h-8 text-zinc-400 hover:text-white">
+                              Edit
+                              <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
+                    <Package className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                    <p className="text-sm font-light">No saved project items yet.</p>
+                    <Link href={`/projects/${project.id}/items/new`} className="mt-4 inline-block">
+                      <Button size="sm" variant="outline" className="border-white/10 text-zinc-300 hover:text-white rounded-lg">
+                        Add First Item
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 4: DOCUMENTS */}
           <TabsContent value="documents" className="outline-none">
             <DocumentManager 
               organizationId={organizationId} 
@@ -822,7 +909,7 @@ export function ProjectWorkspace({
             />
           </TabsContent>
 
-          {/* TAB 4: ACTIVITY */}
+          {/* TAB 5: ACTIVITY */}
           <TabsContent value="activity" className="space-y-6 outline-none">
             <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
               <CardHeader>
@@ -871,7 +958,7 @@ export function ProjectWorkspace({
             </Card>
           </TabsContent>
 
-          {/* TAB 5: RISKS */}
+          {/* TAB 6: RISKS */}
           <TabsContent value="risks" className="space-y-6 outline-none">
             <Card className="border-white/5 bg-zinc-955 text-white rounded-xl shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between">

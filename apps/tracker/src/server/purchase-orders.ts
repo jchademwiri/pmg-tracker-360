@@ -39,6 +39,21 @@ export async function getPurchaseOrderBreadcrumbLabel(poId: string) {
   }
 }
 
+export async function getProjectLineItemBreadcrumbLabel(lineItemId: string) {
+  try {
+    const item = await db
+      .select({ description: projectLineItem.description })
+      .from(projectLineItem)
+      .where(and(eq(projectLineItem.id, lineItemId), isNull(projectLineItem.deletedAt)))
+      .limit(1);
+
+    return item[0]?.description || null;
+  } catch (error) {
+    console.error('Error fetching project line item breadcrumb label:', error);
+    return null;
+  }
+}
+
 type POLineItemInput = {
   id?: string;
   projectLineItemId: string;
@@ -50,8 +65,23 @@ export async function getProjectLineItems(organizationId: string, projectId: str
     await validateSessionAndOrg(organizationId);
 
     const items = await db
-      .select()
+      .select({
+        id: projectLineItem.id,
+        organizationId: projectLineItem.organizationId,
+        projectId: projectLineItem.projectId,
+        description: projectLineItem.description,
+        unit: projectLineItem.unit,
+        unitPrice: projectLineItem.unitPrice,
+        createdAt: projectLineItem.createdAt,
+        updatedAt: projectLineItem.updatedAt,
+        deletedAt: projectLineItem.deletedAt,
+        usageCount: sql<number>`count(${purchaseOrderLineItem.id})::int`,
+      })
       .from(projectLineItem)
+      .leftJoin(
+        purchaseOrderLineItem,
+        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id)
+      )
       .where(
         and(
           eq(projectLineItem.organizationId, organizationId),
@@ -59,12 +89,61 @@ export async function getProjectLineItems(organizationId: string, projectId: str
           isNull(projectLineItem.deletedAt)
         )
       )
+      .groupBy(projectLineItem.id)
       .orderBy(projectLineItem.description);
 
     return { success: true, lineItems: items };
   } catch (error: any) {
     console.error('Error fetching project line items:', error);
     return { success: false, error: error.message || 'Failed to fetch project line items', lineItems: [] };
+  }
+}
+
+export async function getProjectLineItemById(
+  organizationId: string,
+  projectId: string,
+  lineItemId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const items = await db
+      .select({
+        id: projectLineItem.id,
+        organizationId: projectLineItem.organizationId,
+        projectId: projectLineItem.projectId,
+        description: projectLineItem.description,
+        unit: projectLineItem.unit,
+        unitPrice: projectLineItem.unitPrice,
+        createdAt: projectLineItem.createdAt,
+        updatedAt: projectLineItem.updatedAt,
+        deletedAt: projectLineItem.deletedAt,
+        usageCount: sql<number>`count(${purchaseOrderLineItem.id})::int`,
+      })
+      .from(projectLineItem)
+      .leftJoin(
+        purchaseOrderLineItem,
+        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id)
+      )
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, projectId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .groupBy(projectLineItem.id)
+      .limit(1);
+
+    if (items.length === 0) {
+      return { success: false, error: 'Project line item not found' };
+    }
+
+    return { success: true, lineItem: items[0] };
+  } catch (error: any) {
+    console.error('Error fetching project line item:', error);
+    return { success: false, error: error.message || 'Failed to fetch project line item' };
   }
 }
 
@@ -137,6 +216,136 @@ export async function createProjectLineItem(
   } catch (error: any) {
     console.error('Error creating project line item:', error);
     return { success: false, error: error.message || 'Failed to create line item' };
+  }
+}
+
+export async function updateProjectLineItem(
+  organizationId: string,
+  projectId: string,
+  lineItemId: string,
+  data: {
+    description: string;
+    unit: string;
+    unitPrice: string;
+  }
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['update'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return { success: false, error: 'Insufficient permissions to update line items' };
+    }
+
+    const description = data.description.trim();
+    const unit = data.unit.trim();
+    const unitPrice = parseFloat(data.unitPrice);
+
+    if (!description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { success: false, error: 'Description, unit, and unit price are required.' };
+    }
+
+    const existingItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          eq(projectLineItem.projectId, projectId),
+          eq(projectLineItem.organizationId, organizationId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existingItem.length === 0) {
+      return { success: false, error: 'Project line item not found' };
+    }
+
+    const updatedItem = await db
+      .update(projectLineItem)
+      .set({
+        description,
+        unit,
+        unitPrice: unitPrice.toFixed(2),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectLineItem.id, lineItemId))
+      .returning();
+
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/items`);
+    return { success: true, lineItem: updatedItem[0] };
+  } catch (error: any) {
+    console.error('Error updating project line item:', error);
+    return { success: false, error: error.message || 'Failed to update line item' };
+  }
+}
+
+export async function archiveProjectLineItem(
+  organizationId: string,
+  projectId: string,
+  lineItemId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['delete'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return { success: false, error: 'Insufficient permissions to archive line items' };
+    }
+
+    const existingItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          eq(projectLineItem.projectId, projectId),
+          eq(projectLineItem.organizationId, organizationId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existingItem.length === 0) {
+      return { success: false, error: 'Project line item not found' };
+    }
+
+    await db
+      .update(projectLineItem)
+      .set({
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectLineItem.id, lineItemId));
+
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/items`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error archiving project line item:', error);
+    return { success: false, error: error.message || 'Failed to archive line item' };
   }
 }
 

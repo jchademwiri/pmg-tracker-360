@@ -11,16 +11,25 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { getTenderBreadcrumbLabel } from '@/server/tenders';
-import { getPurchaseOrderBreadcrumbLabel } from '@/server/purchase-orders';
+import {
+  getProjectLineItemBreadcrumbLabel,
+  getPurchaseOrderBreadcrumbLabel,
+} from '@/server/purchase-orders';
+import { getProjectBreadcrumbLabel } from '@/server/projects';
 
 const STATIC_SEGMENT_LABELS: Record<string, string> = {
   tenders: 'Tenders',
   overview: 'Overview',
   create: 'Add Tender',
   edit: 'Edit',
+  projects: 'Projects',
+  items: 'Items',
+  new: 'New',
+  deliveries: 'Deliveries',
 };
 
 const TENDER_STATIC_ROUTES = new Set(['overview', 'create']);
+const PROJECT_STATIC_ROUTES = new Set(['overview', 'create', 'purchase-orders', 'contracts']);
 const PURCHASE_ORDER_STATIC_ROUTES = new Set(['create', 'edit', 'deliveries', 'new']);
 
 function formatSegmentName(segment: string) {
@@ -33,7 +42,9 @@ function formatSegmentName(segment: string) {
 export function DynamicBreadcrumb() {
   const pathname = usePathname();
   const [tenderLabels, setTenderLabels] = useState<Record<string, string>>({});
+  const [projectLabels, setProjectLabels] = useState<Record<string, string>>({});
   const [purchaseOrderLabels, setPurchaseOrderLabels] = useState<Record<string, string>>({});
+  const [projectLineItemLabels, setProjectLineItemLabels] = useState<Record<string, string>>({});
 
   const pathSegments = useMemo(
     () => pathname.split('/').filter(Boolean),
@@ -71,6 +82,36 @@ export function DynamicBreadcrumb() {
   }, [pathSegments, tenderLabels]);
 
   useEffect(() => {
+    const projectId = pathSegments.find((segment, index) => {
+      return (
+        pathSegments[index - 1] === 'projects' &&
+        !PROJECT_STATIC_ROUTES.has(segment)
+      );
+    });
+
+    if (!projectId || projectLabels[projectId]) {
+      return;
+    }
+
+    let isMounted = true;
+
+    getProjectBreadcrumbLabel(projectId).then((label) => {
+      if (!isMounted || !label) {
+        return;
+      }
+
+      setProjectLabels((current) => ({
+        ...current,
+        [projectId]: label,
+      }));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathSegments, projectLabels]);
+
+  useEffect(() => {
     const purchaseOrderId = pathSegments.find((segment, index) => {
       return (
         pathSegments[index - 1] === 'purchase-orders' &&
@@ -100,6 +141,33 @@ export function DynamicBreadcrumb() {
     };
   }, [pathSegments, purchaseOrderLabels]);
 
+  useEffect(() => {
+    const projectLineItemId = pathSegments.find((segment, index) => {
+      return pathSegments[index - 1] === 'items' && !['new'].includes(segment);
+    });
+
+    if (!projectLineItemId || projectLineItemLabels[projectLineItemId]) {
+      return;
+    }
+
+    let isMounted = true;
+
+    getProjectLineItemBreadcrumbLabel(projectLineItemId).then((label) => {
+      if (!isMounted || !label) {
+        return;
+      }
+
+      setProjectLineItemLabels((current) => ({
+        ...current,
+        [projectLineItemId]: label,
+      }));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathSegments, projectLineItemLabels]);
+
   return (
     <Breadcrumb>
       <BreadcrumbList>
@@ -116,9 +184,16 @@ export function DynamicBreadcrumb() {
           const isPurchaseOrderId =
             pathSegments[index - 1] === 'purchase-orders' &&
             !PURCHASE_ORDER_STATIC_ROUTES.has(segment);
+          const isProjectId =
+            pathSegments[index - 1] === 'projects' &&
+            !PROJECT_STATIC_ROUTES.has(segment);
+          const isProjectLineItemId =
+            pathSegments[index - 1] === 'items' && segment !== 'new';
           const displayName =
             (isTenderId ? tenderLabels[segment] : undefined) ||
+            (isProjectId ? projectLabels[segment] : undefined) ||
             (isPurchaseOrderId ? purchaseOrderLabels[segment] : undefined) ||
+            (isProjectLineItemId ? projectLineItemLabels[segment] : undefined) ||
             STATIC_SEGMENT_LABELS[segment] ||
             formatSegmentName(segment);
 

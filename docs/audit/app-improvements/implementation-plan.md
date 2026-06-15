@@ -223,66 +223,74 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 
 ---
 
-## Phase 5: PO Line Items & Delivery Tracking (Week 7–8)
+## Phase 5: Project Items, PO Line Items & Delivery Tracking (Week 7–9)
 
-**Goal:** Implement the largest post-award workflow gap — itemized PO fulfillment.
-**Effort:** 7–10 days
+**Goal:** Implement project-scoped item management and itemized PO fulfillment from saved project items through delivery notes.
+**Effort:** 10–14 days
 **Confidence:** Very High (all models agree — highest priority)
 
 ### Tasks
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 5.1 | **PO line-item editor + server CRUD** | Schema exists but no UI or API | L | `po-form.tsx`, `purchase-orders.ts` | ✅ Done |
-| 5.2 | **Delivery note capture with POD upload** | No way to record deliveries | L | New delivery components | ✅ Done |
-| 5.3 | **Validate delivered vs outstanding quantities** | No guardrails against over-delivery | M | Server actions | ✅ Done |
-| 5.4 | **Auto-calculate PO completion status** | Manual status updates only | M | Server actions | ✅ Done |
-| 5.5 | **Mobile delivery capture flow** | Field supervisors can't record deliveries on phone | L | New mobile components | ✅ Done |
-| 5.6 | **Expand PO form to include line items** | PO creation is header-only | M | `po-form.tsx` | ✅ Done |
+| 5.1 | **Add project item catalog schema** | PO items need a saved project-scoped source | M | `packages/db/src/schema.ts`, migrations | ✅ Done |
+| 5.2 | **Backfill/verify existing PO project links** | Existing POs must be attached to projects before item filtering works | S | DB data check/migration notes | ✅ Done |
+| 5.3 | **Project item list page** | Users need to manage saved line items outside PO creation | M | `/projects/[id]/items` | ✅ Done |
+| 5.4 | **Create project item page/form** | Saved items need project, description, unit, unit price/rate | M | `/projects/[id]/items/new` | ✅ Done |
+| 5.5 | **Edit/archive project item workflow** | Users need to update or retire saved items safely | M | `/projects/[id]/items/[itemId]/edit` | ✅ Done |
+| 5.6 | **Item usage and delete safeguards** | Items used on POs should not be hard-deleted accidentally | M | Item server actions + UI | ✅ Done |
+| 5.7 | **Add project Items tab/section** | Project workspace should expose the saved item catalog | M | Project workspace/tabs | ✅ Done |
+| 5.8 | **PO project-first item selector** | PO line items must come only from selected project's saved items | L | `po-form.tsx`, `purchase-orders.ts` | ✅ Done |
+| 5.9 | **Server validation for unrelated project items** | Users must not save PO lines from another project | M | PO validation/server actions | ✅ Done |
+| 5.10 | **PO item price snapshot warnings** | Saved item prices can change after a PO is created | M | PO form/detail | Pending |
+| 5.11 | **Prevent risky project changes on delivered POs** | Changing PO project after deliveries can corrupt item lineage | M | PO edit validation | Pending |
+| 5.12 | **Dedicated delivery note creation page** | Delivery recording should not happen in a modal | L | `/projects/purchase-orders/[id]/deliveries/new` | ✅ Done |
+| 5.13 | **Delivery note list page per PO** | Users need to browse all delivery notes for a PO | M | `/projects/purchase-orders/[id]/deliveries` | Pending |
+| 5.14 | **Delivery note detail page** | Users need a dedicated receipt/POD view | M | `/projects/purchase-orders/[id]/deliveries/[deliveryNoteId]` | Pending |
+| 5.15 | **Delivery note edit/cancel workflow** | Mistakes need correction with safeguards | L | Delivery note server actions + UI | Pending |
+| 5.16 | **Delivery note PDF/print view** | Delivery notes need printable operational records | M | Delivery note detail | Pending |
+| 5.17 | **Delivery quantity/value calculation** | Delivery value must be delivered quantity × unit price | M | Delivery server actions + UI | ✅ Done |
+| 5.18 | **Validate delivered vs outstanding quantities** | No guardrails against over-delivery | M | Server actions | ✅ Done |
+| 5.19 | **Auto-calculate PO completion status** | Manual status updates only | M | Server actions | ✅ Done |
+| 5.20 | **PO/project item progress summaries** | Users need ordered, delivered, outstanding, and value totals | M | PO detail + project workspace | Pending |
+| 5.21 | **Breadcrumb labels for PO/project item/delivery routes** | UUID breadcrumbs are not usable | S | `dynamic-breadcrumb.tsx` | ✅ Done |
 
-### PO Line Item Grid
+### Project Item Catalog
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ Description        │ Qty  │ Unit Price │ Total   │ Action │
-├──────────────────────────────────────────────────────────┤
-│ Cement (tons)       │ 100  │ R2,500     │ R250,000│ [Edit] │
-│ Steel rebar (tons)  │ 50   │ R8,000     │ R400,000│ [Edit] │
-│ Sand (tons)         │ 200  │ R800       │ R160,000│ [Edit] │
-├──────────────────────────────────────────────────────────┤
-│                              TOTAL:        R810,000      │
-│                              DELIVERED:    R450,000 (56%)│
-│                              OUTSTANDING:  R360,000      │
-└──────────────────────────────────────────────────────────┘
+Project: SS02 - 2025/26
+
+Description       Unit      Unit Price     Used On POs     Status
+Cables            unit      R12.50         2               Active
+Installation      hour      R350.00        1               Active
+Hardware kit      kit       R1,200.00      0               Active
 ```
 
-### Delivery Capture (Mobile)
+### PO Line Item Selection
 
 ```
-┌─────────────────────────────┐
-│ 📦 Record Delivery          │
-├─────────────────────────────┤
-│ PO Number: PO-2026-0042     │
-│ Delivery Note: [________]   │
-│ Date: [2026-06-14]          │
-│                             │
-│ Line Items:                 │
-│ ☑ Cement    Received: [80]  │
-│ ☐ Steel     Received: [__]  │
-│                             │
-│ 📷 Upload POD Photo         │
-│                             │
-│ [Save Delivery]             │
-└─────────────────────────────┘
+1. Select project
+2. Load saved line items for that project only
+3. Select saved item
+4. Enter PO quantity
+5. Snapshot description, unit, unit price, and line total
 ```
 
 ### Deliverables
-- [✓] PO line items editable in form with auto-total calculation
-- [✓] Delivery note capture with POD document upload
+- [✓] Project-scoped item schema added
+- [✓] Existing PO verified against project link
+- [✓] Project item list/add/edit/archive pages
+- [✓] Project workspace Items tab
+- [✓] PO line items selected from saved project items
+- [✓] Server validation blocks unrelated project items
+- [ ] PO item usage and price-change warnings
+- [✓] Dedicated delivery note creation page
+- [ ] Delivery note list/detail/edit/cancel pages
 - [✓] Quantity validation (delivered ≤ outstanding)
 - [✓] Auto-status updates (partially_delivered, delivered, completed)
-- [✓] Mobile-optimized delivery capture flow
-- [✓] PO progress visible from project detail
+- [✓] Delivery value calculated from delivered quantity × unit price
+- [ ] PO/project item progress summaries
+- [ ] Delivery note print/PDF view
 
 ---
 
@@ -347,6 +355,13 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 | 7.5 | **Premium UI polish** | Card elevation, transitions, micro-interactions | M | CSS + components | Pending |
 | 7.6 | **Export functionality** | No data export on any register | M | Register components | Pending |
 | 7.7 | **Keyboard shortcuts** | No power-user keyboard navigation | M | Layout + shortcuts | Pending |
+| 7.8 | **Outstanding item quantity report** | Managers need item-level ordered vs delivered visibility | M | Reports pages | Pending |
+| 7.9 | **Partially delivered PO report** | Partial fulfillment needs active follow-up | M | Reports pages | Pending |
+| 7.10 | **Delivery value report** | Delivery value is now calculated but not summarized | M | Reports pages | Pending |
+| 7.11 | **Item spend/value by project** | Project cost exposure needs item-level rollups | M | Reports pages | Pending |
+| 7.12 | **POD verification queue** | Delivery notes missing PODs need follow-up | M | Reports + delivery pages | Pending |
+| 7.13 | **Item and delivery permissions** | Item edits and delivery corrections need role-specific access | M | Permissions + server actions | Pending |
+| 7.14 | **CSV import/export for project items** | Large projects need bulk item setup and review | M | Item pages + export actions | Pending |
 
 ### Activity Event Table Schema
 
@@ -368,6 +383,10 @@ CREATE TABLE activity_events (
 - [ ] Notification triggers for deadlines, follow-ups, deliveries
 - [ ] Command palette for quick navigation
 - [ ] Reporting with win/loss, delivery performance, overdue analysis
+- [ ] Item-level outstanding quantity and delivery value reports
+- [ ] Partially delivered PO and POD verification queues
+- [ ] Item/delivery role permissions enforced in server actions and UI
+- [ ] Project item CSV import/export
 - [ ] Premium UI polish (transitions, elevation, micro-interactions)
 - [ ] CSV/Excel export on registers
 - [ ] Keyboard shortcuts for power users
@@ -385,7 +404,7 @@ Phase 1: Stabilize Core
     │       │       │
     │       │       └── Phase 4: Project Workspace
     │       │               │
-    │       │               └── Phase 5: PO Line Items & Delivery
+    │       │               └── Phase 5: Project Items, PO Line Items & Delivery
     │       │                       │
     │       │                       └── Phase 6: Mobile & Forms
     │       │                               │
@@ -406,10 +425,10 @@ Phase 1: Stabilize Core
 | 2. Dashboard & Nav | 4–5 days | Week 2 | Action queues, badge counts, urgency signals |
 | 3. Tender Workflow | 5–7 days | Week 3–4 | Tender stages, result capture, mobile cards |
 | 4. Project Workspace | 5–7 days | Week 5–6 | PO visibility, delivery progress, activity |
-| 5. PO & Delivery | 7–10 days | Week 7–8 | Line items, delivery notes, quantity tracking |
-| 6. Mobile & Forms | 5–7 days | Week 9–10 | Mobile cards, steppers, draft saving |
-| 7. Automation & Polish | 5–7 days | Week 11–12 | Notifications, reporting, command palette |
-| **Total** | **34–48 days** | **~10–12 weeks** | Premium operational SaaS |
+| 5. Project Items, PO & Delivery | 10–14 days | Week 7–9 | Item catalog, filtered PO items, delivery notes |
+| 6. Mobile & Forms | 5–7 days | Week 10–11 | Mobile cards, steppers, draft saving |
+| 7. Automation & Polish | 6–9 days | Week 12–13 | Notifications, reporting, permissions, command palette |
+| **Total** | **38–54 days** | **~12–13 weeks** | Premium operational SaaS |
 
 ---
 
@@ -447,6 +466,7 @@ Before starting implementation, these decisions should be made:
 | Follow-up persistence | None | ✅ | ✅ + notifications |
 | Delivery tracking | None | ✅ | ✅ + alerts |
 | PO lifecycle visibility | Broken | ✅ | ✅ + reporting |
+| Project item management | None | ✅ | ✅ + reports/import |
 
 ---
 

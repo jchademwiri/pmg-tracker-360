@@ -66,6 +66,7 @@ export default async function ProjectDetailPage({
         project={project as any}
         purchaseOrders={(project as any).purchaseOrders || []}
         documents={documents as any}
+        lineItems={(project as any).lineItems || []}
         activities={(project as any).activities || []}
         risks={(project as any).risks || []}
         organizationId={session.activeOrganizationId}

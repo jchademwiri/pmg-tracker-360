@@ -9,6 +9,7 @@ import {
   organization,
   projectActivity,
   projectRisk,
+  projectLineItem,
 } from '@pmg/db/schema';
 import { validateSessionAndOrg } from './utils';
 import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
@@ -28,6 +29,21 @@ import {
 } from '@/lib/validations/project';
 import type { RecentActivity } from '@/types/activity';
 import { nowInSAST } from '@/lib/timezone';
+
+export async function getProjectBreadcrumbLabel(projectId: string) {
+  try {
+    const projectData = await db
+      .select({ projectNumber: project.projectNumber })
+      .from(project)
+      .where(and(eq(project.id, projectId), isNull(project.deletedAt)))
+      .limit(1);
+
+    return projectData[0]?.projectNumber || null;
+  } catch (error) {
+    console.error('Error fetching project breadcrumb label:', error);
+    return null;
+  }
+}
 
 // Get projects with pagination, search, and client joins
 export async function getProjects(
@@ -1028,6 +1044,10 @@ export async function getProjectWorkspaceData(
         tender: true,
         purchaseOrders: {
           where: isNull(purchaseOrder.deletedAt),
+        },
+        lineItems: {
+          where: isNull(projectLineItem.deletedAt),
+          orderBy: [desc(projectLineItem.updatedAt)],
         },
         activities: {
           orderBy: [desc(projectActivity.createdAt)],
