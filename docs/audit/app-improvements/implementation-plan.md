@@ -160,14 +160,14 @@ const STATUS_MAP = {
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 3.1 | **Add tender stages/preparation workflow** | No review/approval/preparation states | L | Schema + tender server actions | Pending |
-| 3.2 | **Persist follow-ups + next follow-up date** | Follow-up data lost on refresh (schema from Phase 1) | M | Tender server actions + UI | Pending |
-| 3.3 | **Add result capture dialog/form** | Cannot capture award amount, loss reason, or evaluation notes | M | `tender-details.tsx` | Pending |
-| 3.4 | **Add tender checklist tied to documents** | Compliance checklist disconnected from uploads | M | Tender detail | Pending |
-| 3.5 | **Add tender mobile cards** | Tender register unusable on mobile | L | `tenders-table.tsx` | Pending |
-| 3.6 | **Add filtered tender queues** | No way to see "closing soon", "awaiting result", "submitted" | M | Tender overview | Pending |
-| 3.7 | **Convert tender form to multi-step** | 15+ fields on one page — overwhelming | L | `tender-form.tsx` | Pending |
-| 3.8 | **Add draft saving** | Complex forms must be completed in one sitting | M | All forms | Pending |
+| 3.1 | **Add tender stages/preparation workflow** | No review/approval/preparation states | L | Schema + tender server actions | ✅ Done |
+| 3.2 | **Persist follow-ups + next follow-up date** | Follow-up data lost on refresh (schema from Phase 1) | M | Tender server actions + UI | ✅ Done |
+| 3.3 | **Add result capture dialog/form** | Cannot capture award amount, loss reason, or evaluation notes | M | `tender-details.tsx` | ✅ Done |
+| 3.4 | **Add tender checklist tied to documents** | Compliance checklist disconnected from uploads | M | Tender detail | ✅ Done |
+| 3.5 | **Add tender mobile cards** | Tender register unusable on mobile | L | `tenders-table.tsx` | ✅ Done |
+| 3.6 | **Add filtered tender queues** | No way to see "closing soon", "awaiting result", "submitted" | M | Tender overview | ✅ Done |
+| 3.7 | **Convert tender form to multi-step** | 15+ fields on one page — overwhelming | L | `tender-form.tsx` | ✅ Done |
+| 3.8 | **Add draft saving** | Complex forms must be completed in one sitting | M | All forms | ✅ Done |
 
 ### Tender Stages
 
@@ -177,13 +177,13 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 ```
 
 ### Deliverables
-- [ ] Tender stages with workflow progression
-- [ ] Follow-ups persisted with next follow-up date
-- [ ] Result capture with award/loss details
-- [ ] Compliance checklist linked to document uploads
-- [ ] Tender mobile cards in register
-- [ ] Multi-step tender form with draft saving
-- [ ] Filtered queues (closing soon, awaiting result, etc.)
+- [x] Tender stages with workflow progression
+- [x] Follow-ups persisted with next follow-up date
+- [x] Result capture with award/loss details
+- [x] Compliance checklist linked to document uploads
+- [x] Tender mobile cards in register
+- [x] Multi-step tender form with draft saving
+- [x] Filtered queues (closing soon, awaiting result, etc.)
 
 ---
 
