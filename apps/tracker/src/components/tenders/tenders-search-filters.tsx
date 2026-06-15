@@ -30,6 +30,9 @@ export interface TendersSearchFiltersProps {
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
+  { value: 'closing_soon', label: '⏳ Closing Soon' },
+  { value: 'under_preparation', label: '📄 Under Preparation' },
+  { value: 'awaiting_results', label: '📥 Awaiting Results' },
   { value: 'open', label: 'Open' },
   { value: 'closed', label: 'Closed' },
   { value: 'evaluation', label: 'Evaluation' },

@@ -29,7 +29,7 @@ export const TenderCreateSchema = z.object({
       if (isNaN(num)) return null;
       return cleaned;
     }),
-  status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']),
+  status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']),
   validityDays: z.number().int().nonnegative().nullable().optional(),
   validityDate: z.coerce.date().optional().nullable(),
   contactName: optionalText,
@@ -46,7 +46,7 @@ export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
 });
 
 export const TenderStatusUpdateSchema = z.object({
-  status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']),
+  status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']),
   awardValue: z
     .string()
     .optional()
@@ -61,11 +61,14 @@ export const TenderStatusUpdateSchema = z.object({
   contractStartDate: z.coerce.date().optional().nullable(),
   contractEndDate: z.coerce.date().optional().nullable(),
   signedContractUrl: z.string().optional().nullable(),
+  lossReason: z.string().optional().nullable(),
+  lossDetails: z.string().optional().nullable(),
+  evaluationNotes: z.string().optional().nullable(),
 });
 
 export const TenderSearchSchema = z.object({
   query: z.string().optional(),
-  status: z.enum(['open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']).optional(),
+  status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']).optional(),
   clientId: z.string().optional(),
   dateFrom: z.date().optional(),
   dateTo: z.date().optional(),

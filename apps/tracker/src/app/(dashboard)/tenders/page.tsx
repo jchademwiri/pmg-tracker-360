@@ -48,6 +48,21 @@ function parseTenderFilters(searchParams: SearchParams) {
 
 function getRegisterCopy(status: string) {
   switch (status) {
+    case 'closing_soon':
+      return {
+        title: 'Closing Soon',
+        description: 'Track active tender opportunities closing in the next 14 days.',
+      };
+    case 'under_preparation':
+      return {
+        title: 'Under Preparation',
+        description: 'Monitor tenders currently being compiled and prepared for submission.',
+      };
+    case 'awaiting_results':
+      return {
+        title: 'Awaiting Results',
+        description: 'Review submitted tenders currently under evaluation or awaiting outcomes.',
+      };
     case 'open':
       return {
         title: 'Open Tenders',

@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/server';
-import { getTenderById } from '@/server/tenders';
+import { getTenderById, getTenderFollowUps } from '@/server/tenders';
 import { getDocuments } from '@/server/documents';
 import { getTenderExtensions } from '@/server/modules/extensions';
 import { TenderDetails } from '@/components/tenders/tender-details';
@@ -44,6 +44,10 @@ export default async function TenderDetailPage({
     session.activeOrganizationId,
     id
   );
+  const followUpsResult = await getTenderFollowUps(
+    session.activeOrganizationId,
+    id
+  );
 
   if (!result.success || !result.tender) {
     notFound();
@@ -55,6 +59,7 @@ export default async function TenderDetailPage({
       organizationId={session.activeOrganizationId}
       documents={documentsResult.documents || []}
       extensions={extensionsResult.data || []}
+      followUps={followUpsResult.followUps || []}
     />
   );
 }

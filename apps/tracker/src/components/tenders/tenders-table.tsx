@@ -95,7 +95,7 @@ export function TendersTable({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto hidden md:block">
             <Table className="w-full min-w-[800px]">
                   <TableHeader>
                     <TableRow>
@@ -126,111 +126,229 @@ export function TendersTable({
                       );
                       return (
                         <TableRow
-                          key={tender.id}
-                          className={
-                            onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''
-                          }
-                          onClick={() => onRowClick?.(tender.id)}
-                        >
-                          <TableCell className="font-medium">
-                            <Link
-                              href={`/tenders/${tender.id}`}
-                              className="text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                              onClick={(event) => event.stopPropagation()}
+                           key={tender.id}
+                           className={
+                             onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''
+                           }
+                           onClick={() => onRowClick?.(tender.id)}
+                         >
+                           <TableCell className="font-medium">
+                             <Link
+                               href={`/tenders/${tender.id}`}
+                               className="text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                               onClick={(event) => event.stopPropagation()}
+                             >
+                               {tender.tenderNumber}
+                             </Link>
+                           </TableCell>
+                           <TableCell>
+                             {tender.client?.name || 'Unknown Client'}
+                           </TableCell>
+                           <TableCell className="max-w-[200px] truncate hidden sm:table-cell">
+                             {tender.description || '-'}
+                           </TableCell>
+                           <TableCell>
+                             <StatusBadge status={tender.status} />
+                           </TableCell>
+                           <TableCell className="hidden md:table-cell">
+                             {formatCurrency(Number(tender.value || 0))}
+                           </TableCell>
+                           <TableCell className="hidden lg:table-cell">
+                             {formatDate(tender.submissionDate)}
+                           </TableCell>
+                           <TableCell className="hidden sm:table-cell">
+                             {tender.status === 'evaluation' ? (
+                               (() => {
+                                 const submissionDate = tender.updatedAt;
+                                 return `Submitted ${formatDate(submissionDate)}`;
+                               })()
+                             ) : daysLeft === null ? (
+                               '-'
+                             ) : daysLeft < 0 ? (
+                               <span className="text-red-600 font-medium">
+                                 {Math.abs(daysLeft)} days overdue
+                               </span>
+                             ) : daysLeft === 0 ? (
+                               <span className="text-orange-600 font-medium">
+                                 Due today
+                               </span>
+                             ) : (
+                               <span
+                                 className={
+                                   daysLeft <= 3
+                                     ? 'text-orange-600 font-medium'
+                                     : ''
+                                 }
+                               >
+                                 {daysLeft} days
+                               </span>
+                             )}
+                           </TableCell>
+                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                             <DropdownMenu>
+                               <DropdownMenuTrigger asChild>
+                                 <Button
+                                   variant="ghost"
+                                   size="icon"
+                                   className="size-8 cursor-pointer"
+                                 >
+                                   <MoreHorizontalIcon className="h-4 w-4" />
+                                   <span className="sr-only">Open menu</span>
+                                 </Button>
+                               </DropdownMenuTrigger>
+                               <DropdownMenuContent align="end">
+                                 {onViewTender && (
+                                   <DropdownMenuItem
+                                     onClick={() => onViewTender(tender.id)}
+                                   >
+                                     View
+                                   </DropdownMenuItem>
+                                 )}
+                                 {onEditTender && (
+                                   <DropdownMenuItem
+                                     onClick={() => onEditTender(tender.id)}
+                                   >
+                                     Edit
+                                   </DropdownMenuItem>
+                                 )}
+                                 {onDeleteTender && (
+                                   <>
+                                     <DropdownMenuSeparator />
+                                     <DropdownMenuItem
+                                       onClick={() => onDeleteTender(tender.id)}
+                                       variant="destructive"
+                                     >
+                                       Delete
+                                     </DropdownMenuItem>
+                                   </>
+                                 )}
+                               </DropdownMenuContent>
+                             </DropdownMenu>
+                           </TableCell>
+                         </TableRow>
+                       );
+                     })}
+                   </TableBody>
+                 </Table>
+               </div>
+
+          {/* Mobile Card Layout */}
+          <div className="md:hidden space-y-4">
+            {tenders.map((tender) => {
+              const daysLeft = getDaysUntilDeadline(tender.submissionDate);
+              return (
+                <div
+                  key={tender.id}
+                  onClick={() => onRowClick?.(tender.id)}
+                  className="p-4 rounded-xl border border-border/40 bg-card/45 backdrop-blur-md hover:bg-card/60 transition-all cursor-pointer shadow-sm relative overflow-hidden"
+                >
+                  {/* Top Bar: Tender Number, StatusBadge, Actions */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-bold text-blue-400">
+                        {tender.tenderNumber}
+                      </span>
+                      <StatusBadge status={tender.status} />
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 cursor-pointer"
+                          >
+                            <MoreHorizontalIcon className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {onViewTender && (
+                            <DropdownMenuItem
+                              onClick={() => onViewTender(tender.id)}
                             >
-                              {tender.tenderNumber}
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            {tender.client?.name || 'Unknown Client'}
-                          </TableCell>
-                          <TableCell className="max-w-[200px] truncate hidden sm:table-cell">
-                            {tender.description || '-'}
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={tender.status} />
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {formatCurrency(Number(tender.value || 0))}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {formatDate(tender.submissionDate)}
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {tender.status === 'evaluation' ? (
-                              (() => {
-                                const submissionDate = tender.updatedAt;
-                                return `Submitted ${formatDate(submissionDate)}`;
-                              })()
-                            ) : daysLeft === null ? (
-                              '-'
-                            ) : daysLeft < 0 ? (
-                              <span className="text-red-600 font-medium">
-                                {Math.abs(daysLeft)} days overdue
-                              </span>
-                            ) : daysLeft === 0 ? (
-                              <span className="text-orange-600 font-medium">
-                                Due today
-                              </span>
-                            ) : (
-                              <span
-                                className={
-                                  daysLeft <= 3
-                                    ? 'text-orange-600 font-medium'
-                                    : ''
-                                }
+                              View
+                            </DropdownMenuItem>
+                          )}
+                          {onEditTender && (
+                            <DropdownMenuItem
+                              onClick={() => onEditTender(tender.id)}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                          {onDeleteTender && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => onDeleteTender(tender.id)}
+                                variant="destructive"
                               >
-                                {daysLeft} days
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 cursor-pointer"
-                                >
-                                  <MoreHorizontalIcon className="h-4 w-4" />
-                                  <span className="sr-only">Open menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {onViewTender && (
-                                  <DropdownMenuItem
-                                    onClick={() => onViewTender(tender.id)}
-                                  >
-                                    View
-                                  </DropdownMenuItem>
-                                )}
-                                {onEditTender && (
-                                  <DropdownMenuItem
-                                    onClick={() => onEditTender(tender.id)}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                )}
-                                {onDeleteTender && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() => onDeleteTender(tender.id)}
-                                      variant="destructive"
-                                    >
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  {/* Client Info & Description */}
+                  <div className="space-y-1 mb-3">
+                    <h3 className="font-semibold text-foreground text-sm">
+                      {tender.client?.name || 'Unknown Client'}
+                    </h3>
+                    {tender.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {tender.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-2 gap-y-2 gap-x-4 border-t border-border/20 pt-2.5 text-[11px]">
+                    <div>
+                      <span className="text-muted-foreground block mb-0.5">Value</span>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(Number(tender.value || 0))}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block mb-0.5">Closing Date</span>
+                      <span className="font-medium text-foreground">
+                        {formatDate(tender.submissionDate)}
+                      </span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground block mb-0.5">Time Left</span>
+                      <span className="font-medium">
+                        {tender.status === 'evaluation' ? (
+                          (() => {
+                            const submissionDate = tender.updatedAt;
+                            return `Submitted ${formatDate(submissionDate)}`;
+                          })()
+                        ) : daysLeft === null ? (
+                          '-'
+                        ) : daysLeft < 0 ? (
+                          <span className="text-red-500 font-semibold">
+                            {Math.abs(daysLeft)} days overdue
+                          </span>
+                        ) : daysLeft === 0 ? (
+                          <span className="text-orange-500 font-semibold">
+                            Due today
+                          </span>
+                        ) : (
+                          <span className={daysLeft <= 3 ? 'text-orange-500 font-semibold' : 'text-foreground'}>
+                            {daysLeft} days left
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
             {/* Pagination */}
             {totalPages > 1 && (

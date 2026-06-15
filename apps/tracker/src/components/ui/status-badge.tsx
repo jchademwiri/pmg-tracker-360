@@ -7,6 +7,30 @@ type StatusConfig = {
 
 const STATUS_MAP: Record<string, StatusConfig> = {
   // Tender statuses
+  new: {
+    label: 'New Opportunity',
+    className: 'bg-sky-500/10 text-sky-400 border border-sky-500/20',
+  },
+  review: {
+    label: 'To Review',
+    className: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+  },
+  approved_to_prepare: {
+    label: 'Approved to Prepare',
+    className: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
+  },
+  preparation: {
+    label: 'In Preparation',
+    className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  },
+  ready: {
+    label: 'Ready for Submission',
+    className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+  },
+  submitted: {
+    label: 'Submitted',
+    className: 'bg-violet-500/10 text-violet-400 border border-violet-500/20',
+  },
   open: {
     label: 'Open',
     className: 'bg-green-500/10 text-green-400 border border-green-500/20',

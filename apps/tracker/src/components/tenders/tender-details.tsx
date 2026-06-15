@@ -13,17 +13,23 @@ import {
   Calendar,
   MoreHorizontal,
   Building,
+  CheckSquare,
+  CheckCircle2,
+  Plus,
+  PhoneCall,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { deleteTender, updateTenderStatus } from '@/server/tenders';
+import { deleteTender, updateTenderStatus, createTenderFollowUp } from '@/server/tenders';
 import { formatCurrency, formatDate as sharedFormatDate, formatDateTime } from '@/lib/format';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,6 +41,10 @@ interface TenderWithClient {
   description: string | null;
   submissionDate: Date | null;
   value: string | null;
+  awardValue: string | null;
+  lossReason: string | null;
+  lossDetails: string | null;
+  evaluationNotes: string | null;
   status: string;
   evaluationDate: Date | null;
   validityDays: number | null;
@@ -59,18 +69,33 @@ interface Document {
   size: string;
   type: string;
   createdAt: Date;
-  signedUrl?: string; // Optional if we fetch signed URLs
+  signedUrl?: string;
   url?: string;
 }
 
 import { ExtensionList, ExtendedTenderExtension } from './extension-list';
 import { TenderToProjectDialog } from './tender-to-project-dialog';
+import { TenderLostDialog } from './tender-lost-dialog';
+import { TenderFollowUpDialog } from './tender-follow-up-dialog';
+
+interface FollowUp {
+  id: string;
+  tenderId: string;
+  followUpDate: Date;
+  contactPerson: string | null;
+  notes: string | null;
+  outcome: string | null;
+  nextFollowUpDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface TenderDetailsProps {
   tender: TenderWithClient;
   organizationId: string;
   documents: Document[];
   extensions: ExtendedTenderExtension[];
+  followUps: FollowUp[];
 }
 
 
@@ -80,10 +105,29 @@ export function TenderDetails({
   organizationId,
   documents,
   extensions,
+  followUps,
 }: TenderDetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showAwardDialog, setShowAwardDialog] = useState(false);
+  const [showLostDialog, setShowLostDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
+
+  const handleFollowUpSubmit = async (data: any) => {
+    startTransition(async () => {
+      const result = await createTenderFollowUp(organizationId, {
+        tenderId: tender.id,
+        ...data,
+      });
+      if (result.success) {
+        setShowFollowUpDialog(false);
+        router.refresh();
+      } else {
+        alert(result.error || 'Failed to create follow-up');
+      }
+    });
+  };
 
   const handleEdit = () => {
     router.push(`/tenders/${tender.id}/edit`);
@@ -110,21 +154,27 @@ export function TenderDetails({
   };
 
   const handleStatusUpdate = async (
-    newStatus: 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost',
-    contractDetails?: {
+    newStatus: 'new' | 'review' | 'approved_to_prepare' | 'preparation' | 'ready' | 'submitted' | 'evaluation' | 'awarded' | 'lost' | 'cancelled' | 'closed' | 'open',
+    details?: {
       awardValue?: string | null;
       contractStartDate?: Date | null;
       contractEndDate?: Date | null;
       signedContractUrl?: string | null;
+      lossReason?: string | null;
+      lossDetails?: string | null;
+      evaluationNotes?: string | null;
     }
   ) => {
     startTransition(async () => {
       const result = await updateTenderStatus(organizationId, tender.id, {
         status: newStatus,
-        awardValue: contractDetails?.awardValue ?? null,
-        contractStartDate: contractDetails?.contractStartDate,
-        contractEndDate: contractDetails?.contractEndDate,
-        signedContractUrl: contractDetails?.signedContractUrl,
+        awardValue: details?.awardValue ?? null,
+        contractStartDate: details?.contractStartDate,
+        contractEndDate: details?.contractEndDate,
+        signedContractUrl: details?.signedContractUrl,
+        lossReason: details?.lossReason ?? null,
+        lossDetails: details?.lossDetails ?? null,
+        evaluationNotes: details?.evaluationNotes ?? null,
       });
       if (result.success) {
         if (newStatus === 'awarded' && result.projectId) {
@@ -208,11 +258,123 @@ export function TenderDetails({
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      {/* Tender Lifecycle Stage Stepper */}
+      <Card className="rounded-lg shadow-sm border border-border/40 bg-card/50 overflow-hidden">
+        <div className="px-4 py-2.5 bg-muted/20 border-b border-border/30 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tender Lifecycle Stage</span>
+            <StatusBadge status={tender.status} />
+          </div>
+          <span className="text-xs text-muted-foreground">Click a stage to transition the workflow</span>
+        </div>
+        <div className="p-5 overflow-x-auto">
+          {(() => {
+            const stages = [
+              { value: 'new', label: 'Opportunity' },
+              { value: 'review', label: 'To Review' },
+              { value: 'approved_to_prepare', label: 'Approved' },
+              { value: 'preparation', label: 'Preparing' },
+              { value: 'ready', label: 'Ready' },
+              { value: 'submitted', label: 'Submitted' },
+              { value: 'evaluation', label: 'Evaluation' },
+              { value: 'awarded', label: tender.status === 'lost' ? 'Lost' : 'Awarded' },
+            ];
+
+            const getStatusIndex = (status: string) => {
+              switch (status) {
+                case 'new':
+                case 'open':
+                  return 0;
+                case 'review':
+                  return 1;
+                case 'approved_to_prepare':
+                  return 2;
+                case 'preparation':
+                  return 3;
+                case 'ready':
+                  return 4;
+                case 'submitted':
+                  return 5;
+                case 'evaluation':
+                  return 6;
+                case 'awarded':
+                case 'lost':
+                  return 7;
+                default:
+                  return -1;
+              }
+            };
+
+            const currentStatusIndex = getStatusIndex(tender.status);
+
+            const handleStageClick = (stageValue: string) => {
+              if (stageValue === tender.status) return;
+              if (stageValue === 'new' && tender.status === 'open') return;
+              if (stageValue === 'awarded') {
+                setShowAwardDialog(true);
+                return;
+              }
+              handleStatusUpdate(stageValue as any);
+            };
+
+            return (
+              <div className="flex items-center w-full min-w-[750px] justify-between relative py-2">
+                {/* Background progress line */}
+                <div className="absolute top-[21px] left-0 right-0 h-0.5 bg-border -translate-y-1/2 z-0" />
+                
+                {/* Active progress line */}
+                {currentStatusIndex >= 0 && (
+                  <div 
+                    className="absolute top-[21px] left-0 h-0.5 bg-blue-500 -translate-y-1/2 z-0 transition-all duration-500 ease-in-out" 
+                    style={{ 
+                      width: `${(currentStatusIndex / (stages.length - 1)) * 100}%` 
+                    }}
+                  />
+                )}
+
+                {stages.map((stage, idx) => {
+                  const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
+                  const isActive = idx === currentStatusIndex;
+                  const isTerminal = stage.value === 'awarded';
+                  const isLost = tender.status === 'lost' && isTerminal;
+
+                  let dotColor = "bg-background border-border text-muted-foreground hover:border-blue-500/50";
+                  if (isCompleted) {
+                    dotColor = "bg-blue-500 border-blue-500 text-white";
+                  } else if (isActive) {
+                    dotColor = isLost 
+                      ? "bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20" 
+                      : "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-500/20 ring-4 ring-blue-500/10";
+                  }
+
+                  return (
+                    <button
+                      key={stage.value}
+                      onClick={() => handleStageClick(stage.value)}
+                      disabled={isPending}
+                      className="flex flex-col items-center relative z-10 cursor-pointer group focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotColor} group-hover:scale-105`}>
+                        {idx + 1}
+                      </div>
+                      <span className={`text-[11px] font-semibold mt-2 transition-colors duration-300 ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground group-hover:text-foreground'}`}>
+                        {stage.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      </Card>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="extensions">Extensions</TabsTrigger>
+          <TabsTrigger value="follow-ups">Follow-ups</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -283,6 +445,56 @@ export function TenderDetails({
                       </p>
                     </div>
                   </div>
+
+                  {/* Award Outcome Details */}
+                  {tender.status === 'awarded' && (
+                    <div className="border-t pt-4 mt-2">
+                      <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Award & Appointment Outcome
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-500/[0.01] border border-emerald-500/10 rounded-lg p-3">
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Final Award Value</label>
+                          <p className="text-base font-semibold text-emerald-600">{formatCurrency(tender.awardValue || tender.value)}</p>
+                        </div>
+                        {tender.evaluationNotes && (
+                          <div className="md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outcome Notes</label>
+                            <p className="text-sm text-foreground whitespace-pre-wrap mt-0.5">{tender.evaluationNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lost Outcome Details */}
+                  {tender.status === 'lost' && (
+                    <div className="border-t pt-4 mt-2">
+                      <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-1.5">
+                        <AlertTriangle className="h-4 w-4 text-red-600" />
+                        Tender Outcome Details (Lost / Rejected)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-red-500/[0.01] border border-red-500/10 rounded-lg p-3">
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reason for Loss</label>
+                          <p className="text-sm font-medium capitalize mt-0.5">{tender.lossReason ? tender.lossReason.replace('_', ' ') : 'Not recorded'}</p>
+                        </div>
+                        {tender.lossDetails && (
+                          <div>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Additional Loss Details</label>
+                            <p className="text-sm text-foreground mt-0.5">{tender.lossDetails}</p>
+                          </div>
+                        )}
+                        {tender.evaluationNotes && (
+                          <div className="md:col-span-2">
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Evaluation / Feedback Notes</label>
+                            <p className="text-sm text-foreground whitespace-pre-wrap mt-0.5">{tender.evaluationNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {tender.description && (
                     <div>
@@ -488,6 +700,87 @@ export function TenderDetails({
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Bidding Compliance Checklist */}
+              <Card className="rounded-lg shadow-sm border border-border/40 bg-card/60 backdrop-blur-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-blue-500" />
+                    Bidding Compliance
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Required document checklist for submission
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {(() => {
+                    const checkComplianceItem = (keywords: string[]) => {
+                      return documents.some((doc) =>
+                        keywords.some((kw) => doc.name.toLowerCase().includes(kw))
+                      );
+                    };
+
+                    const complianceItems = [
+                      { id: 'tax', label: 'Tax Clearance Certificate', keywords: ['tax', 'clearance'] },
+                      { id: 'bee', label: 'B-BBEE / BEE Certificate', keywords: ['bee', 'b-bbee'] },
+                      { id: 'tech', label: 'Technical Proposal Spec', keywords: ['technical', 'proposal', 'scope'] },
+                      { id: 'price', label: 'Financial / Pricing Schedule', keywords: ['price', 'pricing', 'financial', 'schedule'] },
+                      { id: 'sbd', label: 'Signed Bidding Docs (SBD)', keywords: ['sbd'] },
+                      { id: 'ck', label: 'Company Profile / CIPC (CK)', keywords: ['ck', 'cipc', 'profile', 'registration'] },
+                    ];
+
+                    const completedCount = complianceItems.filter(item => checkComplianceItem(item.keywords)).length;
+
+                    return (
+                      <>
+                        {/* Progress Bar */}
+                        <div className="space-y-1.5 pb-2 border-b border-border/30">
+                          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                            <span>Documents Attached</span>
+                            <span>{completedCount} / {complianceItems.length}</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-blue-500 transition-all duration-500 ease-in-out" 
+                              style={{ width: `${(completedCount / complianceItems.length) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Checklist Items */}
+                        <div className="space-y-2.5 pt-1">
+                          {complianceItems.map((item) => {
+                            const isDone = checkComplianceItem(item.keywords);
+                            return (
+                              <div key={item.id} className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  {isDone ? (
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                                  ) : (
+                                    <div className="h-4 w-4 rounded-full border-2 border-dashed border-muted-foreground/30 shrink-0" />
+                                  )}
+                                  <span className={`text-xs truncate ${isDone ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                                    {item.label}
+                                  </span>
+                                </div>
+                                {!isDone && (
+                                  <Button 
+                                    variant="ghost" 
+                                    onClick={() => setActiveTab('documents')}
+                                    className="h-6 text-[10px] px-2 py-0 text-blue-500 hover:text-blue-700 cursor-pointer"
+                                  >
+                                    Attach
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
               {/* Quick Actions */}
               <Card className="rounded-lg shadow-sm">
                 <CardHeader>
@@ -575,7 +868,7 @@ export function TenderDetails({
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('lost')}
+                      onClick={() => setShowLostDialog(true)}
                       disabled={isPending}
                     >
                       Mark as Rejected / Lost
@@ -661,6 +954,64 @@ export function TenderDetails({
             tenderId={tender.id}
           />
         </TabsContent>
+
+        <TabsContent value="follow-ups" className="mt-6">
+          <Card className="rounded-lg shadow-sm border border-border/40">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <CardTitle className="text-xl">Follow-up Log Workspace</CardTitle>
+                <CardDescription>Keep track of all client communication and bid status queries</CardDescription>
+              </div>
+              <Button onClick={() => setShowFollowUpDialog(true)} className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="mr-2 h-4 w-4" /> Log Follow-up
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {followUps.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
+                  <PhoneCall className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="font-semibold text-sm">No follow-ups logged yet</p>
+                  <p className="text-xs mt-1">Keep a digital trail of updates to ensure you stay aligned on validities.</p>
+                </div>
+              ) : (
+                <div className="relative border-l-2 border-blue-500/20 pl-6 ml-3 space-y-6">
+                  {followUps.map((f) => (
+                    <div key={f.id} className="relative">
+                      {/* Timeline dot */}
+                      <span className="absolute -left-[31px] top-1 bg-background border-2 border-blue-500 rounded-full h-4 w-4 z-10 flex items-center justify-center">
+                        <span className="bg-blue-500 rounded-full h-1.5 w-1.5" />
+                      </span>
+                      <div className="bg-background border border-border/40 hover:border-blue-500/10 p-4 rounded-xl shadow-sm transition-all duration-300">
+                        <div className="flex justify-between items-start gap-4 flex-wrap">
+                          <div>
+                            <span className="text-xs font-semibold text-blue-500">{formatDateOnly(f.followUpDate)}</span>
+                            {f.contactPerson && (
+                              <p className="text-xs font-medium text-muted-foreground mt-0.5">Contact: <span className="text-foreground">{f.contactPerson}</span></p>
+                            )}
+                          </div>
+                          {f.nextFollowUpDate && (
+                            <Badge variant="outline" className="text-[10px] text-amber-600 bg-amber-500/[0.02] border-amber-500/20">
+                              Next: {formatDateOnly(f.nextFollowUpDate)}
+                            </Badge>
+                          )}
+                        </div>
+                        {f.notes && (
+                          <p className="text-sm text-foreground/80 mt-2.5 whitespace-pre-wrap">{f.notes}</p>
+                        )}
+                        {f.outcome && (
+                          <div className="mt-3 flex items-start gap-1.5 bg-muted/30 p-2 rounded-lg text-xs text-muted-foreground">
+                            <span className="font-semibold text-foreground shrink-0">Outcome:</span>
+                            <span>{f.outcome}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <TenderToProjectDialog
@@ -672,6 +1023,25 @@ export function TenderDetails({
           handleStatusUpdate('awarded', data);
           setShowAwardDialog(false);
         }}
+        isPending={isPending}
+      />
+
+      <TenderLostDialog
+        open={showLostDialog}
+        onOpenChange={setShowLostDialog}
+        tenderNumber={tender.tenderNumber}
+        onSubmit={(data) => {
+          handleStatusUpdate('lost', data);
+          setShowLostDialog(false);
+        }}
+        isPending={isPending}
+      />
+
+      <TenderFollowUpDialog
+        open={showFollowUpDialog}
+        onOpenChange={setShowFollowUpDialog}
+        tenderNumber={tender.tenderNumber}
+        onSubmit={handleFollowUpSubmit}
         isPending={isPending}
       />
     </div>

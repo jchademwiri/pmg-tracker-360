@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -102,6 +103,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   const [validityType, setValidityType] = useState<'days' | 'date'>(
     tender?.validityDays ? 'days' : (tender?.validityDate ? 'date' : 'days')
   );
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [hasDraft, setHasDraft] = useState(false);
 
   const form = useForm<TenderCreateInput>({
     resolver: zodResolver(TenderCreateSchema) as any,
@@ -147,6 +150,69 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
     loadClients();
   }, [organizationId]);
 
+  // Draft loading checks
+  useEffect(() => {
+    if (mode === 'create') {
+      const draft = localStorage.getItem(`tender_draft_${organizationId}`);
+      if (draft) {
+        try {
+          const parsed = JSON.parse(draft);
+          const hasData = Object.entries(parsed.values || {}).some(
+            ([key, val]) => key !== 'status' && val !== '' && val !== undefined && val !== false
+          );
+          if (hasData) {
+            setHasDraft(true);
+          }
+        } catch (e) {
+          console.error('Failed to parse draft', e);
+        }
+      }
+    }
+  }, [mode, organizationId]);
+
+  // Draft autosaving logic
+  const formValues = form.watch();
+  useEffect(() => {
+    if (mode === 'create') {
+      const draftData = {
+        values: formValues,
+        validityType,
+      };
+      localStorage.setItem(`tender_draft_${organizationId}`, JSON.stringify(draftData));
+    }
+  }, [formValues, validityType, mode, organizationId]);
+
+  const handleRestoreDraft = () => {
+    const draft = localStorage.getItem(`tender_draft_${organizationId}`);
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (parsed.values) {
+          Object.entries(parsed.values).forEach(([key, val]) => {
+            if ((key === 'submissionDate' || key === 'validityDate' || key === 'briefingDate') && val) {
+              form.setValue(key as any, new Date(val as string));
+            } else {
+              form.setValue(key as any, val);
+            }
+          });
+        }
+        if (parsed.validityType) {
+          setValidityType(parsed.validityType);
+        }
+        toast.success('Draft restored successfully');
+      } catch (e) {
+        console.error('Failed to restore draft', e);
+      }
+    }
+    setHasDraft(false);
+  };
+
+  const handleDiscardDraft = () => {
+    localStorage.removeItem(`tender_draft_${organizationId}`);
+    setHasDraft(false);
+    toast.success('Draft discarded');
+  };
+
   const onSubmit = (data: TenderCreateInput) => {
     setError(null);
 
@@ -175,6 +241,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
         }
 
         if (result?.success) {
+          localStorage.removeItem(`tender_draft_${organizationId}`);
+
           // Upload files if any
           if (files.length > 0) {
             const entityId = mode === 'create' ? result.tender?.id : tender?.id;
@@ -232,6 +300,90 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
         </div>
       </div>
 
+      {/* Stepper Progress */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between max-w-xl mx-auto">
+          {[
+            { step: 1, label: 'General & Contact' },
+            { step: 2, label: 'Timeline & Value' },
+            { step: 3, label: 'Documents' },
+          ].map((item, index, arr) => (
+            <div key={item.step} className="flex items-center flex-1 last:flex-none">
+              <div className="flex flex-col items-center">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    // Only allow navigation to steps that are already valid
+                    if (item.step < currentStep) {
+                      setCurrentStep(item.step);
+                    } else if (item.step === 2 && currentStep === 1) {
+                      const isValid = await form.trigger(['tenderNumber', 'clientId']);
+                      if (isValid) setCurrentStep(2);
+                    } else if (item.step === 3 && currentStep === 2) {
+                      const isValid = await form.trigger(['tenderNumber', 'clientId']);
+                      if (isValid) setCurrentStep(3);
+                    }
+                  }}
+                  className={`size-10 rounded-full flex items-center justify-center font-semibold text-sm border-2 transition-all cursor-pointer ${
+                    currentStep === item.step
+                      ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-105'
+                      : currentStep > item.step
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : 'border-muted-foreground/30 bg-muted/20 text-muted-foreground'
+                  }`}
+                >
+                  {currentStep > item.step ? '✓' : item.step}
+                </button>
+                <span className={`text-xs mt-2 font-medium whitespace-nowrap ${
+                  currentStep === item.step
+                    ? 'text-primary'
+                    : currentStep > item.step
+                      ? 'text-emerald-500'
+                      : 'text-muted-foreground'
+                }`}>
+                  {item.label}
+                </span>
+              </div>
+              {index < arr.length - 1 && (
+                <div className={`h-[2px] flex-1 mx-4 -mt-6 transition-all ${
+                  currentStep > item.step ? 'bg-emerald-500' : 'bg-muted-foreground/20'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Draft Notification Banner */}
+      {hasDraft && (
+        <div className="flex items-center justify-between p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-md">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold text-sm text-blue-400">Draft Found</span>
+            <span className="text-xs text-muted-foreground">You have an unsaved draft from your last session.</span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              className="text-xs cursor-pointer"
+              onClick={handleDiscardDraft}
+            >
+              Discard
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              type="button"
+              className="text-xs bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+              onClick={handleRestoreDraft}
+            >
+              Restore Draft
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Error Display */}
@@ -241,235 +393,451 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Basic Information */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                  Basic Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <FormField
-                  control={form.control}
-                  name="tenderNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tender Number *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter unique tender number"
-                          {...field}
-                          onChange={(e) => {
-                            const upperValue = e.target.value.toUpperCase();
-                            field.onChange(upperValue);
-                          }}
-                          disabled={isPending}
-                          className="rounded-md uppercase"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* STEP 1: General & Contact Info */}
+          {currentStep === 1 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-200">
+              {/* Basic Information */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                    Basic Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                  <FormField
+                    control={form.control}
+                    name="tenderNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tender Number *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter unique tender number"
+                            {...field}
+                            onChange={(e) => {
+                              const upperValue = e.target.value.toUpperCase();
+                              field.onChange(upperValue);
+                            }}
+                            disabled={isPending}
+                            className="rounded-md uppercase"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="clientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client *</FormLabel>
-                      <div className="flex items-center gap-2">
+                  <FormField
+                    control={form.control}
+                    name="clientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client *</FormLabel>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isPending || loadingClients}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select a client" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {loadingClients ? (
+                                <SelectItem value="loading" disabled>
+                                  Loading clients...
+                                </SelectItem>
+                              ) : clients.length === 0 ? (
+                                <SelectItem value="no-clients" disabled>
+                                  No clients available
+                                </SelectItem>
+                              ) : (
+                                clients.map((client) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    <div className="flex flex-col">
+                                      <span>{client.name}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <ClientCreateDialog
+                            organizationId={organizationId}
+                            onClientCreated={(newClient) => {
+                              setClients((prev) => [
+                                ...prev,
+                                {
+                                  id: newClient.id,
+                                  name: newClient.name,
+                                  contactName: newClient.contactName || null,
+                                  contactEmail: newClient.contactEmail || null,
+                                  contactPhone: newClient.contactPhone || null,
+                                },
+                              ]);
+                              form.setValue('clientId', newClient.id, {
+                                shouldValidate: true,
+                              });
+                            }}
+                          />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={isPending || loadingClients}
+                          defaultValue={field.value}
+                          disabled={isPending}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select a client" />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {loadingClients ? (
-                              <SelectItem value="loading" disabled>
-                                Loading clients...
-                              </SelectItem>
-                            ) : clients.length === 0 ? (
-                              <SelectItem value="no-clients" disabled>
-                                No clients available
-                              </SelectItem>
-                            ) : (
-                              clients.map((client) => (
-                                <SelectItem key={client.id} value={client.id}>
-                                  <div className="flex flex-col">
-                                    <span>{client.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="evaluation">Evaluation</SelectItem>
+                            <SelectItem value="awarded">Appointed / Awarded</SelectItem>
+                            <SelectItem value="lost">Rejected / Lost</SelectItem>
                           </SelectContent>
                         </Select>
-                        <ClientCreateDialog
-                          organizationId={organizationId}
-                          onClientCreated={(newClient) => {
-                            setClients((prev) => [
-                              ...prev,
-                              {
-                                id: newClient.id,
-                                name: newClient.name,
-                                contactName: newClient.contactName || null,
-                                contactEmail: newClient.contactEmail || null,
-                                contactPhone: newClient.contactPhone || null,
-                              },
-                            ]);
-                            form.setValue('clientId', newClient.id, {
-                              shouldValidate: true,
-                            });
-                          }}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Enter tender description..."
+                            rows={4}
+                            {...field}
+                            disabled={isPending}
+                            className="rounded-md"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Tender Follow-up Contact */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <User className="h-5 w-5 mr-2 text-amber-600" />
+                    Tender Follow-up Contact
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Tender-specific enquiry or validity follow-up details
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                  <FormField
+                    control={form.control}
+                    name="contactName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Person</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              placeholder="e.g. Supply Chain Officer"
+                              className="pl-10 rounded-md"
+                              {...field}
+                              value={field.value || ''}
+                              disabled={isPending}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="contactEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              type="email"
+                              placeholder="e.g. enquiries@client.co.za"
+                              className="pl-10 rounded-md"
+                              {...field}
+                              value={field.value || ''}
+                              disabled={isPending}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="contactPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              type="tel"
+                              placeholder="e.g. +27 11 555 0123"
+                              className="pl-10 rounded-md"
+                              {...field}
+                              value={field.value || ''}
+                              disabled={isPending}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* STEP 2: Timeline & Value */}
+          {currentStep === 2 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-200">
+              {/* Submission Details */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Calendar className="h-5 w-5 mr-2 text-green-600" />
+                    Submission Details
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Financial and timeline information (optional)
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                  <FormField
+                    control={form.control}
+                    name="submissionDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Closing Date & Time</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              type="datetime-local"
+                              className="pl-10 rounded-md"
+                              {...field}
+                              value={toLocalDateTimeString(field.value)}
+                              onChange={(e) => {
+                                field.onChange(
+                                  fromLocalDateTimeString(e.target.value)
+                                );
+                              }}
+                              disabled={isPending}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-3">
+                    <FormLabel>Tender Validity *</FormLabel>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={validityType === 'days' ? 'default' : 'outline'}
+                        onClick={() => {
+                          setValidityType('days');
+                          form.setValue('validityDate', undefined);
+                        }}
+                        className="flex-1"
                         disabled={isPending}
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="open">Open</SelectItem>
-                          <SelectItem value="closed">Closed</SelectItem>
-                          <SelectItem value="evaluation">Evaluation</SelectItem>
-                          <SelectItem value="awarded">Appointed / Awarded</SelectItem>
-                          <SelectItem value="lost">Rejected / Lost</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        In Days
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={validityType === 'date' ? 'default' : 'outline'}
+                        onClick={() => {
+                          setValidityType('date');
+                          form.setValue('validityDays', undefined);
+                        }}
+                        className="flex-1"
+                        disabled={isPending}
+                      >
+                        Specific Date
+                      </Button>
+                    </div>
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter tender description..."
-                          rows={4}
-                          {...field}
-                          disabled={isPending}
-                          className="rounded-md"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Submission Details */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                  Submission Details
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Financial and timeline information (optional)
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <FormField
-                  control={form.control}
-                  name="submissionDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Closing Date & Time</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            type="datetime-local"
-                            className="pl-10 rounded-md"
-                            {...field}
-                            value={toLocalDateTimeString(field.value)}
-                            onChange={(e) => {
-                              field.onChange(
-                                fromLocalDateTimeString(e.target.value)
-                              );
-                            }}
-                            disabled={isPending}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-3">
-                  <FormLabel>Tender Validity *</FormLabel>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={validityType === 'days' ? 'default' : 'outline'}
-                      onClick={() => {
-                        setValidityType('days');
-                        form.setValue('validityDate', undefined);
-                      }}
-                      className="flex-1"
-                      disabled={isPending}
-                    >
-                      In Days
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={validityType === 'date' ? 'default' : 'outline'}
-                      onClick={() => {
-                        setValidityType('date');
-                        form.setValue('validityDays', undefined);
-                      }}
-                      className="flex-1"
-                      disabled={isPending}
-                    >
-                      Specific Date
-                    </Button>
+                    {validityType === 'days' ? (
+                      <FormField
+                        control={form.control}
+                        name="validityDays"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Enter number of days (e.g. 90)"
+                                {...field}
+                                value={field.value ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                  field.onChange(val);
+                                }}
+                                disabled={isPending}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="validityDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                  type="date"
+                                  className="pl-10 rounded-md"
+                                  {...field}
+                                  value={toLocalDateString(field.value)}
+                                  onChange={(e) => {
+                                    field.onChange(fromLocalDateString(e.target.value));
+                                  }}
+                                  disabled={isPending}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
 
-                  {validityType === 'days' ? (
+                  <FormField
+                    control={form.control}
+                    name="value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tender Value</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground font-semibold text-sm">
+                              R
+                            </span>
+                            <Input
+                              type="text"
+                              placeholder="Enter tender value"
+                              className="pl-10 rounded-md"
+                              {...field}
+                              value={field.value || ''}
+                              disabled={isPending}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Client Information Display */}
+                  {form.watch('clientId') && (
+                    <div className="bg-accent rounded-md p-4">
+                      <h4 className="text-sm font-medium text-foreground mb-2">
+                        Selected Client Information
+                      </h4>
+                      {(() => {
+                        const selectedClient = clients.find(
+                          (c) => c.id === form.watch('clientId')
+                        );
+                        if (!selectedClient) return null;
+
+                        return (
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <div className="flex items-center">
+                              <User className="h-3 w-3 mr-1" />
+                              {selectedClient.name}
+                            </div>
+                            {selectedClient.contactName && (
+                              <div>Contact: {selectedClient.contactName}</div>
+                            )}
+                            {selectedClient.contactEmail && (
+                              <div>Email: {selectedClient.contactEmail}</div>
+                            )}
+                            {selectedClient.contactPhone && (
+                              <div>Phone: {selectedClient.contactPhone}</div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Clarification & Briefing Session */}
+              <Card className="backdrop-blur-md bg-card/70 border-border/40 shadow-sm mt-6 lg:mt-0">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-indigo-500" />
+                    Clarification Meeting & Briefing Session
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Clarification meeting schedule and mandatory attendance tracking
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="validityDays"
+                      name="briefingDate"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Briefing Date & Time</FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
-                              placeholder="Enter number of days (e.g. 90)"
+                              type="datetime-local"
+                              className="rounded-md"
                               {...field}
-                              value={field.value ?? ''}
+                              value={toSASTDateTimeString(field.value)}
                               onChange={(e) => {
-                                const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
-                                field.onChange(val);
+                                field.onChange(parseDateTimeToUTC(e.target.value));
                               }}
                               disabled={isPending}
                             />
@@ -478,318 +846,112 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                         </FormItem>
                       )}
                     />
-                  ) : (
+
                     <FormField
                       control={form.control}
-                      name="validityDate"
+                      name="briefingLocation"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Venue / Meeting Link</FormLabel>
                           <FormControl>
-                            <div className="relative">
-                              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                              <Input
-                                type="date"
-                                className="pl-10 rounded-md"
-                                {...field}
-                                value={toLocalDateString(field.value)}
-                                onChange={(e) => {
-                                  field.onChange(fromLocalDateString(e.target.value));
-                                }}
-                                disabled={isPending}
-                              />
-                            </div>
+                            <Input
+                              placeholder="e.g. Boardroom A or Microsoft Teams link"
+                              className="rounded-md"
+                              {...field}
+                              value={field.value || ''}
+                              disabled={isPending}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  )}
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tender Value</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground font-semibold text-sm">
-                            R
-                          </span>
-                          <Input
-                            type="text"
-                            placeholder="Enter tender value"
-                            className="pl-10 rounded-md"
-                            {...field}
-                            value={field.value || ''}
-                            disabled={isPending}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Client Information Display */}
-                {form.watch('clientId') && (
-                  <div className="bg-accent rounded-md p-4">
-                    <h4 className="text-sm font-medium text-foreground mb-2">
-                      Selected Client Information
-                    </h4>
-                    {(() => {
-                      const selectedClient = clients.find(
-                        (c) => c.id === form.watch('clientId')
-                      );
-                      if (!selectedClient) return null;
-
-                      return (
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <div className="flex items-center">
-                            <User className="h-3 w-3 mr-1" />
-                            {selectedClient.name}
-                          </div>
-                          {selectedClient.contactName && (
-                            <div>Contact: {selectedClient.contactName}</div>
-                          )}
-                          {selectedClient.contactEmail && (
-                            <div>Email: {selectedClient.contactEmail}</div>
-                          )}
-                          {selectedClient.contactPhone && (
-                            <div>Phone: {selectedClient.contactPhone}</div>
-                          )}
-                        </div>
-                      );
-                    })()}
                   </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Tender Follow-up Contact */}
-            <Card className="shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-t pt-4">
+                    <FormField
+                      control={form.control}
+                      name="isBriefingMandatory"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                              checked={field.value || false}
+                              onChange={field.onChange}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="font-semibold text-sm">
+                              Mandatory Briefing
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              Attendance is compulsory for bid validity
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="briefingAttended"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                              checked={field.value || false}
+                              onChange={field.onChange}
+                              disabled={isPending}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="font-semibold text-sm">
+                              Briefing Attended
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              Clarification register signed/attended
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* STEP 3: Documents */}
+          {currentStep === 3 && (
+            <Card className="shadow-sm animate-in fade-in duration-200">
               <CardHeader>
                 <CardTitle className="flex items-center text-lg">
-                  <User className="h-5 w-5 mr-2 text-amber-600" />
-                  Tender Follow-up Contact
+                  <FileText className="h-5 w-5 mr-2 text-purple-600" />
+                  Documents
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Tender-specific enquiry or validity follow-up details
+                  Upload tender documents, specifications, or requirements (PDF,
+                  Word, Excel, Images)
                 </p>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <FormField
-                  control={form.control}
-                  name="contactName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Person</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            placeholder="e.g. Supply Chain Officer"
-                            className="pl-10 rounded-md"
-                            {...field}
-                            value={field.value || ''}
-                            disabled={isPending}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="contactEmail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            type="email"
-                            placeholder="e.g. enquiries@client.co.za"
-                            className="pl-10 rounded-md"
-                            {...field}
-                            value={field.value || ''}
-                            disabled={isPending}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="contactPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            type="tel"
-                            placeholder="e.g. +27 11 555 0123"
-                            className="pl-10 rounded-md"
-                            {...field}
-                            value={field.value || ''}
-                            disabled={isPending}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <FileUploader
+                  value={files}
+                  onValueChange={setFiles}
+                  maxFiles={5}
+                  disabled={isPending}
                 />
               </CardContent>
             </Card>
-
-            {/* Clarification & Briefing Session */}
-            <Card className="backdrop-blur-md bg-card/70 border-border/40 shadow-sm mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-indigo-500" />
-                  Clarification Meeting & Briefing Session
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Clarification meeting schedule and mandatory attendance tracking
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="briefingDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Briefing Date & Time</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="datetime-local"
-                            className="rounded-md"
-                            {...field}
-                            value={toSASTDateTimeString(field.value)}
-                            onChange={(e) => {
-                              field.onChange(parseDateTimeToUTC(e.target.value));
-                            }}
-                            disabled={isPending}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="briefingLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Venue / Meeting Link</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g. Boardroom A or Microsoft Teams link"
-                            className="rounded-md"
-                            {...field}
-                            value={field.value || ''}
-                            disabled={isPending}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-t pt-4">
-                  <FormField
-                    control={form.control}
-                    name="isBriefingMandatory"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
-                        <FormControl>
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                            checked={field.value || false}
-                            onChange={field.onChange}
-                            disabled={isPending}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="font-semibold text-sm">
-                            Mandatory Briefing
-                          </FormLabel>
-                          <p className="text-xs text-muted-foreground">
-                            Attendance is compulsory for bid validity
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="briefingAttended"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
-                        <FormControl>
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                            checked={field.value || false}
-                            onChange={field.onChange}
-                            disabled={isPending}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="font-semibold text-sm">
-                            Briefing Attended
-                          </FormLabel>
-                          <p className="text-xs text-muted-foreground">
-                            Clarification register signed/attended
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Documents */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center text-lg">
-                <FileText className="h-5 w-5 mr-2 text-purple-600" />
-                Documents
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">
-                Upload tender documents, specifications, or requirements (PDF,
-                Word, Excel, Images)
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-6 p-6">
-              <FileUploader
-                value={files}
-                onValueChange={setFiles}
-                maxFiles={5}
-                disabled={isPending}
-              />
-            </CardContent>
-          </Card>
+          )}
 
           {/* Form Actions */}
-          <div className="flex items-center rounded-lg justify-end space-x-4 pt-8 border-t bg-card px-6 py-6">
+          <div className="flex items-center rounded-lg justify-between space-x-4 pt-8 border-t bg-card px-6 py-6">
             <Button
               type="button"
               variant="outline"
@@ -799,23 +961,57 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending || loadingClients}
-              className="min-w-[120px] cursor-pointer"
-            >
-              {isPending ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Saving...
-                </div>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  {mode === 'create' ? 'Create Tender' : 'Save Changes'}
-                </>
+            <div className="flex gap-2">
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCurrentStep((prev) => prev - 1)}
+                  disabled={isPending}
+                  className="cursor-pointer"
+                >
+                  Previous
+                </Button>
               )}
-            </Button>
+
+              {currentStep < 3 ? (
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    let fieldsToValidate: Array<keyof TenderCreateInput> = [];
+                    if (currentStep === 1) {
+                      fieldsToValidate = ['tenderNumber', 'clientId'];
+                    }
+                    const isValid = await form.trigger(fieldsToValidate);
+                    if (isValid) {
+                      setCurrentStep((prev) => prev + 1);
+                    }
+                  }}
+                  disabled={isPending}
+                  className="min-w-[100px] cursor-pointer"
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={isPending || loadingClients}
+                  className="min-w-[120px] cursor-pointer"
+                >
+                  {isPending ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </div>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      {mode === 'create' ? 'Create Tender' : 'Save Changes'}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </form>
       </Form>

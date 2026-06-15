@@ -2,8 +2,8 @@
 
 import { db } from '@pmg/db';
 import { validateSessionAndOrg } from './utils';
-import { tender, client, project, tenderExtension } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql } from 'drizzle-orm';
+import { tender, client, project, tenderExtension, tenderFollowUp } from '@pmg/db/schema';
+import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, isNotNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
@@ -310,6 +310,10 @@ export async function getTenderById(organizationId: string, tenderId: string) {
         contactName: tender.contactName,
         contactEmail: tender.contactEmail,
         contactPhone: tender.contactPhone,
+        awardValue: tender.awardValue,
+        lossReason: tender.lossReason,
+        lossDetails: tender.lossDetails,
+        evaluationNotes: tender.evaluationNotes,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
@@ -575,6 +579,10 @@ export async function updateTenderStatus(
       .update(tender)
       .set({
         status: validatedData.status,
+        awardValue: validatedData.status === 'awarded' ? validatedData.awardValue ?? existingTender[0].value : null,
+        lossReason: validatedData.status === 'lost' ? validatedData.lossReason : null,
+        lossDetails: validatedData.status === 'lost' ? validatedData.lossDetails : null,
+        evaluationNotes: validatedData.evaluationNotes ?? null,
         updatedAt: new Date(),
       })
       .where(eq(tender.id, tenderId))
@@ -1318,7 +1326,26 @@ export async function getTendersOverview(
 
     // Add filters
     if (filters.status && filters.status !== 'all') {
-      whereCondition = and(whereCondition, eq(tender.status, filters.status));
+      if (filters.status === 'closing_soon') {
+        whereCondition = and(
+          whereCondition,
+          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open']),
+          isNotNull(tender.submissionDate),
+          gte(tender.submissionDate, new Date())
+        );
+      } else if (filters.status === 'awaiting_results') {
+        whereCondition = and(
+          whereCondition,
+          inArray(tender.status, ['submitted', 'evaluation'])
+        );
+      } else if (filters.status === 'under_preparation') {
+        whereCondition = and(
+          whereCondition,
+          inArray(tender.status, ['approved_to_prepare', 'preparation'])
+        );
+      } else {
+        whereCondition = and(whereCondition, eq(tender.status, filters.status));
+      }
     }
 
     if (filters.clientId && filters.clientId !== 'all') {
@@ -1511,5 +1538,60 @@ export async function autoCloseExpiredTenders(organizationId: string) {
   } catch (error: any) {
     console.error('Error auto-closing expired tenders:', error);
     return { success: false, error: error.message || 'Failed to auto-close expired tenders' };
+  }
+}
+
+export async function getTenderFollowUps(organizationId: string, tenderId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const data = await db
+      .select()
+      .from(tenderFollowUp)
+      .where(
+        and(
+          eq(tenderFollowUp.organizationId, organizationId),
+          eq(tenderFollowUp.tenderId, tenderId)
+        )
+      )
+      .orderBy(desc(tenderFollowUp.createdAt));
+    return { success: true, followUps: data };
+  } catch (error: any) {
+    console.error('Error fetching follow ups:', error);
+    return { success: false, error: error.message || 'Failed to fetch follow-ups' };
+  }
+}
+
+export async function createTenderFollowUp(
+  organizationId: string,
+  data: {
+    tenderId: string;
+    followUpDate: Date;
+    contactPerson?: string | null;
+    notes?: string | null;
+    outcome?: string | null;
+    nextFollowUpDate?: Date | null;
+  }
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    
+    const newFollowUp = await db.insert(tenderFollowUp).values({
+      id: randomUUID(),
+      organizationId,
+      tenderId: data.tenderId,
+      followUpDate: new Date(data.followUpDate),
+      contactPerson: data.contactPerson ?? null,
+      notes: data.notes ?? null,
+      outcome: data.outcome ?? null,
+      nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate) : null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+
+    revalidatePath(`/tenders/${data.tenderId}`);
+    return { success: true, followUp: newFollowUp[0] };
+  } catch (error: any) {
+    console.error('Error creating follow up:', error);
+    return { success: false, error: error.message || 'Failed to create follow-up' };
   }
 }

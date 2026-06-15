@@ -339,6 +339,10 @@ export const tender = pgTable(
       .references(() => client.id, { onDelete: 'cascade' }),
     submissionDate: timestamp('submission_date'),
     value: decimal('value', { precision: 15, scale: 2 }),
+    awardValue: decimal('award_value', { precision: 15, scale: 2 }),
+    lossReason: text('loss_reason'),
+    lossDetails: text('loss_details'),
+    evaluationNotes: text('evaluation_notes'),
     status: text('status').default('open').notNull(), // open, closed, evaluation, awarded, lost, cancelled
     priority: text('priority').default('medium').notNull(), // low, medium, high, urgent
     evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
