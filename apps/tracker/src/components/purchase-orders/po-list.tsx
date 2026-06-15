@@ -7,13 +7,19 @@ import {
   Plus,
   MoreHorizontalIcon,
   FileText,
-  Banknote,
-  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
+import {
+  MobileCard,
+  MobileCardHeader,
+  MobileCardBody,
+  MobileCardField,
+  MobileCardGrid,
+  MobileCardList,
+} from '@/components/ui/mobile-card';
 import { toast } from 'sonner';
 import {
   Table,
@@ -345,109 +351,55 @@ export function POList({
             </div>
 
             {/* Mobile Cards */}
-            <div className="md:hidden space-y-4">
-              {pos.map((po) => (
-                <Card
-                  key={po.id}
-                  className="cursor-pointer hover:bg-accent transition-colors duration-200 group rounded-lg border hover:ring-1 hover:ring-ring"
-                  onClick={() =>
-                    router.push(`/projects/purchase-orders/${po.id}`)
-                  }
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-medium text-blue-600 group-hover:text-blue-700 transition-colors">
-                            {po.poNumber}
-                          </h3>
-                          <StatusBadge status={po.status} />
-                        </div>
+            <MobileCardList>
+              {pos.map((po) => {
+                const actions = [
+                  { label: 'View Details', onClick: () => router.push(`/projects/purchase-orders/${po.id}`) },
+                  { label: 'Edit PO', onClick: () => router.push(`/projects/purchase-orders/${po.id}/edit`) },
+                  { label: 'Delete PO', onClick: () => handleDeletePO(po.id), variant: 'destructive' as const },
+                ];
 
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>Supplier:</strong>{' '}
+                return (
+                  <MobileCard
+                    key={po.id}
+                    onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}
+                  >
+                    <MobileCardHeader
+                      identifier={po.poNumber}
+                      status={po.status}
+                      actions={actions}
+                    />
+                    <MobileCardBody>
+                      {po.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {po.description}
+                        </p>
+                      )}
+                      <MobileCardGrid>
+                        <MobileCardField label="Supplier">
                           {po.supplierName || 'Not specified'}
-                        </div>
-
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>Project:</strong>{' '}
+                        </MobileCardField>
+                        <MobileCardField label="Project">
                           {po.project?.projectNumber.toUpperCase() || 'Unknown'}
-                        </div>
-
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>PO Date:</strong> {formatDate(po.poDate)}
-                        </div>
-
-                        {po.description && (
-                          <p className="text-sm text-foreground/80 mb-2 line-clamp-2">
-                            {po.description}
-                          </p>
-                        )}
-
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Banknote className="h-3 w-3 mr-1" />
-                            {formatCurrency(po.totalAmount)}
-                          </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Expected: {formatDate(po.expectedDeliveryDate)}
-                          </div>
-                        </div>
-
-                        <div className="mt-2">
-                          <span className="text-xs text-muted-foreground">
-                            Created {formatDate(po.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 cursor-pointer"
-                          >
-                            <MoreHorizontalIcon className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/projects/purchase-orders/${po.id}`);
-                            }}
-                          >
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/projects/purchase-orders/${po.id}/edit`);
-                            }}
-                          >
-                            Edit PO
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeletePO(po.id);
-                            }}
-                            variant="destructive"
-                            disabled={isPending}
-                          >
-                            Delete PO
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        </MobileCardField>
+                        <MobileCardField label="Total Amount">
+                          {formatCurrency(po.totalAmount)}
+                        </MobileCardField>
+                        <MobileCardField label="PO Date">
+                          {formatDate(po.poDate)}
+                        </MobileCardField>
+                        <MobileCardField label="Expected Delivery">
+                          {formatDate(po.expectedDeliveryDate)}
+                        </MobileCardField>
+                        <MobileCardField label="Created">
+                          {formatDate(po.createdAt)}
+                        </MobileCardField>
+                      </MobileCardGrid>
+                    </MobileCardBody>
+                  </MobileCard>
+                );
+              })}
+            </MobileCardList>
 
             {/* Pagination */}
             {totalPages > 1 && (

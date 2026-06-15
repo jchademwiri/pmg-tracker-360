@@ -18,6 +18,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  MobileCard,
+  MobileCardHeader,
+  MobileCardBody,
+  MobileCardField,
+  MobileCardGrid,
+  MobileCardList,
+} from '@/components/ui/mobile-card';
+import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontalIcon,
@@ -233,68 +241,23 @@ export function TendersTable({
                </div>
 
           {/* Mobile Card Layout */}
-          <div className="md:hidden space-y-4">
+          <MobileCardList>
             {tenders.map((tender) => {
               const daysLeft = getDaysUntilDeadline(tender.submissionDate);
-              return (
-                <div
-                  key={tender.id}
-                  onClick={() => onRowClick?.(tender.id)}
-                  className="p-4 rounded-xl border border-border/40 bg-card/45 backdrop-blur-md hover:bg-card/60 transition-all cursor-pointer shadow-sm relative overflow-hidden"
-                >
-                  {/* Top Bar: Tender Number, StatusBadge, Actions */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-blue-400">
-                        {tender.tenderNumber}
-                      </span>
-                      <StatusBadge status={tender.status} />
-                    </div>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 cursor-pointer"
-                          >
-                            <MoreHorizontalIcon className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {onViewTender && (
-                            <DropdownMenuItem
-                              onClick={() => onViewTender(tender.id)}
-                            >
-                              View
-                            </DropdownMenuItem>
-                          )}
-                          {onEditTender && (
-                            <DropdownMenuItem
-                              onClick={() => onEditTender(tender.id)}
-                            >
-                              Edit
-                            </DropdownMenuItem>
-                          )}
-                          {onDeleteTender && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => onDeleteTender(tender.id)}
-                                variant="destructive"
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+              const actions = [
+                ...(onViewTender ? [{ label: 'View', onClick: () => onViewTender(tender.id) }] : []),
+                ...(onEditTender ? [{ label: 'Edit', onClick: () => onEditTender(tender.id) }] : []),
+                ...(onDeleteTender ? [{ label: 'Delete', onClick: () => onDeleteTender(tender.id), variant: 'destructive' as const }] : []),
+              ];
 
-                  {/* Client Info & Description */}
-                  <div className="space-y-1 mb-3">
+              return (
+                <MobileCard key={tender.id} onClick={() => onRowClick?.(tender.id)}>
+                  <MobileCardHeader
+                    identifier={tender.tenderNumber}
+                    status={tender.status}
+                    actions={actions}
+                  />
+                  <MobileCardBody>
                     <h3 className="font-semibold text-foreground text-sm">
                       {tender.client?.name || 'Unknown Client'}
                     </h3>
@@ -303,25 +266,14 @@ export function TendersTable({
                         {tender.description}
                       </p>
                     )}
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-y-2 gap-x-4 border-t border-border/20 pt-2.5 text-[11px]">
-                    <div>
-                      <span className="text-muted-foreground block mb-0.5">Value</span>
-                      <span className="font-medium text-foreground">
+                    <MobileCardGrid>
+                      <MobileCardField label="Value">
                         {formatCurrency(Number(tender.value || 0))}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block mb-0.5">Closing Date</span>
-                      <span className="font-medium text-foreground">
+                      </MobileCardField>
+                      <MobileCardField label="Closing Date">
                         {formatDate(tender.submissionDate)}
-                      </span>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground block mb-0.5">Time Left</span>
-                      <span className="font-medium">
+                      </MobileCardField>
+                      <MobileCardField label="Time Left" className="col-span-2">
                         {tender.status === 'evaluation' ? (
                           (() => {
                             const submissionDate = tender.updatedAt;
@@ -342,13 +294,13 @@ export function TendersTable({
                             {daysLeft} days left
                           </span>
                         )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                      </MobileCardField>
+                    </MobileCardGrid>
+                  </MobileCardBody>
+                </MobileCard>
               );
             })}
-          </div>
+          </MobileCardList>
 
             {/* Pagination */}
             {totalPages > 1 && (

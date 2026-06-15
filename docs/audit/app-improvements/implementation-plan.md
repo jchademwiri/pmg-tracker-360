@@ -257,6 +257,9 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 | 5.22 | **Move project workspace navigation to top** | Tabs were buried below summary cards and hard to discover | S | `project-workspace.tsx` | ✅ Done |
 | 5.23 | **Add project-level deliveries tab** | Delivery notes need project-level visibility, not only PO-level visibility | M | `project-workspace.tsx`, project query | ✅ Done |
 | 5.24 | **Add top project command bar actions** | Create PO and Add Item actions should be available immediately | S | `project-workspace.tsx` | ✅ Done |
+| 5.25 | **Add itemNumber + sapReference to project items** | Items need unique identifiers and SAP references | M | Schema, forms, PO forms, PO detail | ✅ Done |
+| 5.26 | **Generate drizzle migration for item fields** | Schema changes need proper migration tracking | S | `packages/db/migrations/` | ✅ Done |
+| 5.27 | **Move delivery progress cards to Overview tab only** | Summary cards were taking space on all tabs | S | `project-workspace.tsx` | ✅ Done |
 
 ### Project Item Catalog
 
@@ -310,7 +313,7 @@ Hardware kit      kit       R1,200.00      0               Active
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 6.1 | **Shared mobile card component** | Tables overflow on mobile | M | `packages/ui/src/components/ui/mobile-card.tsx` | Pending |
+| 6.1 | **Shared mobile card component** | Tables overflow on mobile | M | `apps/tracker/src/components/ui/mobile-card.tsx` | ✅ Done |
 | 6.2 | **Mobile filter drawer/bottom sheet** | Desktop search filters don't work on mobile | M | Filter components | Pending |
 | 6.3 | **Sticky mobile action bars** | No quick actions on mobile detail pages | S | Detail page layouts | Pending |
 | 6.4 | **Mobile bottom navigation** | Sidebar collapses — no mobile nav pattern | M | App layout | Pending |
@@ -335,7 +338,7 @@ Hardware kit      kit       R1,200.00      0               Active
 ```
 
 ### Deliverables
-- [ ] All registers show cards on mobile (≤768px)
+- [✓] Shared mobile card component created and used in tenders-table and po-list
 - [ ] Filter drawers on mobile
 - [ ] Sticky action bars on detail pages
 - [ ] Bottom navigation for mobile
