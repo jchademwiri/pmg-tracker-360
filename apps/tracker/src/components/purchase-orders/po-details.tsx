@@ -38,6 +38,7 @@ import {
   updatePurchaseOrderStatus,
 } from '@/server/purchase-orders';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
+import { MobileActionBar, MobileActionBarSpacer } from '@/components/ui/mobile-action-bar';
 
 interface LineItem {
   id: string;
@@ -706,6 +707,15 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Mobile Sticky Action Bar */}
+      <MobileActionBar
+        actions={[
+          { label: 'Record Delivery', onClick: handleRecordDelivery, variant: 'default' },
+          { label: 'Edit PO', onClick: handleEdit },
+        ]}
+      />
+      <MobileActionBarSpacer />
 
     </div>
   );

@@ -7,14 +7,20 @@ import {
   Plus,
   MoreHorizontalIcon,
   FileText,
-  Calendar,
-  Building,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import {
+  MobileCard,
+  MobileCardHeader,
+  MobileCardBody,
+  MobileCardField,
+  MobileCardGrid,
+  MobileCardList,
+} from '@/components/ui/mobile-card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -388,121 +394,66 @@ export function ProjectList({
             </div>
 
             {/* Mobile Cards */}
-            <div className="md:hidden space-y-4">
-              {projects.map((project) => (
-                <Card
-                  key={project.id}
-                  className="cursor-pointer hover:bg-accent transition-colors duration-200 group rounded-lg border hover:ring-1 hover:ring-ring"
-                  onClick={() =>
-                    router.push(`/projects/${project.id}`)
-                  }
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-medium text-blue-600 group-hover:text-blue-700 transition-colors">
-                            {project.projectNumber.toUpperCase()}
-                          </h3>
-                          <Badge
-                            className={
-                              statusColors[
-                                project.status as keyof typeof statusColors
-                              ]
-                            }
-                          >
-                            {
-                              statusLabels[
-                                project.status as keyof typeof statusLabels
-                              ]
-                            }
-                          </Badge>
+            <MobileCardList>
+              {projects.map((project) => {
+                const actions = [
+                  { label: 'View Details', onClick: () => router.push(`/projects/${project.id}`) },
+                  { label: 'Edit Project', onClick: () => router.push(`/projects/${project.id}/edit`) },
+                  { label: 'Delete Project', onClick: () => setDeleteProjectId(project.id), variant: 'destructive' as const },
+                ];
+
+                return (
+                  <MobileCard
+                    key={project.id}
+                    onClick={() => router.push(`/projects/${project.id}`)}
+                  >
+                    <MobileCardHeader
+                      identifier={project.projectNumber.toUpperCase()}
+                      badge={
+                        <Badge className={statusColors[project.status as keyof typeof statusColors]}>
+                          {statusLabels[project.status as keyof typeof statusLabels]}
+                        </Badge>
+                      }
+                      actions={actions}
+                    />
+                    <MobileCardBody>
+                      <h3 className="font-semibold text-foreground text-sm">
+                        {project.client?.name || 'No Client'}
+                      </h3>
+
+                      {/* Delivery Progress */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Delivery Progress</span>
+                          <span className="font-semibold text-foreground">{project.completionPercentage || 0}%</span>
                         </div>
-
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>Client:</strong>{' '}
-                          {project.client?.name || 'No Client'}
-                        </div>
-
-                        <div className="mb-3 space-y-1">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span>Delivery Progress:</span>
-                            <span className="font-semibold text-zinc-200">{project.completionPercentage || 0}%</span>
-                          </div>
-                          <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
-                            <div 
-                              className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" 
-                              style={{ width: `${project.completionPercentage || 0}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {project.description && (
-                          <p className="text-sm text-foreground/80 mb-2 line-clamp-2">
-                            {project.description}
-                          </p>
-                        )}
-
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Building className="h-3 w-3 mr-1" />
-                            Tender:{' '}
-                            {project.tender?.tenderNumber.toUpperCase() ||
-                              'None'}
-                          </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Created: {formatDate(project.createdAt)}
-                          </div>
+                        <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                          <div 
+                            className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" 
+                            style={{ width: `${project.completionPercentage || 0}%` }}
+                          />
                         </div>
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 cursor-pointer"
-                          >
-                            <MoreHorizontalIcon className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/projects/${project.id}`);
-                            }}
-                          >
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/projects/${project.id}/edit`);
-                            }}
-                          >
-                            Edit Project
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteProjectId(project.id);
-                            }}
-                            variant="destructive"
-                            disabled={isPending}
-                          >
-                            Delete Project
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      {project.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {project.description}
+                        </p>
+                      )}
+
+                      <MobileCardGrid>
+                        <MobileCardField label="Tender">
+                          {project.tender?.tenderNumber.toUpperCase() || 'None'}
+                        </MobileCardField>
+                        <MobileCardField label="Created">
+                          {formatDate(project.createdAt)}
+                        </MobileCardField>
+                      </MobileCardGrid>
+                    </MobileCardBody>
+                  </MobileCard>
+                );
+              })}
+            </MobileCardList>
 
             {/* Pagination */}
             {totalPages > 1 && (

@@ -20,6 +20,10 @@ import {
   MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
+import {
+  MobileFilterDrawer,
+  MobileFilterField,
+} from '@/components/ui/mobile-filter-drawer';
 import { toast } from 'sonner';
 import {
   Table,
@@ -94,6 +98,7 @@ export function POList({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
+  const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -129,6 +134,7 @@ export function POList({
     // Reset search and filters
     setSearchQuery('');
     setStatusFilter('all');
+    setDraftStatusFilter('all');
     setCurrentPage(1);
 
     // Fetch fresh data
@@ -183,9 +189,9 @@ export function POList({
           <CardTitle>Purchase Orders</CardTitle>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-          <div className="relative flex-1 w-full">
+        {/* Desktop Search and Filters */}
+        <div className="hidden md:flex items-center space-x-2">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search by PO number, supplier, or description..."
@@ -195,7 +201,7 @@ export function POList({
             />
           </div>
           <Select value={statusFilter} onValueChange={handleStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -209,6 +215,43 @@ export function POList({
               <SelectItem value="disputed">Disputed</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Mobile Search + Filter Drawer */}
+        <div className="md:hidden space-y-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search POs..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <MobileFilterDrawer
+            activeFilterCount={statusFilter !== 'all' ? 1 : 0}
+            onApply={() => handleStatusFilter(draftStatusFilter)}
+            onClear={() => { setDraftStatusFilter('all'); handleStatusFilter('all'); }}
+            title="Filter Purchase Orders"
+          >
+            <MobileFilterField label="Status">
+              <Select value={draftStatusFilter} onValueChange={setDraftStatusFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="partially_delivered">Partially Delivered</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="disputed">Disputed</SelectItem>
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
+          </MobileFilterDrawer>
         </div>
       </CardHeader>
 

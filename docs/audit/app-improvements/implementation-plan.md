@@ -314,8 +314,8 @@ Hardware kit      kit       R1,200.00      0               Active
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
 | 6.1 | **Shared mobile card component** | Tables overflow on mobile | M | `apps/tracker/src/components/ui/mobile-card.tsx` | ✅ Done |
-| 6.2 | **Mobile filter drawer/bottom sheet** | Desktop search filters don't work on mobile | M | Filter components | Pending |
-| 6.3 | **Sticky mobile action bars** | No quick actions on mobile detail pages | S | Detail page layouts | Pending |
+| 6.2 | **Mobile filter drawer/bottom sheet** | Desktop search filters don't work on mobile | M | `apps/tracker/src/components/ui/mobile-filter-drawer.tsx` | ✅ Done |
+| 6.3 | **Sticky mobile action bars** | No quick actions on mobile detail pages | S | `apps/tracker/src/components/ui/mobile-action-bar.tsx` | ✅ Done |
 | 6.4 | **Mobile bottom navigation** | Sidebar collapses — no mobile nav pattern | M | App layout | Pending |
 | 6.5 | **Convert remaining forms to steppers** | Complex forms still single-page on mobile | L | Tender/PO forms | Pending |
 | 6.6 | **Add draft/autosave to all forms** | Form abandonment risk | M | Form infrastructure | Pending |
@@ -338,7 +338,9 @@ Hardware kit      kit       R1,200.00      0               Active
 ```
 
 ### Deliverables
-- [✓] Shared mobile card component created and used in tenders-table and po-list
+- [✓] Shared mobile card component created and used in tenders-table, po-list, and project-list
+- [✓] Mobile filter drawer with apply/clear pattern integrated into PO list
+- [✓] Sticky mobile action bar on PO detail page
 - [ ] Filter drawers on mobile
 - [ ] Sticky action bars on detail pages
 - [ ] Bottom navigation for mobile
