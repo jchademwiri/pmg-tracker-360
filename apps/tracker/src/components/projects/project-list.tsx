@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Search,
   Plus,
-  MoreHorizontal,
+  MoreHorizontalIcon,
   FileText,
   Calendar,
   Building,
@@ -37,6 +37,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -247,7 +248,7 @@ export function ProjectList({
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden md:block rounded-lg overflow-hidden border">
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -257,7 +258,7 @@ export function ProjectList({
                     <TableHead>Status</TableHead>
                     <TableHead>Tender</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -322,23 +323,23 @@ export function ProjectList({
                           {formatDate(project.createdAt)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 cursor-pointer"
+                            >
+                              <MoreHorizontalIcon className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(
-                                  `/projects/${project.id}`
-                                );
+                                router.push(`/projects/${project.id}`);
                               }}
                             >
                               View Details
@@ -346,19 +347,18 @@ export function ProjectList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(
-                                  `/projects/${project.id}/edit`
-                                );
+                                router.push(`/projects/${project.id}/edit`);
                               }}
                             >
                               Edit Project
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setDeleteProjectId(project.id);
                               }}
-                              className="text-red-600"
+                              variant="destructive"
                               disabled={isPending}
                             >
                               Delete Project
@@ -430,12 +430,14 @@ export function ProjectList({
                       </div>
 
                       <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 cursor-pointer"
+                          >
+                            <MoreHorizontalIcon className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -450,19 +452,18 @@ export function ProjectList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(
-                                `/projects/${project.id}/edit`
-                              );
+                              router.push(`/projects/${project.id}/edit`);
                             }}
                           >
                             Edit Project
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeleteProjectId(project.id);
                             }}
-                            className="text-red-600"
+                            variant="destructive"
                             disabled={isPending}
                           >
                             Delete Project

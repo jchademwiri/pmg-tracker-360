@@ -10,20 +10,17 @@ import {
 } from '@/components/ui/table';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Edit,
-  MoreHorizontal,
-  Trash2,
+  MoreHorizontalIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatDate } from '@/lib/format';
@@ -83,27 +80,23 @@ export function TendersTable({
   const endItem = Math.min(currentPage * 20, totalCount);
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Tenders</span>
-          <span className="text-sm font-normal text-muted-foreground">
-            {totalCount > 0
-              ? `${startItem}-${endItem} of ${totalCount}`
-              : 'No tenders'}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {tenders.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No tenders found</p>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-md border overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table className="w-full min-w-[800px]">
+    <div className={className}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold tracking-tight">Tenders</h2>
+        <span className="text-sm text-muted-foreground">
+          {totalCount > 0
+            ? `${startItem}-${endItem} of ${totalCount}`
+            : 'No tenders'}
+        </span>
+      </div>
+      {tenders.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No tenders found</p>
+        </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <Table className="w-full min-w-[800px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="min-w-[120px]">
@@ -123,7 +116,7 @@ export function TendersTable({
                       <TableHead className="min-w-[100px] hidden sm:table-cell">
                         Days Left
                       </TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
+                      <TableHead className="w-[100px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -191,15 +184,16 @@ export function TendersTable({
                               </span>
                             )}
                           </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="cursor-pointer"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
                                 >
-                                  <MoreHorizontal className="h-4 w-4" />
+                                  <MoreHorizontalIcon className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -207,7 +201,6 @@ export function TendersTable({
                                   <DropdownMenuItem
                                     onClick={() => onViewTender(tender.id)}
                                   >
-                                    <Eye className="mr-2 h-4 w-4" />
                                     View
                                   </DropdownMenuItem>
                                 )}
@@ -215,18 +208,19 @@ export function TendersTable({
                                   <DropdownMenuItem
                                     onClick={() => onEditTender(tender.id)}
                                   >
-                                    <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                   </DropdownMenuItem>
                                 )}
                                 {onDeleteTender && (
-                                  <DropdownMenuItem
-                                    onClick={() => onDeleteTender(tender.id)}
-                                    className="text-red-600 focus:text-red-600"
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => onDeleteTender(tender.id)}
+                                      variant="destructive"
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </>
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -237,7 +231,6 @@ export function TendersTable({
                   </TableBody>
                 </Table>
               </div>
-            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -271,7 +264,6 @@ export function TendersTable({
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }

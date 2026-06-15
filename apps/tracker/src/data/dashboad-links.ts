@@ -13,7 +13,6 @@ export const dashboadLinks = {
       title: 'Dashboard',
       url: '/dashboard',
       icon: LayoutDashboard,
-      isActive: true,
     },
     {
       title: 'Calendar',

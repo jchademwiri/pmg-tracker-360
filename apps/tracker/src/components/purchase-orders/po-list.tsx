@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Search,
   Plus,
-  MoreHorizontal,
+  MoreHorizontalIcon,
   FileText,
   Banknote,
   Calendar,
@@ -27,6 +27,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -235,7 +236,7 @@ export function POList({
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden md:block rounded-lg overflow-hidden border">
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -246,7 +247,7 @@ export function POList({
                     <TableHead>Status</TableHead>
                     <TableHead>Total Amount</TableHead>
                     <TableHead>Expected Delivery</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -294,23 +295,23 @@ export function POList({
                           {formatDate(po.expectedDeliveryDate)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 cursor-pointer"
+                            >
+                              <MoreHorizontalIcon className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(
-                                  `/projects/purchase-orders/${po.id}`
-                                );
+                                router.push(`/projects/purchase-orders/${po.id}`);
                               }}
                             >
                               View Details
@@ -318,13 +319,12 @@ export function POList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(
-                                  `/projects/purchase-orders/${po.id}/edit`
-                                );
+                                router.push(`/projects/purchase-orders/${po.id}/edit`);
                               }}
                             >
                               Edit PO
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -403,21 +403,21 @@ export function POList({
                       </div>
 
                       <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 cursor-pointer"
+                          >
+                            <MoreHorizontalIcon className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(
-                                `/projects/purchase-orders/${po.id}`
-                              );
+                              router.push(`/projects/purchase-orders/${po.id}`);
                             }}
                           >
                             View Details
@@ -425,19 +425,18 @@ export function POList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(
-                                `/projects/purchase-orders/${po.id}/edit`
-                              );
+                              router.push(`/projects/purchase-orders/${po.id}/edit`);
                             }}
                           >
                             Edit PO
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeletePO(po.id);
                             }}
-                            className="text-red-600"
+                            variant="destructive"
                             disabled={isPending}
                           >
                             Delete PO

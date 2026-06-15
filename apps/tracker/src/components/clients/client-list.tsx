@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, MoreHorizontal, Mail, Phone, User } from 'lucide-react';
+import { Search, Plus, MoreHorizontalIcon, Mail, Phone, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -184,7 +185,7 @@ export function ClientList({
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden md:block rounded-lg overflow-hidden border">
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -192,7 +193,7 @@ export function ClientList({
                     <TableHead>Contact Person</TableHead>
                     <TableHead>Contact Info</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[100px] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -252,14 +253,16 @@ export function ClientList({
                           {formatDate(client.createdAt)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 cursor-pointer"
+                            >
+                              <MoreHorizontalIcon className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -274,19 +277,18 @@ export function ClientList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(
-                                  `/clients/${client.id}/edit`
-                                );
+                                router.push(`/clients/${client.id}/edit`);
                               }}
                             >
                               Edit Client
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setDeleteClientId(client.id);
                               }}
-                              className="text-red-600"
+                              variant="destructive"
                               disabled={isPending}
                             >
                               Delete Client
@@ -350,12 +352,14 @@ export function ClientList({
                       </div>
 
                       <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 cursor-pointer"
+                          >
+                            <MoreHorizontalIcon className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -370,22 +374,22 @@ export function ClientList({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              router.push(
-                                `/clients/${client.id}/edit`
-                              );
+                              router.push(`/clients/${client.id}/edit`);
                             }}
                           >
                             Edit Client
-                          </DropdownMenuItem>                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteClientId(client.id);
-                              }}
-                              className="text-red-600"
-                              disabled={isPending}
-                            >
-                              Delete Client
-                            </DropdownMenuItem>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteClientId(client.id);
+                            }}
+                            variant="destructive"
+                            disabled={isPending}
+                          >
+                            Delete Client
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

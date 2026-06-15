@@ -205,6 +205,7 @@ export function TendersOverviewClient({
         onViewTender={handleViewTender}
         onEditTender={handleEditTender}
         onDeleteTender={handleDeleteTender}
+        onRowClick={handleRowClick}
       />
 
       {loading && (
