@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { tender, project, purchaseOrder } from '@pmg/db/schema';
+import { tender, project, purchaseOrder, tenderFollowUp, document } from '@pmg/db/schema';
 import { and, eq, isNull, lte, gte } from 'drizzle-orm';
 import { validateSessionAndOrg } from './utils';
 import { resolveTenderStatus } from '@/lib/tender-utils';
@@ -12,6 +12,9 @@ export interface UrgencyData {
   overdueTenders: number;
   underEvaluation: number;
   totalOpen: number;
+  dueFollowUps: number;
+  missingDocuments: number;
+  overdueDeliveries: number;
 }
 
 export interface WorkflowCounts {
@@ -83,6 +86,59 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
     // Total open
     const totalOpen = resolved.filter((t) => t.resolved === 'open').length;
 
+    // Due Follow-ups (nextFollowUpDate <= now and outcome is empty/null)
+    const followUps = await db
+      .select({
+        id: tenderFollowUp.id,
+        nextFollowUpDate: tenderFollowUp.nextFollowUpDate,
+        outcome: tenderFollowUp.outcome,
+      })
+      .from(tenderFollowUp)
+      .where(eq(tenderFollowUp.organizationId, organizationId));
+
+    const dueFollowUps = followUps.filter(
+      (f) =>
+        f.nextFollowUpDate &&
+        new Date(f.nextFollowUpDate) <= now &&
+        (!f.outcome || f.outcome.trim() === '')
+    ).length;
+
+    // Missing Documents (active/open tenders with 0 uploaded documents)
+    const activeTenders = resolved.filter((t) => t.resolved === 'open');
+    const activeTenderIds = activeTenders.map((t) => t.id);
+    let missingDocuments = 0;
+    if (activeTenderIds.length > 0) {
+      const docs = await db
+        .select({
+          tenderId: document.tenderId,
+        })
+        .from(document)
+        .where(eq(document.organizationId, organizationId));
+
+      const docTenderIds = new Set(docs.map((d) => d.tenderId).filter(Boolean));
+      missingDocuments = activeTenders.filter((t) => !docTenderIds.has(t.id)).length;
+    }
+
+    // Overdue Deliveries (expectedDeliveryDate <= now, and status is not delivered/completed/cancelled)
+    const candidatePOs = await db
+      .select({
+        id: purchaseOrder.id,
+        status: purchaseOrder.status,
+        expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
+      })
+      .from(purchaseOrder)
+      .where(
+        and(
+          eq(purchaseOrder.organizationId, organizationId),
+          lte(purchaseOrder.expectedDeliveryDate, now),
+          isNull(purchaseOrder.deletedAt)
+        )
+      );
+
+    const overdueDeliveries = candidatePOs.filter(
+      (po) => !['delivered', 'completed', 'cancelled'].includes(po.status)
+    ).length;
+
     return {
       success: true,
       urgency: {
@@ -90,6 +146,9 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
         overdueTenders,
         underEvaluation,
         totalOpen,
+        dueFollowUps,
+        missingDocuments,
+        overdueDeliveries,
       },
     };
   } catch (error: any) {
@@ -101,6 +160,9 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
         overdueTenders: 0,
         underEvaluation: 0,
         totalOpen: 0,
+        dueFollowUps: 0,
+        missingDocuments: 0,
+        overdueDeliveries: 0,
       },
     };
   }

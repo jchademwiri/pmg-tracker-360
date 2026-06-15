@@ -122,13 +122,13 @@ const STATUS_MAP = {
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 2.1 | **Add dashboard action queue band** | No urgency signals — users must scroll to find critical items | M | `apps/tracker/src/app/(dashboard)/dashboard/` | Pending |
-| 2.2 | **Add project/PO risk cards** | Delivery health invisible on dashboard | M | Dashboard components | Pending |
+| 2.1 | **Add dashboard action queue band** | No urgency signals — users must scroll to find critical items | M | `apps/tracker/src/app/(dashboard)/dashboard/` | ✅ Done |
+| 2.2 | **Add project/PO risk cards** | Delivery health invisible on dashboard | M | Dashboard components | ✅ Done |
 | 2.3 | **Add nav badge counts** | No urgency signalling in sidebar | S | `apps/tracker/src/components/shared/navigation/app-sidebar.tsx` | ✅ Done |
 | 2.4 | **Rename navigation groups** | "Procurement Cycle" confusing; "Tender Pipeline" → "Tender Management" | S | `apps/tracker/src/data/dashboad-links.ts` | ✅ Done |
 | 2.5 | **Add direct workflow links** | Follow-ups, submitted/awarded tenders, deliveries, overdue items not exposed | M | Sidebar + dashboard | ✅ Done |
-| 2.6 | **Add KPI trend indicators** | No context for whether metrics improving or declining | S | Dashboard metric cards | Pending |
-| 2.7 | **Add urgency alert banner** | Missing deadlines/overdue items not surfaced at top | S | Dashboard layout | Pending |
+| 2.6 | **Add KPI trend indicators** | No context for whether metrics improving or declining | S | Dashboard metric cards | ✅ Done |
+| 2.7 | **Add urgency alert banner** | Missing deadlines/overdue items not surfaced at top | S | Dashboard layout | ✅ Done |
 
 ### Dashboard Action Queue Design
 
@@ -142,9 +142,9 @@ const STATUS_MAP = {
 ```
 
 ### Deliverables
-- [ ] Dashboard shows actionable queue at top (closings, follow-ups, overdue)
+- [x] Dashboard shows actionable queue at top (closings, follow-ups, overdue)
 - [x] Navigation badges show counts for urgent items
-- [ ] KPI cards show trend arrows (↑↓→)
+- [x] KPI cards show trend arrows (↑↓→)
 - [x] Navigation labels match business workflow
 - [x] Direct links to follow-ups, awarded tenders, deliveries, overdue items
 
