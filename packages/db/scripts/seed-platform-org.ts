@@ -12,7 +12,7 @@
  *   pnpm --filter db tsx scripts/seed-platform-org.ts
  */
 
-import 'dotenv/config';
+import '../src/load-env';
 import { db } from '../src/client';
 import { organization } from '../src/schema';
 

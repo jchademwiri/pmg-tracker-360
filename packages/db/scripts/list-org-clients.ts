@@ -1,8 +1,6 @@
-import { config } from "dotenv";
+import "../src/load-env";
 import postgres from "postgres";
-import * as path from "path";
 
-config({ path: path.resolve(__dirname, "../../../.env.local") });
 
 const organizationId = process.argv[2];
 const outputPath = process.argv[3];

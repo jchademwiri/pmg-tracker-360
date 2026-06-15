@@ -340,6 +340,7 @@ export const tender = pgTable(
     submissionDate: timestamp('submission_date'),
     value: decimal('value', { precision: 15, scale: 2 }),
     status: text('status').default('open').notNull(), // open, closed, evaluation, awarded, lost, cancelled
+    priority: text('priority').default('medium').notNull(), // low, medium, high, urgent
     evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
     validityDays: integer('validity_days'),
     validityDate: timestamp('validity_date'),
@@ -473,6 +474,24 @@ export const tenderExtension = pgTable('tender_extension', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'), // Soft deletion
+});
+
+// Tender Follow-up table
+export const tenderFollowUp = pgTable('tender_follow_up', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  tenderId: text('tender_id')
+    .notNull()
+    .references(() => tender.id, { onDelete: 'cascade' }),
+  followUpDate: timestamp('follow_up_date').notNull(),
+  contactPerson: text('contact_person'),
+  notes: text('notes'),
+  outcome: text('outcome'),
+  nextFollowUpDate: timestamp('next_follow_up_date'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Document table for file attachments
@@ -647,6 +666,7 @@ export const tenderRelations = relations(tender, ({ one, many }) => ({
   }),
   projects: many(project),
   extensions: many(tenderExtension),
+  followUps: many(tenderFollowUp),
 }));
 
 export const projectRelations = relations(project, ({ one, many }) => ({
@@ -732,6 +752,20 @@ export const tenderExtensionRelations = relations(
   })
 );
 
+export const tenderFollowUpRelations = relations(
+  tenderFollowUp,
+  ({ one }) => ({
+    organization: one(organization, {
+      fields: [tenderFollowUp.organizationId],
+      references: [organization.id],
+    }),
+    tender: one(tender, {
+      fields: [tenderFollowUp.tenderId],
+      references: [tender.id],
+    }),
+  })
+);
+
 export const documentRelations = relations(document, ({ one }) => ({
   organization: one(organization, {
     fields: [document.organizationId],
@@ -784,6 +818,7 @@ export const schema = {
   purchaseOrderDeliveryNote,
   purchaseOrderDeliveryItem,
   tenderExtension,
+  tenderFollowUp,
   document,
   // Relations
   organizationRelations,
@@ -803,6 +838,7 @@ export const schema = {
   purchaseOrderDeliveryNoteRelations,
   purchaseOrderDeliveryItemRelations,
   tenderExtensionRelations,
+  tenderFollowUpRelations,
   documentRelations,
   // Other
   waitlist,
@@ -814,3 +850,4 @@ export type Feedback = typeof feedback.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type PurchaseOrderDeliveryNote = typeof purchaseOrderDeliveryNote.$inferSelect;
 export type PurchaseOrderDeliveryItem = typeof purchaseOrderDeliveryItem.$inferSelect;
+export type TenderFollowUp = typeof tenderFollowUp.$inferSelect;

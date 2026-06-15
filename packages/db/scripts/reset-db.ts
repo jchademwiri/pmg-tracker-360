@@ -4,11 +4,9 @@
  * Run with: bun scripts/reset-db.ts
  * ⚠️  This is destructive — only use in development.
  */
+import "../src/load-env";
 import postgres from "postgres";
-import { config } from "dotenv";
-import * as path from "path";
 
-config({ path: path.resolve(__dirname, "../../../.env.local") });
 
 
 const url = process.env.DATABASE_URL;

@@ -3,13 +3,11 @@
  * Promotes a registered user's role to 'admin'.
  * Run with: bun scripts/promote-admin.ts <email>
  */
+import "../src/load-env";
 import { db } from "../src/index";
 import { user } from "../src/schema";
 import { eq } from "drizzle-orm";
-import { config } from "dotenv";
-import * as path from "path";
 
-config({ path: path.resolve(__dirname, "../../../.env.local") });
 
 async function run() {
   const email = process.argv[2];

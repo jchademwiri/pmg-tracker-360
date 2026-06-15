@@ -68,9 +68,9 @@ This plan organises **17 critical issues** and **28 major issues** across 7 phas
 |---|------|-------|:------:|-------|:------:|
 | 1.1 | **Fix `won` → `awarded` status mismatch** | `getAvailableTendersForProjects` queries for `status = 'won'` but schema uses `'awarded'` | S | `apps/tracker/src/server/tenders.ts` | ✅ Done |
 | 1.2 | **Re-enable document upload** | Upload shows "currently unavailable" despite server support existing | M | `apps/tracker/src/components/tenders/tender-form.tsx`, `tender-details.tsx` | ✅ Done |
-| 1.3 | **Create `tender_follow_up` table** | Follow-ups UI exists but data is not persisted — lost on refresh | M | `packages/db/src/schema.ts`, migration | Pending |
-| 1.4 | **Expand PO status enum** | Only `open/sent/delivered` — no draft, partially_delivered, completed, cancelled | S | `packages/db/src/schema.ts` | Pending |
-| 1.5 | **Add `priority` field to tender** | No way to prioritise tenders | S | `packages/db/src/schema.ts` | Pending |
+| 1.3 | **Create `tender_follow_up` table** | Follow-ups UI exists but data is not persisted — lost on refresh | M | `packages/db/src/schema.ts`, migration | ✅ Done |
+| 1.4 | **Expand PO status enum** | Only `open/sent/delivered` — no draft, partially_delivered, completed, cancelled | S | `packages/db/src/schema.ts` | ✅ Done |
+| 1.5 | **Add `priority` field to tender** | No way to prioritise tenders | S | `packages/db/src/schema.ts` | ✅ Done |
 | 1.6 | **Create shared `StatusBadge` component** | Status colours inconsistent across all components | S | `apps/tracker/src/components/ui/status-badge.tsx` | ✅ Done |
 | 1.7 | **Clean table Actions UI & borderless design** | Table action dropdowns had inconsistent icons; tables had double outer borders | S | `apps/tracker/src/components/**/*-table.tsx` and list files | ✅ Done |
 
@@ -104,10 +104,10 @@ const STATUS_MAP = {
 ### Deliverables
 - [x] Bug fix: awarded tenders appear for project conversion
 - [x] Document upload working in tender and project forms
-- [ ] Follow-up data persisted in database
-- [ ] PO statuses expanded for lifecycle tracking
+- [x] Follow-up data persisted in database
+- [x] PO statuses expanded for lifecycle tracking
 - [x] Shared `StatusBadge` component available across app
-- [ ] Tender priority field functional
+- [x] Tender priority field functional
 - [x] Clean, borderless tables with right-aligned Action dropdown triggers and clickable rows
 
 ---

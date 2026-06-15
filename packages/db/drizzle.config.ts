@@ -1,8 +1,6 @@
-import { config } from "dotenv";
+import "./src/load-env";
 import type { Config } from "drizzle-kit";
-import * as path from "path";
 
-config({ path: path.resolve(__dirname, "../../.env.local") });
 
 
 export default {
