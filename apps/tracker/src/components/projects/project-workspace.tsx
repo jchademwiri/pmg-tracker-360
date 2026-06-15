@@ -738,7 +738,7 @@ export function ProjectWorkspace({
                   <CardTitle className="text-base font-semibold">Project Purchase Orders</CardTitle>
                   <CardDescription className="text-zinc-500 text-xs">A list of purchase orders issued and their delivery states</CardDescription>
                 </div>
-                <Link href={`/purchase-orders/new?projectId=${project.id}`}>
+                <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
                   <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-500 rounded-lg">
                     <Plus className="h-4 w-4 mr-1.5" />
                     New PO
@@ -787,7 +787,7 @@ export function ProjectWorkspace({
                               </p>
                             </div>
                             
-                            <Link href={`/purchase-orders/${po.id}`}>
+                            <Link href={`/projects/purchase-orders/${po.id}`}>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full">
                                 <ArrowRight className="h-3.5 w-3.5" />
                               </Button>
@@ -801,9 +801,9 @@ export function ProjectWorkspace({
                   <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
                     <DollarSign className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
                     <p className="text-sm font-light">No purchase orders linked to this project workspace.</p>
-                    <Link href={`/purchase-orders/new?projectId=${project.id}`} className="mt-4 inline-block">
+                    <Link href={`/projects/purchase-orders/create?projectId=${project.id}`} className="mt-4 inline-block">
                       <Button size="sm" variant="outline" className="border-white/10 text-zinc-300 hover:text-white rounded-lg">
-                        Create First Purchase Order
+                        Create First PO
                       </Button>
                     </Link>
                   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -12,6 +12,9 @@ import {
   Truck,
   Package,
   MoreHorizontal,
+  Plus,
+  Loader2,
+  FileUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,10 +26,65 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { FileUploader } from '@/components/ui/file-uploader';
+import {
   deletePurchaseOrder,
   updatePurchaseOrderStatus,
+  recordPODelivery,
 } from '@/server/purchase-orders';
+import { uploadDocument } from '@/server/documents';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
+
+interface LineItem {
+  id: string;
+  purchaseOrderId: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  subtotal: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface DeliveryItem {
+  id: string;
+  deliveryNoteId: string;
+  lineItemId: string;
+  quantityDelivered: string;
+  lineItem?: LineItem;
+}
+
+interface DeliveryNote {
+  id: string;
+  purchaseOrderId: string;
+  deliveryNoteNumber: string;
+  recipientName: string;
+  receivedAt: Date;
+  status: string;
+  podFileUrl: string | null;
+  notes: string | null;
+  createdAt: Date;
+  items: DeliveryItem[];
+}
 
 interface PurchaseOrderWithProject {
   id: string;
@@ -46,6 +104,8 @@ interface PurchaseOrderWithProject {
     projectNumber: string;
     description: string | null;
   } | null;
+  lineItems: LineItem[];
+  deliveryNotes: DeliveryNote[];
 }
 
 interface PODetailsProps {
@@ -53,11 +113,77 @@ interface PODetailsProps {
   organizationId: string;
 }
 
-
-
 export function PODetails({ po, organizationId }: PODetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Delivery Dialog States
+  const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryNoteNumber, setDeliveryNoteNumber] = useState('');
+  const [recipientName, setRecipientName] = useState('');
+  const [receivedAt, setReceivedAt] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [notes, setNotes] = useState('');
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, string>>({});
+
+  // Initialize delivery quantities on mount or when line items change
+  useEffect(() => {
+    if (po.lineItems) {
+      const initialQtys: Record<string, string> = {};
+      po.lineItems.forEach((item) => {
+        initialQtys[item.id] = '';
+      });
+      setDeliveryQuantities(initialQtys);
+    }
+  }, [po.lineItems]);
+
+  const handleQtyChange = (itemId: string, value: string) => {
+    setDeliveryQuantities((prev) => ({
+      ...prev,
+      [itemId]: value,
+    }));
+  };
+
+  // Compute validation errors and sum
+  const getQtyValidation = () => {
+    const errors: Record<string, string> = {};
+    let totalDelivering = 0;
+
+    po.lineItems?.forEach((item) => {
+      const val = deliveryQuantities[item.id] || '';
+      if (val === '') return;
+      const delivering = parseFloat(val);
+      if (isNaN(delivering)) {
+        errors[item.id] = 'Must be a valid number';
+        return;
+      }
+      if (delivering < 0) {
+        errors[item.id] = 'Cannot be negative';
+        return;
+      }
+      const ordered = parseFloat(item.quantity) || 0;
+      
+      // Calculate already delivered
+      const previouslyDelivered = po.deliveryNotes?.reduce((sum, note) => {
+        const dItem = note.items?.find((di) => di.lineItemId === item.id);
+        return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
+      }, 0) || 0;
+
+      const outstanding = Math.max(0, ordered - previouslyDelivered);
+      if (delivering > outstanding) {
+        errors[item.id] = `Cannot exceed outstanding qty (${outstanding})`;
+      }
+      totalDelivering += delivering;
+    });
+
+    return { errors, totalDelivering };
+  };
+
+  const { errors: qtyErrors, totalDelivering } = getQtyValidation();
 
   const handleEdit = () => {
     router.push(`/projects/purchase-orders/${po.id}/edit`);
@@ -107,11 +233,79 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
     return formatDateTime(date, 'Not set');
   };
 
+  const handleSubmitDelivery = async () => {
+    if (deliveryNoteNumber.trim() === '' || recipientName.trim() === '' || totalDelivering === 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      let podFileUrl = '';
+      
+      // 1. Upload POD File if selected
+      if (uploadFiles.length > 0) {
+        const formData = new FormData();
+        formData.append('file', uploadFiles[0]);
+        const uploadResult = await uploadDocument(organizationId, formData, {
+          purchaseOrderId: po.id,
+        });
+        
+        if (uploadResult.success && uploadResult.document) {
+          podFileUrl = uploadResult.document.url;
+        } else {
+          alert(uploadResult.error || 'Failed to upload Proof of Delivery file');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // 2. Format item payload
+      const itemsPayload = Object.entries(deliveryQuantities)
+        .filter(([_, qty]) => qty !== '' && parseFloat(qty) > 0)
+        .map(([lineItemId, qty]) => ({
+          lineItemId,
+          quantityDelivered: qty,
+        }));
+
+      // 3. Save POD Note
+      const result = await recordPODelivery(organizationId, po.id, {
+        deliveryNoteNumber,
+        recipientName,
+        receivedAt: new Date(receivedAt),
+        notes: notes || undefined,
+        podFileUrl: podFileUrl || undefined,
+        items: itemsPayload,
+      });
+
+      if (result.success) {
+        // Reset states
+        setDeliveryNoteNumber('');
+        setRecipientName('');
+        setNotes('');
+        setUploadFiles([]);
+        const initialQtys: Record<string, string> = {};
+        po.lineItems.forEach((item) => {
+          initialQtys[item.id] = '';
+        });
+        setDeliveryQuantities(initialQtys);
+        setIsDeliveryOpen(false);
+        router.refresh();
+      } else {
+        alert(result.error || 'Failed to record delivery note');
+      }
+    } catch (err) {
+      console.error('Error submitting delivery:', err);
+      alert('An unexpected error occurred while saving the delivery');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
@@ -124,10 +318,19 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
           </Button>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <h1 className="text-xl text-foreground/80 font-bold">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl text-foreground/80 font-bold mr-2 hidden md:block">
             {po.poNumber}
           </h1>
+
+          <Button
+            variant="default"
+            onClick={() => setIsDeliveryOpen(true)}
+            className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            <Truck className="h-4 w-4 mr-2" />
+            Record Delivery
+          </Button>
 
           <Button
             variant="outline"
@@ -162,268 +365,638 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        {/* Main Information */}
-        <div className="xl:col-span-3 space-y-6">
-          {/* Basic Information */}
-          <Card className="rounded-lg shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center text-lg">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                Purchase Order Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    PO Number
-                  </label>
-                  <p className="text-lg font-medium text-blue-600">
-                    {po.poNumber}
-                  </p>
-                </div>
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-muted p-1 rounded-lg">
+          <TabsTrigger value="overview" className="px-4 py-2 text-sm font-medium">Overview</TabsTrigger>
+          <TabsTrigger value="deliveries" className="px-4 py-2 text-sm font-medium flex items-center gap-1.5">
+            <Truck className="h-4 w-4" />
+            Deliveries
+            {po.deliveryNotes?.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-500 text-white rounded-full font-bold">
+                {po.deliveryNotes.length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Status
-                  </label>
-                  <div className="mt-1">
-                    <StatusBadge status={po.status} />
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            {/* Main Information */}
+            <div className="xl:col-span-3 space-y-6">
+              {/* Basic Information */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                    Purchase Order Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        PO Number
+                      </label>
+                      <p className="text-lg font-medium text-blue-600">
+                        {po.poNumber}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Status
+                      </label>
+                      <div className="mt-1">
+                        <StatusBadge status={po.status} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Supplier Name
+                      </label>
+                      <p className="text-lg font-medium">
+                        {po.supplierName || 'Not specified'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 p-4 bg-muted/40 rounded-lg border border-border/50">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">VAT Exclusive Total:</span>
+                        <span className="font-semibold text-foreground">{formatCurrency(po.totalAmount)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">VAT (15%):</span>
+                        <span className="font-semibold text-foreground">
+                          {formatCurrency((parseFloat(po.totalAmount) || 0) * 0.15)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-base font-bold border-t pt-2 mt-1">
+                        <span className="text-indigo-600">Total (VAT Inclusive):</span>
+                        <span className="text-foreground text-lg">
+                          {formatCurrency((parseFloat(po.totalAmount) || 0) * 1.15)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Supplier Name
-                  </label>
-                  <p className="text-lg font-medium">
-                    {po.supplierName || 'Not specified'}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Total Amount
-                  </label>
-                  <p className="text-lg font-medium">
-                    {formatCurrency(po.totalAmount)}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Description
-                </label>
-                <p className="text-foreground whitespace-pre-wrap">
-                  {po.description}
-                </p>
-              </div>
-
-              {po.deliveryAddress && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Delivery Address
-                  </label>
-                  <p className="text-foreground whitespace-pre-wrap">
-                    {po.deliveryAddress}
-                  </p>
-                </div>
-              )}
-
-              {!po.deliveryAddress && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Delivery Address
-                  </label>
-                  <p className="text-muted-foreground italic">
-                    No delivery address added
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Project Information */}
-          <Card className="rounded-lg shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center text-lg">
-                <Building className="h-5 w-5 mr-2 text-green-600" />
-                Project Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Project Number
-                  </label>
-                  <p className="text-lg font-medium text-blue-600">
-                    {po.project?.projectNumber.toUpperCase() ||
-                      'Unknown Project'}
-                  </p>
-                </div>
-
-                {po.project?.description && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">
-                      Project Description
+                      Description
                     </label>
-                    <p className="text-foreground">{po.project.description}</p>
+                    <p className="text-foreground whitespace-pre-wrap">
+                      {po.description}
+                    </p>
                   </div>
+
+                  {po.deliveryAddress && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Delivery Address
+                      </label>
+                      <p className="text-foreground whitespace-pre-wrap">
+                        {po.deliveryAddress}
+                      </p>
+                    </div>
+                  )}
+
+                  {!po.deliveryAddress && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Delivery Address
+                      </label>
+                      <p className="text-muted-foreground italic">
+                        No delivery address added
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Item Fulfillment Tracking Grid */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Package className="h-5 w-5 mr-2 text-indigo-600" />
+                    Item Fulfillment Tracking
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="pl-6 w-[35%]">Item / Description</TableHead>
+                          <TableHead className="w-[12%] text-right">Ordered</TableHead>
+                          <TableHead className="w-[12%] text-right">Delivered</TableHead>
+                          <TableHead className="w-[12%] text-right">Outstanding</TableHead>
+                          <TableHead className="w-[14%] text-right">Unit Price</TableHead>
+                          <TableHead className="pr-6 w-[15%]">Progress</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(!po.lineItems || po.lineItems.length === 0) ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground italic">
+                              No line items associated with this purchase order.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          po.lineItems.map((item) => {
+                            const ordered = parseFloat(item.quantity) || 0;
+                            const delivered = po.deliveryNotes?.reduce((sum, note) => {
+                              const dItem = note.items?.find((di) => di.lineItemId === item.id);
+                              return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
+                            }, 0) || 0;
+                            const outstanding = Math.max(0, ordered - delivered);
+                            const percentage = ordered > 0 ? Math.min(100, (delivered / ordered) * 100) : 0;
+                            
+                            return (
+                              <TableRow key={item.id}>
+                                <TableCell className="pl-6 font-medium">{item.description}</TableCell>
+                                <TableCell className="text-right font-medium">{ordered}</TableCell>
+                                <TableCell className="text-right text-emerald-600 font-semibold">{delivered}</TableCell>
+                                <TableCell className={`text-right font-semibold ${outstanding > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{outstanding}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
+                                <TableCell className="pr-6">
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 bg-secondary h-2.5 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-300 ${percentage >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                        style={{ width: `${percentage}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs font-semibold text-muted-foreground w-8 text-right">
+                                      {Math.round(percentage)}%
+                                    </span>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Project Information */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Building className="h-5 w-5 mr-2 text-green-600" />
+                    Project Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Project Number
+                      </label>
+                      <p className="text-lg font-medium text-blue-600">
+                        {po.project?.projectNumber.toUpperCase() ||
+                          'Unknown Project'}
+                      </p>
+                    </div>
+
+                    {po.project?.description && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Project Description
+                        </label>
+                        <p className="text-foreground">{po.project.description}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Quick Actions */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    variant="default"
+                    className="w-full justify-start cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
+                    onClick={() => setIsDeliveryOpen(true)}
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    Record Delivery Note
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start cursor-pointer"
+                    onClick={handleEdit}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Purchase Order
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Status Management */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Status Management</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="text-sm text-muted-foreground mb-3">
+                    Current Status:{' '}
+                    <StatusBadge status={po.status} />
+                  </div>
+
+                  {po.status === 'open' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start cursor-pointer"
+                      onClick={() => handleStatusUpdate('sent')}
+                      disabled={isPending}
+                    >
+                      <Truck className="h-4 w-4 mr-2" />
+                      Mark as Sent
+                    </Button>
+                  )}
+
+                  {po.status === 'sent' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start cursor-pointer"
+                      onClick={() => handleStatusUpdate('partially_delivered')}
+                      disabled={isPending}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      Mark as Partially Delivered
+                    </Button>
+                  )}
+
+                  {(po.status === 'sent' || po.status === 'partially_delivered') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start cursor-pointer"
+                      onClick={() => handleStatusUpdate('delivered')}
+                      disabled={isPending}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      Mark as Delivered
+                    </Button>
+                  )}
+
+                  {po.status === 'delivered' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start cursor-pointer"
+                      onClick={() => handleStatusUpdate('completed')}
+                      disabled={isPending}
+                    >
+                      Mark as Completed
+                    </Button>
+                  )}
+
+                  {po.status !== 'cancelled' && po.status !== 'completed' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start cursor-pointer text-destructive hover:text-destructive"
+                      onClick={() => handleStatusUpdate('cancelled')}
+                      disabled={isPending}
+                    >
+                      Mark as Cancelled
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Timeline */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Timeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Created
+                    </label>
+                    <p className="text-sm">{formatDateWithTime(po.createdAt)}</p>
+                  </div>
+                  {po.poDate && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        PO Date
+                      </label>
+                      <p className="text-sm">{formatDate(po.poDate)}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Last Updated
+                    </label>
+                    <p className="text-sm">{formatDateWithTime(po.updatedAt)}</p>
+                  </div>
+                  {po.expectedDeliveryDate && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Expected Delivery
+                      </label>
+                      <p className="text-sm">
+                        {formatDate(po.expectedDeliveryDate)}
+                      </p>
+                    </div>
+                  )}
+                  {po.deliveredAt && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Delivered At
+                      </label>
+                      <p className="text-sm">{formatDateWithTime(po.deliveredAt)}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="deliveries" className="space-y-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            {/* Deliveries Stack */}
+            <div className="xl:col-span-3 space-y-6">
+              {(!po.deliveryNotes || po.deliveryNotes.length === 0) ? (
+                <Card className="rounded-lg shadow-sm border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <Truck className="h-10 w-10 text-muted-foreground mb-4 opacity-50" />
+                    <h3 className="font-semibold text-lg mb-1">No deliveries recorded</h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                      No delivery notes have been logged for this purchase order yet.
+                    </p>
+                    <Button
+                      onClick={() => setIsDeliveryOpen(true)}
+                      className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Record First Delivery
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {po.deliveryNotes.map((note) => (
+                    <Card key={note.id} className="rounded-lg shadow-sm border overflow-hidden">
+                      <CardHeader className="bg-muted/30 pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-base text-foreground">DN Number: {note.deliveryNoteNumber}</span>
+                              <StatusBadge status="delivered" />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Received by <strong className="text-foreground">{note.recipientName}</strong> on {formatDate(note.receivedAt)}
+                            </p>
+                          </div>
+                          {note.podFileUrl && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                              className="cursor-pointer self-start sm:self-center bg-background"
+                            >
+                              <a href={note.podFileUrl} target="_blank" rel="noopener noreferrer">
+                                <FileUp className="h-4 w-4 mr-2 text-indigo-500" />
+                                View POD File
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-4">
+                        {note.notes && (
+                          <div>
+                            <span className="text-xs font-semibold text-muted-foreground block mb-1">Notes / Remarks</span>
+                            <p className="text-sm italic text-foreground bg-accent/30 p-2.5 rounded border border-accent">
+                              {note.notes}
+                            </p>
+                          </div>
+                        )}
+
+                        <div>
+                          <span className="text-xs font-semibold text-muted-foreground block mb-2">Items Received</span>
+                          <div className="border rounded-lg overflow-hidden max-w-xl">
+                            <Table>
+                              <TableHeader className="bg-muted/10">
+                                <TableRow>
+                                  <TableHead className="pl-4 py-2">Item Description</TableHead>
+                                  <TableHead className="pr-4 py-2 text-right">Quantity Received</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {note.items?.map((item) => (
+                                  <TableRow key={item.id}>
+                                    <TableCell className="pl-4 py-2 font-medium">{item.lineItem?.description || 'Unknown Item'}</TableCell>
+                                    <TableCell className="pr-4 py-2 text-right font-bold text-emerald-600">{item.quantityDelivered}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sidebar duplication for layout consistency across tabs */}
+            <div className="space-y-6">
+              {/* Quick Actions */}
+              <Card className="rounded-lg shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    variant="default"
+                    className="w-full justify-start cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
+                    onClick={() => setIsDeliveryOpen(true)}
+                  >
+                    <Truck className="h-4 w-4 mr-2" />
+                    Record Delivery Note
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Record Delivery Dialog */}
+      <Dialog open={isDeliveryOpen} onOpenChange={setIsDeliveryOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-indigo-600" />
+              Record Delivery Note
+            </DialogTitle>
+            <DialogDescription>
+              Record a new delivery for PO {po.poNumber}. Enter the details and specify quantities received.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dn-number">Delivery Note Number *</Label>
+                <Input
+                  id="dn-number"
+                  placeholder="e.g. DN-10023"
+                  value={deliveryNoteNumber}
+                  onChange={(e) => setDeliveryNoteNumber(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="recipient">Recipient Name *</Label>
+                <Input
+                  id="recipient"
+                  placeholder="e.g. John Smith"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="received-at">Date Received *</Label>
+                <Input
+                  id="received-at"
+                  type="date"
+                  value={receivedAt}
+                  onChange={(e) => setReceivedAt(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Proof of Delivery (POD) Photo/PDF</Label>
+                <FileUploader
+                  value={uploadFiles}
+                  onValueChange={setUploadFiles}
+                  maxFiles={1}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Add any delivery notes or remarks..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Item Delivery Quantities *</Label>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                {(!po.lineItems || po.lineItems.length === 0) ? (
+                  <div className="text-center py-6 text-muted-foreground italic border rounded-lg">
+                    No items available to deliver.
+                  </div>
+                ) : (
+                  po.lineItems.map((item) => {
+                    const ordered = parseFloat(item.quantity) || 0;
+                    const delivered = po.deliveryNotes?.reduce((sum, note) => {
+                      const dItem = note.items?.find((di) => di.lineItemId === item.id);
+                      return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
+                    }, 0) || 0;
+                    const outstanding = Math.max(0, ordered - delivered);
+                    const value = deliveryQuantities[item.id] || '';
+                    const err = qtyErrors[item.id];
+
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border bg-card/50 gap-3"
+                      >
+                        <div className="flex-1 space-y-1">
+                          <div className="font-semibold text-sm">{item.description}</div>
+                          <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+                            <span>Ordered: <strong className="text-foreground">{ordered}</strong></span>
+                            <span>Delivered: <strong className="text-emerald-600">{delivered}</strong></span>
+                            <span>Outstanding: <strong className="text-amber-600">{outstanding}</strong></span>
+                          </div>
+                        </div>
+                        <div className="w-full md:w-32">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            disabled={outstanding === 0}
+                            value={value}
+                            onChange={(e) => handleQtyChange(item.id, e.target.value)}
+                            className={err ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                          />
+                          {err && <div className="text-[10px] text-red-500 mt-1">{err}</div>}
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <Card className="rounded-lg shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start cursor-pointer"
-                onClick={handleEdit}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Purchase Order
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Status Management */}
-          <Card className="rounded-lg shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Status Management</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-sm text-muted-foreground mb-3">
-                Current Status:{' '}
-                <StatusBadge status={po.status} />
-              </div>
-
-              {po.status === 'open' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start cursor-pointer"
-                  onClick={() => handleStatusUpdate('sent')}
-                  disabled={isPending}
-                >
-                  <Truck className="h-4 w-4 mr-2" />
-                  Mark as Sent
-                </Button>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeliveryOpen(false)}
+              disabled={isSubmitting}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmitDelivery}
+              disabled={
+                isSubmitting ||
+                deliveryNoteNumber.trim() === '' ||
+                recipientName.trim() === '' ||
+                Object.keys(qtyErrors).length > 0 ||
+                totalDelivering === 0
+              }
+              className="min-w-[120px] bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Save Delivery
+                </>
               )}
-
-              {po.status === 'sent' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start cursor-pointer"
-                  onClick={() => handleStatusUpdate('partially_delivered')}
-                  disabled={isPending}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Mark as Partially Delivered
-                </Button>
-              )}
-
-              {(po.status === 'sent' || po.status === 'partially_delivered') && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start cursor-pointer"
-                  onClick={() => handleStatusUpdate('delivered')}
-                  disabled={isPending}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Mark as Delivered
-                </Button>
-              )}
-
-              {po.status === 'delivered' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start cursor-pointer"
-                  onClick={() => handleStatusUpdate('completed')}
-                  disabled={isPending}
-                >
-                  Mark as Completed
-                </Button>
-              )}
-
-              {po.status !== 'cancelled' && po.status !== 'completed' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start cursor-pointer text-destructive hover:text-destructive"
-                  onClick={() => handleStatusUpdate('cancelled')}
-                  disabled={isPending}
-                >
-                  Mark as Cancelled
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-4 w-4 mr-2" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Created
-                </label>
-                <p className="text-sm">{formatDateWithTime(po.createdAt)}</p>
-              </div>
-              {po.poDate && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    PO Date
-                  </label>
-                  <p className="text-sm">{formatDate(po.poDate)}</p>
-                </div>
-              )}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Last Updated
-                </label>
-                <p className="text-sm">{formatDateWithTime(po.updatedAt)}</p>
-              </div>
-              {po.expectedDeliveryDate && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Expected Delivery
-                  </label>
-                  <p className="text-sm">
-                    {formatDate(po.expectedDeliveryDate)}
-                  </p>
-                </div>
-              )}
-              {po.deliveredAt && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Delivered At
-                  </label>
-                  <p className="text-sm">{formatDateWithTime(po.deliveredAt)}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

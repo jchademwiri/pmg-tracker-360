@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const LineItemSchema = z.object({
+  id: z.string().optional(),
+  description: z.string().min(1, 'Description is required'),
+  quantity: z.string().min(1, 'Quantity is required'),
+  unitPrice: z.string().min(1, 'Unit price is required'),
+});
+
 export const PurchaseOrderCreateSchema = z.object({
   poNumber: z.string().min(1, 'PO Number is required'),
   projectId: z.string().min(1, 'Project is required'),
@@ -11,6 +18,7 @@ export const PurchaseOrderCreateSchema = z.object({
   expectedDeliveryDate: z.date().optional(),
   deliveredAt: z.date().optional(),
   deliveryAddress: z.string().optional(),
+  lineItems: z.array(LineItemSchema).optional(),
 });
 
 export const PurchaseOrderUpdateSchema =
@@ -31,3 +39,4 @@ export type PurchaseOrderUpdateInput = z.infer<
 export type PurchaseOrderStatusUpdateInput = z.infer<
   typeof PurchaseOrderStatusUpdateSchema
 >;
+

@@ -90,6 +90,12 @@ export default async function EditPurchaseOrderPage({
           poDate: po.poDate || undefined,
           expectedDeliveryDate: po.expectedDeliveryDate || undefined,
           deliveryAddress: po.deliveryAddress || undefined,
+          lineItems: po.lineItems?.map((item: any) => ({
+            id: item.id,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })) || [],
         }}
       />
     </div>

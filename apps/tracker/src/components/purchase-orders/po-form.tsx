@@ -3,9 +3,9 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
-import { ArrowLeft, FileText, Building, Save } from 'lucide-react';
+import { ArrowLeft, FileText, Building, Save, Plus, Trash2, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,12 +24,31 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';import { createPurchaseOrder,
-  updatePurchaseOrder,
-} from '@/server/purchase-orders';
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { createPurchaseOrder, updatePurchaseOrder } from '@/server/purchase-orders';
 import { getProjects } from '@/server/projects';
 import { ProjectCreateDialog } from '@/components/projects/project-create-dialog';
 import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';
+import { formatCurrency } from '@/lib/format';
+
+const lineItemSchema = z.object({
+  id: z.string().optional(),
+  description: z.string().min(1, 'Description is required'),
+  quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: 'Quantity must be a positive number',
+  }),
+  unitPrice: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
+    message: 'Unit price must be zero or positive',
+  }),
+});
 
 const poFormSchema = z
   .object({
@@ -42,6 +61,7 @@ const poFormSchema = z
     poDate: z.date().optional(),
     expectedDeliveryDate: z.date().optional(),
     deliveryAddress: z.string().optional(),
+    lineItems: z.array(lineItemSchema).optional(),
   })
   .refine(
     (data) => {
@@ -56,7 +76,23 @@ const poFormSchema = z
     }
   );
 
-type POFormValues = z.infer<typeof poFormSchema>;
+interface POFormValues {
+  poNumber: string;
+  projectId: string;
+  supplierName?: string;
+  description: string;
+  totalAmount: string;
+  status: 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed';
+  poDate?: Date;
+  expectedDeliveryDate?: Date;
+  deliveryAddress?: string;
+  lineItems?: Array<{
+    id?: string;
+    description: string;
+    quantity: string;
+    unitPrice: string;
+  }>;
+}
 
 interface POFormProps {
   organizationId: string;
@@ -71,6 +107,12 @@ interface POFormProps {
     poDate?: Date;
     expectedDeliveryDate?: Date;
     deliveryAddress?: string;
+    lineItems?: Array<{
+      id?: string;
+      description: string;
+      quantity: string;
+      unitPrice: string;
+    }>;
   };
   onSuccess?: () => void;
 }
@@ -93,13 +135,38 @@ export function POForm({
       projectId: initialData?.projectId || '',
       supplierName: initialData?.supplierName || '',
       description: initialData?.description || '',
-      totalAmount: initialData?.totalAmount || '',
+      totalAmount: initialData?.totalAmount || '0.00',
       status: initialData?.status || 'open',
       poDate: initialData?.poDate,
       expectedDeliveryDate: initialData?.expectedDeliveryDate,
       deliveryAddress: initialData?.deliveryAddress || '',
+      lineItems: initialData?.lineItems || [],
     },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'lineItems',
+  });
+
+  const watchedLineItems = form.watch('lineItems');
+
+  // Auto-calculate totalAmount when lineItems change
+  useEffect(() => {
+    if (watchedLineItems) {
+      const total = watchedLineItems.reduce((acc, item) => {
+        const qty = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.unitPrice) || 0;
+        return acc + qty * price;
+      }, 0);
+      form.setValue('totalAmount', total.toFixed(2));
+    }
+  }, [watchedLineItems, form]);
+
+  const watchedTotal = parseFloat(form.watch('totalAmount')) || 0;
+  const vatExclusive = watchedTotal;
+  const vatAmount = watchedTotal * 0.15;
+  const vatInclusive = watchedTotal * 1.15;
 
   // Load projects on component mount
   useEffect(() => {
@@ -233,7 +300,7 @@ export function POForm({
                     name="totalAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Amount (ZAR) *</FormLabel>
+                        <FormLabel>Total Amount (ZAR) (calculated)</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground font-semibold text-sm">
@@ -243,7 +310,8 @@ export function POForm({
                               type="number"
                               step="0.01"
                               placeholder="0.00"
-                              className="pl-8"
+                              className="pl-8 bg-muted font-medium cursor-not-allowed"
+                              readOnly
                               {...field}
                             />
                           </div>
@@ -330,7 +398,13 @@ export function POForm({
 
             {/* Related Information */}
             <Card className="shadow-sm">
-              <CardContent className="space-y-6p-6">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-lg">
+                  <Building className="h-5 w-5 mr-2 text-green-600" />
+                  Project &amp; Supplier Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 p-6">
                 <FormField
                   control={form.control}
                   name="projectId"
@@ -392,7 +466,7 @@ export function POForm({
                   control={form.control}
                   name="supplierName"
                   render={({ field }) => (
-                    <FormItem className="py-2">
+                    <FormItem>
                       <FormLabel>Supplier Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter supplier name" {...field} />
@@ -401,19 +475,9 @@ export function POForm({
                     </FormItem>
                   )}
                 />
-              </CardContent>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Building className="h-5 w-5 mr-2 text-green-600" />
-                  Project Information
-                </CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Details of the selected project
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
+
                 {form.watch('projectId') ? (
-                  <div className="bg-accent rounded-md p-4">
+                  <div className="bg-accent rounded-md p-4 mt-2">
                     <h4 className="text-sm font-medium text-foreground mb-2">
                       Selected Project Details
                     </h4>
@@ -452,7 +516,7 @@ export function POForm({
                     })()}
                   </div>
                 ) : (
-                  <div className="bg-muted rounded-md p-4 text-center">
+                  <div className="bg-muted rounded-md p-4 text-center mt-2">
                     <p className="text-sm text-muted-foreground">
                       Select a project to view its details
                     </p>
@@ -463,7 +527,7 @@ export function POForm({
                   control={form.control}
                   name="deliveryAddress"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="pt-2">
                       <FormLabel>Delivery Address</FormLabel>
                       <FormControl>
                         <Textarea
@@ -476,6 +540,149 @@ export function POForm({
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
+
+            {/* Line Items Card */}
+            <Card className="shadow-sm col-span-1 lg:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="flex items-center text-lg">
+                  <Package className="h-5 w-5 mr-2 text-indigo-600" />
+                  PO Line Items
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ description: '', quantity: '1', unitPrice: '0.00' })}
+                  className="cursor-pointer"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[45%] pl-6">Description *</TableHead>
+                        <TableHead className="w-[15%]">Quantity *</TableHead>
+                        <TableHead className="w-[20%]">Unit Price (ZAR) *</TableHead>
+                        <TableHead className="w-[15%]">Subtotal</TableHead>
+                        <TableHead className="w-[5%] pr-6 text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {fields.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground italic">
+                            No line items added yet. Click &quot;Add Item&quot; to begin.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        fields.map((field, index) => {
+                          const qtyVal = form.watch(`lineItems.${index}.quantity` as any);
+                          const priceVal = form.watch(`lineItems.${index}.unitPrice` as any);
+                          const qty = parseFloat(qtyVal || '0') || 0;
+                          const price = parseFloat(priceVal || '0') || 0;
+                          const subtotal = qty * price;
+                          return (
+                            <TableRow key={field.id}>
+                              <TableCell className="pl-6">
+                                <FormField
+                                  control={form.control as any}
+                                  name={`lineItems.${index}.description` as any}
+                                  render={({ field: inputField }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Item description" {...inputField} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control as any}
+                                  name={`lineItems.${index}.quantity` as any}
+                                  render={({ field: inputField }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          placeholder="0.00"
+                                          {...inputField}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control as any}
+                                  name={`lineItems.${index}.unitPrice` as any}
+                                  render={({ field: inputField }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <div className="relative">
+                                          <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
+                                            R
+                                          </span>
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            className="pl-6"
+                                            {...inputField}
+                                          />
+                                        </div>
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell className="font-medium text-sm">
+                                {formatCurrency(subtotal)}
+                              </TableCell>
+                              <TableCell className="pr-6 text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => remove(index)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50/10 cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="flex flex-col items-end gap-2 p-6 bg-zinc-950/20 border-t">
+                  <div className="flex justify-between w-72 text-sm text-muted-foreground">
+                    <span>VAT Exclusive Total:</span>
+                    <span className="font-semibold text-foreground">{formatCurrency(vatExclusive)}</span>
+                  </div>
+                  <div className="flex justify-between w-72 text-sm text-muted-foreground">
+                    <span>VAT (15%):</span>
+                    <span className="font-semibold text-foreground">{formatCurrency(vatAmount)}</span>
+                  </div>
+                  <div className="flex justify-between w-72 text-base font-bold border-t pt-2 mt-1">
+                    <span className="text-indigo-600">Total (VAT Inclusive):</span>
+                    <span className="text-foreground">{formatCurrency(vatInclusive)}</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -504,9 +711,7 @@ export function POForm({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {initialData?.id
-                    ? 'Update Purchase Order'
-                    : 'Create Purchase Order'}
+                  {initialData?.id ? 'Update Purchase Order' : 'Create Purchase Order'}
                 </>
               )}
             </Button>

@@ -231,12 +231,12 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 
 | # | Task | Issue | Effort | Files | Status |
 |---|------|-------|:------:|-------|:------:|
-| 5.1 | **PO line-item editor + server CRUD** | Schema exists but no UI or API | L | `po-form.tsx`, `purchase-orders.ts` | Pending |
-| 5.2 | **Delivery note capture with POD upload** | No way to record deliveries | L | New delivery components | Pending |
-| 5.3 | **Validate delivered vs outstanding quantities** | No guardrails against over-delivery | M | Server actions | Pending |
-| 5.4 | **Auto-calculate PO completion status** | Manual status updates only | M | Server actions | Pending |
-| 5.5 | **Mobile delivery capture flow** | Field supervisors can't record deliveries on phone | L | New mobile components | Pending |
-| 5.6 | **Expand PO form to include line items** | PO creation is header-only | M | `po-form.tsx` | Pending |
+| 5.1 | **PO line-item editor + server CRUD** | Schema exists but no UI or API | L | `po-form.tsx`, `purchase-orders.ts` | ✅ Done |
+| 5.2 | **Delivery note capture with POD upload** | No way to record deliveries | L | New delivery components | ✅ Done |
+| 5.3 | **Validate delivered vs outstanding quantities** | No guardrails against over-delivery | M | Server actions | ✅ Done |
+| 5.4 | **Auto-calculate PO completion status** | Manual status updates only | M | Server actions | ✅ Done |
+| 5.5 | **Mobile delivery capture flow** | Field supervisors can't record deliveries on phone | L | New mobile components | ✅ Done |
+| 5.6 | **Expand PO form to include line items** | PO creation is header-only | M | `po-form.tsx` | ✅ Done |
 
 ### PO Line Item Grid
 
@@ -275,12 +275,12 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 ```
 
 ### Deliverables
-- [ ] PO line items editable in form with auto-total calculation
-- [ ] Delivery note capture with POD document upload
-- [ ] Quantity validation (delivered ≤ outstanding)
-- [ ] Auto-status updates (partially_delivered, delivered, completed)
-- [ ] Mobile-optimized delivery capture flow
-- [ ] PO progress visible from project detail
+- [✓] PO line items editable in form with auto-total calculation
+- [✓] Delivery note capture with POD document upload
+- [✓] Quantity validation (delivered ≤ outstanding)
+- [✓] Auto-status updates (partially_delivered, delivered, completed)
+- [✓] Mobile-optimized delivery capture flow
+- [✓] PO progress visible from project detail
 
 ---
 
