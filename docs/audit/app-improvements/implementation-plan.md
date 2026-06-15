@@ -102,13 +102,13 @@ const STATUS_MAP = {
 ```
 
 ### Deliverables
-- [x] Bug fix: awarded tenders appear for project conversion
-- [x] Document upload working in tender and project forms
-- [x] Follow-up data persisted in database
-- [x] PO statuses expanded for lifecycle tracking
-- [x] Shared `StatusBadge` component available across app
-- [x] Tender priority field functional
-- [x] Clean, borderless tables with right-aligned Action dropdown triggers and clickable rows
+- [✓] Bug fix: awarded tenders appear for project conversion
+- [✓] Document upload working in tender and project forms
+- [✓] Follow-up data persisted in database
+- [✓] PO statuses expanded for lifecycle tracking
+- [✓] Shared `StatusBadge` component available across app
+- [✓] Tender priority field functional
+- [✓] Clean, borderless tables with right-aligned Action dropdown triggers and clickable rows
 
 ---
 
@@ -142,11 +142,11 @@ const STATUS_MAP = {
 ```
 
 ### Deliverables
-- [x] Dashboard shows actionable queue at top (closings, follow-ups, overdue)
-- [x] Navigation badges show counts for urgent items
-- [x] KPI cards show trend arrows (↑↓→)
-- [x] Navigation labels match business workflow
-- [x] Direct links to follow-ups, awarded tenders, deliveries, overdue items
+- [✓] Dashboard shows actionable queue at top (closings, follow-ups, overdue)
+- [✓] Navigation badges show counts for urgent items
+- [✓] KPI cards show trend arrows (↑↓→)
+- [✓] Navigation labels match business workflow
+- [✓] Direct links to follow-ups, awarded tenders, deliveries, overdue items
 
 ---
 
@@ -177,13 +177,13 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 ```
 
 ### Deliverables
-- [x] Tender stages with workflow progression
-- [x] Follow-ups persisted with next follow-up date
-- [x] Result capture with award/loss details
-- [x] Compliance checklist linked to document uploads
-- [x] Tender mobile cards in register
-- [x] Multi-step tender form with draft saving
-- [x] Filtered queues (closing soon, awaiting result, etc.)
+- [✓] Tender stages with workflow progression
+- [✓] Follow-ups persisted with next follow-up date
+- [✓] Result capture with award/loss details
+- [✓] Compliance checklist linked to document uploads
+- [✓] Tender mobile cards in register
+- [✓] Multi-step tender form with draft saving
+- [✓] Filtered queues (closing soon, awaiting result, etc.)
 
 ---
 
@@ -212,12 +212,12 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 ```
 
 ### Deliverables
-- [x] Project detail shows linked POs with delivery status
-- [x] Contract and originating tender summaries visible
-- [x] Delivery progress overview with risk indicators
-- [x] Activity timeline for all project events
-- [x] Project completion tracking (percentage)
-- [x] Project close-out workflow
+- [✓] Project detail shows linked POs with delivery status
+- [✓] Contract and originating tender summaries visible
+- [✓] Delivery progress overview with risk indicators
+- [✓] Activity timeline for all project events
+- [✓] Project completion tracking (percentage)
+- [✓] Project close-out workflow
 
 ---
 
