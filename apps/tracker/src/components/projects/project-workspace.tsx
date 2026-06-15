@@ -523,7 +523,7 @@ export function ProjectWorkspace({
                 key={item.value}
                 type="button"
                 onClick={() => setActiveTab(item.value)}
-                className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors ${
+                className={`group inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-white text-zinc-950 shadow-sm'
                     : 'text-zinc-400 hover:bg-white/10 hover:text-white'
@@ -533,8 +533,10 @@ export function ProjectWorkspace({
                 {item.label}
                 {item.count !== null && item.count > 0 && (
                   <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                      isActive ? 'bg-zinc-200 text-zinc-800' : 'bg-white/10 text-white'
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition-all duration-200 ${
+                      isActive
+                        ? 'bg-zinc-200 text-zinc-800'
+                        : 'bg-white/10 text-white/70 group-hover:bg-white/20 group-hover:text-white'
                     }`}
                   >
                     {item.count}
@@ -544,86 +546,6 @@ export function ProjectWorkspace({
             );
           })}
         </div>
-      </div>
-
-      {/* Grid: Delivery Progress Card & KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Delivery Progress Card */}
-        <Card className="md:col-span-2 overflow-hidden border-white/5 bg-zinc-950 text-white shadow-xl rounded-xl">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold text-zinc-300">Project Delivery Progress</CardTitle>
-                <CardDescription className="text-zinc-500 text-xs">Overall completion based on Purchase Order fulfillment</CardDescription>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                {projectCompletionPercentage}%
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative w-full h-3 bg-zinc-905 rounded-full overflow-hidden border border-white/5">
-              <div 
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 via-sky-500 to-emerald-500 transition-all duration-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.3)]"
-                style={{ width: `${projectCompletionPercentage}%` }}
-              />
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4 pt-2">
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Total PO Value</p>
-                <p className="text-sm font-semibold text-zinc-300 mt-1">{formatCurrency(totalPOAmount)}</p>
-              </div>
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Delivered Value</p>
-                <p className="text-sm font-semibold text-emerald-400 mt-1">{formatCurrency(totalDeliveredValue)}</p>
-              </div>
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Outstanding</p>
-                <p className="text-sm font-semibold text-amber-500 mt-1">{formatCurrency(Math.max(0, totalPOAmount - totalDeliveredValue))}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Risks Summary Card */}
-        <Card className="border-white/5 bg-zinc-955 text-white shadow-xl rounded-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-zinc-300">Risk Profile</CardTitle>
-            <CardDescription className="text-zinc-500 text-xs">Active delivery vulnerabilities</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <div className="flex items-center space-x-2">
-                <div className={`h-2.5 w-2.5 rounded-full ${criticalRisks.length > 0 ? 'bg-red-500 animate-pulse' : 'bg-zinc-700'}`} />
-                <span className="text-sm text-zinc-300 font-medium">Critical & High Risks</span>
-              </div>
-              <span className={`text-sm font-bold ${criticalRisks.length > 0 ? 'text-red-400' : 'text-zinc-500'}`}>
-                {criticalRisks.length} active
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between py-2 border-b border-white/5">
-              <div className="flex items-center space-x-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                <span className="text-sm text-zinc-300 font-medium">Active Risks</span>
-              </div>
-              <span className="text-sm font-bold text-amber-400">
-                {activeRisks.length} total
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center space-x-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-zinc-500" />
-                <span className="text-sm text-zinc-400">Mitigated / Closed</span>
-              </div>
-              <span className="text-sm font-bold text-zinc-500">
-                {risks.filter(r => r.status !== 'open').length} archived
-              </span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Tabs Layout */}
@@ -681,6 +603,81 @@ export function ProjectWorkspace({
         <div className="mt-6">
           {/* TAB 1: INFO */}
           <TabsContent value="info" className="space-y-6 outline-none">
+            {/* Delivery Progress & Risk Profile Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="md:col-span-2 overflow-hidden border-white/5 bg-zinc-950 text-white shadow-xl rounded-xl">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base font-semibold text-zinc-300">Project Delivery Progress</CardTitle>
+                      <CardDescription className="text-zinc-500 text-xs">Overall completion based on Purchase Order fulfillment</CardDescription>
+                    </div>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                      {projectCompletionPercentage}%
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="relative w-full h-3 bg-zinc-905 rounded-full overflow-hidden border border-white/5">
+                    <div 
+                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 via-sky-500 to-emerald-500 transition-all duration-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.3)]"
+                      style={{ width: `${projectCompletionPercentage}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 pt-2">
+                    <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                      <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Total PO Value</p>
+                      <p className="text-sm font-semibold text-zinc-300 mt-1">{formatCurrency(totalPOAmount)}</p>
+                    </div>
+                    <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                      <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Delivered Value</p>
+                      <p className="text-sm font-semibold text-emerald-400 mt-1">{formatCurrency(totalDeliveredValue)}</p>
+                    </div>
+                    <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                      <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Outstanding</p>
+                      <p className="text-sm font-semibold text-amber-500 mt-1">{formatCurrency(Math.max(0, totalPOAmount - totalDeliveredValue))}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-white/5 bg-zinc-955 text-white shadow-xl rounded-xl">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold text-zinc-300">Risk Profile</CardTitle>
+                  <CardDescription className="text-zinc-500 text-xs">Active delivery vulnerabilities</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                    <div className="flex items-center space-x-2">
+                      <div className={`h-2.5 w-2.5 rounded-full ${criticalRisks.length > 0 ? 'bg-red-500 animate-pulse' : 'bg-zinc-700'}`} />
+                      <span className="text-sm text-zinc-300 font-medium">Critical & High Risks</span>
+                    </div>
+                    <span className={`text-sm font-bold ${criticalRisks.length > 0 ? 'text-red-400' : 'text-zinc-500'}`}>
+                      {criticalRisks.length} active
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                      <span className="text-sm text-zinc-300 font-medium">Active Risks</span>
+                    </div>
+                    <span className="text-sm font-bold text-amber-400">
+                      {activeRisks.length} total
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2.5 w-2.5 rounded-full bg-zinc-500" />
+                      <span className="text-sm text-zinc-400">Mitigated / Closed</span>
+                    </div>
+                    <span className="text-sm font-bold text-zinc-500">
+                      {risks.filter(r => r.status !== 'open').length} archived
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Originating Tender Summary */}
               <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
