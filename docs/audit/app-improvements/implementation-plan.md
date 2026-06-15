@@ -23,6 +23,8 @@ This plan organises **17 critical issues** and **28 major issues** across 7 phas
 | Issue | Antigravity | codebuff | codex | Confidence |
 |-------|:-----------:|:--------:|:-----:|:----------:|
 | PO line items + delivery notes not implemented | ✅ | ✅ | ✅ | **High** |
+
+> 2026-06-15 update: PO line items and delivery notes now follow a project-scoped saved line-item workflow. See `docs/audit/project-line-items-delivery-notes-workflow.md` for the current schema, route, validation, and migration details.
 | Partial delivery tracking missing | ✅ | ✅ | ✅ | **High** |
 | PO status model too limited | ✅ | ✅ | ✅ | **High** |
 | Project detail lacks PO/delivery workspace | ✅ | ✅ | ✅ | **High** |

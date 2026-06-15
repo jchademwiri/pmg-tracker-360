@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -13,7 +13,6 @@ import {
   Package,
   MoreHorizontal,
   Plus,
-  Loader2,
   FileUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,23 +34,9 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { FileUploader } from '@/components/ui/file-uploader';
-import {
   deletePurchaseOrder,
   updatePurchaseOrderStatus,
-  recordPODelivery,
 } from '@/server/purchase-orders';
-import { uploadDocument } from '@/server/documents';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 
 interface LineItem {
@@ -70,6 +55,8 @@ interface DeliveryItem {
   deliveryNoteId: string;
   lineItemId: string;
   quantityDelivered: string;
+  unitPrice: string;
+  deliveryValue: string;
   lineItem?: LineItem;
 }
 
@@ -117,76 +104,12 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Delivery Dialog States
-  const [isDeliveryOpen, setIsDeliveryOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deliveryNoteNumber, setDeliveryNoteNumber] = useState('');
-  const [recipientName, setRecipientName] = useState('');
-  const [receivedAt, setReceivedAt] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
-  const [notes, setNotes] = useState('');
-  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-  const [deliveryQuantities, setDeliveryQuantities] = useState<Record<string, string>>({});
-
-  // Initialize delivery quantities on mount or when line items change
-  useEffect(() => {
-    if (po.lineItems) {
-      const initialQtys: Record<string, string> = {};
-      po.lineItems.forEach((item) => {
-        initialQtys[item.id] = '';
-      });
-      setDeliveryQuantities(initialQtys);
-    }
-  }, [po.lineItems]);
-
-  const handleQtyChange = (itemId: string, value: string) => {
-    setDeliveryQuantities((prev) => ({
-      ...prev,
-      [itemId]: value,
-    }));
-  };
-
-  // Compute validation errors and sum
-  const getQtyValidation = () => {
-    const errors: Record<string, string> = {};
-    let totalDelivering = 0;
-
-    po.lineItems?.forEach((item) => {
-      const val = deliveryQuantities[item.id] || '';
-      if (val === '') return;
-      const delivering = parseFloat(val);
-      if (isNaN(delivering)) {
-        errors[item.id] = 'Must be a valid number';
-        return;
-      }
-      if (delivering < 0) {
-        errors[item.id] = 'Cannot be negative';
-        return;
-      }
-      const ordered = parseFloat(item.quantity) || 0;
-      
-      // Calculate already delivered
-      const previouslyDelivered = po.deliveryNotes?.reduce((sum, note) => {
-        const dItem = note.items?.find((di) => di.lineItemId === item.id);
-        return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
-      }, 0) || 0;
-
-      const outstanding = Math.max(0, ordered - previouslyDelivered);
-      if (delivering > outstanding) {
-        errors[item.id] = `Cannot exceed outstanding qty (${outstanding})`;
-      }
-      totalDelivering += delivering;
-    });
-
-    return { errors, totalDelivering };
-  };
-
-  const { errors: qtyErrors, totalDelivering } = getQtyValidation();
-
   const handleEdit = () => {
     router.push(`/projects/purchase-orders/${po.id}/edit`);
+  };
+
+  const handleRecordDelivery = () => {
+    router.push(`/projects/purchase-orders/${po.id}/deliveries/new`);
   };
 
   const handleDelete = async () => {
@@ -233,75 +156,6 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
     return formatDateTime(date, 'Not set');
   };
 
-  const handleSubmitDelivery = async () => {
-    if (deliveryNoteNumber.trim() === '' || recipientName.trim() === '' || totalDelivering === 0) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      let podFileUrl = '';
-      
-      // 1. Upload POD File if selected
-      if (uploadFiles.length > 0) {
-        const formData = new FormData();
-        formData.append('file', uploadFiles[0]);
-        const uploadResult = await uploadDocument(organizationId, formData, {
-          purchaseOrderId: po.id,
-        });
-        
-        if (uploadResult.success && uploadResult.document) {
-          podFileUrl = uploadResult.document.url;
-        } else {
-          alert(uploadResult.error || 'Failed to upload Proof of Delivery file');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // 2. Format item payload
-      const itemsPayload = Object.entries(deliveryQuantities)
-        .filter(([_, qty]) => qty !== '' && parseFloat(qty) > 0)
-        .map(([lineItemId, qty]) => ({
-          lineItemId,
-          quantityDelivered: qty,
-        }));
-
-      // 3. Save POD Note
-      const result = await recordPODelivery(organizationId, po.id, {
-        deliveryNoteNumber,
-        recipientName,
-        receivedAt: new Date(receivedAt),
-        notes: notes || undefined,
-        podFileUrl: podFileUrl || undefined,
-        items: itemsPayload,
-      });
-
-      if (result.success) {
-        // Reset states
-        setDeliveryNoteNumber('');
-        setRecipientName('');
-        setNotes('');
-        setUploadFiles([]);
-        const initialQtys: Record<string, string> = {};
-        po.lineItems.forEach((item) => {
-          initialQtys[item.id] = '';
-        });
-        setDeliveryQuantities(initialQtys);
-        setIsDeliveryOpen(false);
-        router.refresh();
-      } else {
-        alert(result.error || 'Failed to record delivery note');
-      }
-    } catch (err) {
-      console.error('Error submitting delivery:', err);
-      alert('An unexpected error occurred while saving the delivery');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="w-full space-y-6">
       {/* Header */}
@@ -325,7 +179,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
 
           <Button
             variant="default"
-            onClick={() => setIsDeliveryOpen(true)}
+            onClick={handleRecordDelivery}
             className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             <Truck className="h-4 w-4 mr-2" />
@@ -586,7 +440,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                   <Button
                     variant="default"
                     className="w-full justify-start cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
-                    onClick={() => setIsDeliveryOpen(true)}
+                    onClick={handleRecordDelivery}
                   >
                     <Truck className="h-4 w-4 mr-2" />
                     Record Delivery Note
@@ -744,7 +598,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                       No delivery notes have been logged for this purchase order yet.
                     </p>
                     <Button
-                      onClick={() => setIsDeliveryOpen(true)}
+                      onClick={handleRecordDelivery}
                       className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -799,14 +653,18 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                               <TableHeader className="bg-muted/10">
                                 <TableRow>
                                   <TableHead className="pl-4 py-2">Item Description</TableHead>
-                                  <TableHead className="pr-4 py-2 text-right">Quantity Received</TableHead>
+                                  <TableHead className="py-2 text-right">Quantity Received</TableHead>
+                                  <TableHead className="pr-4 py-2 text-right">Delivery Value</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {note.items?.map((item) => (
                                   <TableRow key={item.id}>
                                     <TableCell className="pl-4 py-2 font-medium">{item.lineItem?.description || 'Unknown Item'}</TableCell>
-                                    <TableCell className="pr-4 py-2 text-right font-bold text-emerald-600">{item.quantityDelivered}</TableCell>
+                                    <TableCell className="py-2 text-right font-bold text-emerald-600">{item.quantityDelivered}</TableCell>
+                                    <TableCell className="pr-4 py-2 text-right font-semibold">
+                                      {formatCurrency(item.deliveryValue || 0)}
+                                    </TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
@@ -831,7 +689,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                   <Button
                     variant="default"
                     className="w-full justify-start cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white"
-                    onClick={() => setIsDeliveryOpen(true)}
+                    onClick={handleRecordDelivery}
                   >
                     <Truck className="h-4 w-4 mr-2" />
                     Record Delivery Note
@@ -843,160 +701,6 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Record Delivery Dialog */}
-      <Dialog open={isDeliveryOpen} onOpenChange={setIsDeliveryOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-indigo-600" />
-              Record Delivery Note
-            </DialogTitle>
-            <DialogDescription>
-              Record a new delivery for PO {po.poNumber}. Enter the details and specify quantities received.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dn-number">Delivery Note Number *</Label>
-                <Input
-                  id="dn-number"
-                  placeholder="e.g. DN-10023"
-                  value={deliveryNoteNumber}
-                  onChange={(e) => setDeliveryNoteNumber(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="recipient">Recipient Name *</Label>
-                <Input
-                  id="recipient"
-                  placeholder="e.g. John Smith"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="received-at">Date Received *</Label>
-                <Input
-                  id="received-at"
-                  type="date"
-                  value={receivedAt}
-                  onChange={(e) => setReceivedAt(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Proof of Delivery (POD) Photo/PDF</Label>
-                <FileUploader
-                  value={uploadFiles}
-                  onValueChange={setUploadFiles}
-                  maxFiles={1}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add any delivery notes or remarks..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Item Delivery Quantities *</Label>
-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-                {(!po.lineItems || po.lineItems.length === 0) ? (
-                  <div className="text-center py-6 text-muted-foreground italic border rounded-lg">
-                    No items available to deliver.
-                  </div>
-                ) : (
-                  po.lineItems.map((item) => {
-                    const ordered = parseFloat(item.quantity) || 0;
-                    const delivered = po.deliveryNotes?.reduce((sum, note) => {
-                      const dItem = note.items?.find((di) => di.lineItemId === item.id);
-                      return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
-                    }, 0) || 0;
-                    const outstanding = Math.max(0, ordered - delivered);
-                    const value = deliveryQuantities[item.id] || '';
-                    const err = qtyErrors[item.id];
-
-                    return (
-                      <div 
-                        key={item.id} 
-                        className="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border bg-card/50 gap-3"
-                      >
-                        <div className="flex-1 space-y-1">
-                          <div className="font-semibold text-sm">{item.description}</div>
-                          <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
-                            <span>Ordered: <strong className="text-foreground">{ordered}</strong></span>
-                            <span>Delivered: <strong className="text-emerald-600">{delivered}</strong></span>
-                            <span>Outstanding: <strong className="text-amber-600">{outstanding}</strong></span>
-                          </div>
-                        </div>
-                        <div className="w-full md:w-32">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            disabled={outstanding === 0}
-                            value={value}
-                            onChange={(e) => handleQtyChange(item.id, e.target.value)}
-                            className={err ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                          />
-                          {err && <div className="text-[10px] text-red-500 mt-1">{err}</div>}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDeliveryOpen(false)}
-              disabled={isSubmitting}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSubmitDelivery}
-              disabled={
-                isSubmitting ||
-                deliveryNoteNumber.trim() === '' ||
-                recipientName.trim() === '' ||
-                Object.keys(qtyErrors).length > 0 ||
-                totalDelivering === 0
-              }
-              className="min-w-[120px] bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Save Delivery
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

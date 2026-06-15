@@ -33,7 +33,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { createPurchaseOrder, updatePurchaseOrder } from '@/server/purchase-orders';
+import {
+  createProjectLineItem,
+  createPurchaseOrder,
+  getProjectLineItems,
+  updatePurchaseOrder,
+} from '@/server/purchase-orders';
 import { getProjects } from '@/server/projects';
 import { ProjectCreateDialog } from '@/components/projects/project-create-dialog';
 import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';
@@ -41,13 +46,13 @@ import { formatCurrency } from '@/lib/format';
 
 const lineItemSchema = z.object({
   id: z.string().optional(),
-  description: z.string().min(1, 'Description is required'),
+  projectLineItemId: z.string().min(1, 'Saved line item is required'),
+  description: z.string().optional(),
+  unit: z.string().optional(),
   quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
     message: 'Quantity must be a positive number',
   }),
-  unitPrice: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, {
-    message: 'Unit price must be zero or positive',
-  }),
+  unitPrice: z.string().optional(),
 });
 
 const poFormSchema = z
@@ -88,9 +93,11 @@ interface POFormValues {
   deliveryAddress?: string;
   lineItems?: Array<{
     id?: string;
-    description: string;
+    projectLineItemId: string;
+    description?: string;
+    unit?: string;
     quantity: string;
-    unitPrice: string;
+    unitPrice?: string;
   }>;
 }
 
@@ -109,7 +116,9 @@ interface POFormProps {
     deliveryAddress?: string;
     lineItems?: Array<{
       id?: string;
+      projectLineItemId?: string | null;
       description: string;
+      unit?: string;
       quantity: string;
       unitPrice: string;
     }>;
@@ -127,6 +136,13 @@ export function POForm({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projects, setProjects] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
+  const [projectLineItems, setProjectLineItems] = useState<any[]>([]);
+  const [loadingLineItems, setLoadingLineItems] = useState(false);
+  const [newLineItem, setNewLineItem] = useState({
+    description: '',
+    unit: 'unit',
+    unitPrice: '0.00',
+  });
 
   const form = useForm<POFormValues>({
     resolver: zodResolver(poFormSchema),
@@ -140,7 +156,12 @@ export function POForm({
       poDate: initialData?.poDate,
       expectedDeliveryDate: initialData?.expectedDeliveryDate,
       deliveryAddress: initialData?.deliveryAddress || '',
-      lineItems: initialData?.lineItems || [],
+      lineItems:
+        initialData?.lineItems?.map((item) => ({
+          ...item,
+          projectLineItemId: item.projectLineItemId || '',
+          unit: item.unit || 'unit',
+        })) || [],
     },
   });
 
@@ -150,13 +171,14 @@ export function POForm({
   });
 
   const watchedLineItems = form.watch('lineItems');
+  const selectedProjectId = form.watch('projectId');
 
   // Auto-calculate totalAmount when lineItems change
   useEffect(() => {
     if (watchedLineItems) {
       const total = watchedLineItems.reduce((acc, item) => {
         const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unitPrice) || 0;
+        const price = parseFloat(item.unitPrice || '0') || 0;
         return acc + qty * price;
       }, 0);
       form.setValue('totalAmount', total.toFixed(2));
@@ -183,6 +205,58 @@ export function POForm({
 
     loadProjects();
   }, [organizationId]);
+
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setProjectLineItems([]);
+      return;
+    }
+
+    const loadProjectLineItems = async () => {
+      setLoadingLineItems(true);
+      try {
+        const result = await getProjectLineItems(organizationId, selectedProjectId);
+        setProjectLineItems(result.lineItems || []);
+      } catch (error) {
+        console.error('Error loading project line items:', error);
+        setProjectLineItems([]);
+      } finally {
+        setLoadingLineItems(false);
+      }
+    };
+
+    loadProjectLineItems();
+  }, [organizationId, selectedProjectId]);
+
+  const handleCreateProjectLineItem = async () => {
+    if (!selectedProjectId) {
+      alert('Select a project before adding saved line items.');
+      return;
+    }
+
+    const result = await createProjectLineItem(organizationId, {
+      projectId: selectedProjectId,
+      ...newLineItem,
+    });
+
+    if (result.success && result.lineItem) {
+      setProjectLineItems((prev) => [...prev, result.lineItem]);
+      setNewLineItem({ description: '', unit: 'unit', unitPrice: '0.00' });
+    } else {
+      alert(result.error || 'Failed to create saved line item');
+    }
+  };
+
+  const applySavedLineItem = (index: number, projectLineItemId: string) => {
+    const savedItem = projectLineItems.find((item) => item.id === projectLineItemId);
+    form.setValue(`lineItems.${index}.projectLineItemId` as any, projectLineItemId);
+
+    if (savedItem) {
+      form.setValue(`lineItems.${index}.description` as any, savedItem.description);
+      form.setValue(`lineItems.${index}.unit` as any, savedItem.unit);
+      form.setValue(`lineItems.${index}.unitPrice` as any, savedItem.unitPrice);
+    }
+  };
 
   const onSubmit = async (data: POFormValues) => {
     startTransition(async () => {
@@ -413,7 +487,12 @@ export function POForm({
                       <FormLabel>Project *</FormLabel>
                       <div className="flex items-center gap-2">
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            if (value !== field.value) {
+                              form.setValue('lineItems', []);
+                            }
+                            field.onChange(value);
+                          }}
                           value={field.value}
                           disabled={loadingProjects}
                         >
@@ -554,7 +633,16 @@ export function POForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ description: '', quantity: '1', unitPrice: '0.00' })}
+                  onClick={() =>
+                    append({
+                      projectLineItemId: '',
+                      description: '',
+                      unit: 'unit',
+                      quantity: '1',
+                      unitPrice: '0.00',
+                    })
+                  }
+                  disabled={!selectedProjectId || projectLineItems.length === 0}
                   className="cursor-pointer"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -562,13 +650,83 @@ export function POForm({
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
+                <div className="border-b p-6">
+                  {!selectedProjectId ? (
+                    <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
+                      Select a project before adding purchase order line items.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 rounded-md border bg-muted/20 p-4 md:grid-cols-[1fr_140px_160px_auto]">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Saved item description
+                        </label>
+                        <Input
+                          value={newLineItem.description}
+                          onChange={(event) =>
+                            setNewLineItem((prev) => ({
+                              ...prev,
+                              description: event.target.value,
+                            }))
+                          }
+                          placeholder="Cables, installation, hardware"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Unit
+                        </label>
+                        <Input
+                          value={newLineItem.unit}
+                          onChange={(event) =>
+                            setNewLineItem((prev) => ({ ...prev, unit: event.target.value }))
+                          }
+                          placeholder="unit"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Unit Price
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={newLineItem.unitPrice}
+                          onChange={(event) =>
+                            setNewLineItem((prev) => ({
+                              ...prev,
+                              unitPrice: event.target.value,
+                            }))
+                          }
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCreateProjectLineItem}
+                          disabled={
+                            !newLineItem.description.trim() ||
+                            !newLineItem.unit.trim() ||
+                            newLineItem.unitPrice.trim() === ''
+                          }
+                          className="w-full"
+                        >
+                          Save Item
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[45%] pl-6">Description *</TableHead>
-                        <TableHead className="w-[15%]">Quantity *</TableHead>
-                        <TableHead className="w-[20%]">Unit Price (ZAR) *</TableHead>
+                        <TableHead className="w-[40%] pl-6">Saved Line Item *</TableHead>
+                        <TableHead className="w-[12%]">Unit</TableHead>
+                        <TableHead className="w-[13%]">Quantity *</TableHead>
+                        <TableHead className="w-[18%]">Unit Price (ZAR)</TableHead>
                         <TableHead className="w-[15%]">Subtotal</TableHead>
                         <TableHead className="w-[5%] pr-6 text-right">Action</TableHead>
                       </TableRow>
@@ -576,14 +734,17 @@ export function POForm({
                     <TableBody>
                       {fields.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground italic">
-                            No line items added yet. Click &quot;Add Item&quot; to begin.
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground italic">
+                            {selectedProjectId
+                              ? 'No PO line items selected yet. Save project line items, then click "Add Item".'
+                              : 'Select a project to load saved line items.'}
                           </TableCell>
                         </TableRow>
                       ) : (
                         fields.map((field, index) => {
                           const qtyVal = form.watch(`lineItems.${index}.quantity` as any);
                           const priceVal = form.watch(`lineItems.${index}.unitPrice` as any);
+                          const unitVal = form.watch(`lineItems.${index}.unit` as any);
                           const qty = parseFloat(qtyVal || '0') || 0;
                           const price = parseFloat(priceVal || '0') || 0;
                           const subtotal = qty * price;
@@ -592,16 +753,34 @@ export function POForm({
                               <TableCell className="pl-6">
                                 <FormField
                                   control={form.control as any}
-                                  name={`lineItems.${index}.description` as any}
+                                  name={`lineItems.${index}.projectLineItemId` as any}
                                   render={({ field: inputField }) => (
                                     <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Item description" {...inputField} />
-                                      </FormControl>
+                                      <Select
+                                        value={inputField.value}
+                                        onValueChange={(value) => applySavedLineItem(index, value)}
+                                        disabled={loadingLineItems}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select saved project item" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {projectLineItems.map((item) => (
+                                            <SelectItem key={item.id} value={item.id}>
+                                              {item.description}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {unitVal || 'unit'}
                               </TableCell>
                               <TableCell>
                                 <FormField
@@ -623,29 +802,19 @@ export function POForm({
                                 />
                               </TableCell>
                               <TableCell>
-                                <FormField
-                                  control={form.control as any}
-                                  name={`lineItems.${index}.unitPrice` as any}
-                                  render={({ field: inputField }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <div className="relative">
-                                          <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
-                                            R
-                                          </span>
-                                          <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0.00"
-                                            className="pl-6"
-                                            {...inputField}
-                                          />
-                                        </div>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
+                                <div className="relative">
+                                  <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
+                                    R
+                                  </span>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    className="pl-6 bg-muted cursor-not-allowed"
+                                    readOnly
+                                    value={priceVal || '0.00'}
+                                  />
+                                </div>
                               </TableCell>
                               <TableCell className="font-medium text-sm">
                                 {formatCurrency(subtotal)}

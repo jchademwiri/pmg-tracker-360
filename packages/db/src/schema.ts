@@ -400,6 +400,22 @@ export const project = pgTable(
   })
 );
 
+export const projectLineItem = pgTable('project_line_item', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  description: text('description').notNull(),
+  unit: text('unit').notNull(),
+  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+});
+
 // Purchase Order table with project relationships
 export const purchaseOrder = pgTable('purchase_order', {
   id: text('id').primaryKey(),
@@ -429,7 +445,11 @@ export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
   purchaseOrderId: text('purchase_order_id')
     .notNull()
     .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
+  projectLineItemId: text('project_line_item_id').references(() => projectLineItem.id, {
+    onDelete: 'restrict',
+  }),
   description: text('description').notNull(),
+  unit: text('unit').default('unit').notNull(),
   quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
   unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
   subtotal: decimal('subtotal', { precision: 15, scale: 2 }).notNull(),
@@ -442,6 +462,9 @@ export const purchaseOrderDeliveryNote = pgTable('purchase_order_delivery_note',
   purchaseOrderId: text('purchase_order_id')
     .notNull()
     .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
   deliveryNoteNumber: text('delivery_note_number').notNull(),
   recipientName: text('recipient_name').notNull(),
   receivedAt: timestamp('received_at').notNull(),
@@ -460,6 +483,8 @@ export const purchaseOrderDeliveryItem = pgTable('purchase_order_delivery_item',
     .notNull()
     .references(() => purchaseOrderLineItem.id, { onDelete: 'cascade' }),
   quantityDelivered: decimal('quantity_delivered', { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).default('0').notNull(),
+  deliveryValue: decimal('delivery_value', { precision: 15, scale: 2 }).default('0').notNull(),
 });
 
 // Project Activity Timeline table
@@ -611,6 +636,7 @@ export type SessionTracking = typeof sessionTracking.$inferSelect;
 export type Client = typeof client.$inferSelect;
 export type Tender = typeof tender.$inferSelect;
 export type Project = typeof project.$inferSelect;
+export type ProjectLineItem = typeof projectLineItem.$inferSelect;
 export type PurchaseOrder = typeof purchaseOrder.$inferSelect;
 export type TenderExtension = typeof tenderExtension.$inferSelect;
 export type Document = typeof document.$inferSelect;
@@ -726,9 +752,22 @@ export const projectRelations = relations(project, ({ one, many }) => ({
     references: [client.id],
   }),
   purchaseOrders: many(purchaseOrder),
+  lineItems: many(projectLineItem),
   activities: many(projectActivity),
   risks: many(projectRisk),
   documents: many(document),
+}));
+
+export const projectLineItemRelations = relations(projectLineItem, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [projectLineItem.organizationId],
+    references: [organization.id],
+  }),
+  project: one(project, {
+    fields: [projectLineItem.projectId],
+    references: [project.id],
+  }),
+  purchaseOrderLineItems: many(purchaseOrderLineItem),
 }));
 
 export const purchaseOrderRelations = relations(purchaseOrder, ({ one, many }) => ({
@@ -751,6 +790,10 @@ export const purchaseOrderLineItemRelations = relations(
       fields: [purchaseOrderLineItem.purchaseOrderId],
       references: [purchaseOrder.id],
     }),
+    projectLineItem: one(projectLineItem, {
+      fields: [purchaseOrderLineItem.projectLineItemId],
+      references: [projectLineItem.id],
+    }),
     deliveryItems: many(purchaseOrderDeliveryItem),
   })
 );
@@ -761,6 +804,10 @@ export const purchaseOrderDeliveryNoteRelations = relations(
     purchaseOrder: one(purchaseOrder, {
       fields: [purchaseOrderDeliveryNote.purchaseOrderId],
       references: [purchaseOrder.id],
+    }),
+    project: one(project, {
+      fields: [purchaseOrderDeliveryNote.projectId],
+      references: [project.id],
     }),
     items: many(purchaseOrderDeliveryItem),
   })
@@ -884,6 +931,7 @@ export const schema = {
   client,
   tender,
   project,
+  projectLineItem,
   projectActivity,
   projectRisk,
   purchaseOrder,
@@ -906,6 +954,7 @@ export const schema = {
   clientRelations,
   tenderRelations,
   projectRelations,
+  projectLineItemRelations,
   projectActivityRelations,
   projectRiskRelations,
   purchaseOrderRelations,

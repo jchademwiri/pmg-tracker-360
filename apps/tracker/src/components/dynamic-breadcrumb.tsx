@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { getTenderBreadcrumbLabel } from '@/server/tenders';
+import { getPurchaseOrderBreadcrumbLabel } from '@/server/purchase-orders';
 
 const STATIC_SEGMENT_LABELS: Record<string, string> = {
   tenders: 'Tenders',
@@ -20,6 +21,7 @@ const STATIC_SEGMENT_LABELS: Record<string, string> = {
 };
 
 const TENDER_STATIC_ROUTES = new Set(['overview', 'create']);
+const PURCHASE_ORDER_STATIC_ROUTES = new Set(['create', 'edit', 'deliveries', 'new']);
 
 function formatSegmentName(segment: string) {
   return segment
@@ -31,6 +33,7 @@ function formatSegmentName(segment: string) {
 export function DynamicBreadcrumb() {
   const pathname = usePathname();
   const [tenderLabels, setTenderLabels] = useState<Record<string, string>>({});
+  const [purchaseOrderLabels, setPurchaseOrderLabels] = useState<Record<string, string>>({});
 
   const pathSegments = useMemo(
     () => pathname.split('/').filter(Boolean),
@@ -67,6 +70,36 @@ export function DynamicBreadcrumb() {
     };
   }, [pathSegments, tenderLabels]);
 
+  useEffect(() => {
+    const purchaseOrderId = pathSegments.find((segment, index) => {
+      return (
+        pathSegments[index - 1] === 'purchase-orders' &&
+        !PURCHASE_ORDER_STATIC_ROUTES.has(segment)
+      );
+    });
+
+    if (!purchaseOrderId || purchaseOrderLabels[purchaseOrderId]) {
+      return;
+    }
+
+    let isMounted = true;
+
+    getPurchaseOrderBreadcrumbLabel(purchaseOrderId).then((label) => {
+      if (!isMounted || !label) {
+        return;
+      }
+
+      setPurchaseOrderLabels((current) => ({
+        ...current,
+        [purchaseOrderId]: label,
+      }));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathSegments, purchaseOrderLabels]);
+
   return (
     <Breadcrumb>
       <BreadcrumbList>
@@ -80,8 +113,12 @@ export function DynamicBreadcrumb() {
           const isTenderId =
             pathSegments[index - 1] === 'tenders' &&
             !TENDER_STATIC_ROUTES.has(segment);
+          const isPurchaseOrderId =
+            pathSegments[index - 1] === 'purchase-orders' &&
+            !PURCHASE_ORDER_STATIC_ROUTES.has(segment);
           const displayName =
             (isTenderId ? tenderLabels[segment] : undefined) ||
+            (isPurchaseOrderId ? purchaseOrderLabels[segment] : undefined) ||
             STATIC_SEGMENT_LABELS[segment] ||
             formatSegmentName(segment);
 

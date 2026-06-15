@@ -6,6 +6,7 @@ import {
   purchaseOrder, 
   project, 
   client,
+  projectLineItem,
   purchaseOrderLineItem,
   purchaseOrderDeliveryNote,
   purchaseOrderDeliveryItem,
@@ -22,6 +23,191 @@ import {
   type PurchaseOrderUpdateInput,
   type PurchaseOrderStatusUpdateInput,
 } from '@/lib/validations/purchase-order';
+
+export async function getPurchaseOrderBreadcrumbLabel(poId: string) {
+  try {
+    const po = await db
+      .select({ poNumber: purchaseOrder.poNumber })
+      .from(purchaseOrder)
+      .where(and(eq(purchaseOrder.id, poId), isNull(purchaseOrder.deletedAt)))
+      .limit(1);
+
+    return po[0]?.poNumber || null;
+  } catch (error) {
+    console.error('Error fetching purchase order breadcrumb label:', error);
+    return null;
+  }
+}
+
+type POLineItemInput = {
+  id?: string;
+  projectLineItemId: string;
+  quantity: string;
+};
+
+export async function getProjectLineItems(organizationId: string, projectId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const items = await db
+      .select()
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, projectId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .orderBy(projectLineItem.description);
+
+    return { success: true, lineItems: items };
+  } catch (error: any) {
+    console.error('Error fetching project line items:', error);
+    return { success: false, error: error.message || 'Failed to fetch project line items', lineItems: [] };
+  }
+}
+
+export async function createProjectLineItem(
+  organizationId: string,
+  data: {
+    projectId: string;
+    description: string;
+    unit: string;
+    unitPrice: string;
+  }
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['create'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return { success: false, error: 'Insufficient permissions to create line items' };
+    }
+
+    const description = data.description.trim();
+    const unit = data.unit.trim();
+    const unitPrice = parseFloat(data.unitPrice);
+
+    if (!data.projectId || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { success: false, error: 'Project, description, unit, and unit price are required.' };
+    }
+
+    const projectExists = await db
+      .select({ id: project.id })
+      .from(project)
+      .where(
+        and(
+          eq(project.id, data.projectId),
+          eq(project.organizationId, organizationId),
+          isNull(project.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (projectExists.length === 0) {
+      return { success: false, error: 'Project not found' };
+    }
+
+    const newItem = await db
+      .insert(projectLineItem)
+      .values({
+        id: crypto.randomUUID(),
+        organizationId,
+        projectId: data.projectId,
+        description,
+        unit,
+        unitPrice: unitPrice.toFixed(2),
+      })
+      .returning();
+
+    revalidatePath('/projects/purchase-orders/create');
+    revalidatePath(`/projects/${data.projectId}`);
+    return { success: true, lineItem: newItem[0] };
+  } catch (error: any) {
+    console.error('Error creating project line item:', error);
+    return { success: false, error: error.message || 'Failed to create line item' };
+  }
+}
+
+async function getValidatedProjectLineItemSnapshots(
+  organizationId: string,
+  projectId: string,
+  lineItems: POLineItemInput[] = []
+) {
+  if (lineItems.length === 0) {
+    return [];
+  }
+
+  const ids = Array.from(new Set(lineItems.map((item) => item.projectLineItemId)));
+  const savedItems = await db
+    .select()
+    .from(projectLineItem)
+    .where(
+      and(
+        inArray(projectLineItem.id, ids),
+        eq(projectLineItem.organizationId, organizationId),
+        eq(projectLineItem.projectId, projectId),
+        isNull(projectLineItem.deletedAt)
+      )
+    );
+
+  const savedItemMap = new Map(savedItems.map((item) => [item.id, item]));
+  const missingIds = ids.filter((id) => !savedItemMap.has(id));
+
+  if (missingIds.length > 0) {
+    throw new Error('One or more selected line items do not belong to the selected project.');
+  }
+
+  return lineItems.map((item) => {
+    const savedItem = savedItemMap.get(item.projectLineItemId)!;
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(savedItem.unitPrice) || 0;
+
+    if (qty <= 0) {
+      throw new Error(`Quantity for "${savedItem.description}" must be greater than zero.`);
+    }
+
+    return {
+      id: item.id,
+      projectLineItemId: savedItem.id,
+      description: savedItem.description,
+      unit: savedItem.unit,
+      quantity: qty.toString(),
+      unitPrice: price.toString(),
+      subtotal: (qty * price).toFixed(2),
+    };
+  });
+}
+
+function toPurchaseOrderValues(
+  organizationId: string,
+  data: PurchaseOrderCreateInput | PurchaseOrderUpdateInput
+) {
+  return {
+    organizationId,
+    poNumber: data.poNumber,
+    projectId: data.projectId,
+    supplierName: data.supplierName,
+    description: data.description,
+    totalAmount: data.totalAmount,
+    status: data.status,
+    poDate: data.poDate,
+    expectedDeliveryDate: data.expectedDeliveryDate,
+    deliveredAt: data.deliveredAt,
+    deliveryAddress: data.deliveryAddress,
+  };
+}
 
 // Get purchase orders with pagination, search, and project joins
 export async function getPurchaseOrders(
@@ -199,32 +385,53 @@ export async function createPurchaseOrder(
       };
     }
 
+    const lineItemSnapshots = await getValidatedProjectLineItemSnapshots(
+      organizationId,
+      validatedData.projectId,
+      validatedData.lineItems as POLineItemInput[]
+    );
+
+    const poValues = {
+      organizationId,
+      poNumber: validatedData.poNumber,
+      projectId: validatedData.projectId,
+      supplierName: validatedData.supplierName,
+      description: validatedData.description,
+      totalAmount: validatedData.totalAmount,
+      status: validatedData.status,
+      poDate: validatedData.poDate,
+      expectedDeliveryDate: validatedData.expectedDeliveryDate,
+      deliveredAt: validatedData.deliveredAt,
+      deliveryAddress: validatedData.deliveryAddress,
+    };
+    if (lineItemSnapshots.length > 0) {
+      poValues.totalAmount = lineItemSnapshots
+        .reduce((sum, item) => sum + parseFloat(item.subtotal), 0)
+        .toFixed(2);
+    }
+
     const newPurchaseOrder = await db
       .insert(purchaseOrder)
       .values({
         id: crypto.randomUUID(),
-        organizationId,
-        ...validatedData,
+        ...poValues,
       })
       .returning();
 
     const poId = newPurchaseOrder[0].id;
 
     // Save line items
-    if (data.lineItems && data.lineItems.length > 0) {
-      const lineItemsToInsert = data.lineItems.map((item: any) => {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unitPrice) || 0;
-        const sub = (qty * price).toFixed(2);
-        return {
+    if (lineItemSnapshots.length > 0) {
+      const lineItemsToInsert = lineItemSnapshots.map((item) => ({
           id: crypto.randomUUID(),
           purchaseOrderId: poId,
+          projectLineItemId: item.projectLineItemId,
           description: item.description,
-          quantity: qty.toString(),
-          unitPrice: price.toString(),
-          subtotal: sub,
-        };
-      });
+          unit: item.unit,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+        }));
 
       await db.insert(purchaseOrderLineItem).values(lineItemsToInsert);
     }
@@ -413,24 +620,40 @@ export async function updatePurchaseOrder(
       }
     }
 
+    const targetProjectId = validatedData.projectId || existingPO[0].projectId;
+    const lineItemSnapshots = data.lineItems
+      ? await getValidatedProjectLineItemSnapshots(
+          organizationId,
+          targetProjectId,
+          data.lineItems as POLineItemInput[]
+        )
+      : undefined;
+
+    const poValues = toPurchaseOrderValues(organizationId, validatedData);
+    if (lineItemSnapshots && lineItemSnapshots.length > 0) {
+      poValues.totalAmount = lineItemSnapshots
+        .reduce((sum, item) => sum + parseFloat(item.subtotal), 0)
+        .toFixed(2);
+    }
+
     const updatedPO = await db
       .update(purchaseOrder)
       .set({
-        ...validatedData,
+        ...poValues,
         updatedAt: new Date(),
       })
       .where(eq(purchaseOrder.id, poId))
       .returning();
 
     // Sync line items
-    if (data.lineItems) {
+    if (lineItemSnapshots) {
       const existingItems = await db
         .select()
         .from(purchaseOrderLineItem)
         .where(eq(purchaseOrderLineItem.purchaseOrderId, poId));
 
       const existingItemsMap = new Map(existingItems.map((item) => [item.id, item]));
-      const updatedItemIds = new Set(data.lineItems.map((item: any) => item.id).filter(Boolean));
+      const updatedItemIds = new Set(lineItemSnapshots.map((item) => item.id).filter(Boolean));
 
       // 1. Delete items no longer present
       const itemsToDelete = existingItems.filter((item) => !updatedItemIds.has(item.id));
@@ -441,20 +664,18 @@ export async function updatePurchaseOrder(
       }
 
       // 2. Insert or Update line items
-      for (const item of data.lineItems) {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unitPrice) || 0;
-        const sub = (qty * price).toFixed(2);
-
+      for (const item of lineItemSnapshots) {
         if (item.id && existingItemsMap.has(item.id)) {
           // Update
           await db
             .update(purchaseOrderLineItem)
             .set({
+              projectLineItemId: item.projectLineItemId,
               description: item.description,
-              quantity: qty.toString(),
-              unitPrice: price.toString(),
-              subtotal: sub,
+              unit: item.unit,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              subtotal: item.subtotal,
             })
             .where(eq(purchaseOrderLineItem.id, item.id));
         } else {
@@ -462,10 +683,12 @@ export async function updatePurchaseOrder(
           await db.insert(purchaseOrderLineItem).values({
             id: crypto.randomUUID(),
             purchaseOrderId: poId,
+            projectLineItemId: item.projectLineItemId,
             description: item.description,
-            quantity: qty.toString(),
-            unitPrice: price.toString(),
-            subtotal: sub,
+            unit: item.unit,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
           });
         }
       }
@@ -725,6 +948,8 @@ export async function recordPODelivery(
     const itemsToInsert: Array<{
       lineItemId: string;
       quantityDelivered: number;
+      unitPrice: number;
+      deliveryValue: number;
     }> = [];
 
     for (const inputItem of data.items) {
@@ -756,9 +981,12 @@ export async function recordPODelivery(
       }
 
       if (deliveringQty > 0) {
+        const unitPrice = parseFloat(lineItem.unitPrice) || 0;
         itemsToInsert.push({
           lineItemId: lineItem.id,
           quantityDelivered: deliveringQty,
+          unitPrice,
+          deliveryValue: deliveringQty * unitPrice,
         });
       }
     }
@@ -778,6 +1006,7 @@ export async function recordPODelivery(
       await tx.insert(purchaseOrderDeliveryNote).values({
         id: deliveryNoteId,
         purchaseOrderId: poId,
+        projectId: po.projectId,
         deliveryNoteNumber: data.deliveryNoteNumber,
         recipientName: data.recipientName,
         receivedAt: data.receivedAt,
@@ -793,6 +1022,8 @@ export async function recordPODelivery(
           deliveryNoteId,
           lineItemId: item.lineItemId,
           quantityDelivered: item.quantityDelivered.toString(),
+          unitPrice: item.unitPrice.toFixed(2),
+          deliveryValue: item.deliveryValue.toFixed(2),
         }))
       );
 

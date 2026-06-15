@@ -169,6 +169,13 @@
       "when": 1781494296397,
       "tag": "0023_famous_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1781577600000,
+      "tag": "0024_project_line_items_delivery_pages",
+      "breakpoints": true
     }
   ]
 }
