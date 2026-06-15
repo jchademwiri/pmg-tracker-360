@@ -20,6 +20,8 @@ interface ProjectLineItemFormProps {
   mode: 'create' | 'edit';
   lineItem?: {
     id: string;
+    itemNumber: string;
+    sapReference: string | null;
     description: string;
     unit: string;
     unitPrice: string;
@@ -35,13 +37,15 @@ export function ProjectLineItemForm({
 }: ProjectLineItemFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [itemNumber, setItemNumber] = useState(lineItem?.itemNumber || '');
+  const [sapReference, setSapReference] = useState(lineItem?.sapReference || '');
   const [description, setDescription] = useState(lineItem?.description || '');
   const [unit, setUnit] = useState(lineItem?.unit || 'unit');
   const [unitPrice, setUnitPrice] = useState(lineItem?.unitPrice || '0.00');
 
   const handleSubmit = () => {
     startTransition(async () => {
-      const payload = { projectId: project.id, description, unit, unitPrice };
+      const payload = { projectId: project.id, itemNumber, sapReference, description, unit, unitPrice };
       const result =
         mode === 'edit' && lineItem
           ? await updateProjectLineItem(organizationId, project.id, lineItem.id, payload)
@@ -59,6 +63,7 @@ export function ProjectLineItemForm({
 
   const unitPriceNumber = parseFloat(unitPrice) || 0;
   const canSubmit =
+    itemNumber.trim().length > 0 &&
     description.trim().length > 0 &&
     unit.trim().length > 0 &&
     unitPrice.trim().length > 0 &&
@@ -89,6 +94,29 @@ export function ProjectLineItemForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="item-number">Item Number *</Label>
+                <Input
+                  id="item-number"
+                  value={itemNumber}
+                  onChange={(event) => setItemNumber(event.target.value.toUpperCase())}
+                  placeholder="ITEM-001"
+                  disabled={isPending}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sap-reference">SAP Reference</Label>
+                <Input
+                  id="sap-reference"
+                  value={sapReference}
+                  onChange={(event) => setSapReference(event.target.value)}
+                  placeholder="Optional SAP code"
+                  disabled={isPending}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="description">Description *</Label>
               <Input

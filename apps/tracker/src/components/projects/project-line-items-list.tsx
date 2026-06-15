@@ -31,6 +31,8 @@ import { formatCurrency } from '@/lib/format';
 
 interface ProjectLineItem {
   id: string;
+  itemNumber: string;
+  sapReference: string | null;
   description: string;
   unit: string;
   unitPrice: string;
@@ -64,6 +66,8 @@ export function ProjectLineItemsList({
     return lineItems.filter((item) => {
       return (
         item.description.toLowerCase().includes(term) ||
+        item.itemNumber.toLowerCase().includes(term) ||
+        (item.sapReference?.toLowerCase().includes(term) ?? false) ||
         item.unit.toLowerCase().includes(term)
       );
     });
@@ -119,7 +123,7 @@ export function ProjectLineItemsList({
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search items or units"
+              placeholder="Search item number, SAP, description, or unit"
               className="pl-9"
             />
           </div>
@@ -129,7 +133,9 @@ export function ProjectLineItemsList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-6">Description</TableHead>
+                  <TableHead className="pl-6">Item Number</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>SAP</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead className="text-right">Unit Price</TableHead>
                   <TableHead className="text-right">Used On PO Lines</TableHead>
@@ -139,7 +145,7 @@ export function ProjectLineItemsList({
               <TableBody>
                 {filteredItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                       {lineItems.length === 0
                         ? 'No saved project items yet.'
                         : 'No project items match your search.'}
@@ -148,7 +154,9 @@ export function ProjectLineItemsList({
                 ) : (
                   filteredItems.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="pl-6 font-medium">{item.description}</TableCell>
+                      <TableCell className="pl-6 font-semibold text-blue-600">{item.itemNumber}</TableCell>
+                      <TableCell className="font-medium">{item.description}</TableCell>
+                      <TableCell className="text-muted-foreground">{item.sapReference || '-'}</TableCell>
                       <TableCell>{item.unit}</TableCell>
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(item.unitPrice)}

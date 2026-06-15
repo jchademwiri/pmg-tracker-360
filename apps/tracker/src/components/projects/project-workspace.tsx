@@ -15,6 +15,7 @@ import {
   Plus, 
   File,
   Package,
+  Truck,
   ShieldAlert,
   ArrowRight,
   TrendingUp,
@@ -77,6 +78,18 @@ interface PurchaseOrderType {
   poDate: Date | null;
   expectedDeliveryDate: Date | null;
   deliveredAt: Date | null;
+  deliveryNotes?: Array<{
+    id: string;
+    deliveryNoteNumber: string;
+    recipientName: string;
+    receivedAt: Date;
+    status: string;
+    items?: Array<{
+      id: string;
+      quantityDelivered: string;
+      deliveryValue?: string;
+    }>;
+  }>;
 }
 
 interface DocumentType {
@@ -202,6 +215,23 @@ export function ProjectWorkspace({
 
   const activeRisks = risks.filter(r => r.status === 'open');
   const criticalRisks = risks.filter(r => r.status === 'open' && (r.severity === 'critical' || r.severity === 'high'));
+  const deliveryNotes = purchaseOrders.flatMap((po) =>
+    (po.deliveryNotes || []).map((note) => ({
+      ...note,
+      poId: po.id,
+      poNumber: po.poNumber,
+    }))
+  );
+  const totalDeliveryNotes = deliveryNotes.length;
+  const totalDeliveryNoteValue = deliveryNotes.reduce((sum, note) => {
+    return (
+      sum +
+      (note.items || []).reduce(
+        (itemSum, item) => itemSum + parseFloat(item.deliveryValue || '0'),
+        0
+      )
+    );
+  }, 0);
 
   // Format currency
   const formatCurrency = (value: string | number | null) => {
@@ -395,6 +425,18 @@ export function ProjectWorkspace({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
+              <Button className="bg-blue-600 text-white hover:bg-blue-500 rounded-xl">
+                <Plus className="h-4 w-4 mr-2" />
+                Create PO
+              </Button>
+            </Link>
+            <Link href={`/projects/${project.id}/items/new`}>
+              <Button variant="outline" className="border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white rounded-xl">
+                <Package className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </Link>
             <Link href={`/projects/${project.id}/edit`}>
               <Button variant="outline" className="border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white rounded-xl">
                 <Edit className="h-4 w-4 mr-2" />
@@ -458,6 +500,49 @@ export function ProjectWorkspace({
               </Button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Workspace Navigation */}
+      <div className="sticky top-16 z-20 rounded-2xl border border-white/5 bg-zinc-950/90 p-2 shadow-xl backdrop-blur-xl">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {[
+            { value: 'info', label: 'Overview', icon: Info, count: null },
+            { value: 'pos', label: 'Orders', icon: DollarSign, count: purchaseOrders.length },
+            { value: 'items', label: 'Items', icon: Package, count: lineItems.length },
+            { value: 'deliveries', label: 'Deliveries', icon: Truck, count: totalDeliveryNotes },
+            { value: 'documents', label: 'Documents', icon: FileText, count: documents.length },
+            { value: 'activity', label: 'Activity', icon: Activity, count: activities.length },
+            { value: 'risks', label: 'Risks', icon: AlertTriangle, count: activeRisks.length },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.value;
+
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setActiveTab(item.value)}
+                className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-white text-zinc-950 shadow-sm'
+                    : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+                {item.count !== null && item.count > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                      isActive ? 'bg-zinc-200 text-zinc-800' : 'bg-white/10 text-white'
+                    }`}
+                  >
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -543,7 +628,7 @@ export function ProjectWorkspace({
 
       {/* Tabs Layout */}
       <Tabs defaultValue="info" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-zinc-900 border border-white/5 rounded-xl p-1 w-full max-w-2xl flex items-center justify-start overflow-x-auto space-x-1">
+        <TabsList className="hidden">
           <TabsTrigger value="info" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
             <Info className="h-4 w-4 mr-2" />
             Info
@@ -565,6 +650,9 @@ export function ProjectWorkspace({
                 {lineItems.length}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="deliveries">
+            Deliveries
           </TabsTrigger>
           <TabsTrigger value="documents" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
             <FileText className="h-4 w-4 mr-2" />
@@ -899,7 +987,85 @@ export function ProjectWorkspace({
             </Card>
           </TabsContent>
 
-          {/* TAB 4: DOCUMENTS */}
+          {/* TAB 4: DELIVERIES */}
+          <TabsContent value="deliveries" className="space-y-6 outline-none">
+            <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold">Project Deliveries</CardTitle>
+                  <CardDescription className="text-zinc-500 text-xs">
+                    Delivery notes recorded against purchase orders in this project
+                  </CardDescription>
+                </div>
+                <div className="rounded-xl border border-white/5 bg-zinc-900/60 px-3 py-2 text-right">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">Delivery Value</p>
+                  <p className="text-sm font-semibold text-emerald-400">
+                    {formatCurrency(totalDeliveryNoteValue)}
+                  </p>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {deliveryNotes.length > 0 ? (
+                  <div className="space-y-4">
+                    {deliveryNotes.map((note) => {
+                      const noteValue = (note.items || []).reduce(
+                        (sum, item) => sum + parseFloat(item.deliveryValue || '0'),
+                        0
+                      );
+
+                      return (
+                        <div
+                          key={note.id}
+                          className="flex flex-col gap-4 rounded-xl border border-white/5 bg-zinc-900/40 p-4 md:flex-row md:items-center md:justify-between"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold text-zinc-100">
+                                {note.deliveryNoteNumber}
+                              </span>
+                              <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                                {note.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-zinc-500">
+                              PO {note.poNumber} • received by {note.recipientName} on {formatDate(note.receivedAt)}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 md:justify-end">
+                            <div className="text-right">
+                              <p className="text-[10px] uppercase tracking-wider text-zinc-500">Items</p>
+                              <p className="text-sm font-semibold text-zinc-200">{note.items?.length || 0}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] uppercase tracking-wider text-zinc-500">Value</p>
+                              <p className="text-sm font-semibold text-emerald-400">{formatCurrency(noteValue)}</p>
+                            </div>
+                            <Link href={`/projects/purchase-orders/${note.poId}`}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white">
+                                <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
+                    <Truck className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                    <p className="text-sm font-light">No delivery notes recorded for this project yet.</p>
+                    {purchaseOrders.length > 0 && (
+                      <p className="mt-2 text-xs text-zinc-600">
+                        Open a purchase order to record the first delivery note.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 5: DOCUMENTS */}
           <TabsContent value="documents" className="outline-none">
             <DocumentManager 
               organizationId={organizationId} 
@@ -909,7 +1075,7 @@ export function ProjectWorkspace({
             />
           </TabsContent>
 
-          {/* TAB 5: ACTIVITY */}
+          {/* TAB 6: ACTIVITY */}
           <TabsContent value="activity" className="space-y-6 outline-none">
             <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
               <CardHeader>
@@ -958,7 +1124,7 @@ export function ProjectWorkspace({
             </Card>
           </TabsContent>
 
-          {/* TAB 6: RISKS */}
+          {/* TAB 7: RISKS */}
           <TabsContent value="risks" className="space-y-6 outline-none">
             <Card className="border-white/5 bg-zinc-955 text-white rounded-xl shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between">

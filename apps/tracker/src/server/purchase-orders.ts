@@ -42,12 +42,15 @@ export async function getPurchaseOrderBreadcrumbLabel(poId: string) {
 export async function getProjectLineItemBreadcrumbLabel(lineItemId: string) {
   try {
     const item = await db
-      .select({ description: projectLineItem.description })
+      .select({
+        itemNumber: projectLineItem.itemNumber,
+        description: projectLineItem.description,
+      })
       .from(projectLineItem)
       .where(and(eq(projectLineItem.id, lineItemId), isNull(projectLineItem.deletedAt)))
       .limit(1);
 
-    return item[0]?.description || null;
+    return item[0] ? `${item[0].itemNumber} - ${item[0].description}` : null;
   } catch (error) {
     console.error('Error fetching project line item breadcrumb label:', error);
     return null;
@@ -69,6 +72,8 @@ export async function getProjectLineItems(organizationId: string, projectId: str
         id: projectLineItem.id,
         organizationId: projectLineItem.organizationId,
         projectId: projectLineItem.projectId,
+        itemNumber: projectLineItem.itemNumber,
+        sapReference: projectLineItem.sapReference,
         description: projectLineItem.description,
         unit: projectLineItem.unit,
         unitPrice: projectLineItem.unitPrice,
@@ -90,7 +95,7 @@ export async function getProjectLineItems(organizationId: string, projectId: str
         )
       )
       .groupBy(projectLineItem.id)
-      .orderBy(projectLineItem.description);
+      .orderBy(projectLineItem.itemNumber);
 
     return { success: true, lineItems: items };
   } catch (error: any) {
@@ -112,6 +117,8 @@ export async function getProjectLineItemById(
         id: projectLineItem.id,
         organizationId: projectLineItem.organizationId,
         projectId: projectLineItem.projectId,
+        itemNumber: projectLineItem.itemNumber,
+        sapReference: projectLineItem.sapReference,
         description: projectLineItem.description,
         unit: projectLineItem.unit,
         unitPrice: projectLineItem.unitPrice,
@@ -151,6 +158,8 @@ export async function createProjectLineItem(
   organizationId: string,
   data: {
     projectId: string;
+    itemNumber: string;
+    sapReference?: string;
     description: string;
     unit: string;
     unitPrice: string;
@@ -174,12 +183,14 @@ export async function createProjectLineItem(
       return { success: false, error: 'Insufficient permissions to create line items' };
     }
 
+    const itemNumber = data.itemNumber.trim().toUpperCase();
+    const sapReference = data.sapReference?.trim() || null;
     const description = data.description.trim();
     const unit = data.unit.trim();
     const unitPrice = parseFloat(data.unitPrice);
 
-    if (!data.projectId || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
-      return { success: false, error: 'Project, description, unit, and unit price are required.' };
+    if (!data.projectId || !itemNumber || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { success: false, error: 'Project, item number, description, unit, and unit price are required.' };
     }
 
     const projectExists = await db
@@ -198,12 +209,31 @@ export async function createProjectLineItem(
       return { success: false, error: 'Project not found' };
     }
 
+    const duplicateItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, data.projectId),
+          eq(projectLineItem.itemNumber, itemNumber),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (duplicateItem.length > 0) {
+      return { success: false, error: 'This item number already exists for the selected project.' };
+    }
+
     const newItem = await db
       .insert(projectLineItem)
       .values({
         id: crypto.randomUUID(),
         organizationId,
         projectId: data.projectId,
+        itemNumber,
+        sapReference,
         description,
         unit,
         unitPrice: unitPrice.toFixed(2),
@@ -224,6 +254,8 @@ export async function updateProjectLineItem(
   projectId: string,
   lineItemId: string,
   data: {
+    itemNumber: string;
+    sapReference?: string;
     description: string;
     unit: string;
     unitPrice: string;
@@ -247,12 +279,14 @@ export async function updateProjectLineItem(
       return { success: false, error: 'Insufficient permissions to update line items' };
     }
 
+    const itemNumber = data.itemNumber.trim().toUpperCase();
+    const sapReference = data.sapReference?.trim() || null;
     const description = data.description.trim();
     const unit = data.unit.trim();
     const unitPrice = parseFloat(data.unitPrice);
 
-    if (!description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
-      return { success: false, error: 'Description, unit, and unit price are required.' };
+    if (!itemNumber || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { success: false, error: 'Item number, description, unit, and unit price are required.' };
     }
 
     const existingItem = await db
@@ -272,9 +306,29 @@ export async function updateProjectLineItem(
       return { success: false, error: 'Project line item not found' };
     }
 
+    const duplicateItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, projectId),
+          eq(projectLineItem.itemNumber, itemNumber),
+          isNull(projectLineItem.deletedAt),
+          ne(projectLineItem.id, lineItemId)
+        )
+      )
+      .limit(1);
+
+    if (duplicateItem.length > 0) {
+      return { success: false, error: 'This item number already exists for the selected project.' };
+    }
+
     const updatedItem = await db
       .update(projectLineItem)
       .set({
+        itemNumber,
+        sapReference,
         description,
         unit,
         unitPrice: unitPrice.toFixed(2),
@@ -390,6 +444,8 @@ async function getValidatedProjectLineItemSnapshots(
     return {
       id: item.id,
       projectLineItemId: savedItem.id,
+      itemNumber: savedItem.itemNumber,
+      sapReference: savedItem.sapReference,
       description: savedItem.description,
       unit: savedItem.unit,
       quantity: qty.toString(),
@@ -635,6 +691,8 @@ export async function createPurchaseOrder(
           id: crypto.randomUUID(),
           purchaseOrderId: poId,
           projectLineItemId: item.projectLineItemId,
+          itemNumber: item.itemNumber,
+          sapReference: item.sapReference,
           description: item.description,
           unit: item.unit,
           quantity: item.quantity,
@@ -880,6 +938,8 @@ export async function updatePurchaseOrder(
             .update(purchaseOrderLineItem)
             .set({
               projectLineItemId: item.projectLineItemId,
+              itemNumber: item.itemNumber,
+              sapReference: item.sapReference,
               description: item.description,
               unit: item.unit,
               quantity: item.quantity,
@@ -893,6 +953,8 @@ export async function updatePurchaseOrder(
             id: crypto.randomUUID(),
             purchaseOrderId: poId,
             projectLineItemId: item.projectLineItemId,
+            itemNumber: item.itemNumber,
+            sapReference: item.sapReference,
             description: item.description,
             unit: item.unit,
             quantity: item.quantity,

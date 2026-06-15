@@ -42,6 +42,8 @@ import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 interface LineItem {
   id: string;
   purchaseOrderId: string;
+  itemNumber: string;
+  sapReference: string | null;
   description: string;
   quantity: string;
   unitPrice: string;
@@ -341,7 +343,8 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="pl-6 w-[35%]">Item / Description</TableHead>
+                          <TableHead className="pl-6 w-[10%]">Item #</TableHead>
+                          <TableHead className="w-[25%]">Description</TableHead>
                           <TableHead className="w-[12%] text-right">Ordered</TableHead>
                           <TableHead className="w-[12%] text-right">Delivered</TableHead>
                           <TableHead className="w-[12%] text-right">Outstanding</TableHead>
@@ -352,7 +355,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                       <TableBody>
                         {(!po.lineItems || po.lineItems.length === 0) ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground italic">
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground italic">
                               No line items associated with this purchase order.
                             </TableCell>
                           </TableRow>
@@ -368,7 +371,8 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                             
                             return (
                               <TableRow key={item.id}>
-                                <TableCell className="pl-6 font-medium">{item.description}</TableCell>
+                                <TableCell className="pl-6 font-semibold text-blue-600">{item.itemNumber}</TableCell>
+                                <TableCell className="font-medium">{item.description}</TableCell>
                                 <TableCell className="text-right font-medium">{ordered}</TableCell>
                                 <TableCell className="text-right text-emerald-600 font-semibold">{delivered}</TableCell>
                                 <TableCell className={`text-right font-semibold ${outstanding > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{outstanding}</TableCell>
@@ -652,7 +656,8 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                             <Table>
                               <TableHeader className="bg-muted/10">
                                 <TableRow>
-                                  <TableHead className="pl-4 py-2">Item Description</TableHead>
+                                  <TableHead className="pl-4 py-2">Item #</TableHead>
+                                  <TableHead className="py-2">Description</TableHead>
                                   <TableHead className="py-2 text-right">Quantity Received</TableHead>
                                   <TableHead className="pr-4 py-2 text-right">Delivery Value</TableHead>
                                 </TableRow>
@@ -660,7 +665,8 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                               <TableBody>
                                 {note.items?.map((item) => (
                                   <TableRow key={item.id}>
-                                    <TableCell className="pl-4 py-2 font-medium">{item.lineItem?.description || 'Unknown Item'}</TableCell>
+                                    <TableCell className="pl-4 py-2 font-semibold text-blue-600">{item.lineItem?.itemNumber || '-'}</TableCell>
+                                    <TableCell className="py-2 font-medium">{item.lineItem?.description || 'Unknown Item'}</TableCell>
                                     <TableCell className="py-2 text-right font-bold text-emerald-600">{item.quantityDelivered}</TableCell>
                                     <TableCell className="pr-4 py-2 text-right font-semibold">
                                       {formatCurrency(item.deliveryValue || 0)}

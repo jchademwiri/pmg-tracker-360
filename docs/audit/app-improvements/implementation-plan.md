@@ -254,6 +254,9 @@ New Opportunity → To Review → Approved to Prepare → In Preparation
 | 5.19 | **Auto-calculate PO completion status** | Manual status updates only | M | Server actions | ✅ Done |
 | 5.20 | **PO/project item progress summaries** | Users need ordered, delivered, outstanding, and value totals | M | PO detail + project workspace | Pending |
 | 5.21 | **Breadcrumb labels for PO/project item/delivery routes** | UUID breadcrumbs are not usable | S | `dynamic-breadcrumb.tsx` | ✅ Done |
+| 5.22 | **Move project workspace navigation to top** | Tabs were buried below summary cards and hard to discover | S | `project-workspace.tsx` | ✅ Done |
+| 5.23 | **Add project-level deliveries tab** | Delivery notes need project-level visibility, not only PO-level visibility | M | `project-workspace.tsx`, project query | ✅ Done |
+| 5.24 | **Add top project command bar actions** | Create PO and Add Item actions should be available immediately | S | `project-workspace.tsx` | ✅ Done |
 
 ### Project Item Catalog
 
@@ -281,6 +284,9 @@ Hardware kit      kit       R1,200.00      0               Active
 - [✓] Existing PO verified against project link
 - [✓] Project item list/add/edit/archive pages
 - [✓] Project workspace Items tab
+- [✓] Project workspace navigation moved to the top
+- [✓] Top Create PO and Add Item actions added
+- [✓] Project-level Deliveries tab added
 - [✓] PO line items selected from saved project items
 - [✓] Server validation blocks unrelated project items
 - [ ] PO item usage and price-change warnings

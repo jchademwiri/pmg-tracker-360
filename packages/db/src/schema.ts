@@ -408,6 +408,8 @@ export const projectLineItem = pgTable('project_line_item', {
   projectId: text('project_id')
     .notNull()
     .references(() => project.id, { onDelete: 'cascade' }),
+  itemNumber: text('item_number').default('ITEM').notNull(),
+  sapReference: text('sap_reference'),
   description: text('description').notNull(),
   unit: text('unit').notNull(),
   unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
@@ -448,6 +450,8 @@ export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
   projectLineItemId: text('project_line_item_id').references(() => projectLineItem.id, {
     onDelete: 'restrict',
   }),
+  itemNumber: text('item_number').default('ITEM').notNull(),
+  sapReference: text('sap_reference'),
   description: text('description').notNull(),
   unit: text('unit').default('unit').notNull(),
   quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),

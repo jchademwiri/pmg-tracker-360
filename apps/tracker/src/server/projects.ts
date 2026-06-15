@@ -6,6 +6,7 @@ import {
   client,
   tender,
   purchaseOrder,
+  purchaseOrderDeliveryNote,
   organization,
   projectActivity,
   projectRisk,
@@ -1044,6 +1045,14 @@ export async function getProjectWorkspaceData(
         tender: true,
         purchaseOrders: {
           where: isNull(purchaseOrder.deletedAt),
+          with: {
+            deliveryNotes: {
+              orderBy: [desc(purchaseOrderDeliveryNote.receivedAt)],
+              with: {
+                items: true,
+              },
+            },
+          },
         },
         lineItems: {
           where: isNull(projectLineItem.deletedAt),

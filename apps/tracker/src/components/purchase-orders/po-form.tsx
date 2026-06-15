@@ -139,6 +139,8 @@ export function POForm({
   const [projectLineItems, setProjectLineItems] = useState<any[]>([]);
   const [loadingLineItems, setLoadingLineItems] = useState(false);
   const [newLineItem, setNewLineItem] = useState({
+    itemNumber: '',
+    sapReference: '',
     description: '',
     unit: 'unit',
     unitPrice: '0.00',
@@ -234,6 +236,11 @@ export function POForm({
       return;
     }
 
+    if (!newLineItem.itemNumber.trim()) {
+      alert('Item number is required.');
+      return;
+    }
+
     const result = await createProjectLineItem(organizationId, {
       projectId: selectedProjectId,
       ...newLineItem,
@@ -241,7 +248,7 @@ export function POForm({
 
     if (result.success && result.lineItem) {
       setProjectLineItems((prev) => [...prev, result.lineItem]);
-      setNewLineItem({ description: '', unit: 'unit', unitPrice: '0.00' });
+      setNewLineItem({ itemNumber: '', sapReference: '', description: '', unit: 'unit', unitPrice: '0.00' });
     } else {
       alert(result.error || 'Failed to create saved line item');
     }
@@ -656,10 +663,40 @@ export function POForm({
                       Select a project before adding purchase order line items.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-3 rounded-md border bg-muted/20 p-4 md:grid-cols-[1fr_140px_160px_auto]">
+                    <div className="grid grid-cols-1 gap-3 rounded-md border bg-muted/20 p-4 md:grid-cols-[120px_140px_1fr_100px_120px_auto]">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                          Saved item description
+                          Item Number *
+                        </label>
+                        <Input
+                          value={newLineItem.itemNumber}
+                          onChange={(event) =>
+                            setNewLineItem((prev) => ({
+                              ...prev,
+                              itemNumber: event.target.value.toUpperCase(),
+                            }))
+                          }
+                          placeholder="ITEM-001"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          SAP Reference
+                        </label>
+                        <Input
+                          value={newLineItem.sapReference}
+                          onChange={(event) =>
+                            setNewLineItem((prev) => ({
+                              ...prev,
+                              sapReference: event.target.value,
+                            }))
+                          }
+                          placeholder="Optional"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          Description
                         </label>
                         <Input
                           value={newLineItem.description}
@@ -707,6 +744,7 @@ export function POForm({
                           variant="outline"
                           onClick={handleCreateProjectLineItem}
                           disabled={
+                            !newLineItem.itemNumber.trim() ||
                             !newLineItem.description.trim() ||
                             !newLineItem.unit.trim() ||
                             newLineItem.unitPrice.trim() === ''
@@ -720,21 +758,21 @@ export function POForm({
                   )}
                 </div>
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
+                  <Table>                      <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[40%] pl-6">Saved Line Item *</TableHead>
-                        <TableHead className="w-[12%]">Unit</TableHead>
-                        <TableHead className="w-[13%]">Quantity *</TableHead>
-                        <TableHead className="w-[18%]">Unit Price (ZAR)</TableHead>
-                        <TableHead className="w-[15%]">Subtotal</TableHead>
+                        <TableHead className="pl-6">Item #</TableHead>
+                        <TableHead className="w-[30%]">Saved Line Item *</TableHead>
+                        <TableHead className="w-[10%]">Unit</TableHead>
+                        <TableHead className="w-[10%]">Quantity *</TableHead>
+                        <TableHead className="w-[15%]">Unit Price (ZAR)</TableHead>
+                        <TableHead className="w-[12%]">Subtotal</TableHead>
                         <TableHead className="w-[5%] pr-6 text-right">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {fields.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground italic">
+                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground italic">
                             {selectedProjectId
                               ? 'No PO line items selected yet. Save project line items, then click "Add Item".'
                               : 'Select a project to load saved line items.'}
@@ -750,7 +788,13 @@ export function POForm({
                           const subtotal = qty * price;
                           return (
                             <TableRow key={field.id}>
-                              <TableCell className="pl-6">
+                                  <TableCell className="pl-6 font-semibold text-blue-600 text-sm whitespace-nowrap">
+                                {(() => {
+                                  const saved = projectLineItems.find((i) => i.id === form.watch(`lineItems.${index}.projectLineItemId` as any));
+                                  return saved?.itemNumber || '-';
+                                })()}
+                              </TableCell>
+                              <TableCell>
                                 <FormField
                                   control={form.control as any}
                                   name={`lineItems.${index}.projectLineItemId` as any}
@@ -769,7 +813,7 @@ export function POForm({
                                         <SelectContent>
                                           {projectLineItems.map((item) => (
                                             <SelectItem key={item.id} value={item.id}>
-                                              {item.description}
+                                              {item.itemNumber} - {item.description}
                                             </SelectItem>
                                           ))}
                                         </SelectContent>
