@@ -4,9 +4,7 @@ import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Save,
+import { zodResolver } from '@hookform/resolvers/zod';import {
   ArrowLeft,
   FileText,
   User,
@@ -14,6 +12,7 @@ import {
   Mail,
   Phone,
 } from 'lucide-react';
+import { StepIndicator, StepActions, type StepConfig } from '@/components/ui/form-stepper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,6 +104,12 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   );
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [hasDraft, setHasDraft] = useState(false);
+
+  const steps: StepConfig[] = [
+    { step: 1, label: 'General & Contact' },
+    { step: 2, label: 'Timeline & Value' },
+    { step: 3, label: 'Documents' },
+  ];
 
   const form = useForm<TenderCreateInput>({
     resolver: zodResolver(TenderCreateSchema) as any,
@@ -301,58 +306,21 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
       </div>
 
       {/* Stepper Progress */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between max-w-xl mx-auto">
-          {[
-            { step: 1, label: 'General & Contact' },
-            { step: 2, label: 'Timeline & Value' },
-            { step: 3, label: 'Documents' },
-          ].map((item, index, arr) => (
-            <div key={item.step} className="flex items-center flex-1 last:flex-none">
-              <div className="flex flex-col items-center">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    // Only allow navigation to steps that are already valid
-                    if (item.step < currentStep) {
-                      setCurrentStep(item.step);
-                    } else if (item.step === 2 && currentStep === 1) {
-                      const isValid = await form.trigger(['tenderNumber', 'clientId']);
-                      if (isValid) setCurrentStep(2);
-                    } else if (item.step === 3 && currentStep === 2) {
-                      const isValid = await form.trigger(['tenderNumber', 'clientId']);
-                      if (isValid) setCurrentStep(3);
-                    }
-                  }}
-                  className={`size-10 rounded-full flex items-center justify-center font-semibold text-sm border-2 transition-all cursor-pointer ${
-                    currentStep === item.step
-                      ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-105'
-                      : currentStep > item.step
-                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                        : 'border-muted-foreground/30 bg-muted/20 text-muted-foreground'
-                  }`}
-                >
-                  {currentStep > item.step ? '✓' : item.step}
-                </button>
-                <span className={`text-xs mt-2 font-medium whitespace-nowrap ${
-                  currentStep === item.step
-                    ? 'text-primary'
-                    : currentStep > item.step
-                      ? 'text-emerald-500'
-                      : 'text-muted-foreground'
-                }`}>
-                  {item.label}
-                </span>
-              </div>
-              {index < arr.length - 1 && (
-                <div className={`h-[2px] flex-1 mx-4 -mt-6 transition-all ${
-                  currentStep > item.step ? 'bg-emerald-500' : 'bg-muted-foreground/20'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+      <StepIndicator
+        steps={steps}
+        currentStep={currentStep}
+        onStepClick={async (step) => {
+          if (step < currentStep) {
+            setCurrentStep(step);
+          } else if (step === 2 && currentStep === 1) {
+            const isValid = await form.trigger(['tenderNumber', 'clientId']);
+            if (isValid) setCurrentStep(2);
+          } else if (step === 3 && currentStep === 2) {
+            const isValid = await form.trigger(['tenderNumber', 'clientId']);
+            if (isValid) setCurrentStep(3);
+          }
+        }}
+      />
 
       {/* Draft Notification Banner */}
       {hasDraft && (
@@ -951,68 +919,25 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
           )}
 
           {/* Form Actions */}
-          <div className="flex items-center rounded-lg justify-between space-x-4 pt-8 border-t bg-card px-6 py-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isPending}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <div className="flex gap-2">
-              {currentStep > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCurrentStep((prev) => prev - 1)}
-                  disabled={isPending}
-                  className="cursor-pointer"
-                >
-                  Previous
-                </Button>
-              )}
-
-              {currentStep < 3 ? (
-                <Button
-                  type="button"
-                  onClick={async () => {
-                    let fieldsToValidate: Array<keyof TenderCreateInput> = [];
-                    if (currentStep === 1) {
-                      fieldsToValidate = ['tenderNumber', 'clientId'];
-                    }
-                    const isValid = await form.trigger(fieldsToValidate);
-                    if (isValid) {
-                      setCurrentStep((prev) => prev + 1);
-                    }
-                  }}
-                  disabled={isPending}
-                  className="min-w-[100px] cursor-pointer"
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={isPending || loadingClients}
-                  className="min-w-[120px] cursor-pointer"
-                >
-                  {isPending ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </div>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      {mode === 'create' ? 'Create Tender' : 'Save Changes'}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
+          <StepActions
+            onCancel={handleCancel}
+            onPrevious={() => setCurrentStep((prev) => prev - 1)}
+            onNext={async () => {
+              let fieldsToValidate: Array<keyof TenderCreateInput> = [];
+              if (currentStep === 1) {
+                fieldsToValidate = ['tenderNumber', 'clientId'];
+              }
+              const isValid = await form.trigger(fieldsToValidate);
+              if (isValid) {
+                setCurrentStep((prev) => prev + 1);
+              }
+            }}
+            currentStep={currentStep}
+            totalSteps={steps.length}
+            isPending={isPending}
+            submitLabel={mode === 'create' ? 'Create Tender' : 'Save Changes'}
+            loadingLabel="Saving..."
+          />
         </form>
       </Form>
     </div>
