@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ProjectWorkspace } from '@/components/projects/project-workspace';
+import { NoOrganizationState } from '@/components/shared/empty-states';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,18 +23,7 @@ export default async function ProjectDetailPage({
   const { id } = await params;
 
   if (!session.activeOrganizationId) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">
-            No Organization Selected
-          </h2>
-          <p className="text-zinc-400">
-            Please select an organization to view projects.
-          </p>
-        </div>
-      </div>
-    );
+    return <NoOrganizationState />;
   }
 
   // 1. Fetch project workspace data

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useTransition, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -39,6 +39,8 @@ import {
 } from '@/server/purchase-orders';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 import { MobileActionBar, MobileActionBarSpacer } from '@/components/ui/mobile-action-bar';
+import { toast } from 'sonner';
+import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface LineItem {
   id: string;
@@ -106,6 +108,7 @@ interface PODetailsProps {
 export function PODetails({ po, organizationId }: PODetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleEdit = () => {
     router.push(`/projects/purchase-orders/${po.id}/edit`);
@@ -115,22 +118,20 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
     router.push(`/projects/purchase-orders/${po.id}/deliveries/new`);
   };
 
-  const handleDelete = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this purchase order? This action cannot be undone.'
-      )
-    ) {
-      return;
-    }
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
     startTransition(async () => {
       const result = await deletePurchaseOrder(organizationId, po.id);
       if (result.success) {
+        toast.success('Purchase order deleted successfully');
+        setIsDeleteDialogOpen(false);
         router.push('/projects/purchase-orders');
         router.refresh();
       } else {
-        alert(result.error || 'Failed to delete purchase order');
+        toast.error(result.error || 'Failed to delete purchase order');
       }
     });
   };
@@ -143,9 +144,10 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
         status: newStatus,
       });
       if (result.success) {
+        toast.success(`Purchase order status updated to ${newStatus}`);
         router.refresh();
       } else {
-        alert(result.error || 'Failed to update purchase order status');
+        toast.error(result.error || 'Failed to update purchase order status');
       }
     });
   };
@@ -717,6 +719,13 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
       />
       <MobileActionBarSpacer />
 
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        itemName={po.poNumber}
+        itemType="Purchase Order"
+      />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { FileUploader } from '@/components/ui/file-uploader';
 import { recordPODelivery } from '@/server/purchase-orders';
 import { uploadDocument } from '@/server/documents';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { toast } from 'sonner';
 
 interface LineItem {
   id: string;
@@ -120,7 +121,7 @@ export function DeliveryNoteForm({ organizationId, po }: DeliveryNoteFormProps) 
           });
 
           if (!uploadResult.success || !uploadResult.document) {
-            alert(uploadResult.error || 'Failed to upload Proof of Delivery file');
+            toast.error(uploadResult.error || 'Failed to upload Proof of Delivery file');
             return;
           }
 
@@ -142,14 +143,15 @@ export function DeliveryNoteForm({ organizationId, po }: DeliveryNoteFormProps) 
         });
 
         if (result.success) {
+          toast.success('Delivery note recorded successfully');
           router.push(`/projects/purchase-orders/${po.id}`);
           router.refresh();
         } else {
-          alert(result.error || 'Failed to record delivery note');
+          toast.error(result.error || 'Failed to record delivery note');
         }
       } catch (error) {
         console.error('Error recording delivery note:', error);
-        alert('An unexpected error occurred while saving the delivery note');
+        toast.error('An unexpected error occurred while saving the delivery note');
       }
     });
   };

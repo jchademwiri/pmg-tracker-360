@@ -4,6 +4,7 @@ import { getDocuments } from '@/server/documents';
 import { getTenderExtensions } from '@/server/modules/extensions';
 import { TenderDetails } from '@/components/tenders/tender-details';
 import { notFound } from 'next/navigation';
+import { NoOrganizationState } from '@/components/shared/empty-states';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,18 +21,7 @@ export default async function TenderDetailPage({
   const { id } = await params;
 
   if (!session.activeOrganizationId) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">
-            No Organization Selected
-          </h2>
-          <p className="text-gray-600">
-            Please select an organization to view tenders.
-          </p>
-        </div>
-      </div>
-    );
+    return <NoOrganizationState />;
   }
 
   const result = await getTenderById(session.activeOrganizationId, id);

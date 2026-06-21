@@ -349,26 +349,26 @@ export function ProjectWorkspace({
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'bg-purple-950/45 text-purple-400 border border-purple-800/60 shadow-[0_0_10px_rgba(168,85,247,0.15)]';
+        return 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
       case 'high':
-        return 'bg-red-950/45 text-red-400 border border-red-800/60 shadow-[0_0_10px_rgba(239,68,68,0.15)]';
+        return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20';
       case 'medium':
-        return 'bg-amber-950/45 text-amber-400 border border-amber-800/60';
+        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
       case 'low':
       default:
-        return 'bg-emerald-950/45 text-emerald-400 border border-emerald-800/60';
+        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
     }
   };
 
   const getRiskStatusBadge = (status: string) => {
     switch (status) {
       case 'mitigated':
-        return 'bg-sky-500/10 text-sky-400 border border-sky-500/20';
+        return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20';
       case 'closed':
-        return 'bg-zinc-800 text-zinc-400 border border-zinc-700/30';
+        return 'bg-muted text-muted-foreground border border-border/40';
       case 'open':
       default:
-        return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
     }
   };
 
@@ -390,7 +390,7 @@ export function ProjectWorkspace({
   return (
     <div className="w-full space-y-6">
       {/* Top Banner Workspace Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-zinc-900/80 via-zinc-955 to-zinc-900/50 p-6 md:p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card p-6 md:p-8 shadow-sm">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/5 blur-3xl" />
         
@@ -398,27 +398,27 @@ export function ProjectWorkspace({
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <Link href="/projects">
-                <Button variant="ghost" size="sm" className="h-7 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full border border-white/5 px-3">
+                <Button variant="outline" size="sm" className="h-7 rounded-full px-3 text-muted-foreground">
                   Projects
                 </Button>
               </Link>
-              <ChevronRight className="h-3 w-3 text-zinc-600" />
-              <span className="text-sm text-zinc-500 font-mono select-all">
+              <ChevronRight className="h-3 w-3 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground font-mono select-all">
                 {project.projectNumber.toUpperCase()}
               </span>
               <StatusBadge status={project.status} />
               {project.status === 'completed' && (
-                <Badge variant="outline" className="bg-violet-950/20 text-violet-400 border-violet-800/30">
+                <Badge variant="outline" className="bg-muted text-muted-foreground border-border/40">
                   Closed Out
                 </Badge>
               )}
             </div>
             
             <div className="space-y-1">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-500 bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
                 {project.client?.name || 'Project Workspace'}
               </h1>
-              <p className="text-sm text-zinc-400 max-w-2xl font-light">
+              <p className="text-sm text-muted-foreground max-w-2xl font-light">
                 {project.description || 'Workspace delivery dashboard for tracking purchase orders, documents, activity logs, and delivery risks.'}
               </p>
             </div>
@@ -426,19 +426,19 @@ export function ProjectWorkspace({
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
-              <Button className="bg-blue-600 text-white hover:bg-blue-500 rounded-xl">
+              <Button className="rounded-xl">
                 <Plus className="h-4 w-4 mr-2" />
                 Create PO
               </Button>
             </Link>
             <Link href={`/projects/${project.id}/items/new`}>
-              <Button variant="outline" className="border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white rounded-xl">
+              <Button variant="outline" className="rounded-xl">
                 <Package className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
             </Link>
             <Link href={`/projects/${project.id}/edit`}>
-              <Button variant="outline" className="border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white rounded-xl">
+              <Button variant="outline" className="rounded-xl">
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Info
               </Button>
@@ -447,31 +447,31 @@ export function ProjectWorkspace({
             {project.status !== 'completed' ? (
               <Dialog open={isCloseOutOpen} onOpenChange={setIsCloseOutOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-violet-950/30">
+                  <Button variant="default" className="rounded-xl shadow-sm">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Close-out Project
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] border-white/10 bg-zinc-950 text-white rounded-2xl">
+                <DialogContent className="sm:max-w-[500px] border-border/40 bg-card text-card-foreground rounded-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Project Close-out Submission</DialogTitle>
-                    <DialogDescription className="text-zinc-400">
+                    <DialogDescription className="text-muted-foreground">
                       Archive the project as completed. This records close-out notes, captures the date, and changes the project status.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label htmlFor="closeOutNotes" className="text-zinc-300">Close-out Outcome & Notes</Label>
+                      <Label htmlFor="closeOutNotes" className="text-foreground">Close-out Outcome & Notes</Label>
                       <Textarea
                         id="closeOutNotes"
                         placeholder="Provide details about the project delivery, key milestones achieved, and close-out sign-off..."
                         rows={5}
-                        className="bg-zinc-900 border-white/10 text-white focus-visible:ring-violet-500 focus-visible:border-violet-500"
+                        className="bg-background border-border/40 text-foreground focus-visible:ring-primary focus-visible:border-primary"
                         value={closeOutNotes}
                         onChange={(e) => setCloseOutNotes(e.target.value)}
                         disabled={isClosingOut}
                       />
-                      <p className="text-xs text-zinc-500">Min. 10 characters required. Logs submitter name and timestamp.</p>
+                      <p className="text-xs text-muted-foreground">Min. 10 characters required. Logs submitter name and timestamp.</p>
                     </div>
                   </div>
                   <DialogFooter>
@@ -479,14 +479,13 @@ export function ProjectWorkspace({
                       variant="ghost"
                       onClick={() => setIsCloseOutOpen(false)}
                       disabled={isClosingOut}
-                      className="text-zinc-400 hover:text-white"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleCloseOutSubmit}
                       disabled={isClosingOut}
-                      className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500"
                     >
                       {isClosingOut ? 'Submitting...' : 'Submit Close-out'}
                     </Button>
@@ -494,7 +493,7 @@ export function ProjectWorkspace({
                 </DialogContent>
               </Dialog>
             ) : (
-              <Button variant="ghost" disabled className="text-zinc-500 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+              <Button variant="ghost" disabled className="text-muted-foreground bg-muted/50 border border-border/40 rounded-xl">
                 <Lock className="h-4 w-4 mr-2" />
                 Project Closed
               </Button>
@@ -504,7 +503,7 @@ export function ProjectWorkspace({
       </div>
 
       {/* Workspace Navigation */}
-      <div className="sticky top-16 z-20 rounded-2xl border border-white/5 bg-zinc-950/90 p-2 shadow-xl backdrop-blur-xl">
+      <div className="sticky top-16 z-20 rounded-2xl border border-border/40 bg-muted/80 p-1.5 shadow-sm backdrop-blur-md">
         <div className="flex items-center gap-2 overflow-x-auto">
           {[
             { value: 'info', label: 'Overview', icon: Info, count: null },
@@ -523,10 +522,10 @@ export function ProjectWorkspace({
                 key={item.value}
                 type="button"
                 onClick={() => setActiveTab(item.value)}
-                className={`group inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-all duration-200 cursor-pointer ${
+                className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? 'bg-white text-zinc-950 shadow-sm'
-                    : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-background/40 hover:text-foreground'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -535,8 +534,8 @@ export function ProjectWorkspace({
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition-all duration-200 ${
                       isActive
-                        ? 'bg-zinc-200 text-zinc-800'
-                        : 'bg-white/10 text-white/70 group-hover:bg-white/20 group-hover:text-white'
+                        ? 'bg-muted text-muted-foreground'
+                        : 'bg-muted/80 text-muted-foreground group-hover:bg-muted group-hover:text-foreground'
                     }`}
                   >
                     {item.count}
@@ -551,53 +550,13 @@ export function ProjectWorkspace({
       {/* Tabs Layout */}
       <Tabs defaultValue="info" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="hidden">
-          <TabsTrigger value="info" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
-            <Info className="h-4 w-4 mr-2" />
-            Info
-          </TabsTrigger>
-          <TabsTrigger value="pos" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
-            <DollarSign className="h-4 w-4 mr-2" />
-            Purchase Orders
-            {purchaseOrders.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.2 bg-white/10 rounded-full text-[10px] text-white font-semibold">
-                {purchaseOrders.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="items" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
-            <Package className="h-4 w-4 mr-2" />
-            Items
-            {lineItems.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.2 bg-white/10 rounded-full text-[10px] text-white font-semibold">
-                {lineItems.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="deliveries">
-            Deliveries
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
-            <FileText className="h-4 w-4 mr-2" />
-            Documents
-            {documents.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.2 bg-white/10 rounded-full text-[10px] text-white font-semibold">
-                {documents.length}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
-            <Activity className="h-4 w-4 mr-2" />
-            Activity
-          </TabsTrigger>
-          <TabsTrigger value="risks" className="rounded-lg text-zinc-400 hover:text-white data-[state=active]:bg-zinc-800 data-[state=active]:text-white cursor-pointer px-4">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Risks
-            {activeRisks.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.2 bg-red-500/20 border border-red-500/30 rounded-full text-[10px] text-red-400 font-semibold animate-pulse">
-                {activeRisks.length}
-              </span>
-            )}
-          </TabsTrigger>
+          <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="pos">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="items">Items</TabsTrigger>
+          <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="risks">Risks</TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -605,72 +564,72 @@ export function ProjectWorkspace({
           <TabsContent value="info" className="space-y-6 outline-none">
             {/* Delivery Progress & Risk Profile Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="md:col-span-2 overflow-hidden border-white/5 bg-zinc-950 text-white shadow-xl rounded-xl">
+              <Card className="md:col-span-2 overflow-hidden border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-base font-semibold text-zinc-300">Project Delivery Progress</CardTitle>
-                      <CardDescription className="text-zinc-500 text-xs">Overall completion based on Purchase Order fulfillment</CardDescription>
+                      <CardTitle className="text-base font-semibold">Project Delivery Progress</CardTitle>
+                      <CardDescription className="text-muted-foreground text-xs">Overall completion based on Purchase Order fulfillment</CardDescription>
                     </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                    <span className="text-2xl font-bold text-foreground">
                       {projectCompletionPercentage}%
                     </span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="relative w-full h-3 bg-zinc-905 rounded-full overflow-hidden border border-white/5">
+                  <div className="relative w-full h-3 bg-muted rounded-full overflow-hidden border border-border/30">
                     <div 
-                      className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-500 via-sky-500 to-emerald-500 transition-all duration-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.3)]"
+                      className="absolute left-0 top-0 h-full bg-primary transition-all duration-500 rounded-full"
                       style={{ width: `${projectCompletionPercentage}%` }}
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-4 pt-2">
-                    <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                      <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Total PO Value</p>
-                      <p className="text-sm font-semibold text-zinc-300 mt-1">{formatCurrency(totalPOAmount)}</p>
+                    <div className="p-3 bg-muted/50 rounded-lg border border-border/30">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Total PO Value</p>
+                      <p className="text-sm font-semibold text-foreground mt-1">{formatCurrency(totalPOAmount)}</p>
                     </div>
-                    <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                      <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Delivered Value</p>
-                      <p className="text-sm font-semibold text-emerald-400 mt-1">{formatCurrency(totalDeliveredValue)}</p>
+                    <div className="p-3 bg-muted/50 rounded-lg border border-border/30">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Delivered Value</p>
+                      <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">{formatCurrency(totalDeliveredValue)}</p>
                     </div>
-                    <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                      <p className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Outstanding</p>
-                      <p className="text-sm font-semibold text-amber-500 mt-1">{formatCurrency(Math.max(0, totalPOAmount - totalDeliveredValue))}</p>
+                    <div className="p-3 bg-muted/50 rounded-lg border border-border/30">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Outstanding</p>
+                      <p className="text-sm font-semibold text-amber-600 dark:text-amber-500 mt-1">{formatCurrency(Math.max(0, totalPOAmount - totalDeliveredValue))}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-white/5 bg-zinc-955 text-white shadow-xl rounded-xl">
+              <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-zinc-300">Risk Profile</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Active delivery vulnerabilities</CardDescription>
+                  <CardTitle className="text-base font-semibold">Risk Profile</CardTitle>
+                  <CardDescription className="text-muted-foreground text-xs">Active delivery vulnerabilities</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                  <div className="flex items-center justify-between py-2 border-b border-border/30">
                     <div className="flex items-center space-x-2">
-                      <div className={`h-2.5 w-2.5 rounded-full ${criticalRisks.length > 0 ? 'bg-red-500 animate-pulse' : 'bg-zinc-700'}`} />
-                      <span className="text-sm text-zinc-300 font-medium">Critical & High Risks</span>
+                      <div className={`h-2.5 w-2.5 rounded-full ${criticalRisks.length > 0 ? 'bg-red-500 animate-pulse' : 'bg-muted-foreground'}`} />
+                      <span className="text-sm text-foreground font-medium">Critical & High Risks</span>
                     </div>
-                    <span className={`text-sm font-bold ${criticalRisks.length > 0 ? 'text-red-400' : 'text-zinc-500'}`}>
+                    <span className={`text-sm font-bold ${criticalRisks.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
                       {criticalRisks.length} active
                     </span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-white/5">
+                  <div className="flex items-center justify-between py-2 border-b border-border/30">
                     <div className="flex items-center space-x-2">
                       <div className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                      <span className="text-sm text-zinc-300 font-medium">Active Risks</span>
+                      <span className="text-sm text-foreground font-medium">Active Risks</span>
                     </div>
-                    <span className="text-sm font-bold text-amber-400">
+                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
                       {activeRisks.length} total
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2">
                     <div className="flex items-center space-x-2">
-                      <div className="h-2.5 w-2.5 rounded-full bg-zinc-500" />
-                      <span className="text-sm text-zinc-400">Mitigated / Closed</span>
+                      <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Mitigated / Closed</span>
                     </div>
-                    <span className="text-sm font-bold text-zinc-500">
+                    <span className="text-sm font-bold text-muted-foreground">
                       {risks.filter(r => r.status !== 'open').length} archived
                     </span>
                   </div>
@@ -680,45 +639,45 @@ export function ProjectWorkspace({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Originating Tender Summary */}
-              <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+              <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-base font-semibold text-zinc-300 flex items-center">
-                    <File className="h-4 w-4 mr-2 text-blue-400" />
+                  <CardTitle className="text-base font-semibold flex items-center">
+                    <File className="h-4 w-4 mr-2 text-blue-500" />
                     Originating Tender
                   </CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Origin tender details for context</CardDescription>
+                  <CardDescription className="text-muted-foreground text-xs">Origin tender details for context</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {project.tender ? (
                     <>
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Tender Number</label>
-                        <p className="text-sm font-medium text-blue-400 mt-0.5">{project.tender.tenderNumber.toUpperCase()}</p>
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tender Number</label>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-0.5">{project.tender.tenderNumber.toUpperCase()}</p>
                       </div>
                       
                       {project.tender.description && (
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Tender Description</label>
-                          <p className="text-sm text-zinc-300 mt-0.5 font-light line-clamp-3">{project.tender.description}</p>
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tender Description</label>
+                          <p className="text-sm text-foreground mt-0.5 font-light line-clamp-3">{project.tender.description}</p>
                         </div>
                       )}
                       
                       {project.tender.value && (
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Tender Value</label>
-                          <p className="text-sm font-semibold text-zinc-200 mt-0.5">{formatCurrency(project.tender.value)}</p>
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tender Value</label>
+                          <p className="text-sm font-semibold text-foreground mt-0.5">{formatCurrency(project.tender.value)}</p>
                         </div>
                       )}
 
                       {project.tender.submissionDate && (
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Submission Date</label>
-                          <p className="text-sm text-zinc-400 mt-0.5">{formatDate(project.tender.submissionDate)}</p>
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Submission Date</label>
+                          <p className="text-sm text-muted-foreground mt-0.5">{formatDate(project.tender.submissionDate)}</p>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="text-center py-6 text-zinc-500 text-sm italic">
+                    <div className="text-center py-6 text-muted-foreground text-sm italic">
                       No originating tender details linked.
                     </div>
                   )}
@@ -726,33 +685,33 @@ export function ProjectWorkspace({
               </Card>
 
               {/* Client & Contacts */}
-              <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+              <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-base font-semibold text-zinc-300 flex items-center">
-                    <Building className="h-4 w-4 mr-2 text-emerald-400" />
+                  <CardTitle className="text-base font-semibold flex items-center">
+                    <Building className="h-4 w-4 mr-2 text-emerald-500" />
                     Client & Contact details
                   </CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Stakeholder and contact information</CardDescription>
+                  <CardDescription className="text-muted-foreground text-xs">Stakeholder and contact information</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {project.client ? (
                     <>
                       <div>
-                        <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Client Name</label>
-                        <p className="text-sm font-medium text-zinc-200 mt-0.5">{project.client.name}</p>
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Client Name</label>
+                        <p className="text-sm font-medium text-foreground mt-0.5">{project.client.name}</p>
                       </div>
                       
                       {project.client.contactName && (
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Representative</label>
-                          <p className="text-sm text-zinc-300 mt-0.5">{project.client.contactName}</p>
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Representative</label>
+                          <p className="text-sm text-foreground mt-0.5">{project.client.contactName}</p>
                         </div>
                       )}
                       
                       {project.client.contactEmail && (
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Email Address</label>
-                          <p className="text-sm text-zinc-300 mt-0.5 font-mono select-all">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Email Address</label>
+                          <p className="text-sm text-foreground mt-0.5 font-mono select-all">
                             {project.client.contactEmail}
                           </p>
                         </div>
@@ -760,15 +719,15 @@ export function ProjectWorkspace({
 
                       {project.client.contactPhone && (
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Phone Number</label>
-                          <p className="text-sm text-zinc-300 mt-0.5 font-mono">
+                          <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Phone Number</label>
+                          <p className="text-sm text-foreground mt-0.5 font-mono">
                             {project.client.contactPhone}
                           </p>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="text-center py-6 text-zinc-500 text-sm italic">
+                    <div className="text-center py-6 text-muted-foreground text-sm italic">
                       No client assigned to project.
                     </div>
                   )}
@@ -776,41 +735,41 @@ export function ProjectWorkspace({
               </Card>
 
               {/* Contract Metadata */}
-              <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+              <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-base font-semibold text-zinc-300 flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-purple-400" />
+                  <CardTitle className="text-base font-semibold flex items-center">
+                    <Calendar className="h-4 w-4 mr-2 text-purple-500" />
                     Contract Details
                   </CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Dates, values, and closeout archives</CardDescription>
+                  <CardDescription className="text-muted-foreground text-xs">Dates, values, and closeout archives</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Contract Start Date</label>
-                    <p className="text-sm font-medium text-zinc-300 mt-0.5">{formatDate(project.contractStartDate)}</p>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Contract Start Date</label>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{formatDate(project.contractStartDate)}</p>
                   </div>
                   
                   <div>
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Contract End Date</label>
-                    <p className="text-sm font-medium text-zinc-300 mt-0.5">{formatDate(project.contractEndDate)}</p>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Contract End Date</label>
+                    <p className="text-sm font-medium text-foreground mt-0.5">{formatDate(project.contractEndDate)}</p>
                   </div>
                   
                   {project.awardValue && (
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Award Value</label>
-                      <p className="text-sm font-bold text-zinc-200 mt-0.5">{formatCurrency(project.awardValue)}</p>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Award Value</label>
+                      <p className="text-sm font-bold text-foreground mt-0.5">{formatCurrency(project.awardValue)}</p>
                     </div>
                   )}
 
                   {project.signedContractUrl && (
                     <div>
-                      <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Signed Contract</label>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Signed Contract</label>
                       <div className="mt-1">
                         <a 
                           href={project.signedContractUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="inline-flex items-center text-xs text-blue-400 hover:text-blue-300 font-medium"
+                          className="inline-flex items-center text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                         >
                           View Signed Contract
                           <ExternalLink className="h-3 w-3 ml-1" />
@@ -820,12 +779,12 @@ export function ProjectWorkspace({
                   )}
 
                   {project.status === 'completed' && project.closeOutDate && (
-                    <div className="border-t border-white/5 pt-3 mt-2 space-y-2">
-                      <p className="text-[10px] uppercase font-bold text-violet-400 tracking-wider">Close-out Outcome notes</p>
-                      <div className="p-2.5 bg-violet-950/20 border border-violet-800/20 rounded-lg text-xs text-zinc-300 font-light leading-relaxed whitespace-pre-wrap">
+                    <div className="border-t border-border/30 pt-3 mt-2 space-y-2">
+                      <p className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400 tracking-wider">Close-out Outcome notes</p>
+                      <div className="p-2.5 bg-muted border border-border/30 rounded-lg text-xs text-muted-foreground font-light leading-relaxed whitespace-pre-wrap">
                         {project.closeOutNotes}
                       </div>
-                      <p className="text-[9px] text-zinc-500">
+                      <p className="text-[9px] text-muted-foreground">
                         Closed on {formatDate(project.closeOutDate)}
                       </p>
                     </div>
@@ -837,14 +796,14 @@ export function ProjectWorkspace({
 
           {/* TAB 2: PURCHASE ORDERS */}
           <TabsContent value="pos" className="space-y-6 outline-none">
-            <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Project Purchase Orders</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">A list of purchase orders issued and their delivery states</CardDescription>
+                  <CardDescription className="text-muted-foreground text-xs">A list of purchase orders issued and their delivery states</CardDescription>
                 </div>
                 <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
-                  <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-500 rounded-lg">
+                  <Button size="sm" className="rounded-lg">
                     <Plus className="h-4 w-4 mr-1.5" />
                     New PO
                   </Button>
@@ -857,43 +816,43 @@ export function ProjectWorkspace({
                       return (
                         <div 
                           key={po.id} 
-                          className="relative group overflow-hidden p-5 bg-zinc-900/40 rounded-xl border border-white/5 hover:border-white/10 hover:bg-zinc-900/60 transition-all duration-300 shadow-md flex flex-col justify-between min-h-[160px]"
+                          className="relative group overflow-hidden p-5 bg-muted/40 rounded-xl border border-border/40 hover:border-border/80 hover:bg-muted/60 transition-all duration-300 shadow-sm flex flex-col justify-between min-h-[160px]"
                         >
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-zinc-200 group-hover:text-blue-400 transition-colors duration-200 font-mono">
+                              <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors duration-200 font-mono">
                                 {po.poNumber}
                               </span>
                               <StatusBadge status={po.status} />
                             </div>
                             
-                            <p className="text-xs text-zinc-400 font-light line-clamp-2">
+                            <p className="text-xs text-muted-foreground font-light line-clamp-2">
                               {po.description}
                             </p>
                           </div>
 
-                          <div className="pt-4 border-t border-white/5 mt-4 flex items-center justify-between gap-4">
+                          <div className="pt-4 border-t border-border/40 mt-4 flex items-center justify-between gap-4">
                             <div>
-                              <p className="text-[9px] uppercase font-bold text-zinc-500">Supplier</p>
-                              <p className="text-xs text-zinc-300 font-medium truncate max-w-[150px]">
+                              <p className="text-[9px] uppercase font-bold text-muted-foreground">Supplier</p>
+                              <p className="text-xs text-foreground font-medium truncate max-w-[150px]">
                                 {po.supplierName || 'N/A'}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[9px] uppercase font-bold text-zinc-500">Total Value</p>
-                              <p className="text-xs font-semibold text-zinc-100">
+                              <p className="text-[9px] uppercase font-bold text-muted-foreground">Total Value</p>
+                              <p className="text-xs font-semibold text-foreground">
                                 {formatCurrency(po.totalAmount)}
                               </p>
                             </div>
                             <div>
-                              <p className="text-[9px] uppercase font-bold text-zinc-500">Expected Delivery</p>
-                              <p className="text-xs text-zinc-300 font-medium">
+                              <p className="text-[9px] uppercase font-bold text-muted-foreground">Expected Delivery</p>
+                              <p className="text-xs text-foreground font-medium">
                                 {formatDate(po.expectedDeliveryDate)}
                               </p>
                             </div>
                             
                             <Link href={`/projects/purchase-orders/${po.id}`}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
                                 <ArrowRight className="h-3.5 w-3.5" />
                               </Button>
                             </Link>
@@ -903,11 +862,11 @@ export function ProjectWorkspace({
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
-                    <DollarSign className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                  <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                    <DollarSign className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                     <p className="text-sm font-light">No purchase orders linked to this project workspace.</p>
                     <Link href={`/projects/purchase-orders/create?projectId=${project.id}`} className="mt-4 inline-block">
-                      <Button size="sm" variant="outline" className="border-white/10 text-zinc-300 hover:text-white rounded-lg">
+                      <Button size="sm" variant="outline" className="rounded-lg">
                         Create First PO
                       </Button>
                     </Link>
@@ -919,22 +878,22 @@ export function ProjectWorkspace({
 
           {/* TAB 3: ITEMS */}
           <TabsContent value="items" className="space-y-6 outline-none">
-            <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Project Saved Items</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">
+                  <CardDescription className="text-muted-foreground text-xs">
                     Saved line items available for purchase orders on this project
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Link href={`/projects/${project.id}/items`}>
-                    <Button size="sm" variant="outline" className="border-white/10 text-zinc-300 hover:text-white rounded-lg">
+                    <Button size="sm" variant="outline" className="rounded-lg">
                       Manage Items
                     </Button>
                   </Link>
                   <Link href={`/projects/${project.id}/items/new`}>
-                    <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-500 rounded-lg">
+                    <Button size="sm" className="rounded-lg">
                       <Plus className="h-4 w-4 mr-1.5" />
                       Add Item
                     </Button>
@@ -947,20 +906,20 @@ export function ProjectWorkspace({
                     {lineItems.slice(0, 6).map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-white/5 bg-zinc-900/40 p-4"
+                        className="rounded-xl border border-border/40 bg-muted/40 p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="font-semibold text-zinc-100">{item.description}</p>
-                            <p className="text-xs text-zinc-500">{item.unit}</p>
+                            <p className="font-semibold text-foreground">{item.description}</p>
+                            <p className="text-xs text-muted-foreground">{item.unit}</p>
                           </div>
-                          <p className="text-sm font-semibold text-emerald-400">
+                          <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                             {formatCurrency(item.unitPrice)}
                           </p>
                         </div>
                         <div className="mt-4 flex justify-end">
                           <Link href={`/projects/${project.id}/items/${item.id}/edit`}>
-                            <Button size="sm" variant="ghost" className="h-8 text-zinc-400 hover:text-white">
+                            <Button size="sm" variant="ghost" className="h-8">
                               Edit
                               <ArrowRight className="h-3.5 w-3.5 ml-2" />
                             </Button>
@@ -970,11 +929,11 @@ export function ProjectWorkspace({
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
-                    <Package className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                  <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                    <Package className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                     <p className="text-sm font-light">No saved project items yet.</p>
                     <Link href={`/projects/${project.id}/items/new`} className="mt-4 inline-block">
-                      <Button size="sm" variant="outline" className="border-white/10 text-zinc-300 hover:text-white rounded-lg">
+                      <Button size="sm" variant="outline" className="rounded-lg">
                         Add First Item
                       </Button>
                     </Link>
@@ -986,17 +945,17 @@ export function ProjectWorkspace({
 
           {/* TAB 4: DELIVERIES */}
           <TabsContent value="deliveries" className="space-y-6 outline-none">
-            <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Project Deliveries</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">
+                  <CardDescription className="text-muted-foreground text-xs">
                     Delivery notes recorded against purchase orders in this project
                   </CardDescription>
                 </div>
-                <div className="rounded-xl border border-white/5 bg-zinc-900/60 px-3 py-2 text-right">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-500">Delivery Value</p>
-                  <p className="text-sm font-semibold text-emerald-400">
+                <div className="rounded-xl border border-border/40 bg-muted/60 px-3 py-2 text-right">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Delivery Value</p>
+                  <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(totalDeliveryNoteValue)}
                   </p>
                 </div>
@@ -1013,32 +972,32 @@ export function ProjectWorkspace({
                       return (
                         <div
                           key={note.id}
-                          className="flex flex-col gap-4 rounded-xl border border-white/5 bg-zinc-900/40 p-4 md:flex-row md:items-center md:justify-between"
+                          className="flex flex-col gap-4 rounded-xl border border-border/40 bg-muted/40 p-4 md:flex-row md:items-center md:justify-between"
                         >
                           <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-semibold text-zinc-100">
+                              <span className="font-semibold text-foreground">
                                 {note.deliveryNoteNumber}
                               </span>
-                              <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                              <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 {note.status}
                               </Badge>
                             </div>
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-muted-foreground">
                               PO {note.poNumber} • received by {note.recipientName} on {formatDate(note.receivedAt)}
                             </p>
                           </div>
                           <div className="flex items-center justify-between gap-4 md:justify-end">
                             <div className="text-right">
-                              <p className="text-[10px] uppercase tracking-wider text-zinc-500">Items</p>
-                              <p className="text-sm font-semibold text-zinc-200">{note.items?.length || 0}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Items</p>
+                              <p className="text-sm font-semibold text-foreground">{note.items?.length || 0}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-[10px] uppercase tracking-wider text-zinc-500">Value</p>
-                              <p className="text-sm font-semibold text-emerald-400">{formatCurrency(noteValue)}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Value</p>
+                              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(noteValue)}</p>
                             </div>
                             <Link href={`/projects/purchase-orders/${note.poId}`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                                 <ArrowRight className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -1048,11 +1007,11 @@ export function ProjectWorkspace({
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
-                    <Truck className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                  <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                    <Truck className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                     <p className="text-sm font-light">No delivery notes recorded for this project yet.</p>
                     {purchaseOrders.length > 0 && (
-                      <p className="mt-2 text-xs text-zinc-600">
+                      <p className="mt-2 text-xs text-muted-foreground">
                         Open a purchase order to record the first delivery note.
                       </p>
                     )}
@@ -1070,40 +1029,38 @@ export function ProjectWorkspace({
               entityType="project" 
               initialDocuments={documents} 
             />
-          </TabsContent>
-
-          {/* TAB 6: ACTIVITY */}
+          </TabsContent>          {/* TAB 6: ACTIVITY */}
           <TabsContent value="activity" className="space-y-6 outline-none">
-            <Card className="border-white/5 bg-zinc-950 text-white rounded-xl shadow-lg">
+            <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
               <CardHeader>
                 <CardTitle className="text-base font-semibold">Project Activity Timeline</CardTitle>
-                <CardDescription className="text-zinc-500 text-xs">Chronological timeline of all workspace lifecycle events</CardDescription>
+                <CardDescription className="text-muted-foreground text-xs">Chronological timeline of all workspace lifecycle events</CardDescription>
               </CardHeader>
               <CardContent className="px-6 pb-8">
                 {activities.length > 0 ? (
-                  <div className="relative pl-6 border-l-2 border-zinc-800 space-y-8 mt-4">
+                  <div className="relative pl-6 border-l-2 border-border space-y-8 mt-4">
                     {activities.map((act) => {
                       return (
                         <div key={act.id} className="relative group">
                           {/* Timeline Dot */}
-                          <div className="absolute -left-[31px] top-0.5 p-1 bg-zinc-950 border-2 border-zinc-800 rounded-full group-hover:border-zinc-500 transition-colors duration-200">
+                          <div className="absolute -left-[31px] top-0.5 p-1 bg-card border-2 border-border rounded-full group-hover:border-muted-foreground transition-colors duration-200">
                             {getActivityIcon(act.activityType)}
                           </div>
                           
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
-                              <span className="text-xs text-zinc-500">
+                              <span className="text-xs text-muted-foreground">
                                 {formatDate(act.createdAt)} • {new Date(act.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                               {act.user?.name && (
-                                <span className="inline-flex items-center text-[10px] text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-full">
+                                <span className="inline-flex items-center text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                                   <User className="h-2.5 w-2.5 mr-1" />
                                   {act.user.name}
                                 </span>
                               )}
                             </div>
                             
-                            <p className="text-sm text-zinc-200 font-light group-hover:text-white transition-colors duration-200">
+                            <p className="text-sm text-foreground font-light transition-colors duration-200">
                               {act.description}
                             </p>
                           </div>
@@ -1112,8 +1069,8 @@ export function ProjectWorkspace({
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
-                    <Activity className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                  <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                    <Activity className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                     <p className="text-sm font-light">No logged activities for this project.</p>
                   </div>
                 )}
@@ -1123,11 +1080,11 @@ export function ProjectWorkspace({
 
           {/* TAB 7: RISKS */}
           <TabsContent value="risks" className="space-y-6 outline-none">
-            <Card className="border-white/5 bg-zinc-955 text-white rounded-xl shadow-lg">
+            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Delivery Risk Logging</CardTitle>
-                  <CardDescription className="text-zinc-500 text-xs">Manage project constraints, severity logs, and mitigation measures</CardDescription>
+                  <CardDescription className="text-muted-foreground text-xs">Manage project constraints, severity logs, and mitigation measures</CardDescription>
                 </div>
                 
                 <Dialog open={isRiskDialogOpen} onOpenChange={setIsRiskDialogOpen}>
@@ -1137,21 +1094,21 @@ export function ProjectWorkspace({
                       Log Delivery Risk
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px] border-white/10 bg-zinc-950 text-white rounded-2xl">
+                  <DialogContent className="sm:max-w-[500px] border-border/40 bg-card text-card-foreground rounded-2xl">
                     <DialogHeader>
                       <DialogTitle className="text-xl font-bold">Log Project Delivery Risk</DialogTitle>
-                      <DialogDescription className="text-zinc-400">
+                      <DialogDescription className="text-muted-foreground">
                         Record a delivery vulnerability and assign its severity to track mitigation progress.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="riskTitle" className="text-zinc-300">Risk Title</Label>
+                          <Label htmlFor="riskTitle" className="text-foreground">Risk Title</Label>
                           <Input
                             id="riskTitle"
                             placeholder="e.g. Supplier cement shortage, Transport strikes"
-                            className="bg-zinc-900 border-white/10 text-white focus-visible:ring-amber-500"
+                            className="bg-background border-border/40 text-foreground focus-visible:ring-amber-500"
                             value={riskTitle}
                             onChange={(e) => setRiskTitle(e.target.value)}
                             disabled={isLoggingRisk}
@@ -1159,16 +1116,16 @@ export function ProjectWorkspace({
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor="riskSeverity" className="text-zinc-300">Severity Level</Label>
+                          <Label htmlFor="riskSeverity" className="text-foreground">Severity Level</Label>
                           <Select 
                             value={riskSeverity} 
                             onValueChange={(val: any) => setRiskSeverity(val)}
                             disabled={isLoggingRisk}
                           >
-                            <SelectTrigger className="bg-zinc-900 border-white/10 text-white focus-visible:ring-amber-500">
+                            <SelectTrigger className="bg-background border-border/40 text-foreground focus-visible:ring-amber-500">
                               <SelectValue placeholder="Select severity" />
                             </SelectTrigger>
-                            <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                            <SelectContent className="bg-card border-border/40 text-foreground">
                               <SelectItem value="low">Low Severity</SelectItem>
                               <SelectItem value="medium">Medium Severity</SelectItem>
                               <SelectItem value="high">High Severity</SelectItem>
@@ -1178,12 +1135,12 @@ export function ProjectWorkspace({
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="riskDescription" className="text-zinc-300">Detailed Description</Label>
+                          <Label htmlFor="riskDescription" className="text-foreground">Detailed Description</Label>
                           <Textarea
                             id="riskDescription"
                             placeholder="Describe how this risk impacts the delivery timeline or budget..."
                             rows={3}
-                            className="bg-zinc-900 border-white/10 text-white focus-visible:ring-amber-500"
+                            className="bg-background border-border/40 text-foreground focus-visible:ring-amber-500"
                             value={riskDescription}
                             onChange={(e) => setRiskDescription(e.target.value)}
                             disabled={isLoggingRisk}
@@ -1191,12 +1148,12 @@ export function ProjectWorkspace({
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="riskMitigation" className="text-zinc-300">Mitigation Plan (Optional)</Label>
+                          <Label htmlFor="riskMitigation" className="text-foreground">Mitigation Plan (Optional)</Label>
                           <Textarea
                             id="riskMitigation"
                             placeholder="Propose actions to reduce the impact or likelihood of this risk..."
                             rows={3}
-                            className="bg-zinc-900 border-white/10 text-white focus-visible:ring-amber-500"
+                            className="bg-background border-border/40 text-foreground focus-visible:ring-amber-500"
                             value={riskMitigation}
                             onChange={(e) => setRiskMitigation(e.target.value)}
                             disabled={isLoggingRisk}
@@ -1209,7 +1166,7 @@ export function ProjectWorkspace({
                         variant="ghost"
                         onClick={() => setIsRiskDialogOpen(false)}
                         disabled={isLoggingRisk}
-                        className="text-zinc-400 hover:text-white"
+                        className="text-muted-foreground hover:text-foreground"
                       >
                         Cancel
                       </Button>
@@ -1231,7 +1188,7 @@ export function ProjectWorkspace({
                       return (
                         <div 
                           key={risk.id}
-                          className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-5 rounded-xl border border-white/5 bg-zinc-900/30 hover:bg-zinc-900/50 transition-all duration-200"
+                          className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-5 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200"
                         >
                           <div className="space-y-3 max-w-2xl">
                             <div className="flex flex-wrap items-center gap-2.5">
@@ -1241,19 +1198,19 @@ export function ProjectWorkspace({
                               <Badge className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${getRiskStatusBadge(risk.status)}`}>
                                 {risk.status}
                               </Badge>
-                              <span className="text-[10px] text-zinc-500">
+                              <span className="text-[10px] text-muted-foreground">
                                 Logged {formatDate(risk.createdAt)}
                               </span>
                             </div>
 
                             <div className="space-y-1">
-                              <h3 className="text-sm font-semibold text-zinc-100">{risk.title}</h3>
-                              <p className="text-xs text-zinc-400 font-light leading-relaxed">{risk.description}</p>
+                              <h3 className="text-sm font-semibold text-foreground">{risk.title}</h3>
+                              <p className="text-xs text-muted-foreground font-light leading-relaxed">{risk.description}</p>
                             </div>
 
                             {risk.mitigationPlan && (
-                              <div className="p-3 rounded-lg bg-zinc-955/60 border border-white/5 text-xs text-zinc-300 font-light">
-                                <span className="font-semibold text-zinc-400 block mb-1">Mitigation Plan:</span>
+                              <div className="p-3 rounded-lg bg-background border border-border/40 text-xs text-muted-foreground font-light">
+                                <span className="font-semibold text-foreground block mb-1">Mitigation Plan:</span>
                                 {risk.mitigationPlan}
                               </div>
                             )}
@@ -1269,7 +1226,7 @@ export function ProjectWorkspace({
                                 setMitigationStatus(risk.status as any);
                                 setIsMitigateDialogOpen(true);
                               }}
-                              className="border-white/10 text-zinc-300 hover:text-white rounded-lg w-full md:w-auto"
+                              className="w-full md:w-auto"
                             >
                               Update Status
                             </Button>
@@ -1280,10 +1237,10 @@ export function ProjectWorkspace({
 
                     {/* Mitigate Dialog */}
                     <Dialog open={isMitigateDialogOpen} onOpenChange={setIsMitigateDialogOpen}>
-                      <DialogContent className="sm:max-w-[500px] border-white/10 bg-zinc-955 text-white rounded-2xl">
+                      <DialogContent className="sm:max-w-[500px] border-border/40 bg-card text-card-foreground rounded-2xl">
                         <DialogHeader>
                           <DialogTitle className="text-xl font-bold">Update Risk & Mitigation</DialogTitle>
-                          <DialogDescription className="text-zinc-400">
+                          <DialogDescription className="text-muted-foreground">
                             Update the risk mitigation action plan or mark the risk as mitigated/closed.
                           </DialogDescription>
                         </DialogHeader>
@@ -1291,16 +1248,16 @@ export function ProjectWorkspace({
                           <div className="space-y-4 py-4">
                             <div className="grid grid-cols-1 gap-4">
                               <div className="space-y-2">
-                                <Label htmlFor="mitigationStatus" className="text-zinc-300">Risk Status</Label>
+                                <Label htmlFor="mitigationStatus" className="text-foreground">Risk Status</Label>
                                 <Select 
                                   value={mitigationStatus} 
                                   onValueChange={(val: any) => setMitigationStatus(val)}
                                   disabled={isUpdatingRisk}
                                 >
-                                  <SelectTrigger className="bg-zinc-900 border-white/10 text-white focus-visible:ring-blue-500">
+                                  <SelectTrigger className="bg-background border-border/40 text-foreground focus-visible:ring-blue-500">
                                     <SelectValue placeholder="Select status" />
                                   </SelectTrigger>
-                                  <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                                  <SelectContent className="bg-card border-border/40 text-foreground">
                                     <SelectItem value="open">Open (Active Risk)</SelectItem>
                                     <SelectItem value="mitigated">Mitigated (Plan in action)</SelectItem>
                                     <SelectItem value="closed">Closed (No longer a threat)</SelectItem>
@@ -1309,12 +1266,12 @@ export function ProjectWorkspace({
                               </div>
 
                               <div className="space-y-2">
-                                <Label htmlFor="mitigationPlan" className="text-zinc-300">Mitigation Actions</Label>
+                                <Label htmlFor="mitigationPlan" className="text-foreground">Mitigation Actions</Label>
                                 <Textarea
                                   id="mitigationPlan"
                                   placeholder="Update details of mitigation steps taken..."
                                   rows={4}
-                                  className="bg-zinc-900 border-white/10 text-white focus-visible:ring-blue-500"
+                                  className="bg-background border-border/40 text-foreground focus-visible:ring-blue-500"
                                   value={mitigationPlan}
                                   onChange={(e) => setMitigationPlan(e.target.value)}
                                   disabled={isUpdatingRisk}
@@ -1331,7 +1288,7 @@ export function ProjectWorkspace({
                               setSelectedRisk(null);
                             }}
                             disabled={isUpdatingRisk}
-                            className="text-zinc-400 hover:text-white"
+                            className="text-muted-foreground hover:text-foreground"
                           >
                             Cancel
                           </Button>
@@ -1347,14 +1304,14 @@ export function ProjectWorkspace({
                     </Dialog>
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-zinc-500 border border-dashed border-white/5 rounded-xl">
-                    <ShieldAlert className="h-10 w-10 mx-auto text-zinc-700 mb-3" />
+                  <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                    <ShieldAlert className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
                     <p className="text-sm font-light">No risks logged for this project workspace.</p>
                     <Button 
                       size="sm" 
                       variant="outline" 
                       onClick={() => setIsRiskDialogOpen(true)}
-                      className="mt-4 border-white/10 text-zinc-300 hover:text-white rounded-lg"
+                      className="mt-4 rounded-lg"
                     >
                       Log First Risk
                     </Button>

@@ -4,6 +4,7 @@ import { ProjectList } from '@/components/projects/project-list';
 import { Button } from '@/components/ui';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { NoOrganizationState } from '@/components/shared/empty-states';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,18 +15,7 @@ export default async function ProjectsPage() {
   const headersList = await headers();
 
   if (!session.activeOrganizationId) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">
-            No Organization Selected
-          </h2>
-          <p className="text-gray-600">
-            Please select an organization to view projects.
-          </p>
-        </div>
-      </div>
-    );
+    return <NoOrganizationState />;
   }
 
   // Fetch initial projects

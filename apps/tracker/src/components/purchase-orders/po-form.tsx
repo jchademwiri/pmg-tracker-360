@@ -44,6 +44,7 @@ import { getProjects } from '@/server/projects';
 import { ProjectCreateDialog } from '@/components/projects/project-create-dialog';
 import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';
 import { formatCurrency } from '@/lib/format';
+import { toast } from 'sonner';
 
 const lineItemSchema = z.object({
   id: z.string().optional(),
@@ -234,12 +235,12 @@ export function POForm({
 
   const handleCreateProjectLineItem = async () => {
     if (!selectedProjectId) {
-      alert('Select a project before adding saved line items.');
+      toast.error('Select a project before adding saved line items.');
       return;
     }
 
     if (!newLineItem.itemNumber.trim()) {
-      alert('Item number is required.');
+      toast.error('Item number is required.');
       return;
     }
 
@@ -249,10 +250,11 @@ export function POForm({
     });
 
     if (result.success && result.lineItem) {
+      toast.success('Line item created successfully');
       setProjectLineItems((prev) => [...prev, result.lineItem]);
       setNewLineItem({ itemNumber: '', sapReference: '', description: '', unit: 'unit', unitPrice: '0.00' });
     } else {
-      alert(result.error || 'Failed to create saved line item');
+      toast.error(result.error || 'Failed to create saved line item');
     }
   };
 
@@ -273,29 +275,31 @@ export function POForm({
         if (initialData?.id) {
           const result = await updatePurchaseOrder(organizationId, initialData.id, data);
           if (result.success) {
+            toast.success('Purchase order updated successfully');
             if (onSuccess) {
               onSuccess();
             } else {
               router.push('/projects/purchase-orders');
             }
           } else {
-            alert(result.error || 'Failed to update purchase order');
+            toast.error(result.error || 'Failed to update purchase order');
           }
         } else {
           const result = await createPurchaseOrder(organizationId, data);
           if (result.success) {
+            toast.success('Purchase order created successfully');
             if (onSuccess) {
               onSuccess();
             } else {
               router.push('/projects/purchase-orders');
             }
           } else {
-            alert(result.error || 'Failed to create purchase order');
+            toast.error(result.error || 'Failed to create purchase order');
           }
         }
       } catch (error) {
         console.error('Form submission error:', error);
-        alert('An error occurred while saving the purchase order');
+        toast.error('An error occurred while saving the purchase order');
       }
     });
   };

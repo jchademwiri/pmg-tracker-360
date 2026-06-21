@@ -26,12 +26,11 @@ import {
   MobileCardList,
 } from '@/components/ui/mobile-card';
 import {
-  ChevronLeft,
-  ChevronRight,
   MoreHorizontalIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { ListPagination } from '@/components/shared/pagination';
 
 interface Tender {
   id: string;
@@ -303,35 +302,12 @@ export function TendersTable({
           </MobileCardList>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage <= 1}
-                    className="cursor-pointer"
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage >= totalPages}
-                    className="cursor-pointer"
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <ListPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+              className="mt-6"
+            />
           </>
         )}
     </div>

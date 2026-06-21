@@ -9,10 +9,11 @@ import {
   FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ListPagination } from '@/components/shared/pagination';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import {
   MobileCard,
   MobileCardHeader,
@@ -21,6 +22,10 @@ import {
   MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
+import {
+  MobileFilterDrawer,
+  MobileFilterField,
+} from '@/components/ui/mobile-filter-drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,17 +90,12 @@ interface ProjectListProps {
   initialTotalCount?: number;
 }
 
-const statusColors = {
-  active: 'bg-green-100 text-green-800',
-  completed: 'bg-blue-100 text-blue-800',
-  cancelled: 'bg-red-100 text-red-800',
-};
-
-const statusLabels = {
-  active: 'Active',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-};
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
 export function ProjectList({
   organizationId,
@@ -108,6 +108,7 @@ export function ProjectList({
     useState<ProjectWithRelations[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -145,6 +146,7 @@ export function ProjectList({
     // Reset search and filters
     setSearchQuery('');
     setStatusFilter('all');
+    setDraftStatusFilter('all');
     setCurrentPage(1);
 
     // Fetch fresh data for the new organization
@@ -163,6 +165,7 @@ export function ProjectList({
   // Handle status filter
   const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
+    setDraftStatusFilter(status);
     setCurrentPage(1);
     fetchProjects(searchQuery, 1, status);
   };
@@ -200,7 +203,7 @@ export function ProjectList({
         </div>
 
         {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -210,17 +213,46 @@ export function ProjectList({
               className="pl-10"
             />
           </div>
-          <Select value={statusFilter} onValueChange={handleStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="hidden sm:block">
+            <Select value={statusFilter} onValueChange={handleStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-full sm:hidden">
+            <MobileFilterDrawer
+              activeFilterCount={statusFilter !== 'all' ? 1 : 0}
+              onApply={() => handleStatusFilter(draftStatusFilter)}
+              onClear={() => handleStatusFilter('all')}
+              title="Filter Projects"
+            >
+              <MobileFilterField label="Status">
+                <Select
+                  value={draftStatusFilter}
+                  onValueChange={setDraftStatusFilter}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </MobileFilterField>
+            </MobileFilterDrawer>
+          </div>
         </div>
       </CardHeader>
 
@@ -314,19 +346,7 @@ export function ProjectList({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          className={
-                            statusColors[
-                              project.status as keyof typeof statusColors
-                            ]
-                          }
-                        >
-                          {
-                            statusLabels[
-                              project.status as keyof typeof statusLabels
-                            ]
-                          }
-                        </Badge>
+                        <StatusBadge status={project.status} domain="project" />
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
@@ -410,9 +430,7 @@ export function ProjectList({
                     <MobileCardHeader
                       identifier={project.projectNumber.toUpperCase()}
                       badge={
-                        <Badge className={statusColors[project.status as keyof typeof statusColors]}>
-                          {statusLabels[project.status as keyof typeof statusLabels]}
-                        </Badge>
+                        <StatusBadge status={project.status} domain="project" />
                       }
                       actions={actions}
                     />
@@ -456,36 +474,13 @@ export function ProjectList({
             </MobileCardList>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                  {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
-                  {totalCount} projects
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || isLoading}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+            <ListPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+              className="mt-6"
+            />
           </>
         )}
       </CardContent>

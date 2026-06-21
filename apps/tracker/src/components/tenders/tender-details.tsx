@@ -34,6 +34,8 @@ import { formatCurrency, formatDate as sharedFormatDate, formatDateTime } from '
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocumentManager } from '@/components/documents/document-manager';
+import { toast } from 'sonner';
+import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface TenderWithClient {
   id: string;
@@ -113,6 +115,7 @@ export function TenderDetails({
   const [showLostDialog, setShowLostDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleFollowUpSubmit = async (data: any) => {
     startTransition(async () => {
@@ -122,9 +125,10 @@ export function TenderDetails({
       });
       if (result.success) {
         setShowFollowUpDialog(false);
+        toast.success('Follow-up logged successfully');
         router.refresh();
       } else {
-        alert(result.error || 'Failed to create follow-up');
+        toast.error(result.error || 'Failed to create follow-up');
       }
     });
   };
@@ -133,22 +137,20 @@ export function TenderDetails({
     router.push(`/tenders/${tender.id}/edit`);
   };
 
-  const handleDelete = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this tender? This action cannot be undone.'
-      )
-    ) {
-      return;
-    }
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleConfirmDelete = async () => {
     startTransition(async () => {
       const result = await deleteTender(organizationId, tender.id);
       if (result.success) {
+        toast.success('Tender deleted successfully');
+        setIsDeleteDialogOpen(false);
         router.push('/tenders');
         router.refresh();
       } else {
-        alert(result.error || 'Failed to delete tender');
+        toast.error(result.error || 'Failed to delete tender');
       }
     });
   };
@@ -177,13 +179,14 @@ export function TenderDetails({
         evaluationNotes: details?.evaluationNotes ?? null,
       });
       if (result.success) {
+        toast.success(`Tender status updated to ${newStatus}`);
         if (newStatus === 'awarded' && result.projectId) {
           router.push(`/projects/${result.projectId}/edit`);
         } else {
           router.refresh();
         }
       } else {
-        alert(result.error || 'Failed to update tender status');
+        toast.error(result.error || 'Failed to update tender status');
       }
     });
   };
@@ -1043,6 +1046,14 @@ export function TenderDetails({
         tenderNumber={tender.tenderNumber}
         onSubmit={handleFollowUpSubmit}
         isPending={isPending}
+      />
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        itemName={tender.tenderNumber}
+        itemType="Tender"
       />
     </div>
   );

@@ -9,6 +9,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ListPagination } from '@/components/shared/pagination';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -25,6 +26,16 @@ import {
   MobileFilterField,
 } from '@/components/ui/mobile-filter-drawer';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -99,6 +110,7 @@ export function POList({
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
   const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
+  const [deletePOId, setDeletePOId] = useState<string | null>(null);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -164,19 +176,17 @@ export function POList({
   };
 
   // Handle delete PO
-  const handleDeletePO = async (poId: string) => {
-    if (!confirm('Are you sure you want to delete this purchase order?')) {
-      return;
-    }
-
+  const confirmDeletePO = async () => {
+    if (!deletePOId) return;
     startTransition(async () => {
-      const result = await deletePurchaseOrder(organizationId, poId);
+      const result = await deletePurchaseOrder(organizationId, deletePOId);
       if (result.success) {
-        // Refresh the current page
         fetchPOs(searchQuery, currentPage, statusFilter);
+        toast.success('Purchase order deleted');
       } else {
-        alert(result.error || 'Failed to delete purchase order');
+        toast.error(result.error || 'Failed to delete purchase order');
       }
+      setDeletePOId(null);
     });
   };
 
@@ -377,7 +387,7 @@ export function POList({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeletePO(po.id);
+                                setDeletePOId(po.id);
                               }}
                               className="text-red-600"
                               disabled={isPending}
@@ -399,7 +409,7 @@ export function POList({
                 const actions = [
                   { label: 'View Details', onClick: () => router.push(`/projects/purchase-orders/${po.id}`) },
                   { label: 'Edit PO', onClick: () => router.push(`/projects/purchase-orders/${po.id}/edit`) },
-                  { label: 'Delete PO', onClick: () => handleDeletePO(po.id), variant: 'destructive' as const },
+                  { label: 'Delete PO', onClick: () => setDeletePOId(po.id), variant: 'destructive' as const },
                 ];
 
                 return (
@@ -445,39 +455,39 @@ export function POList({
             </MobileCardList>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                  {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
-                  {totalCount} purchase orders
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || isLoading}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+            <ListPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              isLoading={isLoading}
+              className="mt-6"
+            />
           </>
         )}
       </CardContent>
+      <AlertDialog
+        open={!!deletePOId}
+        onOpenChange={(open) => !open && setDeletePOId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Purchase Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the purchase order and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeletePO}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

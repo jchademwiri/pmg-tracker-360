@@ -5,8 +5,10 @@ import { Plus } from 'lucide-react';
 import { TendersOverviewClient } from './overview/client-wrapper';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { NoOrganizationState } from '@/components/shared/empty-states';
 
 export const dynamic = 'force-dynamic';
+
 
 type SearchParams = {
   search?: string;
@@ -106,18 +108,7 @@ export default async function TendersRegisterPage({
   const registerCopy = getRegisterCopy(filters.status);
 
   if (!session.activeOrganizationId) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">
-            No Organization Selected
-          </h2>
-          <p className="text-gray-600">
-            Please select an organization to view tenders.
-          </p>
-        </div>
-      </div>
-    );
+    return <NoOrganizationState />;
   }
 
   // Fetch tenders and clients in parallel
