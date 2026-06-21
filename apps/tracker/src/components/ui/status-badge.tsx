@@ -127,6 +127,7 @@ export const STATUS_MAP_BY_DOMAIN: Record<StatusDomain, Record<string, StatusCon
     received: { label: 'Received', className: tone.neutral, domain: 'delivery' },
     verified: { label: 'Verified', className: tone.success, domain: 'delivery' },
     disputed: { label: 'Disputed', className: tone.danger, domain: 'delivery' },
+    voided: { label: 'Voided', className: tone.done, domain: 'delivery' },
   },
   risk: {
     low: { label: 'Low Risk', className: tone.success, domain: 'risk' },

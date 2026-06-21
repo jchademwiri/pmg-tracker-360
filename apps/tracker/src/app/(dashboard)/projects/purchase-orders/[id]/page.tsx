@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/server';
 import { getPurchaseOrderById } from '@/server/purchase-orders';
 import { PODetails } from '@/components/purchase-orders/po-details';
+import { getDocuments } from '@/server/documents';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -46,9 +47,12 @@ export default async function PurchaseOrderPage({
     );
   }
 
-  const result = await getPurchaseOrderById(session.activeOrganizationId, id);
+  const [poResult, docsResult] = await Promise.all([
+    getPurchaseOrderById(session.activeOrganizationId, id),
+    getDocuments(session.activeOrganizationId, 'purchase_order', id)
+  ]);
 
-  if (!result.success || !result.purchaseOrder) {
+  if (!poResult.success || !poResult.purchaseOrder) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -64,10 +68,13 @@ export default async function PurchaseOrderPage({
     );
   }
 
+  const initialDocuments = docsResult.success ? (docsResult.documents || []) : [];
+
   return (
     <PODetails
-      po={result.purchaseOrder}
+      po={poResult.purchaseOrder}
       organizationId={session.activeOrganizationId}
+      initialDocuments={initialDocuments}
     />
   );
 }

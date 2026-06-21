@@ -55,8 +55,8 @@ export async function DashboardMetrics({
     projectStats = {
       totalProjects: 0,
       growth: 0,
-      activePOs: 0,
-      totalPOAmount: 0,
+      deliveryStats: { totalPOs: 0, pendingDeliveries: 0, partialDeliveries: 0, fullyDelivered: 0 },
+      financialStats: { totalAwardValue: 0, totalPOValue: 0, totalDeliveredValue: 0, remainingValue: 0 },
     };
 
   return (
@@ -115,8 +115,8 @@ export async function DashboardMetrics({
         />
         <MetricCard
           title="Purchase Orders"
-          value={formatNumber(projectStats.activePOs)}
-          description={`Total: ${formatCurrency(projectStats.totalPOAmount)}`}
+          value={formatNumber(projectStats.deliveryStats.pendingDeliveries + projectStats.deliveryStats.partialDeliveries)}
+          description={`Total: ${formatCurrency(projectStats.financialStats.totalPOValue)}`}
         />
         <MetricCard
           title="Under Evaluation"

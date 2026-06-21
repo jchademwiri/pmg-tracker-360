@@ -12,7 +12,7 @@ import {
   purchaseOrderDeliveryItem,
   projectActivity
 } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, ne, inArray, sql } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, ne, inArray, sql, gte, lte } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import {
@@ -554,7 +554,10 @@ export async function getPurchaseOrders(
   page: number = 1,
   limit: number = 10,
   projectId?: string,
-  status?: string
+  status?: string,
+  supplierName?: string,
+  startDate?: Date,
+  endDate?: Date
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -588,7 +591,7 @@ export async function getPurchaseOrders(
     );
 
     // Add project filter if provided
-    if (projectId) {
+    if (projectId && projectId !== 'all') {
       whereCondition = and(
         whereCondition,
         eq(purchaseOrder.projectId, projectId)
@@ -610,6 +613,28 @@ export async function getPurchaseOrders(
     // Add status filter if provided
     if (status && status !== 'all') {
       whereCondition = and(whereCondition, eq(purchaseOrder.status, status));
+    }
+
+    // Add supplier filter if provided
+    if (supplierName && supplierName !== 'all') {
+      whereCondition = and(
+        whereCondition,
+        eq(purchaseOrder.supplierName, supplierName)
+      );
+    }
+
+    // Add date range filter if provided
+    if (startDate) {
+      whereCondition = and(
+        whereCondition,
+        gte(purchaseOrder.poDate, startDate)
+      );
+    }
+    if (endDate) {
+      whereCondition = and(
+        whereCondition,
+        lte(purchaseOrder.poDate, endDate)
+      );
     }
 
     const purchaseOrders = await db
@@ -1424,5 +1449,233 @@ export async function recordPODelivery(
   } catch (error: any) {
     console.error('Error recording PO delivery:', error);
     return { success: false, error: error.message || 'Failed to record delivery' };
+  }
+}
+
+// Get unique supplier names from active POs
+export async function getUniqueSuppliers(organizationId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const result = await db
+      .selectDistinct({ supplierName: purchaseOrder.supplierName })
+      .from(purchaseOrder)
+      .where(
+        and(
+          eq(purchaseOrder.organizationId, organizationId),
+          isNull(purchaseOrder.deletedAt)
+        )
+      )
+      .orderBy(purchaseOrder.supplierName);
+    
+    return { 
+      success: true, 
+      suppliers: result.map((r) => r.supplierName).filter(Boolean) as string[] 
+    };
+  } catch (error: any) {
+    console.error('Error getting unique suppliers:', error);
+    return { success: false, suppliers: [], error: error.message };
+  }
+}
+
+// Verify delivery note, transition status to verified and update PO status
+export async function verifyDeliveryNote(organizationId: string, deliveryNoteId: string) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+
+    // Fetch delivery note
+    const note = await db.query.purchaseOrderDeliveryNote.findFirst({
+      where: eq(purchaseOrderDeliveryNote.id, deliveryNoteId),
+      with: {
+        items: true,
+      }
+    });
+
+    if (!note) {
+      return { success: false, error: 'Delivery note not found' };
+    }
+
+    await db.transaction(async (tx) => {
+      // 1. Update status to verified
+      await tx
+        .update(purchaseOrderDeliveryNote)
+        .set({ status: 'verified' })
+        .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
+
+      // 2. Fetch purchase order and recalculate status based on verified notes
+      const po = await tx.query.purchaseOrder.findFirst({
+        where: eq(purchaseOrder.id, note.purchaseOrderId),
+        with: {
+          lineItems: true,
+          deliveryNotes: {
+            where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+            with: {
+              items: true,
+            }
+          }
+        }
+      });
+
+      if (po) {
+        // Accumulate verified delivery quantities per line item
+        const deliveredQtyMap = new Map<string, number>();
+        // Include the current note we just verified
+        const allVerifiedNotes = [...po.deliveryNotes, { ...note, status: 'verified' }];
+
+        for (const vn of allVerifiedNotes) {
+          for (const item of vn.items || []) {
+            const current = deliveredQtyMap.get(item.lineItemId) || 0;
+            deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
+          }
+        }
+
+        let allCompleted = true;
+        let someDelivered = false;
+
+        for (const lineItem of po.lineItems) {
+          const ordered = parseFloat(lineItem.quantity) || 0;
+          const totalDelivered = deliveredQtyMap.get(lineItem.id) || 0;
+
+          if (totalDelivered < ordered) {
+            allCompleted = false;
+          }
+          if (totalDelivered > 0) {
+            someDelivered = true;
+          }
+        }
+
+        if (po.lineItems.length === 0) {
+          allCompleted = false;
+        }
+
+        const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+
+        await tx
+          .update(purchaseOrder)
+          .set({
+            status: newStatus,
+            deliveredAt: newStatus === 'completed' ? new Date() : null,
+            updatedAt: new Date(),
+          })
+          .where(eq(purchaseOrder.id, note.purchaseOrderId));
+
+        // 3. Log project activity
+        await tx.insert(projectActivity).values({
+          id: crypto.randomUUID(),
+          organizationId,
+          projectId: note.projectId,
+          activityType: 'po_delivery_verified',
+          description: `Delivery Note ${note.deliveryNoteNumber} verified. PO ${po.poNumber} status updated to ${newStatus}.`,
+          userId: userId || null,
+        });
+      }
+    });
+
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${note.purchaseOrderId}`);
+    revalidatePath(`/projects/${note.projectId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error verifying delivery note:', error);
+    return { success: false, error: error.message || 'Failed to verify delivery note' };
+  }
+}
+
+// Void delivery note, transition status to voided and update PO status
+export async function voidDeliveryNote(organizationId: string, deliveryNoteId: string) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+
+    // Fetch delivery note
+    const note = await db.query.purchaseOrderDeliveryNote.findFirst({
+      where: eq(purchaseOrderDeliveryNote.id, deliveryNoteId),
+    });
+
+    if (!note) {
+      return { success: false, error: 'Delivery note not found' };
+    }
+
+    await db.transaction(async (tx) => {
+      // 1. Update status to voided
+      await tx
+        .update(purchaseOrderDeliveryNote)
+        .set({ status: 'voided' })
+        .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
+
+      // 2. Fetch purchase order and recalculate status based only on verified notes
+      const po = await tx.query.purchaseOrder.findFirst({
+        where: eq(purchaseOrder.id, note.purchaseOrderId),
+        with: {
+          lineItems: true,
+          deliveryNotes: {
+            where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+            with: {
+              items: true,
+            }
+          }
+        }
+      });
+
+      if (po) {
+        // Accumulate verified delivery quantities per line item
+        const deliveredQtyMap = new Map<string, number>();
+
+        for (const vn of po.deliveryNotes) {
+          for (const item of vn.items || []) {
+            const current = deliveredQtyMap.get(item.lineItemId) || 0;
+            deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
+          }
+        }
+
+        let allCompleted = true;
+        let someDelivered = false;
+
+        for (const lineItem of po.lineItems) {
+          const ordered = parseFloat(lineItem.quantity) || 0;
+          const totalDelivered = deliveredQtyMap.get(lineItem.id) || 0;
+
+          if (totalDelivered < ordered) {
+            allCompleted = false;
+          }
+          if (totalDelivered > 0) {
+            someDelivered = true;
+          }
+        }
+
+        if (po.lineItems.length === 0) {
+          allCompleted = false;
+        }
+
+        const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+
+        await tx
+          .update(purchaseOrder)
+          .set({
+            status: newStatus,
+            deliveredAt: newStatus === 'completed' ? new Date() : null,
+            updatedAt: new Date(),
+          })
+          .where(eq(purchaseOrder.id, note.purchaseOrderId));
+
+        // 3. Log project activity
+        await tx.insert(projectActivity).values({
+          id: crypto.randomUUID(),
+          organizationId,
+          projectId: note.projectId,
+          activityType: 'po_delivery_voided',
+          description: `Delivery Note ${note.deliveryNoteNumber} voided. PO ${po.poNumber} status updated to ${newStatus}.`,
+          userId: userId || null,
+        });
+      }
+    });
+
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${note.purchaseOrderId}`);
+    revalidatePath(`/projects/${note.projectId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error voiding delivery note:', error);
+    return { success: false, error: error.message || 'Failed to void delivery note' };
   }
 }

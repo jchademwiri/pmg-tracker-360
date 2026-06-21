@@ -780,7 +780,8 @@ export function POForm({
                       </div>
                     )}
                   </div>
-                  <div className="overflow-x-auto">
+                  {/* Desktop Table Layout */}
+                  <div className="hidden md:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -904,6 +905,137 @@ export function POForm({
                         )}
                       </TableBody>
                     </Table>
+                  </div>
+
+                  {/* Mobile Card Layout */}
+                  <div className="md:hidden space-y-4">
+                    {fields.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground italic border rounded-lg bg-muted/10">
+                        {selectedProjectId
+                          ? 'No PO line items selected yet. Save project line items, then click "Add Item".'
+                          : 'Select a project to load saved line items.'}
+                      </div>
+                    ) : (
+                      fields.map((field, index) => {
+                        const qtyVal = form.watch(`lineItems.${index}.quantity` as any);
+                        const priceVal = form.watch(`lineItems.${index}.unitPrice` as any);
+                        const unitVal = form.watch(`lineItems.${index}.unit` as any);
+                        const qty = parseFloat(qtyVal || '0') || 0;
+                        const price = parseFloat(priceVal || '0') || 0;
+                        const subtotal = qty * price;
+                        
+                        const saved = projectLineItems.find((i) => i.id === form.watch(`lineItems.${index}.projectLineItemId` as any));
+                        const itemNumberLabel = saved?.itemNumber || '-';
+
+                        return (
+                          <Card key={field.id} className="p-4 space-y-3 relative border">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-blue-600 text-sm">
+                                Item #{itemNumberLabel}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => remove(index)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50/10 cursor-pointer h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div>
+                                <label className="text-xs font-medium text-muted-foreground">Saved Project Line Item *</label>
+                                <FormField
+                                  control={form.control as any}
+                                  name={`lineItems.${index}.projectLineItemId` as any}
+                                  render={({ field: inputField }) => (
+                                    <FormItem className="mt-1">
+                                      <Select
+                                        value={inputField.value}
+                                        onValueChange={(value) => applySavedLineItem(index, value)}
+                                        disabled={loadingLineItems}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select saved project item" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {projectLineItems.map((item) => (
+                                            <SelectItem key={item.id} value={item.id}>
+                                              {item.itemNumber} - {item.description}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground">Unit</label>
+                                  <div className="mt-1 text-sm bg-muted/30 border rounded-md h-9 flex items-center px-3 text-muted-foreground">
+                                    {unitVal || 'unit'}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground">Quantity *</label>
+                                  <FormField
+                                    control={form.control as any}
+                                    name={`lineItems.${index}.quantity` as any}
+                                    render={({ field: inputField }) => (
+                                      <FormItem className="mt-1">
+                                        <FormControl>
+                                          <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            {...inputField}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 pt-1">
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground">Unit Price (ZAR)</label>
+                                  <div className="relative mt-1">
+                                    <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
+                                      R
+                                    </span>
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      placeholder="0.00"
+                                      className="pl-6 bg-muted cursor-not-allowed h-9"
+                                      readOnly
+                                      value={priceVal || '0.00'}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-xs font-medium text-muted-foreground">Subtotal</label>
+                                  <div className="mt-1 text-sm font-bold flex items-center h-9">
+                                    {formatCurrency(subtotal)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        );
+                      })
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end gap-2 p-6 bg-zinc-950/20 border-t">

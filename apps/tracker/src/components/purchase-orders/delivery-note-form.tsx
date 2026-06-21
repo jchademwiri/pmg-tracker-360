@@ -233,7 +233,8 @@ export function DeliveryNoteForm({ organizationId, po }: DeliveryNoteFormProps) 
               <CardTitle className="text-lg">Delivered Items</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -289,6 +290,71 @@ export function DeliveryNoteForm({ organizationId, po }: DeliveryNoteFormProps) 
                     )}
                   </TableBody>
                 </Table>
+              </div>
+
+              {/* Mobile Card Layout */}
+              <div className="md:hidden space-y-4 p-4">
+                {itemRows.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground italic border rounded-lg bg-muted/10">
+                    No PO line items are available for delivery.
+                  </div>
+                ) : (
+                  itemRows.map((item) => (
+                    <Card key={item.id} className="p-4 space-y-3 border">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm text-foreground">
+                          {item.description}
+                        </span>
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          {item.unit || 'unit'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground text-center">
+                        <div className="bg-muted/10 p-1.5 rounded">
+                          <span className="block text-muted-foreground/70">Ordered</span>
+                          <strong className="block text-sm text-foreground mt-0.5">{item.orderedQuantity}</strong>
+                        </div>
+                        <div className="bg-emerald-500/5 p-1.5 rounded">
+                          <span className="block text-emerald-600/70">Delivered</span>
+                          <strong className="block text-sm text-emerald-600 mt-0.5">{item.previouslyDelivered}</strong>
+                        </div>
+                        <div className="bg-muted/10 p-1.5 rounded">
+                          <span className="block text-muted-foreground/70">Outstanding</span>
+                          <strong className="block text-sm text-foreground mt-0.5">{item.outstandingQuantity}</strong>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor={`qty-${item.id}`} className="text-xs font-semibold">Delivered Quantity</Label>
+                        <Input
+                          id={`qty-${item.id}`}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={deliveredQuantities[item.id] || ''}
+                          disabled={item.outstandingQuantity === 0}
+                          onChange={(event) =>
+                            setDeliveredQuantities((prev) => ({
+                              ...prev,
+                              [item.id]: event.target.value,
+                            }))
+                          }
+                          className={quantityErrors[item.id] ? 'border-red-500 text-right' : 'text-right'}
+                          placeholder="0.00"
+                        />
+                        {quantityErrors[item.id] && (
+                          <p className="mt-1 text-xs text-red-500">{quantityErrors[item.id]}</p>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-center pt-1 border-t text-sm">
+                        <span className="text-muted-foreground">Delivery Value:</span>
+                        <strong className="text-foreground">{formatCurrency(item.deliveryValue)}</strong>
+                      </div>
+                    </Card>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

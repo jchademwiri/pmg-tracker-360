@@ -36,11 +36,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   deletePurchaseOrder,
   updatePurchaseOrderStatus,
+  verifyDeliveryNote,
+  voidDeliveryNote,
 } from '@/server/purchase-orders';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
 import { MobileActionBar, MobileActionBarSpacer } from '@/components/ui/mobile-action-bar';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { DocumentManager } from '@/components/documents/document-manager';
 
 interface LineItem {
   id: string;
@@ -103,12 +106,37 @@ interface PurchaseOrderWithProject {
 interface PODetailsProps {
   po: PurchaseOrderWithProject;
   organizationId: string;
+  initialDocuments?: any[];
 }
 
-export function PODetails({ po, organizationId }: PODetailsProps) {
+export function PODetails({ po, organizationId, initialDocuments = [] }: PODetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const handleVerifyDelivery = async (noteId: string) => {
+    startTransition(async () => {
+      const result = await verifyDeliveryNote(organizationId, noteId);
+      if (result.success) {
+        toast.success('Delivery note verified successfully');
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to verify delivery note');
+      }
+    });
+  };
+
+  const handleVoidDelivery = async (noteId: string) => {
+    startTransition(async () => {
+      const result = await voidDeliveryNote(organizationId, noteId);
+      if (result.success) {
+        toast.success('Delivery note voided successfully');
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to void delivery note');
+      }
+    });
+  };
 
   const handleEdit = () => {
     router.push(`/projects/purchase-orders/${po.id}/edit`);
@@ -156,10 +184,14 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
     router.push('/projects/purchase-orders');
   };
 
-  const formatDateWithTime = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return formatDateTime(date, 'Not set');
-  };
+  const steps = [
+    { label: 'Open', statuses: ['open'] },
+    { label: 'Sent', statuses: ['sent'] },
+    { label: 'Partially Delivered', statuses: ['partially_delivered'] },
+    { label: 'Completed', statuses: ['delivered', 'completed'] },
+  ];
+  const activeIndex = steps.findIndex((s) => s.statuses.includes(po.status));
+  const isSpecialStatus = ['cancelled', 'disputed'].includes(po.status);
 
   return (
     <div className="w-full space-y-6">
@@ -224,6 +256,66 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
         </div>
       </div>
 
+      {/* PO Lifecycle Strip */}
+      <Card className="p-6 bg-card rounded-lg shadow-sm border">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="text-sm text-muted-foreground">Purchase Order Status</div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xl font-bold tracking-tight">{po.poNumber}</span>
+                <StatusBadge status={po.status} domain="purchaseOrder" />
+              </div>
+            </div>
+          </div>
+          
+          {!isSpecialStatus && (
+            <div className="flex-1 max-w-2xl">
+              <div className="relative flex items-center justify-between w-full">
+                {/* Background Line */}
+                <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-muted -translate-y-1/2 -z-10" />
+                
+                {/* Active Progress Line */}
+                <div 
+                  className="absolute left-0 top-1/2 h-0.5 bg-primary -translate-y-1/2 -z-10 transition-all duration-500" 
+                  style={{ width: `${activeIndex >= 0 ? (activeIndex / (steps.length - 1)) * 100 : 0}%` }}
+                />
+                
+                {steps.map((step, idx) => {
+                  const isCompleted = idx <= activeIndex;
+                  const isActive = idx === activeIndex;
+                  
+                  return (
+                    <div key={step.label} className="flex flex-col items-center">
+                      <div 
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 ${
+                          isActive 
+                            ? 'bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110' 
+                            : isCompleted 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted text-muted-foreground border'
+                        }`}
+                      >
+                        {idx + 1}
+                      </div>
+                      <span 
+                        className={`text-xs mt-2 font-medium hidden sm:inline ${
+                          isActive 
+                            ? 'text-foreground font-semibold' 
+                            : 'text-muted-foreground'
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="bg-muted p-1 rounded-lg">
@@ -237,6 +329,7 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="documents" className="px-4 py-2 text-sm font-medium">Documents</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -622,25 +715,51 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-base text-foreground">DN Number: {note.deliveryNoteNumber}</span>
-                              <StatusBadge status="delivered" />
+                              <StatusBadge status={note.status} domain="delivery" />
                             </div>
                             <p className="text-xs text-muted-foreground">
                               Received by <strong className="text-foreground">{note.recipientName}</strong> on {formatDate(note.receivedAt)}
                             </p>
                           </div>
-                          {note.podFileUrl && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              asChild
-                              className="cursor-pointer self-start sm:self-center bg-background"
-                            >
-                              <a href={note.podFileUrl} target="_blank" rel="noopener noreferrer">
-                                <FileUp className="h-4 w-4 mr-2 text-indigo-500" />
-                                View POD File
-                              </a>
-                            </Button>
-                          )}
+                          
+                          <div className="flex flex-wrap gap-2 items-center">
+                            {note.status === 'received' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleVerifyDelivery(note.id)}
+                                  disabled={isPending}
+                                  className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200"
+                                >
+                                  Verify
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleVoidDelivery(note.id)}
+                                  disabled={isPending}
+                                  className="bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 border-red-200"
+                                >
+                                  Void
+                                </Button>
+                              </>
+                            )}
+
+                            {note.podFileUrl && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="cursor-pointer bg-background"
+                              >
+                                <a href={note.podFileUrl} target="_blank" rel="noopener noreferrer">
+                                  <FileUp className="h-4 w-4 mr-2 text-indigo-500" />
+                                  View POD File
+                                </a>
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="pt-4 space-y-4">
@@ -707,6 +826,15 @@ export function PODetails({ po, organizationId }: PODetailsProps) {
               </Card>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-6">
+          <DocumentManager
+            organizationId={organizationId}
+            entityId={po.id}
+            entityType="purchase_order"
+            initialDocuments={initialDocuments}
+          />
         </TabsContent>
       </Tabs>
 

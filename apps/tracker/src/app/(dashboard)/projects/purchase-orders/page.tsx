@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/server';
-import { getPurchaseOrders } from '@/server/purchase-orders';
+import { getPurchaseOrders, getUniqueSuppliers } from '@/server/purchase-orders';
+import { getProjectsList } from '@/server/projects';
 import { POList } from '@/components/purchase-orders/po-list';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -48,12 +49,36 @@ export default async function PurchaseOrdersPage({
     );
   }
 
-  // Fetch initial purchase orders for the list component
+  // Fetch projects list and unique suppliers list for filters
+  const projectsResult = await getProjectsList(session.activeOrganizationId);
+  const suppliersResult = await getUniqueSuppliers(session.activeOrganizationId);
+
+  const projects = projectsResult.success ? (projectsResult.projects || []) : [];
+  const suppliers = suppliersResult.success ? (suppliersResult.suppliers || []) : [];
+
+  // Parse filters from search params
+  const search = typeof resolvedSearchParams.search === 'string' ? resolvedSearchParams.search : undefined;
+  const page = typeof resolvedSearchParams.page === 'string' ? parseInt(resolvedSearchParams.page, 10) : 1;
+  const limit = typeof resolvedSearchParams.limit === 'string' ? parseInt(resolvedSearchParams.limit, 10) : 10;
+  const projectId = typeof resolvedSearchParams.projectId === 'string' ? resolvedSearchParams.projectId : undefined;
+  const status = typeof resolvedSearchParams.status === 'string' ? resolvedSearchParams.status : undefined;
+  const supplierName = typeof resolvedSearchParams.supplier === 'string' ? resolvedSearchParams.supplier : undefined;
+  const startDateStr = typeof resolvedSearchParams.startDate === 'string' ? resolvedSearchParams.startDate : undefined;
+  const endDateStr = typeof resolvedSearchParams.endDate === 'string' ? resolvedSearchParams.endDate : undefined;
+  const startDate = startDateStr ? new Date(startDateStr) : undefined;
+  const endDate = endDateStr ? new Date(endDateStr) : undefined;
+
+  // Fetch purchase orders with filters
   const result = await getPurchaseOrders(
     session.activeOrganizationId,
-    '',
-    1,
-    10
+    search,
+    page,
+    limit,
+    projectId,
+    status,
+    supplierName,
+    startDate,
+    endDate
   );
 
   return (
@@ -86,6 +111,8 @@ export default async function PurchaseOrdersPage({
         organizationId={session.activeOrganizationId}
         initialPOs={result.purchaseOrders}
         initialTotalCount={result.totalCount}
+        projects={projects}
+        suppliers={suppliers}
       />
     </div>
   );

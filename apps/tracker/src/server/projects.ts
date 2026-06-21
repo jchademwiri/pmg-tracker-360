@@ -769,9 +769,10 @@ export async function getProjectStats(organizationId: string) {
       })
       .from(purchaseOrderDeliveryItem)
       .innerJoin(purchaseOrderDeliveryNote, eq(purchaseOrderDeliveryItem.deliveryNoteId, purchaseOrderDeliveryNote.id))
+      .innerJoin(project, eq(purchaseOrderDeliveryNote.projectId, project.id))
       .where(
         and(
-          eq(purchaseOrderDeliveryNote.organizationId, organizationId),
+          eq(project.organizationId, organizationId),
           eq(purchaseOrderDeliveryNote.status, 'verified')
         )
       );
@@ -1291,5 +1292,26 @@ export async function getProjectActionQueue(organizationId: string) {
         closeOutCandidates: [],
       }
     };
+  }
+}
+
+// Lightweight helper returning { id, projectNumber }[] for search filters
+export async function getProjectsList(organizationId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const result = await db
+      .select({ id: project.id, projectNumber: project.projectNumber })
+      .from(project)
+      .where(
+        and(
+          eq(project.organizationId, organizationId),
+          isNull(project.deletedAt)
+        )
+      )
+      .orderBy(project.projectNumber);
+    return { success: true, projects: result };
+  } catch (error: any) {
+    console.error('Error getting projects list:', error);
+    return { success: false, projects: [], error: error.message };
   }
 }

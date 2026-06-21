@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   Search,
   Plus,
@@ -91,97 +91,148 @@ interface POListProps {
   initialPOs?: PurchaseOrderWithProject[];
   initialTotalCount?: number;
   projectId?: string; // Optional: filter by specific project
+  projects?: { id: string; projectNumber: string }[];
+  suppliers?: string[];
 }
-
-
 
 export function POList({
   organizationId,
   initialPOs = [],
   initialTotalCount = 0,
   projectId,
+  projects = [],
+  suppliers = [],
 }: POListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-  const [pos, setPos] = useState<PurchaseOrderWithProject[]>(initialPOs);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(initialTotalCount);
-  const [isLoading, setIsLoading] = useState(false);
-  const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
+
+  // Local state for search query (so users can type without immediately reloading)
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [deletePOId, setDeletePOId] = useState<string | null>(null);
 
+  // Sync search query if URL changes externally
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '');
+  }, [searchParams]);
+
+  // Read current filters directly from URL search params
+  const statusFilter = searchParams.get('status') || 'all';
+  const supplierFilter = searchParams.get('supplier') || 'all';
+  const projectFilter = searchParams.get('projectId') || 'all';
+  const startDate = searchParams.get('startDate') || '';
+  const endDate = searchParams.get('endDate') || '';
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+  const pos = initialPOs;
+  const totalCount = initialTotalCount;
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const isLoading = isPending;
 
-  // Fetch POs with search and pagination
-  const fetchPOs = useCallback(
-    async (search?: string, page: number = 1, status?: string) => {
-      setIsLoading(true);
-      try {
-        const result = await getPurchaseOrders(
-          organizationId,
-          search,
-          page,
-          itemsPerPage,
-          projectId,
-          status === 'all' ? undefined : status
-        );
-        setPos(result.purchaseOrders);
-        setTotalCount(result.totalCount);
-        setCurrentPage(result.currentPage);
-      } catch (error) {
-        console.error('Error fetching purchase orders:', error);
-        toast.error('Failed to load purchase orders. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [organizationId, projectId]
-  );
+  // Draft states for mobile filter drawer
+  const [draftStatus, setDraftStatus] = useState(statusFilter);
+  const [draftSupplier, setDraftSupplier] = useState(supplierFilter);
+  const [draftProject, setDraftProject] = useState(projectFilter);
+  const [draftStartDate, setDraftStartDate] = useState(startDate);
+  const [draftEndDate, setDraftEndDate] = useState(endDate);
 
-  // Reset and refetch data when organizationId or projectId changes
+  // Sync draft states when filters change
   useEffect(() => {
-    // Reset search and filters
-    setSearchQuery('');
-    setStatusFilter('all');
-    setDraftStatusFilter('all');
-    setCurrentPage(1);
+    setDraftStatus(statusFilter);
+    setDraftSupplier(supplierFilter);
+    setDraftProject(projectFilter);
+    setDraftStartDate(startDate);
+    setDraftEndDate(endDate);
+  }, [statusFilter, supplierFilter, projectFilter, startDate, endDate]);
 
-    // Fetch fresh data
-    if (organizationId) {
-      fetchPOs('', 1);
+  // Shared function to update search params and trigger router transition
+  const applyFilters = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'all') {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    // Reset to page 1 on filter change
+    if (!updates.page) {
+      params.delete('page');
     }
-  }, [organizationId, projectId, fetchPOs]);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  }, [searchParams, router, pathname]);
 
-  // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-    fetchPOs(query, 1, statusFilter);
-  };
+  // Debounce the search input updates to URL
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      const currentSearch = searchParams.get('search') || '';
+      if (searchQuery !== currentSearch) {
+        applyFilters({ search: searchQuery });
+      }
+    }, 500);
 
-  // Handle status filter
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, searchParams, applyFilters]);
+
   const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
-    setCurrentPage(1);
-    fetchPOs(searchQuery, 1, status);
+    applyFilters({ status });
   };
 
-  // Handle pagination
+  const handleSupplierFilter = (supplier: string) => {
+    applyFilters({ supplier });
+  };
+
+  const handleProjectFilter = (projId: string) => {
+    applyFilters({ projectId: projId });
+  };
+
+  const handleStartDateChange = (date: string) => {
+    applyFilters({ startDate: date });
+  };
+
+  const handleEndDateChange = (date: string) => {
+    applyFilters({ endDate: date });
+  };
+
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchPOs(searchQuery, page, statusFilter);
+    applyFilters({ page: page.toString() });
   };
 
-  // Handle delete PO
+  const handleApplyMobileFilters = () => {
+    applyFilters({
+      status: draftStatus,
+      supplier: draftSupplier,
+      projectId: draftProject,
+      startDate: draftStartDate,
+      endDate: draftEndDate,
+    });
+  };
+
+  const handleClearMobileFilters = () => {
+    setDraftStatus('all');
+    setDraftSupplier('all');
+    setDraftProject('all');
+    setDraftStartDate('');
+    setDraftEndDate('');
+    applyFilters({
+      status: null,
+      supplier: null,
+      projectId: null,
+      startDate: null,
+      endDate: null,
+    });
+  };
+
   const confirmDeletePO = async () => {
     if (!deletePOId) return;
     startTransition(async () => {
       const result = await deletePurchaseOrder(organizationId, deletePOId);
       if (result.success) {
-        fetchPOs(searchQuery, currentPage, statusFilter);
+        router.refresh();
         toast.success('Purchase order deleted');
       } else {
         toast.error(result.error || 'Failed to delete purchase order');
@@ -190,41 +241,102 @@ export function POList({
     });
   };
 
-
-
   return (
     <Card className="rounded-lg shadow-sm">
-      <CardHeader>
+      <CardHeader className="space-y-4">
         <div className="flex items-center justify-between">
           <CardTitle>Purchase Orders</CardTitle>
         </div>
 
         {/* Desktop Search and Filters */}
-        <div className="hidden md:flex items-center space-x-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search by PO number, supplier, or description..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
+        <div className="hidden md:flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search by PO number, supplier, or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {!projectId && (
+              <Select value={projectFilter} onValueChange={handleProjectFilter}>
+                <SelectTrigger className="w-[240px]">
+                  <SelectValue placeholder="Filter by Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.projectNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
-          <Select value={statusFilter} onValueChange={handleStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="partially_delivered">Partially Delivered</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="disputed">Disputed</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={statusFilter} onValueChange={handleStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="partially_delivered">Partially Delivered</SelectItem>
+                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="disputed">Disputed</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={supplierFilter} onValueChange={handleSupplierFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by Supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Suppliers</SelectItem>
+                {suppliers.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Date From:</span>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="w-[150px] h-9"
+              />
+              <span>To:</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => handleEndDateChange(e.target.value)}
+                className="w-[150px] h-9"
+              />
+            </div>
+
+            {(searchQuery || statusFilter !== 'all' || supplierFilter !== 'all' || projectFilter !== 'all' || startDate || endDate) && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSearchQuery('');
+                  handleClearMobileFilters();
+                }}
+                className="ml-auto"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Mobile Search + Filter Drawer */}
@@ -234,18 +346,42 @@ export function POList({
             <Input
               placeholder="Search POs..."
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
           <MobileFilterDrawer
-            activeFilterCount={statusFilter !== 'all' ? 1 : 0}
-            onApply={() => handleStatusFilter(draftStatusFilter)}
-            onClear={() => { setDraftStatusFilter('all'); handleStatusFilter('all'); }}
+            activeFilterCount={
+              (statusFilter !== 'all' ? 1 : 0) +
+              (supplierFilter !== 'all' ? 1 : 0) +
+              (projectFilter !== 'all' ? 1 : 0) +
+              (startDate ? 1 : 0) +
+              (endDate ? 1 : 0)
+            }
+            onApply={handleApplyMobileFilters}
+            onClear={handleClearMobileFilters}
             title="Filter Purchase Orders"
           >
+            {!projectId && (
+              <MobileFilterField label="Project">
+                <Select value={draftProject} onValueChange={setDraftProject}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Projects</SelectItem>
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.projectNumber}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </MobileFilterField>
+            )}
+
             <MobileFilterField label="Status">
-              <Select value={draftStatusFilter} onValueChange={setDraftStatusFilter}>
+              <Select value={draftStatus} onValueChange={setDraftStatus}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
@@ -260,6 +396,40 @@ export function POList({
                   <SelectItem value="disputed">Disputed</SelectItem>
                 </SelectContent>
               </Select>
+            </MobileFilterField>
+
+            <MobileFilterField label="Supplier">
+              <Select value={draftSupplier} onValueChange={setDraftSupplier}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Suppliers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Suppliers</SelectItem>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
+
+            <MobileFilterField label="Date From">
+              <Input
+                type="date"
+                value={draftStartDate}
+                onChange={(e) => setDraftStartDate(e.target.value)}
+                className="w-full"
+              />
+            </MobileFilterField>
+
+            <MobileFilterField label="Date To">
+              <Input
+                type="date"
+                value={draftEndDate}
+                onChange={(e) => setDraftEndDate(e.target.value)}
+                className="w-full"
+              />
             </MobileFilterField>
           </MobileFilterDrawer>
         </div>
