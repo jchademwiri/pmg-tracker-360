@@ -184,6 +184,11 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
     router.push('/projects/purchase-orders');
   };
 
+  const formatDateWithTime = (date: Date | null) => {
+    if (!date) return 'Not set';
+    return formatDateTime(date, 'Not set');
+  };
+
   const steps = [
     { label: 'Open', statuses: ['open'] },
     { label: 'Sent', statuses: ['sent'] },

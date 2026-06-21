@@ -31,7 +31,7 @@ interface Document {
 interface DocumentManagerProps {
   organizationId: string;
   entityId: string;
-  entityType: 'tender' | 'project';
+  entityType: 'tender' | 'project' | 'purchase_order';
   initialDocuments: Document[];
 }
 
