@@ -95,6 +95,9 @@ export const STATUS_MAP_BY_DOMAIN: Record<StatusDomain, Record<string, StatusCon
     cancelled: { label: 'Cancelled', className: tone.done, domain: 'project' },
     not_ordered: { label: 'Not Ordered', className: tone.neutral, domain: 'project' },
     ordered: { label: 'Ordered', className: tone.progress, domain: 'project' },
+    fully_ordered: { label: 'Fully Ordered', className: tone.progress, domain: 'project' },
+    partially_delivered: { label: 'Partially Delivered', className: tone.warning, domain: 'project' },
+    fully_delivered: { label: 'Fully Delivered', className: tone.success, domain: 'project' },
   },
   purchaseOrder: {
     open: { label: 'Open', className: tone.success, domain: 'purchaseOrder', order: 0 },

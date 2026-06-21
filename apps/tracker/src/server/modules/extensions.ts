@@ -14,6 +14,7 @@ import { headers } from 'next/headers';
 import { nanoid } from 'nanoid';
 import { uploadDocument } from '@/server/documents';
 import { z } from 'zod';
+import { logTenderActivity } from '../tenders';
 
 const createExtensionSchema = z.object({
   tenderId: z.string(),
@@ -106,6 +107,14 @@ export async function createTenderExtension(
         };
       }
     }
+
+    await logTenderActivity(
+      organizationId,
+      validatedData.tenderId,
+      'extension_added',
+      `Extension added for date ${new Date(validatedData.extensionDate).toLocaleDateString()}. New evaluation date: ${new Date(validatedData.newEvaluationDate).toLocaleDateString()}`,
+      userId
+    );
 
     revalidatePath(`/tenders/${validatedData.tenderId}`);
     return { success: true, extension: newExtension };

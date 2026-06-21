@@ -3,7 +3,7 @@ import {
   getTenderStats,
   getRecentActivity,
   getUpcomingDeadlines,
-  getClosingSoonTenders,
+  getTenderActionQueue,
 } from '@/server/tenders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,8 +20,8 @@ import {
 import { formatCurrency } from '@/lib/format';
 import { RecentActivity } from '@/components/tenders/recent-activity';
 import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
-import { ClosingSoonWidget } from '@/components/tenders/closing-soon-widget';
 import { PipelineFunnel } from '@/components/tenders/pipeline-funnel';
+import { TenderActionQueue } from '@/components/tenders/tender-action-queue';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -54,12 +54,12 @@ export default async function TendersOverviewPage() {
   }
 
   // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult, closingSoonResult] =
+  const [statsResult, activityResult, deadlinesResult, actionQueueResult] =
     await Promise.all([
       getTenderStats(session.activeOrganizationId),
       getRecentActivity(session.activeOrganizationId, 3),
       getUpcomingDeadlines(session.activeOrganizationId, 3),
-      getClosingSoonTenders(session.activeOrganizationId),
+      getTenderActionQueue(session.activeOrganizationId),
     ]);
 
   const stats = statsResult.success
@@ -80,7 +80,16 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
-  const closingSoon = closingSoonResult.success ? closingSoonResult.tenders : [];
+  
+  const initialQueues = actionQueueResult.success
+    ? actionQueueResult.queues
+    : {
+        overdue: [],
+        closingSoon: [],
+        briefingPending: [],
+        awaitingResults: [],
+        awardedToConvert: [],
+      };
 
   return (
     <div className="space-y-6">
@@ -100,6 +109,12 @@ export default async function TendersOverviewPage() {
           </Link>
         </Button>
       </header>
+
+      {/* Action Queue Section */}
+      <TenderActionQueue
+        organizationId={session.activeOrganizationId}
+        initialQueues={initialQueues}
+      />
 
       {/* Key Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -193,17 +208,14 @@ export default async function TendersOverviewPage() {
       {/* Pipeline Funnel */}
       <PipelineFunnel statusCounts={stats.statusCounts} />
 
-      {/* Closing Soon and Upcoming Deadlines */}
+      {/* Upcoming Deadlines and Recent Activity */}
       <div className="grid gap-6 md:grid-cols-2">
-        <ClosingSoonWidget tenders={closingSoon} />
         <UpcomingDeadlines deadlines={deadlines} />
+        <RecentActivity
+          recentTenders={activity.recentTenders}
+          recentChanges={activity.recentChanges}
+        />
       </div>
-
-      {/* Recent Activity */}
-      <RecentActivity
-        recentTenders={activity.recentTenders}
-        recentChanges={activity.recentChanges}
-      />
     </div>
   );
 }

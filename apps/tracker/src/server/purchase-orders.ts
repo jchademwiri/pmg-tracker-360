@@ -80,7 +80,7 @@ export async function getProjectLineItems(organizationId: string, projectId: str
         createdAt: projectLineItem.createdAt,
         updatedAt: projectLineItem.updatedAt,
         deletedAt: projectLineItem.deletedAt,
-        usageCount: sql<number>`count(${purchaseOrderLineItem.id})::int`,
+        usageCount: sql<number>`count(distinct ${purchaseOrderLineItem.id})::int`,
       })
       .from(projectLineItem)
       .leftJoin(
@@ -97,7 +97,80 @@ export async function getProjectLineItems(organizationId: string, projectId: str
       .groupBy(projectLineItem.id)
       .orderBy(projectLineItem.itemNumber);
 
-    return { success: true, lineItems: items };
+    // Fetch all active PO lines for this project
+    const poLines = await db
+      .select({
+        id: purchaseOrderLineItem.id,
+        projectLineItemId: purchaseOrderLineItem.projectLineItemId,
+        quantity: purchaseOrderLineItem.quantity,
+      })
+      .from(purchaseOrderLineItem)
+      .innerJoin(purchaseOrder, eq(purchaseOrderLineItem.purchaseOrderId, purchaseOrder.id))
+      .where(
+        and(
+          eq(purchaseOrder.projectId, projectId),
+          isNull(purchaseOrder.deletedAt)
+        )
+      );
+
+    // Fetch all delivery items for these PO lines
+    const deliveryItems = await db
+      .select({
+        lineItemId: purchaseOrderDeliveryItem.lineItemId,
+        quantityDelivered: purchaseOrderDeliveryItem.quantityDelivered,
+      })
+      .from(purchaseOrderDeliveryItem)
+      .innerJoin(purchaseOrderDeliveryNote, eq(purchaseOrderDeliveryItem.deliveryNoteId, purchaseOrderDeliveryNote.id))
+      .where(
+        and(
+          eq(purchaseOrderDeliveryNote.projectId, projectId),
+          eq(purchaseOrderDeliveryNote.status, 'verified')
+        )
+      );
+
+    // Map totals in JS
+    const orderedMap: Record<string, number> = {};
+    const deliveredMap: Record<string, number> = {};
+    
+    // Accumulate delivered quantity per PO line item
+    const poLineDelivered: Record<string, number> = {};
+    for (const d of deliveryItems) {
+      poLineDelivered[d.lineItemId] = (poLineDelivered[d.lineItemId] || 0) + parseFloat(d.quantityDelivered);
+    }
+
+    for (const poLine of poLines) {
+      if (poLine.projectLineItemId) {
+        const qty = parseFloat(poLine.quantity);
+        const delQty = poLineDelivered[poLine.id] || 0;
+        orderedMap[poLine.projectLineItemId] = (orderedMap[poLine.projectLineItemId] || 0) + qty;
+        deliveredMap[poLine.projectLineItemId] = (deliveredMap[poLine.projectLineItemId] || 0) + delQty;
+      }
+    }
+
+    const itemsWithQty = items.map(item => {
+      const ordered = orderedMap[item.id] || 0;
+      const delivered = deliveredMap[item.id] || 0;
+      
+      let status = 'Not Ordered';
+      if (ordered > 0) {
+        if (delivered >= ordered) {
+          status = 'Fully Delivered';
+        } else if (delivered > 0) {
+          status = 'Partially Delivered';
+        } else {
+          status = 'Fully Ordered';
+        }
+      }
+
+      return {
+        ...item,
+        totalOrdered: ordered,
+        totalDelivered: delivered,
+        status,
+      };
+    });
+
+    return { success: true, lineItems: itemsWithQty };
   } catch (error: any) {
     console.error('Error fetching project line items:', error);
     return { success: false, error: error.message || 'Failed to fetch project line items', lineItems: [] };

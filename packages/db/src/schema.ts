@@ -564,6 +564,24 @@ export const tenderFollowUp = pgTable('tender_follow_up', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Tender Activity Timeline table
+export const tenderActivity = pgTable('tender_activity', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  tenderId: text('tender_id')
+    .notNull()
+    .references(() => tender.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(), // e.g. status_change, extension_added, follow_up_added, document_uploaded, tender_created
+  description: text('description').notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type TenderActivity = typeof tenderActivity.$inferSelect;
+
+
 // Document table for file attachments
 export const document = pgTable('document', {
   id: text('id').primaryKey(),
@@ -740,6 +758,7 @@ export const tenderRelations = relations(tender, ({ one, many }) => ({
   projects: many(project),
   extensions: many(tenderExtension),
   followUps: many(tenderFollowUp),
+  activities: many(tenderActivity),
 }));
 
 export const projectRelations = relations(project, ({ one, many }) => ({
@@ -862,6 +881,21 @@ export const tenderFollowUpRelations = relations(
     }),
   })
 );
+
+export const tenderActivityRelations = relations(tenderActivity, ({ one }) => ({
+  organization: one(organization, {
+    fields: [tenderActivity.organizationId],
+    references: [organization.id],
+  }),
+  tender: one(tender, {
+    fields: [tenderActivity.tenderId],
+    references: [tender.id],
+  }),
+  user: one(user, {
+    fields: [tenderActivity.userId],
+    references: [user.id],
+  }),
+}));
 export const projectActivityRelations = relations(projectActivity, ({ one }) => ({
   organization: one(organization, {
     fields: [projectActivity.organizationId],
@@ -944,6 +978,7 @@ export const schema = {
   purchaseOrderDeliveryItem,
   tenderExtension,
   tenderFollowUp,
+  tenderActivity,
   document,
   // Relations
   organizationRelations,
@@ -967,6 +1002,7 @@ export const schema = {
   purchaseOrderDeliveryItemRelations,
   tenderExtensionRelations,
   tenderFollowUpRelations,
+  tenderActivityRelations,
   documentRelations,
   // Other
   waitlist,

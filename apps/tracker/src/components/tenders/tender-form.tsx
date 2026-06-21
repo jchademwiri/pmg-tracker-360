@@ -474,11 +474,18 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="new">Opportunity</SelectItem>
+                            <SelectItem value="review">Review</SelectItem>
+                            <SelectItem value="approved_to_prepare">Approved to Prepare</SelectItem>
+                            <SelectItem value="preparation">Preparing</SelectItem>
+                            <SelectItem value="ready">Ready</SelectItem>
                             <SelectItem value="open">Open</SelectItem>
-                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="submitted">Submitted</SelectItem>
                             <SelectItem value="evaluation">Evaluation</SelectItem>
                             <SelectItem value="awarded">Appointed / Awarded</SelectItem>
                             <SelectItem value="lost">Rejected / Lost</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

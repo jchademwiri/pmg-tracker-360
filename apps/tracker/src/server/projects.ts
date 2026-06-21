@@ -7,13 +7,14 @@ import {
   tender,
   purchaseOrder,
   purchaseOrderDeliveryNote,
+  purchaseOrderDeliveryItem,
   organization,
   projectActivity,
   projectRisk,
   projectLineItem,
 } from '@pmg/db/schema';
 import { validateSessionAndOrg } from './utils';
-import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, ne, inArray, lt, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import {
@@ -680,93 +681,144 @@ export async function deleteProject(organizationId: string, projectId: string) {
 export async function getProjectStats(organizationId: string) {
   try {
     await validateSessionAndOrg(organizationId);
-    // Get project stats
-    const projectStats = await db
-      .select({
-        status: project.status,
-        createdAt: project.createdAt,
-      })
-      .from(project)
-      .where(
-        and(
-          eq(project.organizationId, organizationId),
-          isNull(project.deletedAt)
-        )
-      );
 
-    const totalProjects = projectStats.length;
-    const statusCounts = projectStats.reduce(
-      (acc, project) => {
-        acc[project.status] = (acc[project.status] || 0) + 1;
+    // Get all projects with risks and POs
+    const allProjects = await db.query.project.findMany({
+      where: and(
+        eq(project.organizationId, organizationId),
+        isNull(project.deletedAt)
+      ),
+      with: {
+        risks: {
+          where: eq(projectRisk.status, 'open'),
+        },
+        purchaseOrders: {
+          where: isNull(purchaseOrder.deletedAt),
+        }
+      }
+    });
+
+    const totalProjects = allProjects.length;
+    const statusCounts = allProjects.reduce(
+      (acc, p) => {
+        acc[p.status] = (acc[p.status] || 0) + 1;
         return acc;
       },
-      {} as Record<string, number>
+      { active: 0, completed: 0, cancelled: 0 } as Record<string, number>
     );
 
-    // Get PO stats
-    const poStats = await db
-      .select({
-        status: purchaseOrder.status,
-        totalAmount: purchaseOrder.totalAmount,
-      })
-      .from(purchaseOrder)
-      .where(
-        and(
-          eq(purchaseOrder.organizationId, organizationId),
-          isNull(purchaseOrder.deletedAt)
-        )
+    // Calculate Project Health (active projects only)
+    let healthStats = {
+      onTrack: 0,
+      delayed: 0,
+      critical: 0,
+    };
+
+    const now = nowInSAST();
+
+    for (const p of allProjects) {
+      if (p.status !== 'active') continue;
+
+      const hasCriticalRisk = p.risks.some(r => ['high', 'critical'].includes(r.severity));
+      const hasOverdueDelivery = p.purchaseOrders.some(po => 
+        ['open', 'sent', 'partially_delivered'].includes(po.status) &&
+        po.expectedDeliveryDate &&
+        po.expectedDeliveryDate < now
       );
 
-    // Active POs: sent and delivered
-    const activePOStatuses = ['open', 'sent', 'partially_delivered', 'delivered'];
-    const activePOs = poStats.filter((po) =>
-      activePOStatuses.includes(po.status)
-    ).length;
+      if (hasCriticalRisk) {
+        healthStats.critical++;
+      } else if (hasOverdueDelivery) {
+        healthStats.delayed++;
+      } else {
+        healthStats.onTrack++;
+      }
+    }
 
-    // Total PO amount (only active POs)
-    const totalPOAmount = poStats
+    // Get active PO stats
+    const activePOStatuses = ['open', 'sent', 'partially_delivered', 'delivered'];
+    const allPOs = allProjects.flatMap(p => p.purchaseOrders);
+    
+    const deliveryStats = {
+      totalPOs: allPOs.length,
+      pendingDeliveries: allPOs.filter(po => ['open', 'sent'].includes(po.status)).length,
+      partialDeliveries: allPOs.filter(po => po.status === 'partially_delivered').length,
+      fullyDelivered: allPOs.filter(po => po.status === 'delivered').length,
+    };
+
+    // Calculate total active PO amount
+    const totalPOAmount = allPOs
       .filter((po) => activePOStatuses.includes(po.status))
       .reduce((sum, po) => {
         const amount = parseFloat(po.totalAmount || '0');
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
 
-    // Calculate growth (month-over-month project creation)
-    const now = nowInSAST();
+    // Get total contract award value for active projects
+    const totalAwardValue = allProjects
+      .filter(p => p.status === 'active')
+      .reduce((sum, p) => {
+        const val = parseFloat(p.awardValue || '0');
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+
+    // Get total delivered financial value from verified deliveries
+    const deliveryValueResult = await db
+      .select({
+        totalDelivered: sql<string>`coalesce(sum(${purchaseOrderDeliveryItem.deliveryValue}), '0')`,
+      })
+      .from(purchaseOrderDeliveryItem)
+      .innerJoin(purchaseOrderDeliveryNote, eq(purchaseOrderDeliveryItem.deliveryNoteId, purchaseOrderDeliveryNote.id))
+      .where(
+        and(
+          eq(purchaseOrderDeliveryNote.organizationId, organizationId),
+          eq(purchaseOrderDeliveryNote.status, 'verified')
+        )
+      );
+    const totalDeliveredValue = parseFloat(deliveryValueResult[0]?.totalDelivered || '0');
+
+    // Risk stats
+    const allActiveRisks = allProjects.flatMap(p => p.risks);
+    const riskStats = {
+      totalActiveRisks: allActiveRisks.length,
+      highCriticalRisks: allActiveRisks.filter(r => ['high', 'critical'].includes(r.severity)).length,
+    };
+
+    // Calculate growth (month-over-month active project creation)
     const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const currentMonthProjects = projectStats.filter(
+    const currentMonthProjects = allProjects.filter(
       (p) => p.createdAt >= currentMonth && p.createdAt < nextMonth
     ).length;
 
-    const previousMonthProjects = projectStats.filter(
+    const previousMonthProjects = allProjects.filter(
       (p) => p.createdAt >= previousMonth && p.createdAt < currentMonth
     ).length;
 
     let growth = 0;
     if (previousMonthProjects > 0) {
-      growth =
-        ((currentMonthProjects - previousMonthProjects) /
-          previousMonthProjects) *
-        100;
+      growth = ((currentMonthProjects - previousMonthProjects) / previousMonthProjects) * 100;
     } else if (currentMonthProjects > 0) {
-      growth = 100; // If no previous month projects but current has some, show 100% growth
+      growth = 100;
     }
 
     return {
       success: true,
       stats: {
         totalProjects,
-        statusCounts: {
-          active: statusCounts.active || 0,
-          completed: statusCounts.completed || 0,
-          cancelled: statusCounts.cancelled || 0,
+        statusCounts,
+        healthStats,
+        deliveryStats,
+        riskStats,
+        financialStats: {
+          totalAwardValue,
+          totalPOValue: totalPOAmount,
+          totalDeliveredValue,
+          remainingValue: Math.max(0, totalPOAmount - totalDeliveredValue),
         },
-        activePOs,
-        totalPOAmount,
-        growth: Math.round(growth * 100) / 100, // Round to 2 decimal places
+        growth: Math.round(growth * 100) / 100,
       },
     };
   } catch (error: any) {
@@ -776,13 +828,11 @@ export async function getProjectStats(organizationId: string) {
       error: error.message || 'Failed to fetch project statistics',
       stats: {
         totalProjects: 0,
-        statusCounts: {
-          active: 0,
-          completed: 0,
-          cancelled: 0,
-        },
-        activePOs: 0,
-        totalPOAmount: 0,
+        statusCounts: { active: 0, completed: 0, cancelled: 0 },
+        healthStats: { onTrack: 0, delayed: 0, critical: 0 },
+        deliveryStats: { totalPOs: 0, pendingDeliveries: 0, partialDeliveries: 0, fullyDelivered: 0 },
+        riskStats: { totalActiveRisks: 0, highCriticalRisks: 0 },
+        financialStats: { totalAwardValue: 0, totalPOValue: 0, totalDeliveredValue: 0, remainingValue: 0 },
         growth: 0,
       },
     };
@@ -1046,6 +1096,7 @@ export async function getProjectWorkspaceData(
         purchaseOrders: {
           where: isNull(purchaseOrder.deletedAt),
           with: {
+            lineItems: true,
             deliveryNotes: {
               orderBy: [desc(purchaseOrderDeliveryNote.receivedAt)],
               with: {
@@ -1098,4 +1149,147 @@ export async function getProjectWorkspaceData(
   }
 }
 
+// Get action queue lists and aggregates for projects
+export async function getProjectActionQueue(organizationId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const now = nowInSAST();
 
+    // 1. Overdue Deliveries: POs with status open, sent, or partially_delivered and expectedDeliveryDate in the past.
+    const overdueDeliveries = await db
+      .select({
+        id: purchaseOrder.id,
+        poNumber: purchaseOrder.poNumber,
+        description: purchaseOrder.description,
+        totalAmount: purchaseOrder.totalAmount,
+        status: purchaseOrder.status,
+        expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
+        project: {
+          id: project.id,
+          projectNumber: project.projectNumber,
+        },
+        client: {
+          name: client.name,
+        }
+      })
+      .from(purchaseOrder)
+      .innerJoin(project, eq(purchaseOrder.projectId, project.id))
+      .leftJoin(client, eq(project.clientId, client.id))
+      .where(
+        and(
+          eq(purchaseOrder.organizationId, organizationId),
+          isNull(purchaseOrder.deletedAt),
+          inArray(purchaseOrder.status, ['open', 'sent', 'partially_delivered']),
+          lt(purchaseOrder.expectedDeliveryDate, now)
+        )
+      )
+      .orderBy(purchaseOrder.expectedDeliveryDate);
+
+    // 2. Partial Deliveries: POs with status partially_delivered
+    const partialDeliveries = await db
+      .select({
+        id: purchaseOrder.id,
+        poNumber: purchaseOrder.poNumber,
+        description: purchaseOrder.description,
+        totalAmount: purchaseOrder.totalAmount,
+        status: purchaseOrder.status,
+        expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
+        project: {
+          id: project.id,
+          projectNumber: project.projectNumber,
+        },
+        client: {
+          name: client.name,
+        }
+      })
+      .from(purchaseOrder)
+      .innerJoin(project, eq(purchaseOrder.projectId, project.id))
+      .leftJoin(client, eq(project.clientId, client.id))
+      .where(
+        and(
+          eq(purchaseOrder.organizationId, organizationId),
+          isNull(purchaseOrder.deletedAt),
+          eq(purchaseOrder.status, 'partially_delivered')
+        )
+      )
+      .orderBy(desc(purchaseOrder.createdAt));
+
+    // 3. High Risks: Active risks (status = 'open') with severity high or critical
+    const highRisks = await db
+      .select({
+        id: projectRisk.id,
+        title: projectRisk.title,
+        description: projectRisk.description,
+        severity: projectRisk.severity,
+        status: projectRisk.status,
+        createdAt: projectRisk.createdAt,
+        project: {
+          id: project.id,
+          projectNumber: project.projectNumber,
+        }
+      })
+      .from(projectRisk)
+      .innerJoin(project, eq(projectRisk.projectId, project.id))
+      .where(
+        and(
+          eq(projectRisk.organizationId, organizationId),
+          eq(projectRisk.status, 'open'),
+          inArray(projectRisk.severity, ['high', 'critical'])
+        )
+      )
+      .orderBy(desc(projectRisk.createdAt));
+
+    // 4. Close-out Candidates: Active projects whose contract end date is in the past, or where all POs are fully delivered.
+    const activeProjects = await db.query.project.findMany({
+      where: and(
+        eq(project.organizationId, organizationId),
+        eq(project.status, 'active'),
+        isNull(project.deletedAt)
+      ),
+      with: {
+        client: true,
+        purchaseOrders: {
+          where: isNull(purchaseOrder.deletedAt),
+        }
+      }
+    });
+
+    const closeOutCandidates = activeProjects
+      .filter(p => {
+        const isPastEndDate = p.contractEndDate && p.contractEndDate < now;
+        const allPOsDelivered = p.purchaseOrders.length > 0 && p.purchaseOrders.every(po => po.status === 'delivered');
+        return isPastEndDate || allPOsDelivered;
+      })
+      .map(p => ({
+        id: p.id,
+        projectNumber: p.projectNumber,
+        description: p.description,
+        contractEndDate: p.contractEndDate,
+        status: p.status,
+        client: p.client ? { name: p.client.name } : null,
+        candidateReason: (p.contractEndDate && p.contractEndDate < now) ? 'Passed End Date' : 'All POs Delivered',
+      }));
+
+    return {
+      success: true,
+      queues: {
+        overdueDeliveries,
+        partialDeliveries,
+        highRisks,
+        closeOutCandidates,
+      }
+    };
+  } catch (error: any) {
+    console.error('Error fetching project action queues:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch project action queues',
+      queues: {
+        overdueDeliveries: [],
+        partialDeliveries: [],
+        highRisks: [],
+        closeOutCandidates: [],
+      }
+    };
+  }
+}

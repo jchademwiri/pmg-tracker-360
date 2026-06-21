@@ -1,6 +1,6 @@
 'use client';
 
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -18,6 +18,10 @@ import {
   Plus,
   PhoneCall,
   AlertTriangle,
+  Activity,
+  TrendingUp,
+  ClipboardCheck,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -29,7 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { deleteTender, updateTenderStatus, createTenderFollowUp } from '@/server/tenders';
+import { deleteTender, updateTenderStatus, createTenderFollowUp, getTenderActivities } from '@/server/tenders';
 import { formatCurrency, formatDate as sharedFormatDate, formatDateTime } from '@/lib/format';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -116,6 +120,43 @@ export function TenderDetails({
   const [activeTab, setActiveTab] = useState('overview');
   const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'activities') {
+      const fetchActivities = async () => {
+        setLoadingActivities(true);
+        try {
+          const result = await getTenderActivities(organizationId, tender.id);
+          if (result.success && result.activities) {
+            setActivities(result.activities);
+          }
+        } catch (error) {
+          console.error('Error loading tender activities:', error);
+        } finally {
+          setLoadingActivities(false);
+        }
+      };
+      fetchActivities();
+    }
+  }, [activeTab, tender.id, organizationId]);
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'tender_created':
+        return <Plus className="h-4 w-4 text-emerald-400" />;
+      case 'status_change':
+        return <TrendingUp className="h-4 w-4 text-sky-400" />;
+      case 'extension_added':
+        return <Calendar className="h-4 w-4 text-amber-400" />;
+      case 'follow_up_added':
+        return <ClipboardCheck className="h-4 w-4 text-violet-400" />;
+      default:
+        return <Activity className="h-4 w-4 text-zinc-400" />;
+    }
+  };
 
   const handleFollowUpSubmit = async (data: any) => {
     startTransition(async () => {
@@ -378,6 +419,7 @@ export function TenderDetails({
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="extensions">Extensions</TabsTrigger>
           <TabsTrigger value="follow-ups">Follow-ups</TabsTrigger>
+          <TabsTrigger value="activities">Activities</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -1010,6 +1052,59 @@ export function TenderDetails({
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activities" className="mt-6">
+          <Card className="rounded-lg shadow-sm border border-border/40">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold">Tender Activity Timeline</CardTitle>
+              <CardDescription className="text-muted-foreground text-xs">Chronological timeline of all workspace lifecycle events</CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 pb-8">
+              {loadingActivities ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : activities.length > 0 ? (
+                <div className="relative pl-6 border-l-2 border-border space-y-8 mt-4">
+                  {activities.map((act) => {
+                    return (
+                      <div key={act.id} className="relative group">
+                        {/* Timeline Dot */}
+                        <div className="absolute -left-[31px] top-0.5 p-1 bg-background border-2 border-border rounded-full group-hover:border-muted-foreground transition-colors duration-200">
+                          {getActivityIcon(act.activityType)}
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-muted-foreground">
+                              {sharedFormatDate(act.createdAt)} • {new Date(act.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {act.user?.name && (
+                              <span className="inline-flex items-center text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                <User className="h-2.5 w-2.5 mr-1" />
+                                {act.user.name}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <p className="text-sm text-foreground/80 font-light transition-colors duration-200">
+                            {act.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                  <Activity className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-semibold">No logged activities for this tender</p>
+                  <p className="text-xs mt-1">Actions like status changes, extensions, and follow-ups will log here.</p>
                 </div>
               )}
             </CardContent>

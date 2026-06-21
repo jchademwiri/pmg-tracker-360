@@ -252,6 +252,39 @@ export function ProjectWorkspace({
     }).format(new Date(date));
   };
 
+  // Close-out Readiness Checklist checks
+  const allPOsDelivered = purchaseOrders.length === 0 || purchaseOrders.every(po => ['delivered', 'completed'].includes(po.status));
+  const allRisksClosed = risks.length === 0 || risks.every(r => r.status === 'closed');
+  const hasSignedContract = !!project.signedContractUrl || documents.some(doc => doc.name.toLowerCase().includes('contract') || doc.name.toLowerCase().includes('sla'));
+  const allDeliveryNotesVerified = deliveryNotes.length === 0 || deliveryNotes.every(dn => dn.status === 'verified');
+
+  const closeOutChecklist = [
+    {
+      id: 'pos',
+      label: 'All Purchase Orders Delivered',
+      desc: 'All purchase orders must have status "delivered" or "completed".',
+      status: allPOsDelivered,
+    },
+    {
+      id: 'risks',
+      label: 'All Project Risks Closed',
+      desc: 'All project risks must be in "closed" status.',
+      status: allRisksClosed,
+    },
+    {
+      id: 'contract',
+      label: 'Signed Contract / SLA Document Uploaded',
+      desc: 'Project must have a signed contract URL or contract/SLA document uploaded.',
+      status: hasSignedContract,
+    },
+    {
+      id: 'deliveryNotes',
+      label: 'All Delivery Notes Verified',
+      desc: 'All logged purchase order delivery notes must be verified.',
+      status: allDeliveryNotesVerified,
+    },
+  ];
+
   // Close out handler
   const handleCloseOutSubmit = () => {
     if (closeOutNotes.trim().length < 10) {
@@ -460,6 +493,37 @@ export function ProjectWorkspace({
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
+                    {/* Close-out Readiness Checklist */}
+                    <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Close-out Readiness Checks</h4>
+                      <div className="space-y-2.5">
+                        {closeOutChecklist.map((item) => (
+                          <div key={item.id} className="flex items-start gap-2.5 text-sm">
+                            {item.status ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                            )}
+                            <div>
+                              <p className={`font-medium ${item.status ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                {item.label}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {item.desc}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {!closeOutChecklist.every(item => item.status) && (
+                        <div className="mt-3 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
+                          <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <span>Some checks are not satisfied. You can still submit the close-out if necessary.</span>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="closeOutNotes" className="text-foreground">Close-out Outcome & Notes</Label>
                       <Textarea
