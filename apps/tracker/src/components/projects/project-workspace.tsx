@@ -379,32 +379,6 @@ export function ProjectWorkspace({
     });
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
-      case 'high':
-        return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20';
-      case 'medium':
-        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
-      case 'low':
-      default:
-        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-    }
-  };
-
-  const getRiskStatusBadge = (status: string) => {
-    switch (status) {
-      case 'mitigated':
-        return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20';
-      case 'closed':
-        return 'bg-muted text-muted-foreground border border-border/40';
-      case 'open':
-      default:
-        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-    }
-  };
-
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'project_created':
@@ -1250,12 +1224,8 @@ export function ProjectWorkspace({
                         >
                           <div className="space-y-3 max-w-2xl">
                             <div className="flex flex-wrap items-center gap-2.5">
-                              <Badge className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${getSeverityColor(risk.severity)}`}>
-                                {risk.severity}
-                              </Badge>
-                              <Badge className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${getRiskStatusBadge(risk.status)}`}>
-                                {risk.status}
-                              </Badge>
+                              <StatusBadge domain="risk" status={risk.severity} />
+                              <StatusBadge domain="risk" status={risk.status} />
                               <span className="text-[10px] text-muted-foreground">
                                 Logged {formatDate(risk.createdAt)}
                               </span>
