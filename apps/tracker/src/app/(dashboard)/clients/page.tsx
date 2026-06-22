@@ -16,7 +16,7 @@ export default async function ClientsPage() {
           <h2 className="text-xl font-semibold mb-2">
             No Organization Selected
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Please select an organization to manage clients.
           </p>
         </div>

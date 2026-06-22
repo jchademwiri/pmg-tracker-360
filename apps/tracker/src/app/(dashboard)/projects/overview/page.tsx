@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/format';
 import { ProjectActionQueue } from '@/components/projects/project-action-queue';
+import { ProjectHealthSummary } from '@/components/projects/project-health-summary';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,16 @@ export default async function ProjectsOverviewPage() {
           )}
         </div>
       </header>
+
+      {/* Project Health Summary Widget */}
+      <ProjectHealthSummary
+        stats={{
+          criticalProjects: stats.healthStats.critical,
+          overdueDeliveries: initialQueues.overdueDeliveries.length,
+          pendingDeliveries: stats.deliveryStats.pendingDeliveries,
+          openRisks: stats.riskStats.totalActiveRisks,
+        }}
+      />
 
       {/* Project Action Queue */}
       <ProjectActionQueue

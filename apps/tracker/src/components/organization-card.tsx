@@ -1,14 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { Role } from '@pmg/db/schema';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, Settings, ExternalLink } from 'lucide-react';
+import { Users, Calendar, Settings, ExternalLink, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { OrganizationWithStats } from '@/server/organizations';
+import { switchOrganization } from '@/lib/organization-utils';
 
 interface OrganizationCardProps {
   organization: OrganizationWithStats;
@@ -28,6 +30,26 @@ export function OrganizationCard({
   // Use the organization's built-in data if not provided as props
   const actualMemberCount = memberCount ?? organization.memberCount;
   const actualUserRole = userRole ?? organization.userRole;
+  const [isSwitching, setIsSwitching] = useState(false);
+
+  const handleOpenDashboard = async () => {
+    if (isActive) {
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    setIsSwitching(true);
+    const result = await switchOrganization({
+      organizationId: organization.id,
+      organizationName: organization.name,
+      redirectUrl: '/dashboard',
+    });
+
+    if (!result.success) {
+      setIsSwitching(false);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -108,14 +130,18 @@ export function OrganizationCard({
           {/* Actions */}
           <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
             <Button
-              asChild
+              type="button"
               className="flex-1 transition-all duration-200 hover:scale-105"
               size="sm"
+              disabled={isSwitching}
+              onClick={handleOpenDashboard}
             >
-              <Link href={`/dashboard`}>
+              {isSwitching ? (
+                <Loader2 className="size-4 mr-2 animate-spin" />
+              ) : (
                 <ExternalLink className="size-4 mr-2 py-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                Go to Dashboard
-              </Link>
+              )}
+              Go to Dashboard
             </Button>
             {(actualUserRole === 'owner' || actualUserRole === 'admin') && (
               <Button

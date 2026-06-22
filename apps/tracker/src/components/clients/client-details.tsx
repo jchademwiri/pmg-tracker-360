@@ -200,7 +200,7 @@ export function ClientDetails({
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">
+                <label className="text-sm font-medium text-muted-foreground">
                   Client Name
                 </label>
                 <p className="text-lg font-medium">{client.name}</p>
@@ -208,7 +208,7 @@ export function ClientDetails({
 
               {client.notes ? (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">
+                  <label className="text-sm font-medium text-muted-foreground">
                     Notes
                   </label>
                   <p className="text-foreground whitespace-pre-wrap">
@@ -217,10 +217,10 @@ export function ClientDetails({
                 </div>
               ) : (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">
+                  <label className="text-sm font-medium text-muted-foreground">
                     Notes
                   </label>
-                  <p className="text-gray-400 italic">No notes added</p>
+                  <p className="text-muted-foreground italic">No notes added</p>
                 </div>
               )}
             </CardContent>
@@ -241,7 +241,7 @@ export function ClientDetails({
                     <div className="flex items-center space-x-3">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <label className="text-sm font-medium text-gray-500">
+                        <label className="text-sm font-medium text-muted-foreground">
                           Contact Person
                         </label>
                         <p className="text-foreground">{client.contactName}</p>
@@ -253,13 +253,13 @@ export function ClientDetails({
                     <div className="flex items-center space-x-3">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <label className="text-sm font-medium text-gray-500">
+                        <label className="text-sm font-medium text-muted-foreground">
                           Email Address
                         </label>
                         <p className="text-foreground">
                           <Link
                             href={`mailto:${client.contactEmail}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                            className="text-primary hover:text-primary/80 hover:underline"
                           >
                             {client.contactEmail}
                           </Link>
@@ -272,13 +272,13 @@ export function ClientDetails({
                     <div className="flex items-center space-x-3">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <label className="text-sm font-medium text-gray-500">
+                        <label className="text-sm font-medium text-muted-foreground">
                           Phone Number
                         </label>
                         <p className="text-foreground">
                           <Link
                             href={`tel:${client.contactPhone}`}
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
+                            className="text-primary hover:text-primary/80 hover:underline"
                           >
                             {client.contactPhone}
                           </Link>
@@ -289,7 +289,7 @@ export function ClientDetails({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Mail className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <Mail className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">
                     No Contact Information
                   </h3>
@@ -375,7 +375,7 @@ export function ClientDetails({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <ClipboardList className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">
                     No Tenders Yet
                   </h3>
@@ -461,7 +461,7 @@ export function ClientDetails({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <FolderKanban className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <FolderKanban className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-foreground mb-2">
                     No Projects Yet
                   </h3>
@@ -579,18 +579,18 @@ export function ClientDetails({
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-500">
+                <label className="text-sm font-medium text-muted-foreground">
                   Created
                 </label>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   {formatDateTime(client.createdAt)}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">
+                <label className="text-sm font-medium text-muted-foreground">
                   Last Updated
                 </label>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   {formatDateTime(client.updatedAt)}
                 </p>
               </div>

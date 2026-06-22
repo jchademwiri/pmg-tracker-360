@@ -48,7 +48,7 @@ export default async function TendersOverviewPage() {
           <h2 className="text-xl font-semibold mb-2">
             No Organization Selected
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Please select an organization to view tender overview.
           </p>
         </div>

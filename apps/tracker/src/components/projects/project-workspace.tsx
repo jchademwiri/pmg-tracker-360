@@ -22,7 +22,8 @@ import {
   User,
   Lock,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  MoreHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +31,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { DocumentManager } from '@/components/documents/document-manager';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Dialog, 
   DialogContent, 
@@ -443,117 +450,157 @@ export function ProjectWorkspace({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Create PO
               </Button>
             </Link>
-            <Link href={`/projects/${project.id}/items/new`}>
-              <Button variant="outline">
-                <Package className="h-4 w-4 mr-2" />
-                Add Item
-              </Button>
-            </Link>
-            <Link href={`/projects/${project.id}/edit`}>
-              <Button variant="outline">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Info
-              </Button>
-            </Link>
 
-            {project.status !== 'completed' ? (
-              <Dialog open={isCloseOutOpen} onOpenChange={setIsCloseOutOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default">
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Close-out Project
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-bold">Project Close-out Submission</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">
-                      Archive the project as completed. This records close-out notes, captures the date, and changes the project status.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    {/* Close-out Readiness Checklist */}                    <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Close-out Readiness Checks</h4>
-                      <div className="space-y-2.5">
-                        {closeOutChecklist.map((item) => (
-                          <div key={item.id} className="flex items-start gap-2.5 text-sm">
-                            {item.status ? (
-                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                            ) : (
-                              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                            )}
-                            <div>
-                              <p className={`font-medium ${item.status ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                {item.label}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {item.desc}
-                              </p>
+            {/* Desktop actions */}
+            <div className="hidden md:flex items-center gap-3">
+              <Link href={`/projects/${project.id}/items/new`}>
+                <Button variant="outline">
+                  <Package className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </Link>
+              <Link href={`/projects/${project.id}/edit`}>
+                <Button variant="outline">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Info
+                </Button>
+              </Link>
+
+              {project.status !== 'completed' ? (
+                <Dialog open={isCloseOutOpen} onOpenChange={setIsCloseOutOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="default">
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Close-out Project
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-bold">Project Close-out Submission</DialogTitle>
+                      <DialogDescription className="text-muted-foreground">
+                        Archive the project as completed. This records close-out notes, captures the date, and changes the project status.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      {/* Close-out Readiness Checklist */}                    <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Close-out Readiness Checks</h4>
+                        <div className="space-y-2.5">
+                          {closeOutChecklist.map((item) => (
+                            <div key={item.id} className="flex items-start gap-2.5 text-sm">
+                              {item.status ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                              )}
+                              <div>
+                                <p className={`font-medium ${item.status ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                  {item.label}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.desc}
+                                </p>
+                              </div>
                             </div>
+                          ))}
+                        </div>
+                        
+                        {criticalRisks.length > 0 && (
+                          <div className="mt-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
+                            <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                            <span><strong>Critical risks must be resolved</strong> before close-out can be submitted. Please mitigate {criticalRisks.length > 1 ? 'these risks' : 'this risk'} in the Risks tab first.</span>
                           </div>
-                        ))}
+                        )}
+                        {!closeOutChecklist.every(item => item.status) && criticalRisks.length === 0 && (
+                          <div className="mt-3 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
+                            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                            <span>Some checks are not satisfied. You can still submit the close-out if necessary.</span>
+                          </div>
+                        )}
                       </div>
-                      
-                      {criticalRisks.length > 0 && (
-                        <div className="mt-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
-                          <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                          <span><strong>Critical risks must be resolved</strong> before close-out can be submitted. Please mitigate {criticalRisks.length > 1 ? 'these risks' : 'this risk'} in the Risks tab first.</span>
-                        </div>
-                      )}
-                      {!closeOutChecklist.every(item => item.status) && criticalRisks.length === 0 && (
-                        <div className="mt-3 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
-                          <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                          <span>Some checks are not satisfied. You can still submit the close-out if necessary.</span>
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="closeOutNotes" className="text-foreground">Close-out Outcome & Notes</Label>
-                      <Textarea
-                        id="closeOutNotes"
-                        placeholder="Provide details about the project delivery, key milestones achieved, and close-out sign-off..."
-                        rows={5}
-                        className="bg-background border-border/40 text-foreground focus-visible:ring-primary focus-visible:border-primary"
-                        value={closeOutNotes}
-                        onChange={(e) => setCloseOutNotes(e.target.value)}
-                        disabled={isClosingOut}
-                      />
-                      <p className="text-xs text-muted-foreground">Min. 10 characters required. Logs submitter name and timestamp.</p>
+                      <div className="space-y-2">
+                        <Label htmlFor="closeOutNotes" className="text-foreground">Close-out Outcome & Notes</Label>
+                        <Textarea
+                          id="closeOutNotes"
+                          placeholder="Provide details about the project delivery, key milestones achieved, and close-out sign-off..."
+                          rows={5}
+                          className="bg-background border-border/40 text-foreground focus-visible:ring-primary focus-visible:border-primary"
+                          value={closeOutNotes}
+                          onChange={(e) => setCloseOutNotes(e.target.value)}
+                          disabled={isClosingOut}
+                        />
+                        <p className="text-xs text-muted-foreground">Min. 10 characters required. Logs submitter name and timestamp.</p>
+                      </div>
                     </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setIsCloseOutOpen(false)}
-                      disabled={isClosingOut}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleCloseOutSubmit}
-                      disabled={isClosingOut || criticalRisks.length > 0}
-                      title={criticalRisks.length > 0 ? 'Resolve critical risks first' : undefined}
-                    >
-                      {criticalRisks.length > 0 ? 'Critical Risks Blocking' : (isClosingOut ? 'Submitting...' : 'Submit Close-out')}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            ) : (
-              <Button variant="ghost" disabled className="text-muted-foreground bg-muted/50 border border-border/40 rounded-xl">
-                <Lock className="h-4 w-4 mr-2" />
-                Project Closed
-              </Button>
-            )}
+                    <DialogFooter>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setIsCloseOutOpen(false)}
+                        disabled={isClosingOut}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleCloseOutSubmit}
+                        disabled={isClosingOut || criticalRisks.length > 0}
+                        title={criticalRisks.length > 0 ? 'Resolve critical risks first' : undefined}
+                      >
+                        {criticalRisks.length > 0 ? 'Critical Risks Blocking' : (isClosingOut ? 'Submitting...' : 'Submit Close-out')}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              ) : (
+                <Button variant="ghost" disabled className="text-muted-foreground bg-muted/50 border border-border/40 rounded-xl">
+                  <Lock className="h-4 w-4 mr-2" />
+                  Project Closed
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile overflow menu */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href={`/projects/${project.id}/items/new`}>
+                      <Package className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/projects/${project.id}/edit`}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Info
+                    </Link>
+                  </DropdownMenuItem>
+                  {project.status !== 'completed' ? (
+                    <DropdownMenuItem onClick={() => setIsCloseOutOpen(true)}>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Close-out Project
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      <Lock className="h-4 w-4 mr-2" />
+                      Project Closed
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
