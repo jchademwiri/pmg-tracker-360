@@ -22,6 +22,9 @@ import { RecentActivity } from '@/components/tenders/recent-activity';
 import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
 import { PipelineFunnel } from '@/components/tenders/pipeline-funnel';
 import { TenderActionQueue } from '@/components/tenders/tender-action-queue';
+import { TenderWorkloadSummary } from '@/components/tenders/tender-workload-summary';
+import { TenderCalendarStrip } from '@/components/tenders/tender-calendar-strip';
+import { getTenderWorkloadStats, getTenderCalendarEvents } from '@/server/tender-workload';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -54,12 +57,14 @@ export default async function TendersOverviewPage() {
   }
 
   // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult, actionQueueResult] =
+  const [statsResult, activityResult, deadlinesResult, actionQueueResult, workloadResult, calendarResult] =
     await Promise.all([
       getTenderStats(session.activeOrganizationId),
       getRecentActivity(session.activeOrganizationId, 3),
       getUpcomingDeadlines(session.activeOrganizationId, 3),
       getTenderActionQueue(session.activeOrganizationId),
+      getTenderWorkloadStats(session.activeOrganizationId),
+      getTenderCalendarEvents(session.activeOrganizationId),
     ]);
 
   const stats = statsResult.success
@@ -80,6 +85,12 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
+  
+  const workloadStats = workloadResult.success ? workloadResult.stats : {
+    missingDocuments: 0, missingContact: 0, overdueActions: 0, awaitingResults: 0,
+  };
+  
+  const calendarEvents = calendarResult.success ? calendarResult.events : [];
   
   const initialQueues = actionQueueResult.success
     ? actionQueueResult.queues
@@ -109,6 +120,9 @@ export default async function TendersOverviewPage() {
           </Link>
         </Button>
       </header>
+
+      {/* Workload Summary Widget */}
+      <TenderWorkloadSummary stats={workloadStats} />
 
       {/* Action Queue Section */}
       <TenderActionQueue
@@ -208,13 +222,18 @@ export default async function TendersOverviewPage() {
       {/* Pipeline Funnel */}
       <PipelineFunnel statusCounts={stats.statusCounts} />
 
-      {/* Upcoming Deadlines and Recent Activity */}
+      {/* Calendar Events Strip and Workload */}
       <div className="grid gap-6 md:grid-cols-2">
-        <UpcomingDeadlines deadlines={deadlines} />
+        <TenderCalendarStrip events={calendarEvents} />
         <RecentActivity
           recentTenders={activity.recentTenders}
           recentChanges={activity.recentChanges}
         />
+      </div>
+
+      {/* Upcoming Deadlines */}
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <UpcomingDeadlines deadlines={deadlines} />
       </div>
     </div>
   );
