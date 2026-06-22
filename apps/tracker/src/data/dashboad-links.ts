@@ -5,6 +5,8 @@ import {
   LayoutDashboard,
   Users,
   BarChart3,
+  Settings,
+  Building2,
 } from 'lucide-react';
 
 export const dashboadLinks = {
@@ -64,6 +66,18 @@ export const dashboadLinks = {
       title: 'Clients Directory',
       url: '/clients',
       icon: Users,
+    },
+  ],
+  settings: [
+    {
+      title: 'Settings',
+      url: '/settings',
+      icon: Settings,
+    },
+    {
+      title: 'Organizations',
+      url: '/organization',
+      icon: Building2,
     },
   ],
 };

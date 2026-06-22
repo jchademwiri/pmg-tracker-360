@@ -8,7 +8,8 @@ export interface StepConfig {
 }
 
 /**
- * Renders step indicator dots with connecting lines.
+ * Renders step indicator — full horizontal stepper on desktop,
+ * compact "Step X of Y" with progress bar on mobile.
  */
 function StepIndicator({
   steps,
@@ -19,9 +20,28 @@ function StepIndicator({
   currentStep: number;
   onStepClick?: (step: number) => void;
 }) {
+  const currentLabel = steps.find((s) => s.step === currentStep)?.label || '';
+
   return (
     <div className="mb-8">
-      <div className="flex items-center justify-between max-w-xl mx-auto">
+      {/* ── Mobile: compact Step X of Y + progress bar ── */}
+      <div className="md:hidden space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">
+            Step {currentStep} of {steps.length}
+          </span>
+          <span className="text-sm text-muted-foreground">{currentLabel}</span>
+        </div>
+        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-500 ease-in-out"
+            style={{ width: `${(currentStep / steps.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* ── Desktop: full horizontal dot stepper ── */}
+      <div className="hidden md:flex items-center justify-between max-w-xl mx-auto">
         {steps.map((item, index) => (
           <div key={item.step} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center">

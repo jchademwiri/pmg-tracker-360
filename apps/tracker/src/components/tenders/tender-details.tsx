@@ -303,15 +303,15 @@ export function TenderDetails({
       </div>
 
       {/* Tender Lifecycle Stage Stepper */}
-      <Card className="rounded-lg shadow-sm border border-border/40 bg-card/50 overflow-hidden">
-        <div className="px-4 py-2.5 bg-muted/20 border-b border-border/30 flex items-center justify-between flex-wrap gap-2">
+      <Card className="rounded-lg shadow-sm border overflow-hidden">
+        <div className="px-4 py-2.5 bg-muted/20 border-b flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tender Lifecycle Stage</span>
             <StatusBadge status={tender.status} />
           </div>
           <span className="text-xs text-muted-foreground">Click a stage to transition the workflow</span>
         </div>
-        <div className="p-5 overflow-x-auto">
+        <div className="p-5">
           {(() => {
             const stages = [
               { value: 'new', label: 'Opportunity' },
@@ -326,30 +326,20 @@ export function TenderDetails({
 
             const getStatusIndex = (status: string) => {
               switch (status) {
-                case 'new':
-                case 'open':
-                  return 0;
-                case 'review':
-                  return 1;
-                case 'approved_to_prepare':
-                  return 2;
-                case 'preparation':
-                  return 3;
-                case 'ready':
-                  return 4;
-                case 'submitted':
-                  return 5;
-                case 'evaluation':
-                  return 6;
-                case 'awarded':
-                case 'lost':
-                  return 7;
-                default:
-                  return -1;
+                case 'new': case 'open': return 0;
+                case 'review': return 1;
+                case 'approved_to_prepare': return 2;
+                case 'preparation': return 3;
+                case 'ready': return 4;
+                case 'submitted': return 5;
+                case 'evaluation': return 6;
+                case 'awarded': case 'lost': return 7;
+                default: return -1;
               }
             };
 
             const currentStatusIndex = getStatusIndex(tender.status);
+            const currentStage = stages[currentStatusIndex];
 
             const handleStageClick = (stageValue: string) => {
               if (stageValue === tender.status) return;
@@ -362,52 +352,99 @@ export function TenderDetails({
             };
 
             return (
-              <div className="flex items-center w-full min-w-[750px] justify-between relative py-2">
-                {/* Background progress line */}
-                <div className="absolute top-[21px] left-0 right-0 h-0.5 bg-border -translate-y-1/2 z-0" />
-                
-                {/* Active progress line */}
-                {currentStatusIndex >= 0 && (
-                  <div 
-                    className="absolute top-[21px] left-0 h-0.5 bg-blue-500 -translate-y-1/2 z-0 transition-all duration-500 ease-in-out" 
-                    style={{ 
-                      width: `${(currentStatusIndex / (stages.length - 1)) * 100}%` 
-                    }}
-                  />
-                )}
+              <>
+                {/* ── Desktop: Full horizontal stepper ── */}
+                <div className="hidden md:flex items-center w-full justify-between relative py-2">
+                  <div className="absolute top-[21px] left-0 right-0 h-0.5 bg-border -translate-y-1/2 z-0" />
+                  {currentStatusIndex >= 0 && (
+                    <div 
+                      className="absolute top-[21px] left-0 h-0.5 bg-blue-500 -translate-y-1/2 z-0 transition-all duration-500 ease-in-out" 
+                      style={{ width: `${(currentStatusIndex / (stages.length - 1)) * 100}%` }}
+                    />
+                  )}
+                  {stages.map((stage, idx) => {
+                    const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
+                    const isActive = idx === currentStatusIndex;
+                    const isTerminal = stage.value === 'awarded';
+                    const isLost = tender.status === 'lost' && isTerminal;
 
-                {stages.map((stage, idx) => {
-                  const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
-                  const isActive = idx === currentStatusIndex;
-                  const isTerminal = stage.value === 'awarded';
-                  const isLost = tender.status === 'lost' && isTerminal;
-
-                  let dotColor = "bg-background border-border text-muted-foreground hover:border-blue-500/50";
-                  if (isCompleted) {
-                    dotColor = "bg-blue-500 border-blue-500 text-white";
-                  } else if (isActive) {
-                    dotColor = isLost 
+                    let dotColor = "bg-background border-border text-muted-foreground hover:border-blue-500/50";
+                    if (isCompleted) dotColor = "bg-blue-500 border-blue-500 text-white";
+                    else if (isActive) dotColor = isLost 
                       ? "bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20" 
                       : "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-500/20 ring-4 ring-blue-500/10";
-                  }
 
-                  return (
-                    <button
-                      key={stage.value}
-                      onClick={() => handleStageClick(stage.value)}
-                      disabled={isPending}
-                      className="flex flex-col items-center relative z-10 cursor-pointer group focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotColor} group-hover:scale-105`}>
-                        {idx + 1}
-                      </div>
-                      <span className={`text-[11px] font-semibold mt-2 transition-colors duration-300 ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground group-hover:text-foreground'}`}>
-                        {stage.label}
+                    return (
+                      <button
+                        key={stage.value}
+                        onClick={() => handleStageClick(stage.value)}
+                        disabled={isPending}
+                        className="flex flex-col items-center relative z-10 cursor-pointer group focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotColor} group-hover:scale-105`}>
+                          {idx + 1}
+                        </div>
+                        <span className={`text-[11px] font-semibold mt-2 transition-colors duration-300 ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground group-hover:text-foreground'}`}>
+                          {stage.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* ── Mobile: Compact vertical list ── */}
+                <div className="md:hidden space-y-2">
+                  {/* Current stage summary */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">
+                        Stage {currentStatusIndex + 1} of {stages.length}
                       </span>
-                    </button>
-                  );
-                })}
-              </div>
+                      <span className="text-sm text-muted-foreground">
+                        — {currentStage?.label || 'Unknown'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Compact progress bar */}
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mb-3">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-in-out"
+                      style={{ width: `${((currentStatusIndex + 1) / stages.length) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Stage list as compact vertical pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {stages.map((stage, idx) => {
+                      const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
+                      const isActive = idx === currentStatusIndex;
+                      const isDisabled = idx > currentStatusIndex + 1;
+
+                      let pillClass = 'border-border text-muted-foreground bg-background';
+                      if (isCompleted) pillClass = 'border-blue-500/30 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-300';
+                      else if (isActive) {
+                        const isLost = tender.status === 'lost' && stage.value === 'awarded';
+                        pillClass = isLost
+                          ? 'border-red-500 text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-300 font-semibold'
+                          : 'border-blue-500 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-300 font-semibold';
+                      }
+
+                      return (
+                        <button
+                          key={stage.value}
+                          onClick={() => !isDisabled && handleStageClick(stage.value)}
+                          disabled={isPending || isDisabled}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pillClass} ${!isDisabled && !isActive ? 'hover:border-blue-500/50 hover:text-blue-600' : ''}`}
+                        >
+                          {isCompleted && <span className="text-[10px]">✓</span>}
+                          {stage.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             );
           })()}
         </div>

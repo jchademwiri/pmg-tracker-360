@@ -12,6 +12,10 @@ import {
   FileText,
   Calendar,
   MoreHorizontal,
+  ClipboardList,
+  FolderKanban,
+  Plus,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,13 +41,68 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { Client } from '@pmg/db/schema';
 import Link from 'next/link';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 interface ClientDetailsProps {
   client: Client;
   organizationId: string;
+  relatedTenders?: Array<{
+    id: string;
+    tenderNumber: string;
+    description: string | null;
+    status: string;
+    submissionDate: Date | null;
+    value: string | null;
+    createdAt: Date;
+  }>;
+  relatedProjects?: Array<{
+    id: string;
+    projectNumber: string;
+    description: string | null;
+    status: string;
+    contractStartDate: Date | null;
+    contractEndDate: Date | null;
+    awardValue: string | null;
+    createdAt: Date;
+  }>;
+  purchaseOrderCount?: number;
 }
 
-export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
+const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  open: 'default',
+  awarded: 'secondary',
+  evaluation: 'outline',
+  lost: 'destructive',
+  closed: 'outline',
+  cancelled: 'destructive',
+  active: 'default',
+  completed: 'secondary',
+};
+
+const statusLabels: Record<string, string> = {
+  open: 'Open',
+  new: 'New',
+  review: 'Review',
+  approved_to_prepare: 'Approved to Prepare',
+  preparation: 'Preparation',
+  ready: 'Ready',
+  submitted: 'Submitted',
+  evaluation: 'Evaluation',
+  awarded: 'Awarded',
+  lost: 'Lost',
+  closed: 'Closed',
+  cancelled: 'Cancelled',
+  active: 'Active',
+  completed: 'Completed',
+};
+
+export function ClientDetails({
+  client,
+  organizationId,
+  relatedTenders = [],
+  relatedProjects = [],
+  purchaseOrderCount = 0,
+}: ClientDetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -71,18 +130,11 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
     router.push('/clients');
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
-  };
-
   const hasContactInfo =
     client.contactName || client.contactEmail || client.contactPhone;
+
+  const totalRelatedRecords =
+    relatedTenders.length + relatedProjects.length;
 
   return (
     <div className="w-full space-y-6">
@@ -98,11 +150,10 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Clients
           </Button>
+          <h1 className="text-xl font-bold">{client.name}</h1>
         </div>
 
         <div className="flex items-center space-x-2">
-          <h1 className="text-xl text-gray-600 font-bold">{client.name}</h1>
-
           <Button
             variant="outline"
             onClick={handleEdit}
@@ -141,7 +192,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
         <div className="xl:col-span-3 space-y-6">
           {/* Basic Information */}
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="">
+            <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <User className="h-5 w-5 mr-2 text-blue-600" />
                 Basic Information
@@ -155,7 +206,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
                 <p className="text-lg font-medium">{client.name}</p>
               </div>
 
-              {client.notes && (
+              {client.notes ? (
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Notes
@@ -164,9 +215,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
                     {client.notes}
                   </p>
                 </div>
-              )}
-
-              {!client.notes && (
+              ) : (
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Notes
@@ -179,7 +228,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
 
           {/* Contact Information */}
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="">
+            <CardHeader>
               <CardTitle className="flex items-center text-lg">
                 <Mail className="h-5 w-5 mr-2 text-green-600" />
                 Contact Information
@@ -261,34 +310,209 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
             </CardContent>
           </Card>
 
-          {/* Related Records Placeholder */}
+          {/* Related Records - Tenders */}
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center text-lg">
-                <FileText className="h-5 w-5 mr-2 text-purple-600" />
-                Related Records
+                <ClipboardList className="h-5 w-5 mr-2 text-purple-600" />
+                Tenders ({relatedTenders.length})
               </CardTitle>
+              <Link href={`/tenders/create?clientId=${client.id}`}>
+                <Button variant="outline" size="sm" className="cursor-pointer">
+                  <Plus className="h-4 w-4 mr-1" />
+                  New Tender
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Related Records
-                </h3>
-                <p className="text-gray-500">
-                  Tenders and projects for this client will appear here once the
-                  tender management system is implemented.
-                </p>
-              </div>
+              {relatedTenders.length > 0 ? (
+                <div className="space-y-3">
+                  {relatedTenders.map((tender) => (
+                    <Link
+                      key={tender.id}
+                      href={`/tenders/${tender.id}`}
+                      className="block p-3 rounded-lg border hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">
+                              {tender.tenderNumber}
+                            </span>
+                            <Badge
+                              variant={
+                                statusVariant[tender.status] || 'secondary'
+                              }
+                              className="text-xs"
+                            >
+                              {statusLabels[tender.status] || tender.status}
+                            </Badge>
+                          </div>
+                          {tender.description && (
+                            <p className="text-sm text-muted-foreground mt-1 truncate">
+                              {tender.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                            {tender.value && (
+                              <span>
+                                Value: R{' '}
+                                {Number(tender.value).toLocaleString()}
+                              </span>
+                            )}
+                            {tender.submissionDate && (
+                              <span>
+                                Submission:{' '}
+                                {formatDate(tender.submissionDate)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    No Tenders Yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    No tenders have been created for this client yet.
+                  </p>
+                  <Link href={`/tenders/create?clientId=${client.id}`}>
+                    <Button variant="outline" className="cursor-pointer">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create First Tender
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Related Records - Projects */}
+          <Card className="rounded-lg shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center text-lg">
+                <FolderKanban className="h-5 w-5 mr-2 text-indigo-600" />
+                Projects ({relatedProjects.length})
+              </CardTitle>
+              {relatedProjects.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {purchaseOrderCount} Purchase Order{purchaseOrderCount !== 1 ? 's' : ''}
+                </span>
+              )}
+            </CardHeader>
+            <CardContent>
+              {relatedProjects.length > 0 ? (
+                <div className="space-y-3">
+                  {relatedProjects.map((proj) => (
+                    <Link
+                      key={proj.id}
+                      href={`/projects/${proj.id}`}
+                      className="block p-3 rounded-lg border hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">
+                              {proj.projectNumber}
+                            </span>
+                            <Badge
+                              variant={
+                                statusVariant[proj.status] || 'secondary'
+                              }
+                              className="text-xs"
+                            >
+                              {statusLabels[proj.status] || proj.status}
+                            </Badge>
+                          </div>
+                          {proj.description && (
+                            <p className="text-sm text-muted-foreground mt-1 truncate">
+                              {proj.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                            {proj.awardValue && (
+                              <span>
+                                Award: R{' '}
+                                {Number(proj.awardValue).toLocaleString()}
+                              </span>
+                            )}
+                            {proj.contractStartDate && (
+                              <span>
+                                Start: {formatDate(proj.contractStartDate)}
+                              </span>
+                            )}
+                            {proj.contractEndDate && (
+                              <span>
+                                End: {formatDate(proj.contractEndDate)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FolderKanban className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
+                    No Projects Yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    No projects have been created for this client yet. Projects
+                    are automatically created when a tender is awarded.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* Quick Stats */}
+          <Card className="rounded-lg shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg">Client Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <Badge variant="secondary">Active</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Contact</span>
+                <Badge variant={hasContactInfo ? 'default' : 'secondary'}>
+                  {hasContactInfo ? 'Complete' : 'Incomplete'}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Tenders</span>
+                <span className="font-medium">{relatedTenders.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Projects</span>
+                <span className="font-medium">{relatedProjects.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Purchase Orders
+                </span>
+                <span className="font-medium">{purchaseOrderCount}</span>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Quick Actions */}
           <Card className="rounded-lg shadow-sm">
-            <CardHeader className="">
+            <CardHeader>
               <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -300,6 +524,24 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Client
               </Button>
+              <Link href={`/tenders/create?clientId=${client.id}`}>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start cursor-pointer"
+                >
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  New Tender
+                </Button>
+              </Link>
+              <Link href={`/projects/create?clientId=${client.id}`}>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start cursor-pointer"
+                >
+                  <FolderKanban className="h-4 w-4 mr-2" />
+                  New Project
+                </Button>
+              </Link>
               {client.contactEmail && (
                 <Button
                   variant="outline"
@@ -327,25 +569,6 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
             </CardContent>
           </Card>
 
-          {/* Client Status */}
-          <Card className="rounded-lg shadow-sm">
-            <CardHeader className="">
-              <CardTitle className="text-lg">Client Status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Status</span>
-                <Badge variant="secondary">Active</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Contact Info</span>
-                <Badge variant={hasContactInfo ? 'default' : 'secondary'}>
-                  {hasContactInfo ? 'Complete' : 'Incomplete'}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Timestamps */}
           <Card>
             <CardHeader>
@@ -360,7 +583,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
                   Created
                 </label>
                 <p className="text-sm text-gray-900">
-                  {formatDate(client.createdAt)}
+                  {formatDateTime(client.createdAt)}
                 </p>
               </div>
               <div>
@@ -368,7 +591,7 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
                   Last Updated
                 </label>
                 <p className="text-sm text-gray-900">
-                  {formatDate(client.updatedAt)}
+                  {formatDateTime(client.updatedAt)}
                 </p>
               </div>
             </CardContent>
@@ -381,7 +604,15 @@ export function ClientDetails({ client, organizationId }: ClientDetailsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Client</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this client? This action cannot be undone.
+              Are you sure you want to delete this client? This action cannot be
+              undone.
+              {totalRelatedRecords > 0 && (
+                <span className="block mt-2 text-amber-600">
+                  This client has {totalRelatedRecords} related record
+                  {totalRelatedRecords !== 1 ? 's' : ''}. You may need to
+                  reassign them first.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

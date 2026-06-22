@@ -55,7 +55,13 @@ export function ContactForm() {
         </p>
 
         {state.message && (
-          <div className="mt-4 px-3 py-2 rounded-md text-sm bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+          <div
+            className={`mt-4 px-3 py-2 rounded-md text-sm border ${
+              state.success
+                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                : 'bg-red-500/10 text-red-600 border-red-500/20'
+            }`}
+          >
             {state.message}
           </div>
         )}

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/card';
 import { submitWaitlistForm } from './action';
 import { formSchema } from './schema';
-import { Sparkles, CheckCircle2 } from 'lucide-react';
+import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -71,8 +71,18 @@ export function WaitlistForm() {
 
       <CardContent className="space-y-6">
         {state.message && (
-          <div className="flex items-center gap-2 p-4 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 className="h-5 w-5 shrink-0" />
+          <div
+            className={`flex items-center gap-2 p-4 rounded-lg border ${
+              state.success
+                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                : 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20'
+            }`}
+          >
+            {state.success ? (
+              <CheckCircle2 className="h-5 w-5 shrink-0" />
+            ) : (
+              <AlertCircle className="h-5 w-5 shrink-0" />
+            )}
             <p className="text-sm font-medium">{state.message}</p>
           </div>
         )}

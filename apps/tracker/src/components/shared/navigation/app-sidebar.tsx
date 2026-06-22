@@ -40,6 +40,10 @@ export function AppSidebar({
     return dashboadLinks.mainHub;
   }, []);
 
+  const settingsItems = useMemo(() => {
+    return dashboadLinks.settings;
+  }, []);
+
   // Filter and process procurement workflow links based on role permissions
   const procurementItems = useMemo(() => {
     return dashboadLinks.procurement.map((item) => {
@@ -74,6 +78,7 @@ export function AppSidebar({
         <NavMain items={mainHubItems} label="Overview" />
         <NavMain items={procurementItems} label="Operations" />
         <WorkflowShortcuts organizationId={activeOrganizationId} />
+        <NavMain items={settingsItems} label="Settings" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

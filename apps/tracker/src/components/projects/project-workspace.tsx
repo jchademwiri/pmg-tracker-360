@@ -423,15 +423,12 @@ export function ProjectWorkspace({
   return (
     <div className="w-full space-y-6">
       {/* Top Banner Workspace Header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card p-6 md:p-8 shadow-sm">
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/5 blur-3xl" />
-        
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="rounded-xl border bg-card p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <Link href="/projects">
-                <Button variant="outline" size="sm" className="h-7 rounded-full px-3 text-muted-foreground">
+                <Button variant="outline" size="sm" className="h-7 px-3 text-muted-foreground">
                   Projects
                 </Button>
               </Link>
@@ -459,19 +456,19 @@ export function ProjectWorkspace({
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
-              <Button className="rounded-xl">
+              <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Create PO
               </Button>
             </Link>
             <Link href={`/projects/${project.id}/items/new`}>
-              <Button variant="outline" className="rounded-xl">
+              <Button variant="outline">
                 <Package className="h-4 w-4 mr-2" />
                 Add Item
               </Button>
             </Link>
             <Link href={`/projects/${project.id}/edit`}>
-              <Button variant="outline" className="rounded-xl">
+              <Button variant="outline">
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Info
               </Button>
@@ -480,12 +477,12 @@ export function ProjectWorkspace({
             {project.status !== 'completed' ? (
               <Dialog open={isCloseOutOpen} onOpenChange={setIsCloseOutOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="default" className="rounded-xl shadow-sm">
+                  <Button variant="default">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Close-out Project
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] border-border/40 bg-card text-card-foreground rounded-2xl">
+                <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold">Project Close-out Submission</DialogTitle>
                     <DialogDescription className="text-muted-foreground">
@@ -493,8 +490,7 @@ export function ProjectWorkspace({
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
-                    {/* Close-out Readiness Checklist */}
-                    <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                    {/* Close-out Readiness Checklist */}                    <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
                       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Close-out Readiness Checks</h4>
                       <div className="space-y-2.5">
                         {closeOutChecklist.map((item) => (
@@ -567,7 +563,7 @@ export function ProjectWorkspace({
       </div>
 
       {/* Workspace Navigation */}
-      <div className="sticky top-16 z-20 rounded-2xl border border-border/40 bg-muted/80 p-1.5 shadow-sm backdrop-blur-md">
+      <div className="sticky top-16 z-20 rounded-lg border bg-muted/80 p-1 shadow-sm">
         <div className="flex items-center gap-2 overflow-x-auto">
           {[
             { value: 'info', label: 'Overview', icon: Info, count: null },
@@ -585,8 +581,7 @@ export function ProjectWorkspace({
               <button
                 key={item.value}
                 type="button"
-                onClick={() => setActiveTab(item.value)}
-                className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-all duration-200 cursor-pointer ${
+                onClick={() => setActiveTab(item.value)}                          className={`group inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-background/40 hover:text-foreground'
@@ -628,7 +623,7 @@ export function ProjectWorkspace({
           <TabsContent value="info" className="space-y-6 outline-none">
             {/* Delivery Progress & Risk Profile Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="md:col-span-2 overflow-hidden border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
+              <Card className="md:col-span-2">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -664,7 +659,7 @@ export function ProjectWorkspace({
                 </CardContent>
               </Card>
 
-              <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
+              <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base font-semibold">Risk Profile</CardTitle>
                   <CardDescription className="text-muted-foreground text-xs">Active delivery vulnerabilities</CardDescription>
@@ -703,7 +698,7 @@ export function ProjectWorkspace({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Originating Tender Summary */}
-              <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-base font-semibold flex items-center">
                     <File className="h-4 w-4 mr-2 text-blue-500" />
@@ -749,7 +744,7 @@ export function ProjectWorkspace({
               </Card>
 
               {/* Client & Contacts */}
-              <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-base font-semibold flex items-center">
                     <Building className="h-4 w-4 mr-2 text-emerald-500" />
@@ -799,7 +794,7 @@ export function ProjectWorkspace({
               </Card>
 
               {/* Contract Metadata */}
-              <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-base font-semibold flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-purple-500" />
@@ -860,14 +855,14 @@ export function ProjectWorkspace({
 
           {/* TAB 2: PURCHASE ORDERS */}
           <TabsContent value="pos" className="space-y-6 outline-none">
-            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Project Purchase Orders</CardTitle>
                   <CardDescription className="text-muted-foreground text-xs">A list of purchase orders issued and their delivery states</CardDescription>
                 </div>
                 <Link href={`/projects/purchase-orders/create?projectId=${project.id}`}>
-                  <Button size="sm" className="rounded-lg">
+                  <Button size="sm">
                     <Plus className="h-4 w-4 mr-1.5" />
                     New PO
                   </Button>
@@ -880,7 +875,7 @@ export function ProjectWorkspace({
                       return (
                         <div 
                           key={po.id} 
-                          className="relative group overflow-hidden p-5 bg-muted/40 rounded-xl border border-border/40 hover:border-border/80 hover:bg-muted/60 transition-all duration-300 shadow-sm flex flex-col justify-between min-h-[160px]"
+                          className="relative group p-5 bg-muted/40 rounded-lg border hover:border-foreground/20 hover:bg-muted/60 transition-all duration-200 flex flex-col justify-between min-h-[160px]"
                         >
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
@@ -916,7 +911,7 @@ export function ProjectWorkspace({
                             </div>
                             
                             <Link href={`/projects/purchase-orders/${po.id}`}>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
+                              <Button variant="ghost" size="icon" className="h-7 w-7">
                                 <ArrowRight className="h-3.5 w-3.5" />
                               </Button>
                             </Link>
@@ -942,7 +937,7 @@ export function ProjectWorkspace({
 
           {/* TAB 3: ITEMS */}
           <TabsContent value="items" className="space-y-6 outline-none">
-            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Project Saved Items</CardTitle>
@@ -952,12 +947,12 @@ export function ProjectWorkspace({
                 </div>
                 <div className="flex gap-2">
                   <Link href={`/projects/${project.id}/items`}>
-                    <Button size="sm" variant="outline" className="rounded-lg">
+                    <Button size="sm" variant="outline">
                       Manage Items
                     </Button>
                   </Link>
                   <Link href={`/projects/${project.id}/items/new`}>
-                    <Button size="sm" className="rounded-lg">
+                    <Button size="sm">
                       <Plus className="h-4 w-4 mr-1.5" />
                       Add Item
                     </Button>
@@ -970,7 +965,7 @@ export function ProjectWorkspace({
                     {lineItems.slice(0, 6).map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-border/40 bg-muted/40 p-4"
+                        className="rounded-lg border bg-muted/40 p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -1009,7 +1004,7 @@ export function ProjectWorkspace({
 
           {/* TAB 4: DELIVERIES */}
           <TabsContent value="deliveries" className="space-y-6 outline-none">
-            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Project Deliveries</CardTitle>
@@ -1017,7 +1012,7 @@ export function ProjectWorkspace({
                     Delivery notes recorded against purchase orders in this project
                   </CardDescription>
                 </div>
-                <div className="rounded-xl border border-border/40 bg-muted/60 px-3 py-2 text-right">
+                <div className="rounded-md border bg-muted/60 px-3 py-2 text-right">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Delivery Value</p>
                   <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(totalDeliveryNoteValue)}
@@ -1036,7 +1031,7 @@ export function ProjectWorkspace({
                       return (
                         <div
                           key={note.id}
-                          className="flex flex-col gap-4 rounded-xl border border-border/40 bg-muted/40 p-4 md:flex-row md:items-center md:justify-between"
+                          className="flex flex-col gap-4 rounded-lg border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between"
                         >
                           <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
@@ -1061,7 +1056,7 @@ export function ProjectWorkspace({
                               <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(noteValue)}</p>
                             </div>
                             <Link href={`/projects/purchase-orders/${note.poId}`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <ArrowRight className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -1095,7 +1090,7 @@ export function ProjectWorkspace({
             />
           </TabsContent>          {/* TAB 6: ACTIVITY */}
           <TabsContent value="activity" className="space-y-6 outline-none">
-            <Card className="border-border/40 bg-card text-card-foreground rounded-xl shadow-sm">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base font-semibold">Project Activity Timeline</CardTitle>
                 <CardDescription className="text-muted-foreground text-xs">Chronological timeline of all workspace lifecycle events</CardDescription>
@@ -1144,7 +1139,7 @@ export function ProjectWorkspace({
 
           {/* TAB 7: RISKS */}
           <TabsContent value="risks" className="space-y-6 outline-none">
-            <Card className="border-border/40 bg-card text-card-foreground shadow-sm rounded-xl">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Delivery Risk Logging</CardTitle>
@@ -1153,14 +1148,13 @@ export function ProjectWorkspace({
                 
                 <Dialog open={isRiskDialogOpen} onOpenChange={setIsRiskDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" className="bg-amber-600 text-white hover:bg-amber-500 rounded-lg">
+                    <Button size="sm" className="bg-amber-600 text-white hover:bg-amber-500">
                       <Plus className="h-4 w-4 mr-1.5" />
                       Log Delivery Risk
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px] border-border/40 bg-card text-card-foreground rounded-2xl">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold">Log Project Delivery Risk</DialogTitle>
+                  </DialogTrigger>                    <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold">Log Project Delivery Risk</DialogTitle>
                       <DialogDescription className="text-muted-foreground">
                         Record a delivery vulnerability and assign its severity to track mitigation progress.
                       </DialogDescription>
@@ -1186,7 +1180,7 @@ export function ProjectWorkspace({
                             onValueChange={(val: any) => setRiskSeverity(val)}
                             disabled={isLoggingRisk}
                           >
-                            <SelectTrigger className="bg-background border-border/40 text-foreground focus-visible:ring-amber-500">
+                            <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select severity" />
                             </SelectTrigger>
                             <SelectContent className="bg-card border-border/40 text-foreground">
@@ -1252,7 +1246,7 @@ export function ProjectWorkspace({
                       return (
                         <div 
                           key={risk.id}
-                          className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-5 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200"
+                          className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-all duration-200"
                         >
                           <div className="space-y-3 max-w-2xl">
                             <div className="flex flex-wrap items-center gap-2.5">
@@ -1290,7 +1284,6 @@ export function ProjectWorkspace({
                                 setMitigationStatus(risk.status as any);
                                 setIsMitigateDialogOpen(true);
                               }}
-                              className="w-full md:w-auto"
                             >
                               Update Status
                             </Button>
@@ -1300,8 +1293,7 @@ export function ProjectWorkspace({
                     })}
 
                     {/* Mitigate Dialog */}
-                    <Dialog open={isMitigateDialogOpen} onOpenChange={setIsMitigateDialogOpen}>
-                      <DialogContent className="sm:max-w-[500px] border-border/40 bg-card text-card-foreground rounded-2xl">
+                    <Dialog open={isMitigateDialogOpen} onOpenChange={setIsMitigateDialogOpen}>                        <DialogContent className="sm:max-w-[500px]">
                         <DialogHeader>
                           <DialogTitle className="text-xl font-bold">Update Risk & Mitigation</DialogTitle>
                           <DialogDescription className="text-muted-foreground">
