@@ -86,6 +86,7 @@ interface ProjectListProps {
   organizationId: string;
   initialProjects?: ProjectWithRelations[];
   initialTotalCount?: number;
+  clients?: { id: string; name: string }[];
 }
 
 const STATUS_OPTIONS = [
@@ -99,6 +100,7 @@ export function ProjectList({
   organizationId,
   initialProjects = [],
   initialTotalCount = 0,
+  clients: initialClients = [],
 }: ProjectListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -106,6 +108,8 @@ export function ProjectList({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
+  const [clientFilter, setClientFilter] = useState<string>('all');
+  const [draftClientFilter, setDraftClientFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -113,12 +117,12 @@ export function ProjectList({
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // Fetch projects with search and pagination
+  // Fetch projects with search, pagination, and client filter
   const fetchProjects = useCallback(
-    async (search?: string, page: number = 1, status?: string) => {
+    async (search?: string, page: number = 1, status?: string, clientId?: string) => {
       setIsLoading(true);
       try {
-        const result = await getProjects(organizationId, search, page, itemsPerPage, status);
+        const result = await getProjects(organizationId, search, page, itemsPerPage, status, clientId);
         setProjects(result.projects);
         setTotalCount(result.totalCount);
         setCurrentPage(result.currentPage);
@@ -137,6 +141,8 @@ export function ProjectList({
     setSearchQuery('');
     setStatusFilter('all');
     setDraftStatusFilter('all');
+    setClientFilter('all');
+    setDraftClientFilter('all');
     setCurrentPage(1);
     if (organizationId) {
       fetchProjects('', 1);
@@ -147,7 +153,7 @@ export function ProjectList({
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
-    fetchProjects(query, 1, statusFilter);
+    fetchProjects(query, 1, statusFilter, clientFilter);
   };
 
   // Handle status filter
@@ -155,13 +161,21 @@ export function ProjectList({
     setStatusFilter(status);
     setDraftStatusFilter(status);
     setCurrentPage(1);
-    fetchProjects(searchQuery, 1, status);
+    fetchProjects(searchQuery, 1, status, clientFilter);
+  };
+
+  // Handle client filter
+  const handleClientFilter = (clientId: string) => {
+    setClientFilter(clientId);
+    setDraftClientFilter(clientId);
+    setCurrentPage(1);
+    fetchProjects(searchQuery, 1, statusFilter, clientId);
   };
 
   // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchProjects(searchQuery, page, statusFilter);
+    fetchProjects(searchQuery, page, statusFilter, clientFilter);
   };
 
   // Handle delete project
@@ -173,7 +187,7 @@ export function ProjectList({
     startTransition(async () => {
       const result = await deleteProject(organizationId, deleteProjectId);
       if (result.success) {
-        fetchProjects(searchQuery, currentPage, statusFilter);
+        fetchProjects(searchQuery, currentPage, statusFilter, clientFilter);
         toast.success('Project deleted successfully');
       } else {
         toast.error(result.error || 'Failed to delete project');
@@ -184,6 +198,7 @@ export function ProjectList({
 
   const activeFilterChips = [
     ...(statusFilter !== 'all' ? [{ key: 'status', label: 'Status', value: STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter }] : []),
+    ...(clientFilter !== 'all' ? [{ key: 'client', label: 'Client', value: initialClients?.find(c => c.id === clientFilter)?.name || clientFilter }] : []),
     ...(searchQuery ? [{ key: 'search', label: 'Search', value: searchQuery }] : []),
   ];
 
@@ -204,9 +219,10 @@ export function ProjectList({
         activeFilters={activeFilterChips}
         onRemoveFilter={(key) => {
           if (key === 'status') handleStatusFilter('all');
-          if (key === 'search') { setSearchQuery(''); fetchProjects('', 1, statusFilter); }
+          if (key === 'client') handleClientFilter('all');
+          if (key === 'search') { setSearchQuery(''); fetchProjects('', 1, statusFilter, clientFilter); }
         }}
-        onClearFilters={() => { setSearchQuery(''); handleStatusFilter('all'); }}
+        onClearFilters={() => { setSearchQuery(''); handleStatusFilter('all'); handleClientFilter('all'); }}
         emptyState={{
           type: searchQuery || statusFilter !== 'all' ? 'no-results' : 'empty',
           icon: 'file',
@@ -231,13 +247,24 @@ export function ProjectList({
                 ))}
               </SelectContent>
             </Select>
+            <Select value={clientFilter} onValueChange={handleClientFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by client" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Clients</SelectItem>
+                {(initialClients || []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         }
         mobileFilterBar={
           <MobileFilterDrawer
-            activeFilterCount={statusFilter !== 'all' ? 1 : 0}
-            onApply={() => handleStatusFilter(draftStatusFilter)}
-            onClear={() => handleStatusFilter('all')}
+            activeFilterCount={(statusFilter !== 'all' ? 1 : 0) + (clientFilter !== 'all' ? 1 : 0)}
+            onApply={() => { handleStatusFilter(draftStatusFilter); handleClientFilter(draftClientFilter); }}
+            onClear={() => { handleStatusFilter('all'); handleClientFilter('all'); }}
             title="Filter Projects"
           >
             <MobileFilterField label="Status">
@@ -248,6 +275,19 @@ export function ProjectList({
                 <SelectContent>
                   {STATUS_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
+            <MobileFilterField label="Client">
+              <Select value={draftClientFilter} onValueChange={setDraftClientFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Clients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {(initialClients || []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

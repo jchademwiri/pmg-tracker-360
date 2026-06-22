@@ -466,6 +466,27 @@ export async function getClientRelatedRecords(
   }
 }
 
+// Lightweight helper returning { id, name }[] for filter dropdowns
+export async function getClientsList(organizationId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const result = await db
+      .select({ id: client.id, name: client.name })
+      .from(client)
+      .where(
+        and(
+          eq(client.organizationId, organizationId),
+          isNull(client.deletedAt)
+        )
+      )
+      .orderBy(client.name);
+    return { success: true, clients: result };
+  } catch (error: any) {
+    console.error('Error getting clients list:', error);
+    return { success: false, clients: [], error: error.message };
+  }
+}
+
 // Get client statistics for dashboard
 export async function getClientStats(organizationId: string) {
   try {

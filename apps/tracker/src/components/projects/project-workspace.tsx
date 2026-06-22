@@ -411,6 +411,21 @@ export function ProjectWorkspace({
                 {project.projectNumber.toUpperCase()}
               </span>
               <StatusBadge status={project.status} />
+              {project.status === 'active' && criticalRisks.length > 0 && (
+                <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-500">
+                  Critical Risks
+                </Badge>
+              )}
+              {project.status === 'active' && criticalRisks.length === 0 && !allPOsDelivered && (
+                <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-500">
+                  In Progress
+                </Badge>
+              )}
+              {project.status === 'active' && criticalRisks.length === 0 && allPOsDelivered && (
+                <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
+                  On Track
+                </Badge>
+              )}
               {project.status === 'completed' && (
                 <Badge variant="outline" className="bg-muted text-muted-foreground border-border/40">
                   Closed Out
@@ -486,7 +501,13 @@ export function ProjectWorkspace({
                         ))}
                       </div>
                       
-                      {!closeOutChecklist.every(item => item.status) && (
+                      {criticalRisks.length > 0 && (
+                        <div className="mt-3 p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-600 dark:text-red-400 flex items-start gap-2">
+                          <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <span><strong>Critical risks must be resolved</strong> before close-out can be submitted. Please mitigate {criticalRisks.length > 1 ? 'these risks' : 'this risk'} in the Risks tab first.</span>
+                        </div>
+                      )}
+                      {!closeOutChecklist.every(item => item.status) && criticalRisks.length === 0 && (
                         <div className="mt-3 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20 text-xs text-amber-600 dark:text-amber-400 flex items-start gap-2">
                           <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                           <span>Some checks are not satisfied. You can still submit the close-out if necessary.</span>
@@ -519,9 +540,10 @@ export function ProjectWorkspace({
                     </Button>
                     <Button
                       onClick={handleCloseOutSubmit}
-                      disabled={isClosingOut}
+                      disabled={isClosingOut || criticalRisks.length > 0}
+                      title={criticalRisks.length > 0 ? 'Resolve critical risks first' : undefined}
                     >
-                      {isClosingOut ? 'Submitting...' : 'Submit Close-out'}
+                      {criticalRisks.length > 0 ? 'Critical Risks Blocking' : (isClosingOut ? 'Submitting...' : 'Submit Close-out')}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -595,6 +617,55 @@ export function ProjectWorkspace({
         <div className="mt-6">
           {/* TAB 1: INFO */}
           <TabsContent value="info" className="space-y-6 outline-none">
+            {/* Next Best Action Suggestion */}
+            {(project.status === 'active' && (criticalRisks.length > 0 || allPOsDelivered || purchaseOrders.some(po => ['open', 'sent', 'partially_delivered'].includes(po.status)))) && (
+              <Card className="border-l-4 border-l-blue-500">
+                <CardContent className="py-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <ArrowRight className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Next Best Action</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {criticalRisks.length > 0
+                          ? `Mitigate ${criticalRisks.length} critical project risk${criticalRisks.length > 1 ? 's' : ''} before proceeding with deliveries.`
+                          : (purchaseOrders.some(po => ['open', 'sent'].includes(po.status))
+                            ? 'Follow up on pending deliveries with suppliers.'
+                            : (purchaseOrders.some(po => po.status === 'partially_delivered')
+                              ? 'Complete outstanding quantities on partially delivered orders.'
+                              : (allPOsDelivered && closeOutChecklist.some(c => !c.status)
+                                ? 'Resolve remaining close-out items to archive the project.'
+                                : 'All deliveries are complete. Consider submitting the project close-out.'
+                              )
+                            )
+                          )
+                        }
+                      </p>
+                    </div>
+                    {criticalRisks.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('risks')}
+                        className="shrink-0 text-xs text-blue-500 hover:text-blue-400 font-medium"
+                      >
+                        View Risks →
+                      </button>
+                    )}
+                    {allPOsDelivered && criticalRisks.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCloseOutOpen(true)}
+                        className="shrink-0 text-xs text-emerald-500 hover:text-emerald-400 font-medium"
+                      >
+                        Close-out Now →
+                      </button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Delivery Progress & Risk Profile Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="md:col-span-2">

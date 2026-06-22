@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/server';
 import { getProjects } from '@/server/projects';
+import { getClientsList } from '@/server/clients';
 import { ProjectList } from '@/components/projects/project-list';
 import { Button } from '@/components/ui';
 import Link from 'next/link';
@@ -18,11 +19,15 @@ export default async function ProjectsPage() {
     return <NoOrganizationState />;
   }
 
-  // Fetch initial projects
-  const result = await getProjects(session.activeOrganizationId, '', 1, 10);
+  // Fetch initial projects and clients list in parallel
+  const [result, clientsResult] = await Promise.all([
+    getProjects(session.activeOrganizationId, '', 1, 10),
+    getClientsList(session.activeOrganizationId),
+  ]);
 
   const initialProjects = result.projects;
   const initialTotalCount = result.totalCount;
+  const clients = clientsResult.success ? clientsResult.clients : [];
 
   return (
     <div className="space-y-6">
@@ -76,6 +81,7 @@ export default async function ProjectsPage() {
         organizationId={session.activeOrganizationId}
         initialProjects={initialProjects}
         initialTotalCount={initialTotalCount}
+        clients={clients}
       />
     </div>
   );

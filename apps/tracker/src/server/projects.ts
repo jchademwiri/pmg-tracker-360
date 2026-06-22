@@ -53,7 +53,8 @@ export async function getProjects(
   search?: string,
   page: number = 1,
   limit: number = 10,
-  status?: string
+  status?: string,
+  clientId?: string
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -79,6 +80,11 @@ export async function getProjects(
     // Add status filter if provided
     if (status && status !== 'all') {
       whereCondition = and(whereCondition, eq(project.status, status));
+    }
+
+    // Add client filter if provided
+    if (clientId && clientId !== 'all') {
+      whereCondition = and(whereCondition, eq(project.clientId, clientId));
     }
 
     const projectsData = await db.query.project.findMany({
