@@ -1,9 +1,9 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { client, tender } from '@pmg/db/schema';
+import { client, tender, project, purchaseOrder } from '@pmg/db/schema';
 import { validateSessionAndOrg } from './utils';
-import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, ne, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import {
@@ -377,6 +377,113 @@ export async function getClientsWithSorting(
       currentPage: page,
       totalPages: 0,
     };
+  }
+}
+
+// Get related records for a client (tenders, projects, POs)
+export async function getClientRelatedRecords(
+  organizationId: string,
+  clientId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    // Get tenders for this client
+    const clientTenders = await db
+      .select({
+        id: tender.id,
+        tenderNumber: tender.tenderNumber,
+        description: tender.description,
+        status: tender.status,
+        submissionDate: tender.submissionDate,
+        value: tender.value,
+        createdAt: tender.createdAt,
+      })
+      .from(tender)
+      .where(
+        and(
+          eq(tender.clientId, clientId),
+          eq(tender.organizationId, organizationId),
+          isNull(tender.deletedAt)
+        )
+      )
+      .orderBy(desc(tender.createdAt));
+
+    // Get projects for this client
+    const clientProjects = await db
+      .select({
+        id: project.id,
+        projectNumber: project.projectNumber,
+        description: project.description,
+        status: project.status,
+        contractStartDate: project.contractStartDate,
+        contractEndDate: project.contractEndDate,
+        awardValue: project.awardValue,
+        createdAt: project.createdAt,
+      })
+      .from(project)
+      .where(
+        and(
+          eq(project.clientId, clientId),
+          eq(project.organizationId, organizationId),
+          isNull(project.deletedAt)
+        )
+      )
+      .orderBy(desc(project.createdAt));
+
+    // Get PO counts for each project
+    const projectIds = clientProjects.map((p) => p.id);
+    let purchaseOrderCount = 0;
+    if (projectIds.length > 0) {
+      const poCountResult = await db
+        .select({ count: purchaseOrder.id })
+        .from(purchaseOrder)
+        .where(
+          and(
+            inArray(purchaseOrder.projectId, projectIds),
+            eq(purchaseOrder.organizationId, organizationId),
+            isNull(purchaseOrder.deletedAt)
+          )
+        );
+      purchaseOrderCount = poCountResult.length;
+    }
+
+    return {
+      success: true,
+      records: {
+        tenders: clientTenders,
+        projects: clientProjects,
+        purchaseOrderCount,
+      },
+    };
+  } catch (error: any) {
+    console.error('Error fetching client related records:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch related records',
+      records: { tenders: [], projects: [], purchaseOrderCount: 0 },
+    };
+  }
+}
+
+// Lightweight helper returning { id, name }[] for filter dropdowns
+export async function getClientsList(organizationId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const result = await db
+      .select({ id: client.id, name: client.name })
+      .from(client)
+      .where(
+        and(
+          eq(client.organizationId, organizationId),
+          isNull(client.deletedAt)
+        )
+      )
+      .orderBy(client.name);
+    return { success: true, clients: result };
+  } catch (error: any) {
+    console.error('Error getting clients list:', error);
+    return { success: false, clients: [], error: error.message };
   }
 }
 

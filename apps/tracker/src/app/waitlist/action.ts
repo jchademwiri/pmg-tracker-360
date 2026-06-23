@@ -3,11 +3,13 @@
 import { formSchema } from './schema';
 import { db } from '@pmg/db';
 import { waitlist } from '@pmg/db/schema';
+import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { redirect } from 'next/navigation';
 
 type FormState = {
-  message: string;
+  success?: boolean;
+  message?: string;
+  errors?: Record<string, string[]>;
 };
 
 export async function submitWaitlistForm(
@@ -18,45 +20,61 @@ export async function submitWaitlistForm(
   const parsed = formSchema.safeParse(formData);
 
   if (!parsed.success) {
-    return { message: 'Invalid form data' };
+    return {
+      success: false,
+      message: 'Please check the form for errors.',
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
   }
 
+  // Check if email already on waitlist
   try {
-    // Save to database
-    try {
-      await db.insert(waitlist).values({
-        id: nanoid(),
-        email: parsed.data.email,
-        companyName: parsed.data.companyName,
-        source: 'website',
-      });
-    } catch (e) {
-      // If error is unique constraint violation (duplicate email), we can probably ignore it or just update
-      console.error('Failed to save to db:', e);
-      // We continue to send to router.so even if db fails (or maybe it failed because it already exists)
+    const existingEntry = await db
+      .select({ id: waitlist.id })
+      .from(waitlist)
+      .where(eq(waitlist.email, parsed.data.email))
+      .limit(1);
+
+    if (existingEntry.length > 0) {
+      return {
+        success: true,
+        message: 'You are already on our waitlist! We will keep you posted.',
+      };
     }
 
-    const response = await fetch(
-      'https://app.router.so/api/endpoints/ac4auqxl',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.ROUTER_API_KEY}`,
-        },
-        body: JSON.stringify(parsed.data),
-      }
-    );
+    await db.insert(waitlist).values({
+      id: nanoid(),
+      email: parsed.data.email,
+      companyName: parsed.data.companyName,
+      source: 'website',
+    });
 
-    if (!response.ok) {
-      // If router.so fails, but we saved to DB, we might want to tell the user it was successful?
-      // For now, keeping original behavior but with DB save.
-      // actually if DB save succeeded but this failed...
+    // Notify router.so (non-blocking, don't fail on error)
+    try {
+      await fetch(
+        'https://app.router.so/api/endpoints/ac4auqxl',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.ROUTER_API_KEY}`,
+          },
+          body: JSON.stringify(parsed.data),
+        }
+      );
+    } catch {
       console.error('Router.so submission failed');
     }
-  } catch (error) {
-    return { message: 'Failed to submit form. Please try again.' };
-  }
 
-  redirect('/');
+    return {
+      success: true,
+      message: 'You have been added to the waitlist! We will notify you when early access opens.',
+    };
+  } catch (error) {
+    console.error('Waitlist submission error:', error);
+    return {
+      success: false,
+      message: 'Something went wrong. Please try again or contact support.',
+    };
+  }
 }

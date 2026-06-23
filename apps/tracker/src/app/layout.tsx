@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/shared/providers';
 import { Analytics } from '@vercel/analytics/next';
 import { BetaLabel } from '@/components/shared/beta-label';
 import { HelpWidget } from '@/components/shared/help-widget';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://tendertrack360.co.za'),
@@ -50,7 +51,8 @@ export default function RootLayout({
         className="font-sans antialiased"
         suppressHydrationWarning
       >
-        <script
+        <Script
+          id="jsonld-org"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />

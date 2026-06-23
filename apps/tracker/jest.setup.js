@@ -1,5 +1,34 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+
+function loadJestEnv() {
+  let workspaceEnvPath = '';
+  let dir = process.cwd();
+  while (dir) {
+    const potentialPath = path.join(dir, '.env.local');
+    if (fs.existsSync(potentialPath)) {
+      workspaceEnvPath = potentialPath;
+      break;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+
+  if (workspaceEnvPath) {
+    dotenv.config({ path: workspaceEnvPath });
+  } else {
+    const globalEnvPath = path.join(os.homedir(), '.env.local');
+    if (fs.existsSync(globalEnvPath)) {
+      dotenv.config({ path: globalEnvPath });
+    }
+  }
+}
+loadJestEnv();
 
 jest.setTimeout(60000);
 

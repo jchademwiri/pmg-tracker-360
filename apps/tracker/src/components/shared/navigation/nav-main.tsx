@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { isNavActive, isPathInSection } from '@/lib/nav-utils';
 
 import {
   Collapsible,
@@ -26,7 +27,6 @@ type NavItem = {
   title: string;
   url: string;
   icon?: LucideIcon;
-  isActive?: boolean;
   items?: {
     title: string;
     url: string;
@@ -36,64 +36,61 @@ type NavItem = {
 export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isHydrated, setIsHydrated] = useState(false);
 
-  const isNavUrlActive = (url: string) => {
-    if (url === '#') return false;
-    const [targetPath, targetQuery] = url.split('?');
+  const isNavUrlActive = (url: string) =>
+    isNavActive(pathname, searchParams, url);
 
-    if (pathname !== targetPath && !pathname.startsWith(`${targetPath}/`)) {
-      return false;
-    }
+  const isPathMatching = (url: string) =>
+    isPathInSection(pathname, url);
 
-    if (!targetQuery) {
-      return !searchParams.has('status');
-    }
-
-    const targetParams = new URLSearchParams(targetQuery);
-    return Array.from(targetParams.entries()).every(
-      ([key, value]) => searchParams.get(key) === value
-    );
-  };
-
-  // Initialize state for each collapsible item - start with server-safe defaults
+  // Initialize collapsible state from pathname — consistent on server and client
+  // to prevent the flash of collapsed-then-expanded on navigation.
+  // Accordion: at most one group open at a time.
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
+    let found = false;
     items.forEach((item) => {
       if (item.items && item.items.length > 0) {
-        // Use only isActive for initial server render to avoid hydration mismatch
-        initialState[item.title] = item.isActive || false;
+        if (!found && item.items.some((sub) => isPathMatching(sub.url))) {
+          initialState[item.title] = true;
+          found = true;
+        } else {
+          initialState[item.title] = false;
+        }
       }
     });
     return initialState;
   });
 
-  // Handle hydration and pathname-based state updates
+  // Accordion: on pathname change, open the matching group and close all others.
   useEffect(() => {
-    setIsHydrated(true);
-
-    // After hydration, update state based on current pathname
     setOpenItems((prev) => {
-      const newState = { ...prev };
+      const next: Record<string, boolean> = {};
+      let changed = false;
       items.forEach((item) => {
         if (item.items && item.items.length > 0) {
-          const hasActiveSubItem = item.items.some((subItem) =>
-            isNavUrlActive(subItem.url)
-          );
-          if (hasActiveSubItem) {
-            newState[item.title] = true;
-          }
+          const shouldOpen = item.items.some((sub) => isPathMatching(sub.url));
+          next[item.title] = shouldOpen;
+          if (shouldOpen !== prev[item.title]) changed = true;
         }
       });
-      return newState;
+      return changed ? next : prev;
     });
-  }, [pathname, searchParams, items]);
+  }, [pathname, items]);
 
+  // Accordion toggle: clicking a group closes all others and opens the clicked one.
   const toggleItem = (itemTitle: string) => {
-    setOpenItems((prev) => ({
-      ...prev,
-      [itemTitle]: !prev[itemTitle],
-    }));
+    setOpenItems((prev) => {
+      const wasOpen = prev[itemTitle] ?? false;
+      const next: Record<string, boolean> = {};
+      items.forEach((item) => {
+        if (item.items && item.items.length > 0) {
+          next[item.title] = false;
+        }
+      });
+      if (!wasOpen) next[itemTitle] = true;
+      return next;
+    });
   };
 
   return (
@@ -103,7 +100,7 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
         {items.map((item) => (
           <Collapsible
             key={item.title}
-            open={isHydrated ? openItems[item.title] : item.isActive || false}
+            open={openItems[item.title] ?? false}
             onOpenChange={() => toggleItem(item.title)}
             asChild
             className="group/collapsible"

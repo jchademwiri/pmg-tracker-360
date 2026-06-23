@@ -339,7 +339,12 @@ export const tender = pgTable(
       .references(() => client.id, { onDelete: 'cascade' }),
     submissionDate: timestamp('submission_date'),
     value: decimal('value', { precision: 15, scale: 2 }),
+    awardValue: decimal('award_value', { precision: 15, scale: 2 }),
+    lossReason: text('loss_reason'),
+    lossDetails: text('loss_details'),
+    evaluationNotes: text('evaluation_notes'),
     status: text('status').default('open').notNull(), // open, closed, evaluation, awarded, lost, cancelled
+    priority: text('priority').default('medium').notNull(), // low, medium, high, urgent
     evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
     validityDays: integer('validity_days'),
     validityDate: timestamp('validity_date'),
@@ -379,6 +384,10 @@ export const project = pgTable(
     contractEndDate: timestamp('contract_end_date'),
     awardValue: decimal('award_value', { precision: 15, scale: 2 }),
     signedContractUrl: text('signed_contract_url'),
+    // Close-out details
+    closeOutDate: timestamp('close_out_date'),
+    closeOutNotes: text('close_out_notes'),
+    closeOutSubmittedBy: text('close_out_submitted_by').references(() => user.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     deletedAt: timestamp('deleted_at'), // Soft deletion
@@ -390,6 +399,24 @@ export const project = pgTable(
     ),
   })
 );
+
+export const projectLineItem = pgTable('project_line_item', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  itemNumber: text('item_number').default('ITEM').notNull(),
+  sapReference: text('sap_reference'),
+  description: text('description').notNull(),
+  unit: text('unit').notNull(),
+  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+});
 
 // Purchase Order table with project relationships
 export const purchaseOrder = pgTable('purchase_order', {
@@ -420,7 +447,13 @@ export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
   purchaseOrderId: text('purchase_order_id')
     .notNull()
     .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
+  projectLineItemId: text('project_line_item_id').references(() => projectLineItem.id, {
+    onDelete: 'restrict',
+  }),
+  itemNumber: text('item_number').default('ITEM').notNull(),
+  sapReference: text('sap_reference'),
   description: text('description').notNull(),
+  unit: text('unit').default('unit').notNull(),
   quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
   unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
   subtotal: decimal('subtotal', { precision: 15, scale: 2 }).notNull(),
@@ -433,6 +466,9 @@ export const purchaseOrderDeliveryNote = pgTable('purchase_order_delivery_note',
   purchaseOrderId: text('purchase_order_id')
     .notNull()
     .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
   deliveryNoteNumber: text('delivery_note_number').notNull(),
   recipientName: text('recipient_name').notNull(),
   receivedAt: timestamp('received_at').notNull(),
@@ -451,6 +487,41 @@ export const purchaseOrderDeliveryItem = pgTable('purchase_order_delivery_item',
     .notNull()
     .references(() => purchaseOrderLineItem.id, { onDelete: 'cascade' }),
   quantityDelivered: decimal('quantity_delivered', { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).default('0').notNull(),
+  deliveryValue: decimal('delivery_value', { precision: 15, scale: 2 }).default('0').notNull(),
+});
+
+// Project Activity Timeline table
+export const projectActivity = pgTable('project_activity', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(), // e.g. status_change, po_added, document_uploaded, risk_recorded, close_out, project_created
+  description: text('description').notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Project Delivery Risk table
+export const projectRisk = pgTable('project_risk', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  projectId: text('project_id')
+    .notNull()
+    .references(() => project.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  severity: text('severity').default('medium').notNull(), // low, medium, high, critical
+  status: text('status').default('open').notNull(), // open, mitigated, closed
+  mitigationPlan: text('mitigation_plan'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const tenderExtension = pgTable('tender_extension', {
@@ -474,6 +545,42 @@ export const tenderExtension = pgTable('tender_extension', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'), // Soft deletion
 });
+
+// Tender Follow-up table
+export const tenderFollowUp = pgTable('tender_follow_up', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  tenderId: text('tender_id')
+    .notNull()
+    .references(() => tender.id, { onDelete: 'cascade' }),
+  followUpDate: timestamp('follow_up_date').notNull(),
+  contactPerson: text('contact_person'),
+  notes: text('notes'),
+  outcome: text('outcome'),
+  nextFollowUpDate: timestamp('next_follow_up_date'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Tender Activity Timeline table
+export const tenderActivity = pgTable('tender_activity', {
+  id: text('id').primaryKey(),
+  organizationId: text('organization_id')
+    .notNull()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  tenderId: text('tender_id')
+    .notNull()
+    .references(() => tender.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(), // e.g. status_change, extension_added, follow_up_added, document_uploaded, tender_created
+  description: text('description').notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type TenderActivity = typeof tenderActivity.$inferSelect;
+
 
 // Document table for file attachments
 export const document = pgTable('document', {
@@ -551,9 +658,12 @@ export type SessionTracking = typeof sessionTracking.$inferSelect;
 export type Client = typeof client.$inferSelect;
 export type Tender = typeof tender.$inferSelect;
 export type Project = typeof project.$inferSelect;
+export type ProjectLineItem = typeof projectLineItem.$inferSelect;
 export type PurchaseOrder = typeof purchaseOrder.$inferSelect;
 export type TenderExtension = typeof tenderExtension.$inferSelect;
 export type Document = typeof document.$inferSelect;
+export type ProjectActivity = typeof projectActivity.$inferSelect;
+export type ProjectRisk = typeof projectRisk.$inferSelect;
 
 // Notification Preferences Relations
 export const notificationPreferencesRelations = relations(
@@ -647,6 +757,8 @@ export const tenderRelations = relations(tender, ({ one, many }) => ({
   }),
   projects: many(project),
   extensions: many(tenderExtension),
+  followUps: many(tenderFollowUp),
+  activities: many(tenderActivity),
 }));
 
 export const projectRelations = relations(project, ({ one, many }) => ({
@@ -663,6 +775,22 @@ export const projectRelations = relations(project, ({ one, many }) => ({
     references: [client.id],
   }),
   purchaseOrders: many(purchaseOrder),
+  lineItems: many(projectLineItem),
+  activities: many(projectActivity),
+  risks: many(projectRisk),
+  documents: many(document),
+}));
+
+export const projectLineItemRelations = relations(projectLineItem, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [projectLineItem.organizationId],
+    references: [organization.id],
+  }),
+  project: one(project, {
+    fields: [projectLineItem.projectId],
+    references: [project.id],
+  }),
+  purchaseOrderLineItems: many(purchaseOrderLineItem),
 }));
 
 export const purchaseOrderRelations = relations(purchaseOrder, ({ one, many }) => ({
@@ -685,6 +813,10 @@ export const purchaseOrderLineItemRelations = relations(
       fields: [purchaseOrderLineItem.purchaseOrderId],
       references: [purchaseOrder.id],
     }),
+    projectLineItem: one(projectLineItem, {
+      fields: [purchaseOrderLineItem.projectLineItemId],
+      references: [projectLineItem.id],
+    }),
     deliveryItems: many(purchaseOrderDeliveryItem),
   })
 );
@@ -695,6 +827,10 @@ export const purchaseOrderDeliveryNoteRelations = relations(
     purchaseOrder: one(purchaseOrder, {
       fields: [purchaseOrderDeliveryNote.purchaseOrderId],
       references: [purchaseOrder.id],
+    }),
+    project: one(project, {
+      fields: [purchaseOrderDeliveryNote.projectId],
+      references: [project.id],
     }),
     items: many(purchaseOrderDeliveryItem),
   })
@@ -731,6 +867,60 @@ export const tenderExtensionRelations = relations(
     }),
   })
 );
+
+export const tenderFollowUpRelations = relations(
+  tenderFollowUp,
+  ({ one }) => ({
+    organization: one(organization, {
+      fields: [tenderFollowUp.organizationId],
+      references: [organization.id],
+    }),
+    tender: one(tender, {
+      fields: [tenderFollowUp.tenderId],
+      references: [tender.id],
+    }),
+  })
+);
+
+export const tenderActivityRelations = relations(tenderActivity, ({ one }) => ({
+  organization: one(organization, {
+    fields: [tenderActivity.organizationId],
+    references: [organization.id],
+  }),
+  tender: one(tender, {
+    fields: [tenderActivity.tenderId],
+    references: [tender.id],
+  }),
+  user: one(user, {
+    fields: [tenderActivity.userId],
+    references: [user.id],
+  }),
+}));
+export const projectActivityRelations = relations(projectActivity, ({ one }) => ({
+  organization: one(organization, {
+    fields: [projectActivity.organizationId],
+    references: [organization.id],
+  }),
+  project: one(project, {
+    fields: [projectActivity.projectId],
+    references: [project.id],
+  }),
+  user: one(user, {
+    fields: [projectActivity.userId],
+    references: [user.id],
+  }),
+}));
+
+export const projectRiskRelations = relations(projectRisk, ({ one }) => ({
+  organization: one(organization, {
+    fields: [projectRisk.organizationId],
+    references: [organization.id],
+  }),
+  project: one(project, {
+    fields: [projectRisk.projectId],
+    references: [project.id],
+  }),
+}));
 
 export const documentRelations = relations(document, ({ one }) => ({
   organization: one(organization, {
@@ -779,11 +969,16 @@ export const schema = {
   client,
   tender,
   project,
+  projectLineItem,
+  projectActivity,
+  projectRisk,
   purchaseOrder,
   purchaseOrderLineItem,
   purchaseOrderDeliveryNote,
   purchaseOrderDeliveryItem,
   tenderExtension,
+  tenderFollowUp,
+  tenderActivity,
   document,
   // Relations
   organizationRelations,
@@ -798,11 +993,16 @@ export const schema = {
   clientRelations,
   tenderRelations,
   projectRelations,
+  projectLineItemRelations,
+  projectActivityRelations,
+  projectRiskRelations,
   purchaseOrderRelations,
   purchaseOrderLineItemRelations,
   purchaseOrderDeliveryNoteRelations,
   purchaseOrderDeliveryItemRelations,
   tenderExtensionRelations,
+  tenderFollowUpRelations,
+  tenderActivityRelations,
   documentRelations,
   // Other
   waitlist,
@@ -814,3 +1014,4 @@ export type Feedback = typeof feedback.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
 export type PurchaseOrderDeliveryNote = typeof purchaseOrderDeliveryNote.$inferSelect;
 export type PurchaseOrderDeliveryItem = typeof purchaseOrderDeliveryItem.$inferSelect;
+export type TenderFollowUp = typeof tenderFollowUp.$inferSelect;

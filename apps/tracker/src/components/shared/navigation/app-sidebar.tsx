@@ -17,6 +17,7 @@ import { useMemo } from 'react';
 import { NavUser } from './nav-user';
 import { TeamSwitcher } from './team-switcher';
 import { NavMain } from './nav-main';
+import { WorkflowShortcuts } from './workflow-shortcuts';
 
 // This is sample data.
 
@@ -37,6 +38,10 @@ export function AppSidebar({
   // Filter and process main hub links
   const mainHubItems = useMemo(() => {
     return dashboadLinks.mainHub;
+  }, []);
+
+  const settingsItems = useMemo(() => {
+    return dashboadLinks.settings;
   }, []);
 
   // Filter and process procurement workflow links based on role permissions
@@ -71,7 +76,9 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={mainHubItems} label="Overview" />
-        <NavMain items={procurementItems} label="Procurement Cycle" />
+        <NavMain items={procurementItems} label="Operations" />
+        <WorkflowShortcuts organizationId={activeOrganizationId} />
+        <NavMain items={settingsItems} label="Settings" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

@@ -5,6 +5,8 @@ import {
   LayoutDashboard,
   Users,
   BarChart3,
+  Settings,
+  Building2,
 } from 'lucide-react';
 
 export const dashboadLinks = {
@@ -13,7 +15,6 @@ export const dashboadLinks = {
       title: 'Dashboard',
       url: '/dashboard',
       icon: LayoutDashboard,
-      isActive: true,
     },
     {
       title: 'Calendar',
@@ -28,12 +29,7 @@ export const dashboadLinks = {
   ],
   procurement: [
     {
-      title: 'Clients Directory',
-      url: '/clients',
-      icon: Users,
-    },
-    {
-      title: 'Tender Pipeline',
+      title: 'Tender Management',
       url: '#',
       icon: ClipboardList,
       items: [
@@ -48,7 +44,7 @@ export const dashboadLinks = {
       ],
     },
     {
-      title: 'Project Tracking',
+      title: 'Project Delivery',
       url: '#',
       icon: FolderKanban,
       items: [
@@ -65,6 +61,23 @@ export const dashboadLinks = {
           url: '/projects/purchase-orders',
         },
       ],
+    },
+    {
+      title: 'Clients Directory',
+      url: '/clients',
+      icon: Users,
+    },
+  ],
+  settings: [
+    {
+      title: 'Settings',
+      url: '/settings',
+      icon: Settings,
+    },
+    {
+      title: 'Organizations',
+      url: '/organization',
+      icon: Building2,
     },
   ],
 };

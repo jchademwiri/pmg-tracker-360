@@ -10,6 +10,7 @@ import {
 import { TendersTable } from '@/components/tenders/tenders-table';
 import { getTendersOverview, deleteTender } from '@/server/tenders';
 import { toast } from 'sonner';
+import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface Tender {
   id: string;
@@ -54,6 +55,7 @@ export function TendersOverviewClient({
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<TenderFilters>(initialFilters);
+  const [tenderToDelete, setTenderToDelete] = useState<{ id: string; number: string } | null>(null);
 
   const syncUrl = useCallback(
     (nextFilters: TenderFilters, nextPage: number) => {
@@ -146,39 +148,45 @@ export function TendersOverviewClient({
   );
 
   const handleDeleteTender = useCallback(
-    async (tenderId: string) => {
-      if (!confirm('Are you sure you want to delete this tender?')) {
-        return;
-      }
-      try {
-        setLoading(true);
-        const result = await deleteTender(organizationId, tenderId);
-        if (result.success) {
-          toast.success('Tender deleted successfully');
-          // Refresh list by re-fetching overview
-          const refreshResult = await getTendersOverview(
-            organizationId,
-            filters,
-            currentPage,
-            20
-          );
-          if (refreshResult.success) {
-            setTenders(refreshResult.tenders);
-            setTotalCount(refreshResult.totalCount);
-            setTotalPages(refreshResult.totalPages);
-          }
-        } else {
-          toast.error(result.error || 'Failed to delete tender');
-        }
-      } catch (error) {
-        console.error('Error deleting tender:', error);
-        toast.error('An error occurred while deleting the tender');
-      } finally {
-        setLoading(false);
+    (tenderId: string) => {
+      const tender = tenders.find((t) => t.id === tenderId);
+      if (tender) {
+        setTenderToDelete({ id: tenderId, number: tender.tenderNumber });
       }
     },
-    [organizationId, filters, currentPage]
+    [tenders]
   );
+
+  const handleConfirmDelete = async () => {
+    if (!tenderToDelete) return;
+    try {
+      setLoading(true);
+      const result = await deleteTender(organizationId, tenderToDelete.id);
+      if (result.success) {
+        toast.success('Tender deleted successfully');
+        setTenderToDelete(null);
+        // Refresh list by re-fetching overview
+        const refreshResult = await getTendersOverview(
+          organizationId,
+          filters,
+          currentPage,
+          20
+        );
+        if (refreshResult.success) {
+          setTenders(refreshResult.tenders);
+          setTotalCount(refreshResult.totalCount);
+          setTotalPages(refreshResult.totalPages);
+        }
+      } else {
+        toast.error(result.error || 'Failed to delete tender');
+      }
+    } catch (error) {
+      console.error('Error deleting tender:', error);
+      toast.error('An error occurred while deleting the tender');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRowClick = useCallback(
     (tenderId: string) => {
@@ -205,6 +213,7 @@ export function TendersOverviewClient({
         onViewTender={handleViewTender}
         onEditTender={handleEditTender}
         onDeleteTender={handleDeleteTender}
+        onRowClick={handleRowClick}
       />
 
       {loading && (
@@ -212,6 +221,15 @@ export function TendersOverviewClient({
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        isOpen={!!tenderToDelete}
+        onClose={() => setTenderToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        itemName={tenderToDelete?.number || ''}
+        itemType="Tender"
+      />
     </div>
   );
 }
+

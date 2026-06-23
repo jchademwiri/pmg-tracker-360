@@ -15,6 +15,8 @@
 - Use Separator instead of raw hr or border divs
 - Use Skeleton for loading placeholders
 - Use Badge instead of custom styled spans
+- Table Structure and Row Clicks
+- Table Row Actions Menu
 
 ---
 
@@ -193,3 +195,105 @@ Always include `AvatarFallback` for when the image fails to load:
 | `<hr>` or `<div className="border-t">` | `<Separator />` |
 | `<div className="animate-pulse">` with styled divs | `<Skeleton className="h-4 w-3/4" />` |
 | `<span className="rounded-full bg-green-100 ...">` | `<Badge variant="secondary">` |
+
+---
+
+## Table Structure and Row Clicks
+
+Tables should have a clean, borderless outer layout. Do not wrap tables in `Card` components or wrapper divs that add borders (e.g., `border` or `rounded-lg`). Instead, use a borderless overflow wrapper and let the table rely solely on bottom borders on rows.
+
+When a table is displayed, each row must be clickable and navigate to the details page, unless the row click is explicitly overridden. Ensure click propagation is stopped on interactive cells (such as cells containing action dropdowns, buttons, or links) to prevent accidental row clicks.
+
+**Incorrect:**
+
+```tsx
+// Table inside Card and bordered container, with non-clickable rows
+<Card>
+  <CardContent>
+    <div className="rounded-lg border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Product</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map((item) => (
+            <TableRow key={item.id}>
+              <TableCell>{item.name}</TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost">...</Button>
+                  </DropdownMenuTrigger>
+                  ...
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  </CardContent>
+</Card>
+```
+
+**Correct:**
+
+```tsx
+// Clean, borderless table, clickable rows with stopped propagation on Actions
+<div className="overflow-x-auto">
+  <Table>
+    <TableHeader>
+      <TableRow>
+        <TableHead>Product</TableHead>
+        <TableHead className="w-[100px] text-right">Actions</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {items.map((item) => (
+        <TableRow
+          key={item.id}
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => router.push(`/products/${item.id}`)}
+        >
+          <TableCell className="font-medium">{item.name}</TableCell>
+          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onView(item.id)}>
+                  View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(item.id)}>
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onDelete(item.id)} variant="destructive">
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+</div>
+```
+
+---
+
+## Table Row Actions Menu
+
+When rendering row action dropdowns in a table:
+1. **Right-Align the Column**: Align both the `TableHead` and `TableCell` for actions to the right using `className="text-right"`.
+2. **Compact Ghost Trigger**: Use a compact ghost button of size 8 (`variant="ghost" size="icon" className="size-8 cursor-pointer"`) containing the `MoreHorizontalIcon` (sized `h-4 w-4`) and an `sr-only` accessibility tag.
+3. **Clean List Items**: Avoid inline icons inside dropdown items (use clean, plain text labels like "View", "Edit").
+4. **Visual Hierarchy & Destructiveness**: Group common/safe actions together. Place destructive items (like "Delete") at the bottom, separate them with a `<DropdownMenuSeparator />`, and apply `variant="destructive"` to them.

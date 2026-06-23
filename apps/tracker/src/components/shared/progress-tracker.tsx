@@ -22,19 +22,16 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
   let isLost = false;
 
   switch (status) {
-    case 'draft':
     case 'open':
       currentIndex = 0;
       break;
     case 'closed':
       currentIndex = 1;
       break;
-    case 'submitted':
     case 'pending':
     case 'evaluation':
       currentIndex = 2;
       break;
-    case 'won':
     case 'awarded':
       currentIndex = 3;
       isWon = true;

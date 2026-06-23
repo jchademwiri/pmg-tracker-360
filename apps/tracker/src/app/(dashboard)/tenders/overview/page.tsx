@@ -3,7 +3,7 @@ import {
   getTenderStats,
   getRecentActivity,
   getUpcomingDeadlines,
-  getClosingSoonTenders,
+  getTenderActionQueue,
 } from '@/server/tenders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,8 +20,11 @@ import {
 import { formatCurrency } from '@/lib/format';
 import { RecentActivity } from '@/components/tenders/recent-activity';
 import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
-import { ClosingSoonWidget } from '@/components/tenders/closing-soon-widget';
 import { PipelineFunnel } from '@/components/tenders/pipeline-funnel';
+import { TenderActionQueue } from '@/components/tenders/tender-action-queue';
+import { TenderWorkloadSummary } from '@/components/tenders/tender-workload-summary';
+import { TenderCalendarStrip } from '@/components/tenders/tender-calendar-strip';
+import { getTenderWorkloadStats, getTenderCalendarEvents } from '@/server/tender-workload';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -45,7 +48,7 @@ export default async function TendersOverviewPage() {
           <h2 className="text-xl font-semibold mb-2">
             No Organization Selected
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Please select an organization to view tender overview.
           </p>
         </div>
@@ -54,12 +57,14 @@ export default async function TendersOverviewPage() {
   }
 
   // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult, closingSoonResult] =
+  const [statsResult, activityResult, deadlinesResult, actionQueueResult, workloadResult, calendarResult] =
     await Promise.all([
       getTenderStats(session.activeOrganizationId),
       getRecentActivity(session.activeOrganizationId, 3),
       getUpcomingDeadlines(session.activeOrganizationId, 3),
-      getClosingSoonTenders(session.activeOrganizationId),
+      getTenderActionQueue(session.activeOrganizationId),
+      getTenderWorkloadStats(session.activeOrganizationId),
+      getTenderCalendarEvents(session.activeOrganizationId),
     ]);
 
   const stats = statsResult.success
@@ -80,7 +85,22 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
-  const closingSoon = closingSoonResult.success ? closingSoonResult.tenders : [];
+  
+  const workloadStats = workloadResult.success ? workloadResult.stats : {
+    missingDocuments: 0, missingContact: 0, overdueActions: 0, awaitingResults: 0,
+  };
+  
+  const calendarEvents = calendarResult.success ? calendarResult.events : [];
+  
+  const initialQueues = actionQueueResult.success
+    ? actionQueueResult.queues
+    : {
+        overdue: [],
+        closingSoon: [],
+        briefingPending: [],
+        awaitingResults: [],
+        awardedToConvert: [],
+      };
 
   return (
     <div className="space-y-6">
@@ -100,6 +120,15 @@ export default async function TendersOverviewPage() {
           </Link>
         </Button>
       </header>
+
+      {/* Workload Summary Widget */}
+      <TenderWorkloadSummary stats={workloadStats} />
+
+      {/* Action Queue Section */}
+      <TenderActionQueue
+        organizationId={session.activeOrganizationId}
+        initialQueues={initialQueues}
+      />
 
       {/* Key Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -193,17 +222,19 @@ export default async function TendersOverviewPage() {
       {/* Pipeline Funnel */}
       <PipelineFunnel statusCounts={stats.statusCounts} />
 
-      {/* Closing Soon and Upcoming Deadlines */}
+      {/* Calendar Events Strip and Workload */}
       <div className="grid gap-6 md:grid-cols-2">
-        <ClosingSoonWidget tenders={closingSoon} />
-        <UpcomingDeadlines deadlines={deadlines} />
+        <TenderCalendarStrip events={calendarEvents} />
+        <RecentActivity
+          recentTenders={activity.recentTenders}
+          recentChanges={activity.recentChanges}
+        />
       </div>
 
-      {/* Recent Activity */}
-      <RecentActivity
-        recentTenders={activity.recentTenders}
-        recentChanges={activity.recentChanges}
-      />
+      {/* Upcoming Deadlines */}
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <UpcomingDeadlines deadlines={deadlines} />
+      </div>
     </div>
   );
 }

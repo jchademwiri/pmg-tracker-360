@@ -4,7 +4,9 @@ import { createSupportTicket } from '@/server/support';
 import { formSchema } from './schema';
 
 type FormState = {
-  message: string;
+  success?: boolean;
+  message?: string;
+  errors?: Record<string, string[]>;
 };
 
 export async function submitContactForm(
@@ -15,7 +17,11 @@ export async function submitContactForm(
   const parsed = formSchema.safeParse(formData);
 
   if (!parsed.success) {
-    return { message: 'Invalid form data' };
+    return {
+      success: false,
+      message: 'Please check the form for errors.',
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
   }
 
   try {
@@ -26,11 +32,21 @@ export async function submitContactForm(
     });
 
     if (!result.success) {
-      return { message: result.error || 'Failed to submit form' };
+      return {
+        success: false,
+        message: result.error || 'Failed to submit form',
+      };
     }
 
-    return { message: 'Message sent successfully!' };
+    return {
+      success: true,
+      message: 'Message sent successfully! We will get back to you shortly.',
+    };
   } catch (error) {
-    return { message: 'Failed to submit form. Please try again.' };
+    console.error('Contact form error:', error);
+    return {
+      success: false,
+      message: 'Something went wrong. Please try again or email us directly.',
+    };
   }
 }

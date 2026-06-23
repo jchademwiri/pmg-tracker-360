@@ -2,8 +2,17 @@
 
 import { db } from '@pmg/db';
 import { validateSessionAndOrg } from './utils';
-import { purchaseOrder, project, client } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, ne } from 'drizzle-orm';
+import { 
+  purchaseOrder, 
+  project, 
+  client,
+  projectLineItem,
+  purchaseOrderLineItem,
+  purchaseOrderDeliveryNote,
+  purchaseOrderDeliveryItem,
+  projectActivity
+} from '@pmg/db/schema';
+import { eq, and, isNull, ilike, or, desc, ne, inArray, sql, gte, lte } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import {
@@ -15,6 +24,529 @@ import {
   type PurchaseOrderStatusUpdateInput,
 } from '@/lib/validations/purchase-order';
 
+export async function getPurchaseOrderBreadcrumbLabel(poId: string) {
+  try {
+    const po = await db
+      .select({ poNumber: purchaseOrder.poNumber })
+      .from(purchaseOrder)
+      .where(and(eq(purchaseOrder.id, poId), isNull(purchaseOrder.deletedAt)))
+      .limit(1);
+
+    return po[0]?.poNumber || null;
+  } catch (error) {
+    console.error('Error fetching purchase order breadcrumb label:', error);
+    return null;
+  }
+}
+
+export async function getProjectLineItemBreadcrumbLabel(lineItemId: string) {
+  try {
+    const item = await db
+      .select({
+        itemNumber: projectLineItem.itemNumber,
+        description: projectLineItem.description,
+      })
+      .from(projectLineItem)
+      .where(and(eq(projectLineItem.id, lineItemId), isNull(projectLineItem.deletedAt)))
+      .limit(1);
+
+    return item[0] ? `${item[0].itemNumber} - ${item[0].description}` : null;
+  } catch (error) {
+    console.error('Error fetching project line item breadcrumb label:', error);
+    return null;
+  }
+}
+
+type POLineItemInput = {
+  id?: string;
+  projectLineItemId: string;
+  quantity: string;
+};
+
+export async function getProjectLineItems(organizationId: string, projectId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const items = await db
+      .select({
+        id: projectLineItem.id,
+        organizationId: projectLineItem.organizationId,
+        projectId: projectLineItem.projectId,
+        itemNumber: projectLineItem.itemNumber,
+        sapReference: projectLineItem.sapReference,
+        description: projectLineItem.description,
+        unit: projectLineItem.unit,
+        unitPrice: projectLineItem.unitPrice,
+        createdAt: projectLineItem.createdAt,
+        updatedAt: projectLineItem.updatedAt,
+        deletedAt: projectLineItem.deletedAt,
+        usageCount: sql<number>`count(distinct ${purchaseOrderLineItem.id})::int`,
+      })
+      .from(projectLineItem)
+      .leftJoin(
+        purchaseOrderLineItem,
+        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id)
+      )
+      .where(
+        and(
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, projectId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .groupBy(projectLineItem.id)
+      .orderBy(projectLineItem.itemNumber);
+
+    // Fetch all active PO lines for this project
+    const poLines = await db
+      .select({
+        id: purchaseOrderLineItem.id,
+        projectLineItemId: purchaseOrderLineItem.projectLineItemId,
+        quantity: purchaseOrderLineItem.quantity,
+      })
+      .from(purchaseOrderLineItem)
+      .innerJoin(purchaseOrder, eq(purchaseOrderLineItem.purchaseOrderId, purchaseOrder.id))
+      .where(
+        and(
+          eq(purchaseOrder.projectId, projectId),
+          isNull(purchaseOrder.deletedAt)
+        )
+      );
+
+    // Fetch all delivery items for these PO lines
+    const deliveryItems = await db
+      .select({
+        lineItemId: purchaseOrderDeliveryItem.lineItemId,
+        quantityDelivered: purchaseOrderDeliveryItem.quantityDelivered,
+      })
+      .from(purchaseOrderDeliveryItem)
+      .innerJoin(purchaseOrderDeliveryNote, eq(purchaseOrderDeliveryItem.deliveryNoteId, purchaseOrderDeliveryNote.id))
+      .where(
+        and(
+          eq(purchaseOrderDeliveryNote.projectId, projectId),
+          eq(purchaseOrderDeliveryNote.status, 'verified')
+        )
+      );
+
+    // Map totals in JS
+    const orderedMap: Record<string, number> = {};
+    const deliveredMap: Record<string, number> = {};
+    
+    // Accumulate delivered quantity per PO line item
+    const poLineDelivered: Record<string, number> = {};
+    for (const d of deliveryItems) {
+      poLineDelivered[d.lineItemId] = (poLineDelivered[d.lineItemId] || 0) + parseFloat(d.quantityDelivered);
+    }
+
+    for (const poLine of poLines) {
+      if (poLine.projectLineItemId) {
+        const qty = parseFloat(poLine.quantity);
+        const delQty = poLineDelivered[poLine.id] || 0;
+        orderedMap[poLine.projectLineItemId] = (orderedMap[poLine.projectLineItemId] || 0) + qty;
+        deliveredMap[poLine.projectLineItemId] = (deliveredMap[poLine.projectLineItemId] || 0) + delQty;
+      }
+    }
+
+    const itemsWithQty = items.map(item => {
+      const ordered = orderedMap[item.id] || 0;
+      const delivered = deliveredMap[item.id] || 0;
+      
+      let status = 'Not Ordered';
+      if (ordered > 0) {
+        if (delivered >= ordered) {
+          status = 'Fully Delivered';
+        } else if (delivered > 0) {
+          status = 'Partially Delivered';
+        } else {
+          status = 'Fully Ordered';
+        }
+      }
+
+      return {
+        ...item,
+        totalOrdered: ordered,
+        totalDelivered: delivered,
+        status,
+      };
+    });
+
+    return { success: true, lineItems: itemsWithQty };
+  } catch (error: any) {
+    console.error('Error fetching project line items:', error);
+    return { success: false, error: error.message || 'Failed to fetch project line items', lineItems: [] };
+  }
+}
+
+export async function getProjectLineItemById(
+  organizationId: string,
+  projectId: string,
+  lineItemId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const items = await db
+      .select({
+        id: projectLineItem.id,
+        organizationId: projectLineItem.organizationId,
+        projectId: projectLineItem.projectId,
+        itemNumber: projectLineItem.itemNumber,
+        sapReference: projectLineItem.sapReference,
+        description: projectLineItem.description,
+        unit: projectLineItem.unit,
+        unitPrice: projectLineItem.unitPrice,
+        createdAt: projectLineItem.createdAt,
+        updatedAt: projectLineItem.updatedAt,
+        deletedAt: projectLineItem.deletedAt,
+        usageCount: sql<number>`count(${purchaseOrderLineItem.id})::int`,
+      })
+      .from(projectLineItem)
+      .leftJoin(
+        purchaseOrderLineItem,
+        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id)
+      )
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, projectId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .groupBy(projectLineItem.id)
+      .limit(1);
+
+    if (items.length === 0) {
+      return { success: false, error: 'Project line item not found' };
+    }
+
+    return { success: true, lineItem: items[0] };
+  } catch (error: any) {
+    console.error('Error fetching project line item:', error);
+    return { success: false, error: error.message || 'Failed to fetch project line item' };
+  }
+}
+
+export async function createProjectLineItem(
+  organizationId: string,
+  data: {
+    projectId: string;
+    itemNumber: string;
+    sapReference?: string;
+    description: string;
+    unit: string;
+    unitPrice: string;
+  }
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['create'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return { success: false, error: 'Insufficient permissions to create line items' };
+    }
+
+    const itemNumber = data.itemNumber.trim().toUpperCase();
+    const sapReference = data.sapReference?.trim() || null;
+    const description = data.description.trim();
+    const unit = data.unit.trim();
+    const unitPrice = parseFloat(data.unitPrice);
+
+    if (!data.projectId || !itemNumber || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { success: false, error: 'Project, item number, description, unit, and unit price are required.' };
+    }
+
+    const projectExists = await db
+      .select({ id: project.id })
+      .from(project)
+      .where(
+        and(
+          eq(project.id, data.projectId),
+          eq(project.organizationId, organizationId),
+          isNull(project.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (projectExists.length === 0) {
+      return { success: false, error: 'Project not found' };
+    }
+
+    const duplicateItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, data.projectId),
+          eq(projectLineItem.itemNumber, itemNumber),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (duplicateItem.length > 0) {
+      return { success: false, error: 'This item number already exists for the selected project.' };
+    }
+
+    const newItem = await db
+      .insert(projectLineItem)
+      .values({
+        id: crypto.randomUUID(),
+        organizationId,
+        projectId: data.projectId,
+        itemNumber,
+        sapReference,
+        description,
+        unit,
+        unitPrice: unitPrice.toFixed(2),
+      })
+      .returning();
+
+    revalidatePath('/projects/purchase-orders/create');
+    revalidatePath(`/projects/${data.projectId}`);
+    return { success: true, lineItem: newItem[0] };
+  } catch (error: any) {
+    console.error('Error creating project line item:', error);
+    return { success: false, error: error.message || 'Failed to create line item' };
+  }
+}
+
+export async function updateProjectLineItem(
+  organizationId: string,
+  projectId: string,
+  lineItemId: string,
+  data: {
+    itemNumber: string;
+    sapReference?: string;
+    description: string;
+    unit: string;
+    unitPrice: string;
+  }
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['update'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return { success: false, error: 'Insufficient permissions to update line items' };
+    }
+
+    const itemNumber = data.itemNumber.trim().toUpperCase();
+    const sapReference = data.sapReference?.trim() || null;
+    const description = data.description.trim();
+    const unit = data.unit.trim();
+    const unitPrice = parseFloat(data.unitPrice);
+
+    if (!itemNumber || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
+      return { success: false, error: 'Item number, description, unit, and unit price are required.' };
+    }
+
+    const existingItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          eq(projectLineItem.projectId, projectId),
+          eq(projectLineItem.organizationId, organizationId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existingItem.length === 0) {
+      return { success: false, error: 'Project line item not found' };
+    }
+
+    const duplicateItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.organizationId, organizationId),
+          eq(projectLineItem.projectId, projectId),
+          eq(projectLineItem.itemNumber, itemNumber),
+          isNull(projectLineItem.deletedAt),
+          ne(projectLineItem.id, lineItemId)
+        )
+      )
+      .limit(1);
+
+    if (duplicateItem.length > 0) {
+      return { success: false, error: 'This item number already exists for the selected project.' };
+    }
+
+    const updatedItem = await db
+      .update(projectLineItem)
+      .set({
+        itemNumber,
+        sapReference,
+        description,
+        unit,
+        unitPrice: unitPrice.toFixed(2),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectLineItem.id, lineItemId))
+      .returning();
+
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/items`);
+    return { success: true, lineItem: updatedItem[0] };
+  } catch (error: any) {
+    console.error('Error updating project line item:', error);
+    return { success: false, error: error.message || 'Failed to update line item' };
+  }
+}
+
+export async function archiveProjectLineItem(
+  organizationId: string,
+  projectId: string,
+  lineItemId: string
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['delete'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return { success: false, error: 'Insufficient permissions to archive line items' };
+    }
+
+    const existingItem = await db
+      .select({ id: projectLineItem.id })
+      .from(projectLineItem)
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          eq(projectLineItem.projectId, projectId),
+          eq(projectLineItem.organizationId, organizationId),
+          isNull(projectLineItem.deletedAt)
+        )
+      )
+      .limit(1);
+
+    if (existingItem.length === 0) {
+      return { success: false, error: 'Project line item not found' };
+    }
+
+    await db
+      .update(projectLineItem)
+      .set({
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectLineItem.id, lineItemId));
+
+    revalidatePath(`/projects/${projectId}`);
+    revalidatePath(`/projects/${projectId}/items`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error archiving project line item:', error);
+    return { success: false, error: error.message || 'Failed to archive line item' };
+  }
+}
+
+async function getValidatedProjectLineItemSnapshots(
+  organizationId: string,
+  projectId: string,
+  lineItems: POLineItemInput[] = []
+) {
+  if (lineItems.length === 0) {
+    return [];
+  }
+
+  const ids = Array.from(new Set(lineItems.map((item) => item.projectLineItemId)));
+  const savedItems = await db
+    .select()
+    .from(projectLineItem)
+    .where(
+      and(
+        inArray(projectLineItem.id, ids),
+        eq(projectLineItem.organizationId, organizationId),
+        eq(projectLineItem.projectId, projectId),
+        isNull(projectLineItem.deletedAt)
+      )
+    );
+
+  const savedItemMap = new Map(savedItems.map((item) => [item.id, item]));
+  const missingIds = ids.filter((id) => !savedItemMap.has(id));
+
+  if (missingIds.length > 0) {
+    throw new Error('One or more selected line items do not belong to the selected project.');
+  }
+
+  return lineItems.map((item) => {
+    const savedItem = savedItemMap.get(item.projectLineItemId)!;
+    const qty = parseFloat(item.quantity) || 0;
+    const price = parseFloat(savedItem.unitPrice) || 0;
+
+    if (qty <= 0) {
+      throw new Error(`Quantity for "${savedItem.description}" must be greater than zero.`);
+    }
+
+    return {
+      id: item.id,
+      projectLineItemId: savedItem.id,
+      itemNumber: savedItem.itemNumber,
+      sapReference: savedItem.sapReference,
+      description: savedItem.description,
+      unit: savedItem.unit,
+      quantity: qty.toString(),
+      unitPrice: price.toString(),
+      subtotal: (qty * price).toFixed(2),
+    };
+  });
+}
+
+function toPurchaseOrderValues(
+  organizationId: string,
+  data: PurchaseOrderCreateInput | PurchaseOrderUpdateInput
+) {
+  return {
+    organizationId,
+    poNumber: data.poNumber,
+    projectId: data.projectId,
+    supplierName: data.supplierName,
+    description: data.description,
+    totalAmount: data.totalAmount,
+    status: data.status,
+    poDate: data.poDate,
+    expectedDeliveryDate: data.expectedDeliveryDate,
+    deliveredAt: data.deliveredAt,
+    deliveryAddress: data.deliveryAddress,
+  };
+}
+
 // Get purchase orders with pagination, search, and project joins
 export async function getPurchaseOrders(
   organizationId: string,
@@ -22,7 +554,10 @@ export async function getPurchaseOrders(
   page: number = 1,
   limit: number = 10,
   projectId?: string,
-  status?: string
+  status?: string,
+  supplierName?: string,
+  startDate?: Date,
+  endDate?: Date
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -56,7 +591,7 @@ export async function getPurchaseOrders(
     );
 
     // Add project filter if provided
-    if (projectId) {
+    if (projectId && projectId !== 'all') {
       whereCondition = and(
         whereCondition,
         eq(purchaseOrder.projectId, projectId)
@@ -78,6 +613,28 @@ export async function getPurchaseOrders(
     // Add status filter if provided
     if (status && status !== 'all') {
       whereCondition = and(whereCondition, eq(purchaseOrder.status, status));
+    }
+
+    // Add supplier filter if provided
+    if (supplierName && supplierName !== 'all') {
+      whereCondition = and(
+        whereCondition,
+        eq(purchaseOrder.supplierName, supplierName)
+      );
+    }
+
+    // Add date range filter if provided
+    if (startDate) {
+      whereCondition = and(
+        whereCondition,
+        gte(purchaseOrder.poDate, startDate)
+      );
+    }
+    if (endDate) {
+      whereCondition = and(
+        whereCondition,
+        lte(purchaseOrder.poDate, endDate)
+      );
     }
 
     const purchaseOrders = await db
@@ -191,14 +748,58 @@ export async function createPurchaseOrder(
       };
     }
 
+    const lineItemSnapshots = await getValidatedProjectLineItemSnapshots(
+      organizationId,
+      validatedData.projectId,
+      validatedData.lineItems as POLineItemInput[]
+    );
+
+    const poValues = {
+      organizationId,
+      poNumber: validatedData.poNumber,
+      projectId: validatedData.projectId,
+      supplierName: validatedData.supplierName,
+      description: validatedData.description,
+      totalAmount: validatedData.totalAmount,
+      status: validatedData.status,
+      poDate: validatedData.poDate,
+      expectedDeliveryDate: validatedData.expectedDeliveryDate,
+      deliveredAt: validatedData.deliveredAt,
+      deliveryAddress: validatedData.deliveryAddress,
+    };
+    if (lineItemSnapshots.length > 0) {
+      poValues.totalAmount = lineItemSnapshots
+        .reduce((sum, item) => sum + parseFloat(item.subtotal), 0)
+        .toFixed(2);
+    }
+
     const newPurchaseOrder = await db
       .insert(purchaseOrder)
       .values({
         id: crypto.randomUUID(),
-        organizationId,
-        ...validatedData,
+        ...poValues,
       })
       .returning();
+
+    const poId = newPurchaseOrder[0].id;
+
+    // Save line items
+    if (lineItemSnapshots.length > 0) {
+      const lineItemsToInsert = lineItemSnapshots.map((item) => ({
+          id: crypto.randomUUID(),
+          purchaseOrderId: poId,
+          projectLineItemId: item.projectLineItemId,
+          itemNumber: item.itemNumber,
+          sapReference: item.sapReference,
+          description: item.description,
+          unit: item.unit,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+        }));
+
+      await db.insert(purchaseOrderLineItem).values(lineItemsToInsert);
+    }
 
     revalidatePath('/projects/purchase-orders');
     revalidatePath(`/projects/${validatedData.projectId}`);
@@ -242,43 +843,53 @@ export async function getPurchaseOrderById(
       };
     }
 
-    const poData = await db
-      .select({
-        id: purchaseOrder.id,
-        poNumber: purchaseOrder.poNumber,
-        supplierName: purchaseOrder.supplierName,
-        description: purchaseOrder.description,
-        totalAmount: purchaseOrder.totalAmount,
-        status: purchaseOrder.status,
-        poDate: purchaseOrder.poDate,
-        expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
-        deliveredAt: purchaseOrder.deliveredAt,
-        deliveryAddress: purchaseOrder.deliveryAddress,
-        createdAt: purchaseOrder.createdAt,
-        updatedAt: purchaseOrder.updatedAt,
-        project: {
-          id: project.id,
-          projectNumber: project.projectNumber,
-          description: project.description,
+    const po = await db.query.purchaseOrder.findFirst({
+      where: and(
+        eq(purchaseOrder.id, poId),
+        eq(purchaseOrder.organizationId, organizationId),
+        isNull(purchaseOrder.deletedAt)
+      ),
+      with: {
+        project: true,
+        lineItems: true,
+        deliveryNotes: {
+          orderBy: [desc(purchaseOrderDeliveryNote.receivedAt)],
+          with: {
+            items: {
+              with: {
+                lineItem: true,
+              },
+            },
+          },
         },
-      })
-      .from(purchaseOrder)
-      .leftJoin(project, eq(purchaseOrder.projectId, project.id))
-      .leftJoin(client, eq(project.clientId, client.id))
-      .where(
-        and(
-          eq(purchaseOrder.id, poId),
-          eq(purchaseOrder.organizationId, organizationId),
-          isNull(purchaseOrder.deletedAt)
-        )
-      )
-      .limit(1);
+      },
+    });
 
-    if (poData.length === 0) {
+    if (!po) {
       return { success: false, error: 'Purchase order not found' };
     }
 
-    return { success: true, purchaseOrder: poData[0] };
+    // Enhance delivery notes with signed URLs for PODs
+    if (po.deliveryNotes && po.deliveryNotes.length > 0) {
+      const { StorageService } = await import('@/lib/storage');
+      const enhancedNotes = await Promise.all(
+        po.deliveryNotes.map(async (note) => {
+          if (note.podFileUrl) {
+            try {
+              const signedUrl = await StorageService.getSignedUrl(note.podFileUrl);
+              return { ...note, podFileUrl: signedUrl };
+            } catch (err) {
+              console.error('Error signing POD url:', err);
+            }
+          }
+          return note;
+        })
+      );
+      // @ts-ignore
+      po.deliveryNotes = enhancedNotes;
+    }
+
+    return { success: true, purchaseOrder: po };
   } catch (error: any) {
     console.error('Error fetching purchase order:', error);
     return { success: false, error: error.message || 'Failed to fetch purchase order' };
@@ -374,14 +985,83 @@ export async function updatePurchaseOrder(
       }
     }
 
+    const targetProjectId = validatedData.projectId || existingPO[0].projectId;
+    const lineItemSnapshots = data.lineItems
+      ? await getValidatedProjectLineItemSnapshots(
+          organizationId,
+          targetProjectId,
+          data.lineItems as POLineItemInput[]
+        )
+      : undefined;
+
+    const poValues = toPurchaseOrderValues(organizationId, validatedData);
+    if (lineItemSnapshots && lineItemSnapshots.length > 0) {
+      poValues.totalAmount = lineItemSnapshots
+        .reduce((sum, item) => sum + parseFloat(item.subtotal), 0)
+        .toFixed(2);
+    }
+
     const updatedPO = await db
       .update(purchaseOrder)
       .set({
-        ...validatedData,
+        ...poValues,
         updatedAt: new Date(),
       })
       .where(eq(purchaseOrder.id, poId))
       .returning();
+
+    // Sync line items
+    if (lineItemSnapshots) {
+      const existingItems = await db
+        .select()
+        .from(purchaseOrderLineItem)
+        .where(eq(purchaseOrderLineItem.purchaseOrderId, poId));
+
+      const existingItemsMap = new Map(existingItems.map((item) => [item.id, item]));
+      const updatedItemIds = new Set(lineItemSnapshots.map((item) => item.id).filter(Boolean));
+
+      // 1. Delete items no longer present
+      const itemsToDelete = existingItems.filter((item) => !updatedItemIds.has(item.id));
+      if (itemsToDelete.length > 0) {
+        await db
+          .delete(purchaseOrderLineItem)
+          .where(inArray(purchaseOrderLineItem.id, itemsToDelete.map((i) => i.id)));
+      }
+
+      // 2. Insert or Update line items
+      for (const item of lineItemSnapshots) {
+        if (item.id && existingItemsMap.has(item.id)) {
+          // Update
+          await db
+            .update(purchaseOrderLineItem)
+            .set({
+              projectLineItemId: item.projectLineItemId,
+              itemNumber: item.itemNumber,
+              sapReference: item.sapReference,
+              description: item.description,
+              unit: item.unit,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              subtotal: item.subtotal,
+            })
+            .where(eq(purchaseOrderLineItem.id, item.id));
+        } else {
+          // Create
+          await db.insert(purchaseOrderLineItem).values({
+            id: crypto.randomUUID(),
+            purchaseOrderId: poId,
+            projectLineItemId: item.projectLineItemId,
+            itemNumber: item.itemNumber,
+            sapReference: item.sapReference,
+            description: item.description,
+            unit: item.unit,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
+          });
+        }
+      }
+    }
 
     revalidatePath('/projects/purchase-orders');
     revalidatePath(`/projects/purchase-orders/${poId}`);
@@ -430,11 +1110,11 @@ export async function updatePurchaseOrderStatus(
       return { success: false, error: 'Purchase order not found' };
     }
 
-    // Check if PO is already delivered - cannot change status once delivered
-    if (existingPO[0].status === 'delivered') {
+    // Check if PO is in a terminal state - cannot change status once completed or cancelled
+    if (existingPO[0].status === 'completed' || existingPO[0].status === 'cancelled') {
       return {
         success: false,
-        error: 'Cannot change status of a delivered purchase order',
+        error: 'Cannot change status of a completed or cancelled purchase order',
       };
     }
 
@@ -549,5 +1229,453 @@ export async function deletePurchaseOrder(
   } catch (error: any) {
     console.error('Error deleting purchase order:', error);
     return { success: false, error: error.message || 'Failed to delete purchase order' };
+  }
+}
+
+// Record PO delivery note and update quantities/status
+export async function recordPODelivery(
+  organizationId: string,
+  poId: string,
+  data: {
+    deliveryNoteNumber: string;
+    recipientName: string;
+    receivedAt: Date;
+    notes?: string;
+    podFileUrl?: string;
+    items: Array<{
+      lineItemId: string;
+      quantityDelivered: string;
+    }>;
+  }
+) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const { auth } = await import('@/lib/auth');
+    const { headers } = await import('next/headers');
+
+    const { success: hasPermission } = await auth.api.hasPermission({
+      headers: await headers(),
+      body: {
+        permissions: {
+          purchase_order: ['update'],
+        },
+      },
+    });
+
+    if (!hasPermission) {
+      return {
+        success: false,
+        error: 'Insufficient permissions to record purchase order delivery',
+      };
+    }
+
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const userId = session?.user?.id;
+
+    // Get purchase order with line items and existing deliveries
+    const po = await db.query.purchaseOrder.findFirst({
+      where: and(
+        eq(purchaseOrder.id, poId),
+        eq(purchaseOrder.organizationId, organizationId),
+        isNull(purchaseOrder.deletedAt)
+      ),
+      with: {
+        lineItems: true,
+        deliveryNotes: {
+          with: {
+            items: true,
+          },
+        },
+      },
+    });
+
+    if (!po) {
+      return { success: false, error: 'Purchase order not found' };
+    }
+
+    if (po.status === 'completed' || po.status === 'cancelled') {
+      return {
+        success: false,
+        error: 'Cannot record delivery for a completed or cancelled purchase order',
+      };
+    }
+
+    // Map to find existing deliveries for line items
+    const existingDeliveredQtyMap = new Map<string, number>();
+    for (const note of po.deliveryNotes) {
+      if (note.items) {
+        for (const item of note.items) {
+          const currentVal = existingDeliveredQtyMap.get(item.lineItemId) || 0;
+          existingDeliveredQtyMap.set(item.lineItemId, currentVal + parseFloat(item.quantityDelivered));
+        }
+      }
+    }
+
+    // Validate quantities
+    const itemsToInsert: Array<{
+      lineItemId: string;
+      quantityDelivered: number;
+      unitPrice: number;
+      deliveryValue: number;
+    }> = [];
+
+    for (const inputItem of data.items) {
+      const lineItem = po.lineItems.find((li) => li.id === inputItem.lineItemId);
+      if (!lineItem) {
+        return {
+          success: false,
+          error: `Line item with ID ${inputItem.lineItemId} is not associated with this purchase order`,
+        };
+      }
+
+      const orderedQty = parseFloat(lineItem.quantity) || 0;
+      const alreadyDelivered = existingDeliveredQtyMap.get(lineItem.id) || 0;
+      const outstandingQty = Math.max(0, orderedQty - alreadyDelivered);
+      const deliveringQty = parseFloat(inputItem.quantityDelivered) || 0;
+
+      if (deliveringQty < 0) {
+        return {
+          success: false,
+          error: `Delivered quantity for item "${lineItem.description}" cannot be negative`,
+        };
+      }
+
+      if (deliveringQty > outstandingQty) {
+        return {
+          success: false,
+          error: `Cannot deliver ${deliveringQty} for "${lineItem.description}". Maximum outstanding quantity is ${outstandingQty}.`,
+        };
+      }
+
+      if (deliveringQty > 0) {
+        const unitPrice = parseFloat(lineItem.unitPrice) || 0;
+        itemsToInsert.push({
+          lineItemId: lineItem.id,
+          quantityDelivered: deliveringQty,
+          unitPrice,
+          deliveryValue: deliveringQty * unitPrice,
+        });
+      }
+    }
+
+    if (itemsToInsert.length === 0) {
+      return {
+        success: false,
+        error: 'At least one item must have a delivered quantity greater than zero',
+      };
+    }
+
+    const deliveryNoteId = crypto.randomUUID();
+
+    // Perform inside a transaction
+    await db.transaction(async (tx) => {
+      // 1. Insert delivery note
+      await tx.insert(purchaseOrderDeliveryNote).values({
+        id: deliveryNoteId,
+        purchaseOrderId: poId,
+        projectId: po.projectId,
+        deliveryNoteNumber: data.deliveryNoteNumber,
+        recipientName: data.recipientName,
+        receivedAt: data.receivedAt,
+        status: 'received',
+        podFileUrl: data.podFileUrl || null,
+        notes: data.notes || null,
+      });
+
+      // 2. Insert delivery items
+      await tx.insert(purchaseOrderDeliveryItem).values(
+        itemsToInsert.map((item) => ({
+          id: crypto.randomUUID(),
+          deliveryNoteId,
+          lineItemId: item.lineItemId,
+          quantityDelivered: item.quantityDelivered.toString(),
+          unitPrice: item.unitPrice.toFixed(2),
+          deliveryValue: item.deliveryValue.toFixed(2),
+        }))
+      );
+
+      // 3. Recalculate and update PO status
+      let allCompleted = true;
+      let someDelivered = false;
+
+      for (const lineItem of po.lineItems) {
+        const ordered = parseFloat(lineItem.quantity) || 0;
+        const previouslyDelivered = existingDeliveredQtyMap.get(lineItem.id) || 0;
+        const newlyDelivered = itemsToInsert.find((item) => item.lineItemId === lineItem.id)?.quantityDelivered || 0;
+        const totalDelivered = previouslyDelivered + newlyDelivered;
+
+        if (totalDelivered < ordered) {
+          allCompleted = false;
+        }
+        if (totalDelivered > 0) {
+          someDelivered = true;
+        }
+      }
+
+      // If we don't have line items (edge case), we don't change status to completed
+      if (po.lineItems.length === 0) {
+        allCompleted = false;
+      }
+
+      const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+
+      await tx
+        .update(purchaseOrder)
+        .set({
+          status: newStatus,
+          deliveredAt: newStatus === 'completed' ? new Date() : undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(purchaseOrder.id, poId));
+      
+      // 4. Log project activity
+      await tx.insert(projectActivity).values({
+        id: crypto.randomUUID(),
+        organizationId,
+        projectId: po.projectId,
+        activityType: 'po_delivery',
+        description: `Delivery Note ${data.deliveryNoteNumber} recorded for PO ${po.poNumber}. Status updated to ${newStatus}.`,
+        userId: userId || null,
+      });
+    });
+
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${poId}`);
+    revalidatePath(`/projects/${po.projectId}`);
+
+    return { success: true, deliveryNoteId };
+  } catch (error: any) {
+    console.error('Error recording PO delivery:', error);
+    return { success: false, error: error.message || 'Failed to record delivery' };
+  }
+}
+
+// Get unique supplier names from active POs
+export async function getUniqueSuppliers(organizationId: string) {
+  try {
+    await validateSessionAndOrg(organizationId);
+    const result = await db
+      .selectDistinct({ supplierName: purchaseOrder.supplierName })
+      .from(purchaseOrder)
+      .where(
+        and(
+          eq(purchaseOrder.organizationId, organizationId),
+          isNull(purchaseOrder.deletedAt)
+        )
+      )
+      .orderBy(purchaseOrder.supplierName);
+    
+    return { 
+      success: true, 
+      suppliers: result.map((r) => r.supplierName).filter(Boolean) as string[] 
+    };
+  } catch (error: any) {
+    console.error('Error getting unique suppliers:', error);
+    return { success: false, suppliers: [], error: error.message };
+  }
+}
+
+// Verify delivery note, transition status to verified and update PO status
+export async function verifyDeliveryNote(organizationId: string, deliveryNoteId: string) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+
+    // Fetch delivery note
+    const note = await db.query.purchaseOrderDeliveryNote.findFirst({
+      where: eq(purchaseOrderDeliveryNote.id, deliveryNoteId),
+      with: {
+        items: true,
+      }
+    });
+
+    if (!note) {
+      return { success: false, error: 'Delivery note not found' };
+    }
+
+    await db.transaction(async (tx) => {
+      // 1. Update status to verified
+      await tx
+        .update(purchaseOrderDeliveryNote)
+        .set({ status: 'verified' })
+        .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
+
+      // 2. Fetch purchase order and recalculate status based on verified notes
+      const po = await tx.query.purchaseOrder.findFirst({
+        where: eq(purchaseOrder.id, note.purchaseOrderId),
+        with: {
+          lineItems: true,
+          deliveryNotes: {
+            where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+            with: {
+              items: true,
+            }
+          }
+        }
+      });
+
+      if (po) {
+        // Accumulate verified delivery quantities per line item
+        const deliveredQtyMap = new Map<string, number>();
+        // Include the current note we just verified
+        const allVerifiedNotes = [...po.deliveryNotes, { ...note, status: 'verified' }];
+
+        for (const vn of allVerifiedNotes) {
+          for (const item of vn.items || []) {
+            const current = deliveredQtyMap.get(item.lineItemId) || 0;
+            deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
+          }
+        }
+
+        let allCompleted = true;
+        let someDelivered = false;
+
+        for (const lineItem of po.lineItems) {
+          const ordered = parseFloat(lineItem.quantity) || 0;
+          const totalDelivered = deliveredQtyMap.get(lineItem.id) || 0;
+
+          if (totalDelivered < ordered) {
+            allCompleted = false;
+          }
+          if (totalDelivered > 0) {
+            someDelivered = true;
+          }
+        }
+
+        if (po.lineItems.length === 0) {
+          allCompleted = false;
+        }
+
+        const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+
+        await tx
+          .update(purchaseOrder)
+          .set({
+            status: newStatus,
+            deliveredAt: newStatus === 'completed' ? new Date() : null,
+            updatedAt: new Date(),
+          })
+          .where(eq(purchaseOrder.id, note.purchaseOrderId));
+
+        // 3. Log project activity
+        await tx.insert(projectActivity).values({
+          id: crypto.randomUUID(),
+          organizationId,
+          projectId: note.projectId,
+          activityType: 'po_delivery_verified',
+          description: `Delivery Note ${note.deliveryNoteNumber} verified. PO ${po.poNumber} status updated to ${newStatus}.`,
+          userId: userId || null,
+        });
+      }
+    });
+
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${note.purchaseOrderId}`);
+    revalidatePath(`/projects/${note.projectId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error verifying delivery note:', error);
+    return { success: false, error: error.message || 'Failed to verify delivery note' };
+  }
+}
+
+// Void delivery note, transition status to voided and update PO status
+export async function voidDeliveryNote(organizationId: string, deliveryNoteId: string) {
+  try {
+    const { userId } = await validateSessionAndOrg(organizationId);
+
+    // Fetch delivery note
+    const note = await db.query.purchaseOrderDeliveryNote.findFirst({
+      where: eq(purchaseOrderDeliveryNote.id, deliveryNoteId),
+    });
+
+    if (!note) {
+      return { success: false, error: 'Delivery note not found' };
+    }
+
+    await db.transaction(async (tx) => {
+      // 1. Update status to voided
+      await tx
+        .update(purchaseOrderDeliveryNote)
+        .set({ status: 'voided' })
+        .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
+
+      // 2. Fetch purchase order and recalculate status based only on verified notes
+      const po = await tx.query.purchaseOrder.findFirst({
+        where: eq(purchaseOrder.id, note.purchaseOrderId),
+        with: {
+          lineItems: true,
+          deliveryNotes: {
+            where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+            with: {
+              items: true,
+            }
+          }
+        }
+      });
+
+      if (po) {
+        // Accumulate verified delivery quantities per line item
+        const deliveredQtyMap = new Map<string, number>();
+
+        for (const vn of po.deliveryNotes) {
+          for (const item of vn.items || []) {
+            const current = deliveredQtyMap.get(item.lineItemId) || 0;
+            deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
+          }
+        }
+
+        let allCompleted = true;
+        let someDelivered = false;
+
+        for (const lineItem of po.lineItems) {
+          const ordered = parseFloat(lineItem.quantity) || 0;
+          const totalDelivered = deliveredQtyMap.get(lineItem.id) || 0;
+
+          if (totalDelivered < ordered) {
+            allCompleted = false;
+          }
+          if (totalDelivered > 0) {
+            someDelivered = true;
+          }
+        }
+
+        if (po.lineItems.length === 0) {
+          allCompleted = false;
+        }
+
+        const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+
+        await tx
+          .update(purchaseOrder)
+          .set({
+            status: newStatus,
+            deliveredAt: newStatus === 'completed' ? new Date() : null,
+            updatedAt: new Date(),
+          })
+          .where(eq(purchaseOrder.id, note.purchaseOrderId));
+
+        // 3. Log project activity
+        await tx.insert(projectActivity).values({
+          id: crypto.randomUUID(),
+          organizationId,
+          projectId: note.projectId,
+          activityType: 'po_delivery_voided',
+          description: `Delivery Note ${note.deliveryNoteNumber} voided. PO ${po.poNumber} status updated to ${newStatus}.`,
+          userId: userId || null,
+        });
+      }
+    });
+
+    revalidatePath('/projects/purchase-orders');
+    revalidatePath(`/projects/purchase-orders/${note.purchaseOrderId}`);
+    revalidatePath(`/projects/${note.projectId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error voiding delivery note:', error);
+    return { success: false, error: error.message || 'Failed to void delivery note' };
   }
 }

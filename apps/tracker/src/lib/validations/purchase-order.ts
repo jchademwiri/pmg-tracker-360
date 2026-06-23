@@ -1,16 +1,26 @@
 import { z } from 'zod';
 
+export const LineItemSchema = z.object({
+  id: z.string().optional(),
+  projectLineItemId: z.string().min(1, 'Saved line item is required'),
+  description: z.string().optional(),
+  unit: z.string().optional(),
+  quantity: z.string().min(1, 'Quantity is required'),
+  unitPrice: z.string().optional(),
+});
+
 export const PurchaseOrderCreateSchema = z.object({
   poNumber: z.string().min(1, 'PO Number is required'),
   projectId: z.string().min(1, 'Project is required'),
   supplierName: z.string().optional(),
   description: z.string().min(1, 'Description is required'),
   totalAmount: z.string().min(1, 'Total amount is required'),
-  status: z.enum(['open', 'sent', 'delivered']),
+  status: z.enum(['open', 'sent', 'partially_delivered', 'delivered', 'completed', 'cancelled', 'disputed']),
   poDate: z.date().optional(),
   expectedDeliveryDate: z.date().optional(),
   deliveredAt: z.date().optional(),
   deliveryAddress: z.string().optional(),
+  lineItems: z.array(LineItemSchema).optional(),
 });
 
 export const PurchaseOrderUpdateSchema =
@@ -19,7 +29,7 @@ export const PurchaseOrderUpdateSchema =
   });
 
 export const PurchaseOrderStatusUpdateSchema = z.object({
-  status: z.enum(['open', 'sent', 'delivered']),
+  status: z.enum(['open', 'sent', 'partially_delivered', 'delivered', 'completed', 'cancelled', 'disputed']),
 });
 
 export type PurchaseOrderCreateInput = z.infer<
@@ -31,3 +41,4 @@ export type PurchaseOrderUpdateInput = z.infer<
 export type PurchaseOrderStatusUpdateInput = z.infer<
   typeof PurchaseOrderStatusUpdateSchema
 >;
+

@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/server';
-import { getClientById } from '@/server';
+import { getClientById, getClientRelatedRecords } from '@/server';
 import { ClientDetails } from '@/components/clients/client-details';
 import { notFound } from 'next/navigation';
 
@@ -38,10 +38,19 @@ export default async function ClientDetailPage({
     notFound();
   }
 
+  // Fetch related records (tenders, projects, POs)
+  const relatedRecordsResult = await getClientRelatedRecords(
+    session.activeOrganizationId,
+    id
+  );
+
   return (
     <ClientDetails
       client={result.client}
       organizationId={session.activeOrganizationId}
+      relatedTenders={relatedRecordsResult.records.tenders}
+      relatedProjects={relatedRecordsResult.records.projects}
+      purchaseOrderCount={relatedRecordsResult.records.purchaseOrderCount}
     />
   );
 }

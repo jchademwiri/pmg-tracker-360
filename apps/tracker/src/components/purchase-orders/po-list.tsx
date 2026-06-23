@@ -1,20 +1,38 @@
 'use client';
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   Search,
   Plus,
-  MoreHorizontal,
-  FileText,
-  Banknote,
-  Calendar,
+  MoreHorizontalIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
+import {
+  MobileCard,
+  MobileCardHeader,
+  MobileCardBody,
+  MobileCardField,
+  MobileCardGrid,
+  MobileCardList,
+} from '@/components/ui/mobile-card';
+import {
+  MobileFilterDrawer,
+  MobileFilterField,
+} from '@/components/ui/mobile-filter-drawer';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -27,6 +45,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -36,6 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 import {
   getPurchaseOrders,
@@ -68,446 +88,392 @@ interface POListProps {
   organizationId: string;
   initialPOs?: PurchaseOrderWithProject[];
   initialTotalCount?: number;
-  projectId?: string; // Optional: filter by specific project
+  projectId?: string;
+  projects?: { id: string; projectNumber: string }[];
+  suppliers?: string[];
 }
 
-const statusColors = {
-  open: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800',
-};
-
-const statusLabels = {
-  open: 'Open',
-  sent: 'Sent',
-  delivered: 'Delivered',
-};
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'open', label: 'Open' },
+  { value: 'sent', label: 'Sent' },
+  { value: 'partially_delivered', label: 'Partially Delivered' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'disputed', label: 'Disputed' },
+];
 
 export function POList({
   organizationId,
   initialPOs = [],
   initialTotalCount = 0,
   projectId,
+  projects = [],
+  suppliers = [],
 }: POListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-  const [pos, setPos] = useState<PurchaseOrderWithProject[]>(initialPOs);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(initialTotalCount);
-  const [isLoading, setIsLoading] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [deletePOId, setDeletePOId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '');
+  }, [searchParams]);
+
+  const statusFilter = searchParams.get('status') || 'all';
+  const supplierFilter = searchParams.get('supplier') || 'all';
+  const projectFilter = searchParams.get('projectId') || 'all';
+  const startDate = searchParams.get('startDate') || '';
+  const endDate = searchParams.get('endDate') || '';
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+
+  const pos = initialPOs;
+  const totalCount = initialTotalCount;
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const isLoading = isPending;
 
-  // Fetch POs with search and pagination
-  const fetchPOs = useCallback(
-    async (search?: string, page: number = 1, status?: string) => {
-      setIsLoading(true);
-      try {
-        const result = await getPurchaseOrders(
-          organizationId,
-          search,
-          page,
-          itemsPerPage,
-          projectId,
-          status === 'all' ? undefined : status
-        );
-        setPos(result.purchaseOrders);
-        setTotalCount(result.totalCount);
-        setCurrentPage(result.currentPage);
-      } catch (error) {
-        console.error('Error fetching purchase orders:', error);
-        toast.error('Failed to load purchase orders. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [organizationId, projectId]
-  );
+  const [draftStatus, setDraftStatus] = useState(statusFilter);
+  const [draftSupplier, setDraftSupplier] = useState(supplierFilter);
+  const [draftProject, setDraftProject] = useState(projectFilter);
+  const [draftStartDate, setDraftStartDate] = useState(startDate);
+  const [draftEndDate, setDraftEndDate] = useState(endDate);
 
-  // Reset and refetch data when organizationId or projectId changes
   useEffect(() => {
-    // Reset search and filters
-    setSearchQuery('');
-    setStatusFilter('all');
-    setCurrentPage(1);
+    setDraftStatus(statusFilter);
+    setDraftSupplier(supplierFilter);
+    setDraftProject(projectFilter);
+    setDraftStartDate(startDate);
+    setDraftEndDate(endDate);
+  }, [statusFilter, supplierFilter, projectFilter, startDate, endDate]);
 
-    // Fetch fresh data
-    if (organizationId) {
-      fetchPOs('', 1);
-    }
-  }, [organizationId, projectId, fetchPOs]);
-
-  // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-    fetchPOs(query, 1, statusFilter);
-  };
-
-  // Handle status filter
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
-    setCurrentPage(1);
-    fetchPOs(searchQuery, 1, status);
-  };
-
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchPOs(searchQuery, page, statusFilter);
-  };
-
-  // Handle delete PO
-  const handleDeletePO = async (poId: string) => {
-    if (!confirm('Are you sure you want to delete this purchase order?')) {
-      return;
-    }
-
-    startTransition(async () => {
-      const result = await deletePurchaseOrder(organizationId, poId);
-      if (result.success) {
-        // Refresh the current page
-        fetchPOs(searchQuery, currentPage, statusFilter);
+  const applyFilters = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === '' || value === 'all') {
+        params.delete(key);
       } else {
-        alert(result.error || 'Failed to delete purchase order');
+        params.set(key, value);
       }
+    });
+    if (!updates.page) {
+      params.delete('page');
+    }
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  }, [searchParams, router, pathname]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      const currentSearch = searchParams.get('search') || '';
+      if (searchQuery !== currentSearch) {
+        applyFilters({ search: searchQuery });
+      }
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, searchParams, applyFilters]);
+
+  const handleStatusFilter = (status: string) => applyFilters({ status });
+  const handleSupplierFilter = (supplier: string) => applyFilters({ supplier });
+  const handleProjectFilter = (projId: string) => applyFilters({ projectId: projId });
+  const handleStartDateChange = (date: string) => applyFilters({ startDate: date });
+  const handleEndDateChange = (date: string) => applyFilters({ endDate: date });
+  const handlePageChange = (page: number) => applyFilters({ page: page.toString() });
+
+  const handleApplyMobileFilters = () => {
+    applyFilters({
+      status: draftStatus,
+      supplier: draftSupplier,
+      projectId: draftProject,
+      startDate: draftStartDate,
+      endDate: draftEndDate,
     });
   };
 
+  const handleClearMobileFilters = () => {
+    setDraftStatus('all');
+    setDraftSupplier('all');
+    setDraftProject('all');
+    setDraftStartDate('');
+    setDraftEndDate('');
+    applyFilters({ status: null, supplier: null, projectId: null, startDate: null, endDate: null });
+  };
 
+  const confirmDeletePO = async () => {
+    if (!deletePOId) return;
+    startTransition(async () => {
+      const result = await deletePurchaseOrder(organizationId, deletePOId);
+      if (result.success) {
+        router.refresh();
+        toast.success('Purchase order deleted');
+      } else {
+        toast.error(result.error || 'Failed to delete purchase order');
+      }
+      setDeletePOId(null);
+    });
+  };
+
+  const hasActiveFilters = statusFilter !== 'all' || supplierFilter !== 'all' || projectFilter !== 'all' || !!startDate || !!endDate;
+
+  const activeFilterChips = [
+    ...(statusFilter !== 'all' ? [{ key: 'status', label: 'Status', value: STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter }] : []),
+    ...(supplierFilter !== 'all' ? [{ key: 'supplier', label: 'Supplier', value: supplierFilter }] : []),
+    ...(projectFilter !== 'all' && !projectId ? [{ key: 'projectId', label: 'Project', value: projects.find(p => p.id === projectFilter)?.projectNumber || projectFilter }] : []),
+    ...(searchQuery ? [{ key: 'search', label: 'Search', value: searchQuery }] : []),
+  ];
 
   return (
-    <Card className="rounded-lg shadow-sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Purchase Orders</CardTitle>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-          <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search by PO number, supplier, or description..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={handleStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-sm text-muted-foreground">
-              Loading purchase orders...
-            </div>
-          </div>
-        ) : pos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              No purchase orders found
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {searchQuery || statusFilter !== 'all'
-                ? 'No purchase orders match your search criteria.'
-                : 'Get started by creating your first purchase order.'}
-            </p>
-            {!searchQuery && statusFilter === 'all' && (
-              <Button asChild size={'lg'}>
-                <Link href="/projects/purchase-orders/create">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Purchase Order
-                </Link>
-              </Button>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table */}
-            <div className="hidden md:block rounded-lg overflow-hidden border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>PO Number</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>PO Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Expected Delivery</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pos.map((po) => (
-                    <TableRow
-                      key={po.id}
-                      className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
-                      onClick={() =>
-                        router.push(
-                          `/projects/purchase-orders/${po.id}`
-                        )
-                      }
-                    >
-                      <TableCell>
-                        <div className="font-medium text-blue-600">
-                          {po.poNumber}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {po.supplierName || 'Not specified'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-green-600">
-                          {po.project?.projectNumber.toUpperCase() ||
-                            'Unknown Project'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(po.poDate)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            statusColors[po.status as keyof typeof statusColors]
-                          }
-                        >
-                          {statusLabels[po.status as keyof typeof statusLabels]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm">
-                          {formatCurrency(po.totalAmount)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(po.expectedDeliveryDate)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(
-                                  `/projects/purchase-orders/${po.id}`
-                                );
-                              }}
-                            >
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(
-                                  `/projects/purchase-orders/${po.id}/edit`
-                                );
-                              }}
-                            >
-                              Edit PO
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeletePO(po.id);
-                              }}
-                              className="text-red-600"
-                              disabled={isPending}
-                            >
-                              Delete PO
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+    <>
+      <DataTableShell
+        title="Purchase Orders"
+        entityLabel="purchase orders"
+        totalCount={totalCount}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        dataLength={pos.length}
+        searchPlaceholder="Search by PO number, supplier, or description..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        isLoading={isLoading}
+        activeFilters={hasActiveFilters ? activeFilterChips : undefined}
+        onRemoveFilter={(key) => {
+          if (key === 'status') applyFilters({ status: null });
+          if (key === 'supplier') applyFilters({ supplier: null });
+          if (key === 'projectId') applyFilters({ projectId: null });
+          if (key === 'search') { setSearchQuery(''); applyFilters({ search: null }); }
+        }}
+        onClearFilters={() => { setSearchQuery(''); handleClearMobileFilters(); }}
+        emptyState={{
+          type: searchQuery || hasActiveFilters ? 'no-results' : 'empty',
+          icon: 'file',
+          title: searchQuery || hasActiveFilters ? 'No purchase orders found' : 'No purchase orders yet',
+          description: searchQuery || hasActiveFilters
+            ? 'No purchase orders match your search criteria.'
+            : 'Get started by creating your first purchase order.',
+          actionLabel: searchQuery || hasActiveFilters ? undefined : 'Add Purchase Order',
+          actionHref: searchQuery || hasActiveFilters ? undefined : '/projects/purchase-orders/create',
+        }}
+        actionLabel={pos.length > 0 ? 'Add Purchase Order' : undefined}
+        actionHref="/projects/purchase-orders/create"
+        desktopFilterBar={
+          <div className="flex flex-wrap items-center gap-2">
+            {!projectId && (
+              <Select value={projectFilter} onValueChange={handleProjectFilter}>
+                <SelectTrigger className="w-[240px]">
+                  <SelectValue placeholder="Filter by Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.projectNumber}</SelectItem>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Mobile Cards */}
-            <div className="md:hidden space-y-4">
-              {pos.map((po) => (
-                <Card
-                  key={po.id}
-                  className="cursor-pointer hover:bg-accent transition-colors duration-200 group rounded-lg border hover:ring-1 hover:ring-ring"
-                  onClick={() =>
-                    router.push(`/projects/purchase-orders/${po.id}`)
-                  }
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-medium text-blue-600 group-hover:text-blue-700 transition-colors">
-                            {po.poNumber}
-                          </h3>
-                          <Badge
-                            className={
-                              statusColors[
-                                po.status as keyof typeof statusColors
-                              ]
-                            }
-                          >
-                            {
-                              statusLabels[
-                                po.status as keyof typeof statusLabels
-                              ]
-                            }
-                          </Badge>
-                        </div>
-
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>Supplier:</strong>{' '}
-                          {po.supplierName || 'Not specified'}
-                        </div>
-
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>Project:</strong>{' '}
-                          {po.project?.projectNumber.toUpperCase() || 'Unknown'}
-                        </div>
-
-                        <div className="text-sm text-gray-900 mb-1">
-                          <strong>PO Date:</strong> {formatDate(po.poDate)}
-                        </div>
-
-                        {po.description && (
-                          <p className="text-sm text-foreground/80 mb-2 line-clamp-2">
-                            {po.description}
-                          </p>
-                        )}
-
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Banknote className="h-3 w-3 mr-1" />
-                            {formatCurrency(po.totalAmount)}
-                          </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            Expected: {formatDate(po.expectedDeliveryDate)}
-                          </div>
-                        </div>
-
-                        <div className="mt-2">
-                          <span className="text-xs text-muted-foreground">
-                            Created {formatDate(po.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(
-                                `/projects/purchase-orders/${po.id}`
-                              );
-                            }}
-                          >
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(
-                                `/projects/purchase-orders/${po.id}/edit`
-                              );
-                            }}
-                          >
-                            Edit PO
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeletePO(po.id);
-                            }}
-                            className="text-red-600"
-                            disabled={isPending}
-                          >
-                            Delete PO
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                  {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
-                  {totalCount} purchase orders
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || isLoading}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
             )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+            <Select value={statusFilter} onValueChange={handleStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={supplierFilter} onValueChange={handleSupplierFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by Supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Suppliers</SelectItem>
+                {suppliers.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Date:</span>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => handleStartDateChange(e.target.value)}
+                className="w-[140px] h-9"
+              />
+              <span>to</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => handleEndDateChange(e.target.value)}
+                className="w-[140px] h-9"
+              />
+            </div>
+          </div>
+        }
+        mobileFilterBar={
+          <MobileFilterDrawer
+            activeFilterCount={hasActiveFilters ? Object.entries({ statusFilter, supplierFilter, projectFilter, startDate, endDate }).filter(([k, v]) => v !== 'all' && v !== '').length : 0}
+            onApply={handleApplyMobileFilters}
+            onClear={handleClearMobileFilters}
+            title="Filter Purchase Orders"
+          >
+            {!projectId && (
+              <MobileFilterField label="Project">
+                <Select value={draftProject} onValueChange={setDraftProject}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Projects</SelectItem>
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.projectNumber}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </MobileFilterField>
+            )}
+            <MobileFilterField label="Status">
+              <Select value={draftStatus} onValueChange={setDraftStatus}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
+            <MobileFilterField label="Supplier">
+              <Select value={draftSupplier} onValueChange={setDraftSupplier}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All Suppliers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Suppliers</SelectItem>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
+            <MobileFilterField label="Date From">
+              <Input type="date" value={draftStartDate} onChange={(e) => setDraftStartDate(e.target.value)} className="w-full" />
+            </MobileFilterField>
+            <MobileFilterField label="Date To">
+              <Input type="date" value={draftEndDate} onChange={(e) => setDraftEndDate(e.target.value)} className="w-full" />
+            </MobileFilterField>
+          </MobileFilterDrawer>
+        }
+      >
+        {/* Desktop Table */}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>PO Number</TableHead>
+              <TableHead>Supplier</TableHead>
+              <TableHead>Project</TableHead>
+              <TableHead>PO Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Total Amount</TableHead>
+              <TableHead>Expected Delivery</TableHead>
+              <TableHead className="w-[100px] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pos.map((po) => (
+              <TableRow
+                key={po.id}
+                className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
+                onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}
+              >
+                <TableCell><div className="font-medium text-blue-600">{po.poNumber}</div></TableCell>
+                <TableCell><div className="font-medium">{po.supplierName || 'Not specified'}</div></TableCell>
+                <TableCell>
+                  <div className="font-medium text-green-600">
+                    {po.project?.projectNumber.toUpperCase() || 'Unknown Project'}
+                  </div>
+                </TableCell>
+                <TableCell><span className="text-sm text-muted-foreground">{formatDate(po.poDate)}</span></TableCell>
+                <TableCell><StatusBadge status={po.status} /></TableCell>
+                <TableCell><span className="text-sm">{formatCurrency(po.totalAmount)}</span></TableCell>
+                <TableCell><span className="text-sm text-muted-foreground">{formatDate(po.expectedDeliveryDate)}</span></TableCell>
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
+                        <MoreHorizontalIcon className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}>View Details</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(`/projects/purchase-orders/${po.id}/edit`)}>Edit PO</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setDeletePOId(po.id)} disabled={isPending}>
+                        Delete PO
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        mobileContent={
+          <MobileCardList>
+            {pos.map((po) => {
+              const actions = [
+                { label: 'View Details' as const, onClick: () => router.push(`/projects/purchase-orders/${po.id}`) },
+                { label: 'Edit PO' as const, onClick: () => router.push(`/projects/purchase-orders/${po.id}/edit`) },
+                { label: 'Delete PO' as const, onClick: () => setDeletePOId(po.id), variant: 'destructive' as const },
+              ];
+
+              return (
+                <MobileCard key={po.id} onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}>
+                  <MobileCardHeader identifier={po.poNumber} status={po.status} actions={actions} />
+                  <MobileCardBody>
+                    {po.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{po.description}</p>
+                    )}
+                    <MobileCardGrid>
+                      <MobileCardField label="Supplier">{po.supplierName || 'Not specified'}</MobileCardField>
+                      <MobileCardField label="Project">{po.project?.projectNumber.toUpperCase() || 'Unknown'}</MobileCardField>
+                      <MobileCardField label="Total Amount">{formatCurrency(po.totalAmount)}</MobileCardField>
+                      <MobileCardField label="PO Date">{formatDate(po.poDate)}</MobileCardField>
+                      <MobileCardField label="Expected Delivery">{formatDate(po.expectedDeliveryDate)}</MobileCardField>
+                      <MobileCardField label="Created">{formatDate(po.createdAt)}</MobileCardField>
+                    </MobileCardGrid>
+                  </MobileCardBody>
+                </MobileCard>
+              );
+            })}
+          </MobileCardList>
+        }
+      </DataTableShell>
+
+      <AlertDialog open={!!deletePOId} onOpenChange={(open) => !open && setDeletePOId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Purchase Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the purchase order and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeletePO} disabled={isPending} className="bg-red-600 hover:bg-red-700">
+              {isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

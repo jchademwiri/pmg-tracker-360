@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { AdminView } from '@/components/dashboard/admin-view';
 import { SpecialistView } from '@/components/dashboard/specialist-view';
+import { DashboardUrgencyBanner } from '@/components/dashboard/dashboard-urgency-banner';
 import { validateSessionAndOrg } from '@/server/utils';
 
 // Force dynamic rendering
@@ -127,6 +128,11 @@ export default async function DashboardPage() {
           </Button>
         </div>
       </div>
+
+      {/* Urgency Action Queue */}
+      <Suspense fallback={<div className="h-12 rounded-xl bg-muted/30 animate-pulse" />}>
+        <DashboardUrgencyBanner organizationId={organizationId} />
+      </Suspense>
 
       <Suspense fallback={<DashboardSkeleton />}>
         {isAdmin ? (

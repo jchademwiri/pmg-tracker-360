@@ -9,12 +9,11 @@ export function resolveTenderStatus(
   status: string,
   submissionDate: Date | null
 ): 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost' | 'cancelled' {
-  const currentStatus =
-    status === 'draft' || status === 'pending' || status === 'won'
-      ? status === 'won'
-        ? 'awarded'
-        : 'open'
-      : status;
+  // Map legacy statuses to canonical values
+  let currentStatus = status;
+  if (status === 'pending') {
+    currentStatus = 'open';
+  }
 
   if (!submissionDate) {
     return currentStatus as any;

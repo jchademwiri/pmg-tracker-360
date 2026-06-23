@@ -1,6 +1,6 @@
 export * from './header';
 export * from './app-sidebar';
-export * from './app-sidebar-wrapper';
+export * from './app-sidebar-client';
 export * from './nav-main';
 export * from './nav-links';
 export * from './nav-user';

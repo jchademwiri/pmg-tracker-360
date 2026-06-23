@@ -180,10 +180,10 @@ export async function uploadDocument(
   }
 }
 
-// Get documents for a tender/project
+// Get documents for a tender/project/purchase_order
 export async function getDocuments(
   organizationId: string,
-  entityType: 'tender' | 'project',
+  entityType: 'tender' | 'project' | 'purchase_order',
   entityId: string
 ) {
   try {
@@ -192,7 +192,9 @@ export async function getDocuments(
       eq(document.organizationId, organizationId),
       entityType === 'tender'
         ? eq(document.tenderId, entityId)
-        : eq(document.projectId, entityId)
+        : entityType === 'project'
+        ? eq(document.projectId, entityId)
+        : eq(document.purchaseOrderId, entityId)
     );
 
     const docs = await db.select().from(document).where(whereCondition);
