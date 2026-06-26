@@ -1,5 +1,28 @@
 import { toSASTDateString, toSASTDateTimeString, parseDateToUTC, parseDateTimeToUTC } from './timezone';
 
+function isDateOnlyUtcMidnight(date: Date) {
+  return (
+    date.getUTCHours() === 0 &&
+    date.getUTCMinutes() === 0 &&
+    date.getUTCSeconds() === 0 &&
+    date.getUTCMilliseconds() === 0
+  );
+}
+
+function getSastEndOfDateOnlyDay(date: Date) {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      21,
+      59,
+      59,
+      999
+    )
+  );
+}
+
 /**
  * Sanitizes a tender number by:
  * - Trimming whitespace
@@ -107,7 +130,6 @@ export function toLocalDateTimeString(
 }
 
 export function fromLocalDateTimeString(
-  dateTimeStr: string | null | undefined
-): Date | null {
+  dateTimeStr: string | null | undefined): Date | null {
   return parseDateTimeToUTC(dateTimeStr);
 }
