@@ -18,73 +18,35 @@ interface OrganizationManagementPageProps {
 }
 
 async function OrganizationManagementContent({ slug }: { slug: string }) {
-  try {
-    const { currentUser } = await getCurrentUser();
+  const { currentUser } = await getCurrentUser();
 
-    // Get organization by slug with user role
-    const organizationData = await getOrganizationBySlugWithUserRole(slug);
+  // Get organization by slug with user role
+  const organizationData = await getOrganizationBySlugWithUserRole(slug);
 
-    if (!organizationData) {
-      notFound();
-    }
-
-    // Check if user has access to this organization
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationData.id
-    );
-
-    if (!userMembership) {
-      // User doesn't belong to this organization
-      redirect('/organization');
-    }
-
-    // If user is just a member, redirect to read-only view
-    if (userMembership.role === 'member') {
-      redirect(`/organization/${slug}`);
-    }
-
-    return (
-      <OrganizationSettingsWrapper>
-        <OrganizationManagementTabs
-          organization={organizationData}
-          userRole={userMembership.role}
-          currentUser={currentUser}
-        />
-      </OrganizationSettingsWrapper>
-    );
-  } catch (error) {
-    console.error('Error loading organization:', error);
-    return (
-      <div className="text-center py-12">
-        <div className="mx-auto w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-          <svg
-            className="w-12 h-12 text-red-600 dark:text-red-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-            />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold mb-2">
-          Failed to Load Organization
-        </h3>
-        <p className="text-muted-foreground mb-4">
-          There was an error loading the organization details.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Please try refreshing the page or contact support if the problem
-          persists.
-        </p>
-      </div>
-    );
+  if (!organizationData) {
+    notFound();
   }
+
+  // Check if user has access to this organization
+  const userMembership = await getUserOrganizationMembership(
+    currentUser.id,
+    organizationData.id
+  );
+
+  if (!userMembership) {
+    // User doesn't belong to this organization
+    redirect('/organization');
+  }
+
+  return (
+    <OrganizationSettingsWrapper>
+      <OrganizationManagementTabs
+        organization={organizationData}
+        userRole={userMembership.role}
+        currentUser={currentUser}
+      />
+    </OrganizationSettingsWrapper>
+  );
 }
 
 function OrganizationManagementSkeleton() {
