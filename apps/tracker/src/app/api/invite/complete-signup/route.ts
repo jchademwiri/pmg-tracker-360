@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@pmg/db';
 import { user, member, invitation } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,25 +94,31 @@ export async function POST(request: NextRequest) {
 
     // 6. Add the user to the organisation and mark the invitation as accepted
     try {
-      // Guard against duplicate member rows
-      const existingMember = await db.query.member.findFirst({
-        where: eq(member.userId, userId),
-      });
-
-      if (!existingMember) {
-        await db.insert(member).values({
-          id: crypto.randomUUID(),
-          organizationId: invite.organizationId,
-          userId,
-          role: invite.role ?? 'member',
-          createdAt: new Date(),
+      await db.transaction(async (tx) => {
+        // Guard against duplicate member rows for this organization only.
+        // A user can belong to multiple organizations, so userId alone is not enough.
+        const existingMember = await tx.query.member.findFirst({
+          where: and(
+            eq(member.userId, userId),
+            eq(member.organizationId, invite.organizationId)
+          ),
         });
-      }
 
-      await db
-        .update(invitation)
-        .set({ status: 'accepted' })
-        .where(eq(invitation.id, invitationId));
+        if (!existingMember) {
+          await tx.insert(member).values({
+            id: crypto.randomUUID(),
+            organizationId: invite.organizationId,
+            userId,
+            role: invite.role ?? 'member',
+            createdAt: new Date(),
+          });
+        }
+
+        await tx
+          .update(invitation)
+          .set({ status: 'accepted' })
+          .where(eq(invitation.id, invitationId));
+      });
     } catch (acceptErr) {
       console.error('Failed to complete invitation acceptance in DB:', acceptErr);
       // Non-fatal — account was created, member row may already exist
