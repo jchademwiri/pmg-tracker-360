@@ -6,8 +6,8 @@ import { eq, inArray, not } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { StorageService } from '@/lib/storage';
-import { nanoid } from 'nanoid';
 import { revalidatePath } from 'next/cache';
+import { validateSessionAndOrg } from './utils';
 
 export const getCurrentUser = async () => {
   const session = await auth.api.getSession({
@@ -140,16 +140,23 @@ export const verifyOTPAndGetToken = async (email: string, otp: string) => {
 
 export const getAllUsers = async (organizationId: string) => {
   try {
+    const { role } = await validateSessionAndOrg(organizationId);
+
+    if (!['owner', 'admin'].includes(role)) {
+      return [];
+    }
+
     const members = await db.query.member.findMany({
       where: eq(member.organizationId, organizationId),
     });
+    const memberUserIds = members.map((m) => m.userId);
+
+    if (memberUserIds.length === 0) {
+      return await db.query.user.findMany();
+    }
+
     const users = await db.query.user.findMany({
-      where: not(
-        inArray(
-          user.id,
-          members.map((m) => m.userId)
-        )
-      ),
+      where: not(inArray(user.id, memberUserIds)),
     });
     return users;
   } catch (error) {
