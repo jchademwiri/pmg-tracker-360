@@ -244,14 +244,34 @@ export async function updateTenderExtension(
       })
       .where(eq(tenderExtension.id, validatedData.extensionId));
 
-    // Update tender evaluation date
-    await db
-      .update(tender)
-      .set({
-        evaluationDate: validatedData.newEvaluationDate,
-        updatedAt: new Date(),
-      })
-      .where(eq(tender.id, existing.tenderId));
+    // Recompute the tender's evaluation date from the latest remaining extension
+    const latestExtension = await db
+      .select({ newEvaluationDate: tenderExtension.newEvaluationDate })
+      .from(tenderExtension)
+      .where(and(
+        eq(tenderExtension.tenderId, existing.tenderId),
+        isNull(tenderExtension.deletedAt)
+      ))
+      .orderBy(desc(tenderExtension.newEvaluationDate))
+      .limit(1);
+
+    if (latestExtension.length > 0) {
+      await db
+        .update(tender)
+        .set({
+          evaluationDate: latestExtension[0].newEvaluationDate,
+          updatedAt: new Date(),
+        })
+        .where(eq(tender.id, existing.tenderId));
+    } else {
+      await db
+        .update(tender)
+        .set({
+          evaluationDate: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(tender.id, existing.tenderId));
+    }
 
     // Handle file upload (replace old file if new one provided)
     if (formData) {
