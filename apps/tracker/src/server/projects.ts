@@ -40,7 +40,7 @@ export async function getProjectBreadcrumbLabel(projectId: string) {
       .where(and(eq(project.id, projectId), isNull(project.deletedAt)))
       .limit(1);
 
-    return projectData[0]?.projectNumber || null;
+    return projectData[0]?.projectNumber?.toUpperCase() || null;
   } catch (error) {
     console.error('Error fetching project breadcrumb label:', error);
     return null;
@@ -156,7 +156,7 @@ export async function createProject(
       .from(project)
       .where(
         and(
-          eq(project.projectNumber, validatedData.projectNumber.toUpperCase()),
+          eq(project.projectNumber, validatedData.projectNumber.toLowerCase()),
           eq(project.organizationId, organizationId),
           isNull(project.deletedAt)
         )
@@ -214,7 +214,7 @@ export async function createProject(
         id: crypto.randomUUID(),
         organizationId,
         ...validatedData,
-        projectNumber: validatedData.projectNumber.toUpperCase(),
+        projectNumber: validatedData.projectNumber.toLowerCase(),
       })
       .returning();
 
@@ -336,7 +336,7 @@ export async function getRecentProjectActivities(
         organizationId,
         organizationName: org.name,
         type: 'project_created',
-        description: `Project ${proj.projectNumber} was created${proj.client?.name ? ` for ${proj.client.name}` : ''}`,
+        description: `Project ${proj.projectNumber.toUpperCase()} was created${proj.client?.name ? ` for ${proj.client.name}` : ''}`,
         timestamp: proj.createdAt,
         metadata: {
           projectId: proj.id,
@@ -353,7 +353,7 @@ export async function getRecentProjectActivities(
           organizationId,
           organizationName: org.name,
           type: 'project_status_changed',
-          description: `Project ${proj.projectNumber} status changed to ${proj.status}`,
+          description: `Project ${proj.projectNumber.toUpperCase()} status changed to ${proj.status}`,
           timestamp: proj.updatedAt,
           metadata: {
             projectId: proj.id,
@@ -489,7 +489,7 @@ export async function updateProject(
           and(
             eq(
               project.projectNumber,
-              validatedData.projectNumber.toUpperCase()
+              validatedData.projectNumber.toLowerCase()
             ),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt),
@@ -550,7 +550,7 @@ export async function updateProject(
       .set({
         ...validatedData,
         projectNumber: validatedData.projectNumber
-          ? validatedData.projectNumber.toUpperCase()
+          ? validatedData.projectNumber.toLowerCase()
           : undefined,
         updatedAt: new Date(),
       })

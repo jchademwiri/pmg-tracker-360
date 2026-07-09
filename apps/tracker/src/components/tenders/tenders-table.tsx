@@ -132,7 +132,7 @@ export function TendersTable({
           return (
             <MobileCard key={tender.id} onClick={() => onRowClick?.(tender.id)}>
               <MobileCardHeader
-                identifier={tender.tenderNumber}
+                identifier={tender.tenderNumber.toUpperCase()}
                 status={tender.status}
                 actions={actions}
               />
@@ -184,7 +184,7 @@ export function TendersTable({
                   className="text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  {tender.tenderNumber}
+                  {tender.tenderNumber.toUpperCase()}
                 </Link>
               </TableCell>
               <TableCell>{tender.client?.name || 'Unknown Client'}</TableCell>

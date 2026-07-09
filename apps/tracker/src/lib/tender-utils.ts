@@ -1,5 +1,30 @@
 import { toSASTDateString, toSASTDateTimeString, parseDateToUTC, parseDateTimeToUTC } from './timezone';
 
+/**
+ * Sanitizes a tender number by:
+ * - Trimming whitespace
+ * - Converting to lowercase (stored lowercase, displayed uppercase)
+ * - Replacing forward slashes (/) with hyphens (-)
+ * - Replacing backslashes (\) with hyphens (-)
+ * - Replacing spaces ( ) with hyphens (-)
+ * - Replacing other URL-unsafe characters with hyphens
+ * - Collapsing multiple consecutive hyphens into one
+ * - Trimming leading/trailing hyphens
+ *
+ * Storage:  "DRT 03/01/2026" → "drt-03-01-2026"
+ * Display:  toUpperCase() on render → "DRT-03-01-2026"
+ */
+export function sanitizeTenderNumber(tenderNumber: string): string {
+  return tenderNumber
+    .trim()
+    .toLowerCase()
+    .replace(/[\\/]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function isDateOnlyUtcMidnight(date: Date) {
   return (
     date.getUTCHours() === 0 &&

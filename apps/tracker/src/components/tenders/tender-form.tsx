@@ -42,6 +42,7 @@ import {
   toLocalDateTimeString,
 } from '@/lib/tender-utils';
 import { toSASTDateTimeString, parseDateTimeToUTC } from '@/lib/timezone';
+import { sanitizeTenderNumber } from '@/lib/tender-utils';
 import {
   TenderCreateSchema,
   type TenderCreateInput,
@@ -384,8 +385,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                             placeholder="Enter unique tender number"
                             {...field}
                             onChange={(e) => {
-                              const upperValue = e.target.value.toUpperCase();
-                              field.onChange(upperValue);
+                              const sanitized = sanitizeTenderNumber(e.target.value);
+                              field.onChange(sanitized);
                             }}
                             disabled={isPending}
                             className="rounded-md uppercase"

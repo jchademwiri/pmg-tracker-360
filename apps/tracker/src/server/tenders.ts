@@ -12,6 +12,7 @@ import { randomUUID } from 'crypto';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { nowInSAST } from '@/lib/timezone';
+import { sanitizeTenderNumber } from '@/lib/tender-utils';
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -46,7 +47,7 @@ async function autoCreateProjectForTender(
     await db.insert(project).values({
       id: projectId,
       organizationId,
-      projectNumber: tenderData.tenderNumber.toUpperCase(),
+      projectNumber: tenderData.tenderNumber.toLowerCase(),
       description: tenderData.description || `Project for Tender ${tenderData.tenderNumber}`,
       tenderId,
       clientId: tenderData.clientId,
@@ -194,8 +195,11 @@ export async function createTender(
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    // Validate input
+    // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderCreateSchema.parse(data);
+    if (validatedData.tenderNumber) {
+      validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
+    }
 
     // Check if tender number is unique within organization
     const existingTender = await db
@@ -203,7 +207,7 @@ export async function createTender(
       .from(tender)
       .where(
         and(
-          eq(tender.tenderNumber, validatedData.tenderNumber.toUpperCase()),
+          eq(tender.tenderNumber, validatedData.tenderNumber.toLowerCase()),
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt)
         )
@@ -240,7 +244,7 @@ export async function createTender(
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, validatedData.tenderNumber.toUpperCase()),
+            eq(project.projectNumber, validatedData.tenderNumber.toLowerCase()),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt)
           )
@@ -269,7 +273,7 @@ export async function createTender(
         organizationId,
         ...validatedData,
         evaluationDate,
-        tenderNumber: validatedData.tenderNumber.toUpperCase(),
+        tenderNumber: validatedData.tenderNumber.toLowerCase(),
       })
       .returning();
 
@@ -370,7 +374,7 @@ export async function getTenderBreadcrumbLabel(tenderId: string) {
       )
       .limit(1);
 
-    return tenderData[0]?.tenderNumber ?? null;
+    return tenderData[0]?.tenderNumber?.toUpperCase() ?? null;
   } catch (error) {
     console.error('Error fetching tender breadcrumb label:', error);
     return null;
@@ -385,8 +389,11 @@ export async function updateTender(
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    // Validate input
+    // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderUpdateSchema.parse(data);
+    if (validatedData.tenderNumber) {
+      validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
+    }
 
     // Check if tender exists and belongs to organization
     const existingTender = await db
@@ -412,7 +419,7 @@ export async function updateTender(
         .from(tender)
         .where(
           and(
-            eq(tender.tenderNumber, validatedData.tenderNumber.toUpperCase()),
+            eq(tender.tenderNumber, validatedData.tenderNumber.toLowerCase()),
             eq(tender.organizationId, organizationId),
             isNull(tender.deletedAt),
             // Exclude current tender from uniqueness check
@@ -487,7 +494,7 @@ export async function updateTender(
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, tenderNum.toUpperCase()),
+            eq(project.projectNumber, tenderNum.toLowerCase()),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt)
           )
@@ -527,7 +534,7 @@ export async function updateTender(
         ...validatedData,
         evaluationDate,
         tenderNumber: validatedData.tenderNumber
-          ? validatedData.tenderNumber.toUpperCase()
+          ? validatedData.tenderNumber.toLowerCase()
           : undefined,
         updatedAt: new Date(),
       })
@@ -634,7 +641,7 @@ export async function updateTenderStatus(
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, existingTender[0].tenderNumber.toUpperCase()),
+            eq(project.projectNumber, existingTender[0].tenderNumber.toLowerCase()),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt)
           )

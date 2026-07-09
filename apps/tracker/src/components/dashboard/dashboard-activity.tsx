@@ -30,13 +30,13 @@ export async function DashboardActivity({
     ...activityData.recentTenders.map((t) => ({
       id: `create-${t.id}`,
       type: 'tender_created' as const,
-      description: `New tender ${t.tenderNumber}`,
+      description: `New tender ${t.tenderNumber.toUpperCase()}`,
       timestamp: t.createdAt,
     })),
     ...activityData.recentChanges.map((t) => ({
       id: `update-${t.id}`,
       type: 'status_updated' as const,
-      description: `Tender ${t.tenderNumber} updated to ${t.status}`,
+      description: `Tender ${t.tenderNumber.toUpperCase()} updated to ${t.status}`,
       timestamp: t.updatedAt || t.createdAt,
     })),
   ]

@@ -281,7 +281,7 @@ export async function deleteClient(organizationId: string, clientId: string) {
 export async function searchClients(
   organizationId: string,
   query: string,
-  limit: number = 20
+  limit: number = 10
 ) {
   try {
     await validateSessionAndOrg(organizationId);

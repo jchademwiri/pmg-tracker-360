@@ -300,7 +300,7 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                             href={`/tenders/${t.id}`}
                             className="text-blue-500 hover:text-blue-600 hover:underline font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
                           >
-                            {t.tenderNumber}
+                            {t.tenderNumber.toUpperCase()}
                           </Link>
                         </TableCell>
                         

@@ -123,7 +123,7 @@ export function RecentActivity({
                   <div className="flex items-center gap-2 mb-1">
                     {icon}
                     <span className="font-medium text-sm truncate">
-                      {item.tenderNumber}
+                      {item.tenderNumber.toUpperCase()}
                     </span>
                     <Badge className={getStatusColor(item.status)}>
                       {item.status}

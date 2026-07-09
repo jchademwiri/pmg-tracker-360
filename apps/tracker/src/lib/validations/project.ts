@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { sanitizeTenderNumber } from '@/lib/tender-utils';
 
 export const ProjectCreateSchema = z.object({
-  projectNumber: z.string().min(1, 'Project number is required'),
+  projectNumber: z.string().min(1, 'Project number is required').transform((val) => sanitizeTenderNumber(val)),
   description: z.string().optional(),
   clientId: z.string().optional(),
   tenderId: z.string().optional(),
@@ -9,7 +10,7 @@ export const ProjectCreateSchema = z.object({
 });
 
 export const ProjectUpdateSchema = ProjectCreateSchema.partial().extend({
-  projectNumber: z.string().min(1, 'Project number is required').optional(),
+  projectNumber: z.string().min(1, 'Project number is required').optional().transform((val) => val ? sanitizeTenderNumber(val) : undefined),
 });
 
 export const ProjectStatusUpdateSchema = z.object({

@@ -337,7 +337,7 @@ export function ClientDetails({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">
-                              {tender.tenderNumber}
+                              {tender.tenderNumber.toUpperCase()}
                             </span>
                             <Badge
                               variant={
@@ -419,7 +419,7 @@ export function ClientDetails({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">
-                              {proj.projectNumber}
+                              {proj.projectNumber.toUpperCase()}
                             </span>
                             <Badge
                               variant={

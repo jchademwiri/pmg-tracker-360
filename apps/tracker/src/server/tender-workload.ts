@@ -62,7 +62,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
       events.push({
         id: `close-${t.id}`,
         type: 'closing_date',
-        title: `Closing: ${t.tenderNumber}`,
+        title: `Closing: ${t.tenderNumber.toUpperCase()}`,
         date: t.submissionDate,
         tenderNumber: t.tenderNumber,
         tenderId: t.id,
@@ -97,7 +97,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
       events.push({
         id: `brief-${t.id}`,
         type: 'briefing',
-        title: `Briefing: ${t.tenderNumber}${t.briefingLocation ? ` @ ${t.briefingLocation}` : ''}`,
+        title: `Briefing: ${t.tenderNumber.toUpperCase()}${t.briefingLocation ? ` @ ${t.briefingLocation}` : ''}`,
         date: t.briefingDate,
         tenderNumber: t.tenderNumber,
         tenderId: t.id,
@@ -134,7 +134,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
       events.push({
         id: `validity-${t.id}`,
         type: 'validity_expiry',
-        title: `Validity Expiry: ${t.tenderNumber} (${t.status})`,
+        title: `Validity Expiry: ${t.tenderNumber.toUpperCase()} (${t.status})`,
         date: t.evaluationDate,
         tenderNumber: t.tenderNumber,
         tenderId: t.id,
@@ -182,7 +182,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
       events.push({
         id: `fu-${f.id}`,
         type: 'follow_up',
-        title: `Follow-up: ${f.tenderNumber}${f.contactPerson ? ` (${f.contactPerson})` : ''}`,
+        title: `Follow-up: ${f.tenderNumber?.toUpperCase()}${f.contactPerson ? ` (${f.contactPerson})` : ''}`,
         date: eventDate,
         tenderNumber: f.tenderNumber ?? 'Unknown',
         tenderId: f.tenderId,
@@ -218,7 +218,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
       events.push({
         id: `ext-${e.id}`,
         type: 'tender_extension',
-        title: `Extension Deadline: ${e.tenderNumber}${e.notes ? ` - ${e.notes}` : ''}`,
+        title: `Extension Deadline: ${e.tenderNumber?.toUpperCase()}${e.notes ? ` - ${e.notes}` : ''}`,
         date: e.newEvaluationDate,
         tenderNumber: e.tenderNumber ?? 'Unknown',
         tenderId: e.tenderId,

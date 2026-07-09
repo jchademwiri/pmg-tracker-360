@@ -308,7 +308,7 @@ class AuditLogger {
 
       // Apply filters (simplified for now - in production would use proper query building)
       const results = await query
-        .limit(filters.limit || 100)
+        .limit(filters.limit || 10)
         .offset(filters.offset || 0);
 
       return results.map((entry) => ({

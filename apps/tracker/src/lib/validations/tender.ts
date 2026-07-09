@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sanitizeTenderNumber } from '@/lib/tender-utils';
 
 const optionalText = z
   .string()
@@ -14,7 +15,7 @@ const optionalEmail = z
   .nullable();
 
 export const TenderCreateSchema = z.object({
-  tenderNumber: z.string().min(1, 'Tender number is required'),
+  tenderNumber: z.string().min(1, 'Tender number is required').transform((val) => sanitizeTenderNumber(val)),
   description: z.string().optional(),
   clientId: z.string().min(1, 'Client is required'),
   submissionDate: z.coerce.date().optional().nullable(),
@@ -42,8 +43,14 @@ export const TenderCreateSchema = z.object({
 });
 
 export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
-  tenderNumber: z.string().min(1, 'Tender number is required').optional(),
+  tenderNumber: z.string().min(1, 'Tender number is required').optional().transform((val) => val ? sanitizeTenderNumber(val) : undefined),
 });
+
+/**
+ * Standalone schema for sanitizing a tender number string.
+ * Useful in server actions or utilities that receive raw tender number input.
+ */
+export const TenderNumberSchema = z.string().transform((val) => sanitizeTenderNumber(val));
 
 export const TenderStatusUpdateSchema = z.object({
   status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']),

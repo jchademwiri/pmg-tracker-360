@@ -223,7 +223,7 @@ export function POList({
   const activeFilterChips = [
     ...(statusFilter !== 'all' ? [{ key: 'status', label: 'Status', value: STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter }] : []),
     ...(supplierFilter !== 'all' ? [{ key: 'supplier', label: 'Supplier', value: supplierFilter }] : []),
-    ...(projectFilter !== 'all' && !projectId ? [{ key: 'projectId', label: 'Project', value: projects.find(p => p.id === projectFilter)?.projectNumber || projectFilter }] : []),
+    ...(projectFilter !== 'all' && !projectId ? [{ key: 'projectId', label: 'Project', value: projects.find(p => p.id === projectFilter)?.projectNumber?.toUpperCase() || projectFilter }] : []),
     ...(searchQuery ? [{ key: 'search', label: 'Search', value: searchQuery }] : []),
   ];
 
@@ -271,7 +271,7 @@ export function POList({
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
                   {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.projectNumber}</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>{p.projectNumber.toUpperCase()}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -331,11 +331,11 @@ export function POList({
                   <SelectContent>
                     <SelectItem value="all">All Projects</SelectItem>
                     {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.projectNumber}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </MobileFilterField>
+                    <SelectItem key={p.id} value={p.id}>{p.projectNumber.toUpperCase()}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
             )}
             <MobileFilterField label="Status">
               <Select value={draftStatus} onValueChange={setDraftStatus}>

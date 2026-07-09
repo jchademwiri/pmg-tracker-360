@@ -32,6 +32,7 @@ import {
   ProjectCreateSchema,
   type ProjectCreateInput,
 } from '@/lib/validations/project';
+import { sanitizeTenderNumber } from '@/lib/tender-utils';
 import { ClientCreateDialog } from '@/components/clients/client-create-dialog';
 
 interface ProjectWithRelations {
@@ -263,8 +264,8 @@ export function ProjectForm({
                           placeholder="Enter unique project number"
                           {...field}
                           onChange={(e) => {
-                            const upperValue = e.target.value.toUpperCase();
-                            field.onChange(upperValue);
+                            const sanitized = sanitizeTenderNumber(e.target.value);
+                            field.onChange(sanitized);
                           }}
                           disabled={isPending}
                           className="rounded-md uppercase"

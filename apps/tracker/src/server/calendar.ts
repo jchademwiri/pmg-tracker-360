@@ -108,7 +108,7 @@ export async function getCalendarEvents(
       events.push({
         id: row.id,
         type: 'tender_submission',
-        title: `${row.tenderNumber} submission`,
+        title: `${row.tenderNumber.toUpperCase()} submission`,
         date: row.submissionDate.toISOString(),
         color: EVENT_TYPE_TO_COLOR.tender_submission,
         metadata: {
