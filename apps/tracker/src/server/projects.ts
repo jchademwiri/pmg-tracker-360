@@ -97,6 +97,14 @@ export async function getProjects(
         tender: true,
         purchaseOrders: {
           where: isNull(purchaseOrder.deletedAt),
+          with: {
+            deliveryNotes: {
+              where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+              with: {
+                items: true,
+              },
+            },
+          },
         },
       },
     });
@@ -104,14 +112,23 @@ export async function getProjects(
     const projects = projectsData.map((proj) => {
       const pos = proj.purchaseOrders || [];
       const totalPOAmount = pos.reduce((sum, po) => sum + parseFloat(po.totalAmount || '0'), 0);
-      const deliveredAmount = pos
-        .filter((po) => po.status === 'delivered' || po.status === 'completed')
-        .reduce((sum, po) => sum + parseFloat(po.totalAmount || '0'), 0);
-      const partialAmount = pos
-        .filter((po) => po.status === 'partially_delivered')
-        .reduce((sum, po) => sum + parseFloat(po.totalAmount || '0') * 0.5, 0);
 
-      const totalDelivered = deliveredAmount + partialAmount;
+      // Calculate actual delivered value from verified delivery items
+      let totalDelivered = 0;
+      for (const po of pos) {
+        if (po.status === 'completed' || po.status === 'delivered') {
+          // Full amount delivered
+          totalDelivered += parseFloat(po.totalAmount || '0');
+        } else {
+          // Sum actual delivery item values for partially_delivered and other statuses
+          for (const note of po.deliveryNotes || []) {
+            for (const item of (note as any).items || []) {
+              totalDelivered += parseFloat(item.deliveryValue || '0');
+            }
+          }
+        }
+      }
+
       const completionPercentage = totalPOAmount > 0
         ? Math.round((totalDelivered / totalPOAmount) * 100)
         : 0;

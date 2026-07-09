@@ -927,6 +927,16 @@ export async function getTendersWithSorting(
         sortColumn = tender.createdAt;
     }
 
+    // Build order expression, handling nulls-last for submissionDate
+    const orderByExpression =
+      sortBy === 'submissionDate'
+        ? sortOrder === 'desc'
+          ? sql`${tender.submissionDate} desc nulls last`
+          : sql`${tender.submissionDate} asc nulls last`
+        : sortOrder === 'desc'
+          ? desc(sortColumn)
+          : sortColumn;
+
     const tenders = await db
       .select({
         id: tender.id,
@@ -954,7 +964,7 @@ export async function getTendersWithSorting(
       .from(tender)
       .leftJoin(client, eq(tender.clientId, client.id))
       .where(whereCondition)
-      .orderBy(desc(tender.createdAt))
+      .orderBy(orderByExpression)
       .limit(limit)
       .offset(offset);
 

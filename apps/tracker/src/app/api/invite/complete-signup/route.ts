@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@pmg/db';
 import { user, member, invitation } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,9 +94,12 @@ export async function POST(request: NextRequest) {
 
     // 6. Add the user to the organisation and mark the invitation as accepted
     try {
-      // Guard against duplicate member rows
+      // Guard against duplicate member rows (scoped to this org)
       const existingMember = await db.query.member.findFirst({
-        where: eq(member.userId, userId),
+        where: and(
+          eq(member.userId, userId),
+          eq(member.organizationId, invite.organizationId)
+        ),
       });
 
       if (!existingMember) {
