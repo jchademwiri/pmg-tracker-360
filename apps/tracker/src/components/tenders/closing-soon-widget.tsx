@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Flame, Link2 } from 'lucide-react';
+import { URGENCY_WINDOWS } from '@/lib/urgency-windows';
 import { formatCurrency } from '@/lib/format';
 import Link from 'next/link';
 

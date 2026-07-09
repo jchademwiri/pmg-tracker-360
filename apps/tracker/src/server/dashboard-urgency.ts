@@ -6,6 +6,7 @@ import { and, eq, isNull, lte, gte } from 'drizzle-orm';
 import { validateSessionAndOrg } from './utils';
 import { resolveTenderStatus } from '@/lib/tender-utils';
 import { nowInSAST } from '@/lib/timezone';
+import { URGENCY_WINDOWS } from '@/lib/urgency-windows';
 
 export interface UrgencyData {
   closingThisWeek: number;
@@ -57,7 +58,7 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
 }> {
   try {
     const now = nowInSAST();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS * 24 * 60 * 60 * 1000);
 
     const resolved = await resolveOrgTenders(organizationId);
 
@@ -178,7 +179,7 @@ export async function getWorkflowCounts(organizationId: string): Promise<{
 }> {
   try {
     const now = nowInSAST();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS * 24 * 60 * 60 * 1000);
 
     const resolved = await resolveOrgTenders(organizationId);
 

@@ -6,6 +6,7 @@ import { tender, client, project, tenderExtension, tenderFollowUp, tenderActivit
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, isNotNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { URGENCY_WINDOWS, daysAgo, daysFromNow } from '@/lib/urgency-windows';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
 import { randomUUID } from 'crypto';
 import { auth } from '@/lib/auth';
@@ -1102,11 +1103,9 @@ export async function getTenderStats(organizationId: string) {
     // Calculate average value
     const averageValue = totalTenders > 0 ? totalValue / totalTenders : 0;
 
-    // Count upcoming deadlines (next 30 days)
+    // Count upcoming deadlines
     const now = nowInSAST();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
+    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
     const upcomingDeadlines = stats.filter(
       (tender) =>
         tender.submissionDate &&
@@ -1120,7 +1119,7 @@ export async function getTenderStats(organizationId: string) {
     ).length;
 
     // --- Trend Calculation (vs 30 days ago) ---
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = daysAgo(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
 
     // Filter stats to represent the state 30 days ago
     const previousStats = stats.filter(
@@ -1236,8 +1235,8 @@ export async function getRecentActivity(
       .orderBy(desc(tender.createdAt))
       .limit(limit);
 
-    // Get recent status changes (tenders updated in last 7 days)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // Get recent status changes
+    const sevenDaysAgo = daysAgo(URGENCY_WINDOWS.RECENT_ACTIVITY_DAYS);
     const recentChanges = await db
       .select({
         id: tender.id,
@@ -1290,9 +1289,7 @@ export async function getUpcomingDeadlines(
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
+    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
 
     const upcomingTenders = await db
       .select({
@@ -1352,9 +1349,7 @@ export async function getUpcomingBriefings(
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
+    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
 
     const upcomingBriefings = await db
       .select({
@@ -1583,9 +1578,7 @@ export async function getClosingSoonTenders(organizationId: string) {
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const sevenDaysFromNow = new Date(
-      now.getTime() + 7 * 24 * 60 * 60 * 1000
-    );
+    const sevenDaysFromNow = daysFromNow(URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS);
 
     const closingSoonTenders = await db
       .select({
@@ -1822,7 +1815,7 @@ export async function getTenderActionQueue(organizationId: string) {
       .orderBy(tender.submissionDate);
 
     // 2. Closing Soon: Active pre-submission status, and closing date (submissionDate) within the next 14 days (inclusive of today).
-    const fourteenDaysFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const fourteenDaysFromNow = daysFromNow(URGENCY_WINDOWS.CLOSING_SOON_DAYS);
     const closingSoon = await db
       .select({
         id: tender.id,

@@ -220,7 +220,7 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                 </Badge>
               </div>
               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                {key === 'closingSoon' ? 'Closing Soon (14d)' : config.label}
+                {key === 'closingSoon' ? 'Closing Soon' : config.label}
               </span>
               <span className="text-lg font-bold mt-1 tracking-tight">
                 {list.length > 0 ? `${list.length} action${list.length > 1 ? 's' : ''}` : 'Cleared'}

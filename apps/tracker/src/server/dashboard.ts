@@ -5,6 +5,7 @@ import { validateSessionAndOrg } from './utils';
 import { resolveTenderStatus } from '@/lib/tender-utils';
 import { autoCloseExpiredTenders } from './tenders';
 import { nowInSAST } from '@/lib/timezone';
+import { URGENCY_WINDOWS } from '@/lib/urgency-windows';
 
 export async function getSpecialistDashboardStats(organizationId: string) {
   try {
@@ -14,7 +15,7 @@ export async function getSpecialistDashboardStats(organizationId: string) {
     await autoCloseExpiredTenders(organizationId);
 
     const now = nowInSAST();
-    const fourteenDaysFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const fourteenDaysFromNow = new Date(now.getTime() + URGENCY_WINDOWS.CLOSING_SOON_DAYS * 24 * 60 * 60 * 1000);
 
     // Fetch all active tenders for this organization
     const tenders = await db

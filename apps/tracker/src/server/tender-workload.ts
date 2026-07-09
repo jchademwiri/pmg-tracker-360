@@ -5,6 +5,7 @@ import { tender, client, document, tenderFollowUp, tenderExtension } from '@pmg/
 import { and, eq, isNull, isNotNull, inArray, lte, gte, or, sql } from 'drizzle-orm';
 import { validateSessionAndOrg } from './utils';
 import { nowInSAST } from '@/lib/timezone';
+import { URGENCY_WINDOWS, daysFromNow } from '@/lib/urgency-windows';
 
 export interface WorkloadStats {
   /** Tenders in active pre-submission statuses with no documents uploaded */
@@ -148,7 +149,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
     await validateSessionAndOrg(organizationId);
 
     const now = nowInSAST();
-    const horizon = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    const horizon = new Date(now.getTime() + (daysAhead || URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS) * 24 * 60 * 60 * 1000);
     const events: CalendarEvent[] = [];
 
     // 1. Closing dates (submissionDate) for active pre-submission tenders
