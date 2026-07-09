@@ -49,7 +49,7 @@ export default async function PurchaseOrderPage({
 
   const [poResult, docsResult] = await Promise.all([
     getPurchaseOrderById(session.activeOrganizationId, id),
-    getDocuments(session.activeOrganizationId, 'purchase_order', id)
+    getDocuments(session.activeOrganizationId, 'purchaseOrder', id)
   ]);
 
   if (!poResult.success || !poResult.purchaseOrder) {

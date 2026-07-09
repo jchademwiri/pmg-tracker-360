@@ -1,7 +1,8 @@
 import { getCurrentUser } from '@/server';
 import { getReportStats } from '@/server/reports';
 import { ReportStatsCards } from '@/components/reports/stats-cards';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { TenderPerformanceChart } from '@/components/reports/tender-performance-chart';
+import { RevenueForecastChart } from '@/components/reports/revenue-forecast-chart';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,29 +41,25 @@ export default async function ReportsPage() {
       {/* Overview Stats */}
       <ReportStatsCards stats={stats} />
 
-      {/* Future Charts Placeholder - MVP only requires cards for now */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Tender Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-              Detailed performance charts coming soon
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Revenue Forecast</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-              Revenue forecast charts coming soon
-            </div>
-          </CardContent>
-        </Card>
+      {/* Charts */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <TenderPerformanceChart
+          stats={{
+            wonTenders: stats.wonTenders,
+            lostTenders: stats.lostTenders,
+            pendingTenders: stats.pendingTenders,
+            winRate: stats.winRate,
+            totalTenders: stats.totalTenders,
+          }}
+        />
+        <RevenueForecastChart
+          stats={{
+            pipelineValue: stats.pipelineValue,
+            totalWonValue: stats.totalWonValue,
+            poRevenue: stats.poRevenue,
+            pendingTenders: stats.pendingTenders,
+          }}
+        />
       </div>
     </div>
   );

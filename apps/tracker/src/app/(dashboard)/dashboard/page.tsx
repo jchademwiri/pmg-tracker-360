@@ -1,11 +1,19 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 import { checkUserSession } from '@/lib/session-check';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import { AdminView } from '@/components/dashboard/admin-view';
 import { SpecialistView } from '@/components/dashboard/specialist-view';
@@ -34,8 +42,6 @@ function DashboardSkeleton() {
 }
 
 export default async function DashboardPage() {
-  const { auth } = await import('@/lib/auth');
-  const { headers } = await import('next/headers');
   const headersList = await headers();
 
   // Check if user has an organization
@@ -57,14 +63,36 @@ export default async function DashboardPage() {
 
   // Fetch membership role
   let role = 'member';
+  let memberName = 'there';
   try {
     const sessionDetails = await validateSessionAndOrg(organizationId);
     role = sessionDetails.role;
+    memberName = sessionDetails.user?.name || 'there';
   } catch (error) {
     console.error('Failed to validate session role:', error);
   }
 
   const isAdmin = role === 'owner' || role === 'admin' || role === 'manager';
+
+  // Check permissions for create actions
+  const [hasPOCreate, hasProjectCreate] = await Promise.all([
+    auth.api.hasPermission({
+      headers: headersList,
+      body: {
+        permissions: {
+          purchase_order: ['create'],
+        },
+      },
+    }),
+    auth.api.hasPermission({
+      headers: headersList,
+      body: {
+        permissions: {
+          project: ['create'],
+        },
+      },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -73,59 +101,41 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
+            Welcome back, {memberName}!{' '}
             {isAdmin
-              ? "Welcome back! Here's an overview of your organization's procurement pipeline."
-              : "Welcome back! Here's your operational checklist and bidding activity overview."}
+              ? "Here's an overview of your organization's procurement pipeline."
+              : "Here's your operational checklist and bidding activity overview."}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/tenders/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Tender
-            </Link>
-          </Button>
-          {(
-            await auth.api.hasPermission({
-              headers: headersList,
-              body: {
-                permissions: {
-                  purchase_order: ['create'],
-                },
-              },
-            })
-          ).success && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/projects/purchase-orders/create">
+        <div className="flex items-center gap-2">
+          {/* Consolidated Create Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Create PO
-              </Link>
-            </Button>
-          )}
-
-          {(
-            await auth.api.hasPermission({
-              headers: headersList,
-              body: {
-                permissions: {
-                  project: ['create'],
-                },
-              },
-            })
-          ).success && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/projects/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Project
-              </Link>
-            </Button>
-          )}
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/clients/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Client
-            </Link>
-          </Button>
+                Create
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href="/tenders/create">Create Tender</Link>
+              </DropdownMenuItem>
+              {hasPOCreate.success && (
+                <DropdownMenuItem asChild>
+                  <Link href="/projects/purchase-orders/create">Create PO</Link>
+                </DropdownMenuItem>
+              )}
+              {hasProjectCreate.success && (
+                <DropdownMenuItem asChild>
+                  <Link href="/projects/create">Create Project</Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem asChild>
+                <Link href="/clients/create">Create Client</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

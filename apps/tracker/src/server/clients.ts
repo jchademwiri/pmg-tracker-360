@@ -491,18 +491,26 @@ export async function getClientsList(organizationId: string) {
 export async function getClientStats(organizationId: string) {
   try {
     await validateSessionAndOrg(organizationId);
-    const stats = await db
+    const clients = await db
       .select({
-        total: client.id,
+        id: client.id,
         hasContact: client.contactEmail,
+        createdAt: client.createdAt,
       })
       .from(client)
       .where(
         and(eq(client.organizationId, organizationId), isNull(client.deletedAt))
       );
 
-    const totalClients = stats.length;
-    const clientsWithContact = stats.filter((s) => s.hasContact).length;
+    const totalClients = clients.length;
+    const clientsWithContact = clients.filter((s) => s.hasContact).length;
+
+    // Calculate actual monthly growth (clients added this month)
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const clientsThisMonth = clients.filter(
+      (c) => new Date(c.createdAt) >= startOfMonth
+    ).length;
 
     return {
       success: true,
@@ -510,6 +518,7 @@ export async function getClientStats(organizationId: string) {
         totalClients,
         clientsWithContact,
         clientsWithoutContact: totalClients - clientsWithContact,
+        clientsThisMonth,
       },
     };
   } catch (error: any) {
@@ -521,6 +530,7 @@ export async function getClientStats(organizationId: string) {
         totalClients: 0,
         clientsWithContact: 0,
         clientsWithoutContact: 0,
+        clientsThisMonth: 0,
       },
     };
   }

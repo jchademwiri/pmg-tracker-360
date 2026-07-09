@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Search,
   Plus,
@@ -343,7 +344,13 @@ export function ProjectList({
                 <TableCell>
                   <div className="text-sm">
                     {project.tender ? (
-                      <span className="text-blue-600">{project.tender.tenderNumber.toUpperCase()}</span>
+                      <Link
+                        href={`/tenders/${project.tender.id}`}
+                        className="text-blue-600 hover:text-blue-400 hover:underline transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {project.tender.tenderNumber.toUpperCase()}
+                      </Link>
                     ) : (
                       <span className="text-muted-foreground">None</span>
                     )}

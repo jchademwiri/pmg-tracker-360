@@ -7,7 +7,12 @@
 import "../src/load-env";
 import postgres from "postgres";
 
-
+// ⚠️  Safety guard: prevent accidental production database reset
+if (process.env.NODE_ENV === 'production') {
+  console.error('❌ Refusing to reset database in production environment');
+  console.error('   Set NODE_ENV to development, staging, or leave unset to proceed.');
+  process.exit(1);
+}
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is required");
