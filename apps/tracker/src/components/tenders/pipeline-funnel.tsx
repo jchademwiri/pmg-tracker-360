@@ -18,7 +18,7 @@ interface PipelineFunnelProps {
 const PIPELINE_STAGES = [
   { key: 'open', label: 'Open', href: '/tenders?status=open', color: 'bg-blue-500', textColor: 'text-blue-600', lightBg: 'bg-blue-500/10' },
   { key: 'evaluation', label: 'Under Evaluation', href: '/tenders?status=evaluation', color: 'bg-amber-500', textColor: 'text-amber-600', lightBg: 'bg-amber-500/10' },
-  { key: 'closed', label: 'Closed', href: '/tenders?status=closed', color: 'bg-zinc-400', textColor: 'text-zinc-500', lightBg: 'bg-zinc-400/10' },
+  { key: 'closed', label: 'Closed / Cancelled', href: '/tenders?status=closed', color: 'bg-zinc-400', textColor: 'text-zinc-500', lightBg: 'bg-zinc-400/10' },
   { key: 'awarded', label: 'Awarded', href: '/tenders?status=awarded', color: 'bg-green-500', textColor: 'text-green-600', lightBg: 'bg-green-500/10' },
   { key: 'lost', label: 'Lost / Rejected', href: '/tenders?status=lost', color: 'bg-red-500', textColor: 'text-red-600', lightBg: 'bg-red-500/10' },
 ] as const;
