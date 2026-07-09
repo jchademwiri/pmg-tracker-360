@@ -61,6 +61,7 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
     if (initialQueues.overdue.length > 0) return 'overdue';
     if (initialQueues.closingSoon.length > 0) return 'closingSoon';
     if (initialQueues.briefingPending.length > 0) return 'briefingPending';
+    if (initialQueues.awaitingResults.length > 0) return 'awaitingResults';
     if (initialQueues.awardedToConvert.length > 0) return 'awardedToConvert';
     return 'overdue';
   });
