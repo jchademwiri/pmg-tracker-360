@@ -307,7 +307,7 @@ export function TenderDetails({
         <div className="px-4 py-2.5 bg-muted/20 border-b flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tender Lifecycle Stage</span>
-            <StatusBadge status={tender.status} />
+            <StatusBadge domain="tender" status={tender.status} />
           </div>
           <span className="text-xs text-muted-foreground">Click a stage to transition the workflow</span>
         </div>
@@ -539,7 +539,7 @@ export function TenderDetails({
                         Status
                       </label>
                       <div className="mt-1">
-                        <StatusBadge status={tender.status} />
+                        <StatusBadge domain="tender" status={tender.status} />
                       </div>
                     </div>
 
@@ -889,7 +889,7 @@ export function TenderDetails({
                 <CardContent className="space-y-2">
                   <div className="text-sm text-muted-foreground mb-3">
                     Current Status:{' '}
-                    <StatusBadge status={tender.status} />
+                    <StatusBadge domain="tender" status={tender.status} />
                   </div>
 
                    {tender.status !== 'evaluation' && (

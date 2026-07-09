@@ -47,43 +47,44 @@ export const PO_LIFECYCLE = [
 
 export const STATUS_MAP_BY_DOMAIN: Record<StatusDomain, Record<string, StatusConfig>> = {
   tender: {
-    new: { label: 'Opportunity', className: tone.info, domain: 'tender', order: 0 },
+    open: { label: 'Open', className: tone.progress, domain: 'tender', order: 0 },
+    new: { label: 'Opportunity', className: tone.info, domain: 'tender', order: 1 },
     review: { label: 'Review', className: tone.review, domain: 'tender', order: 1 },
     approved_to_prepare: {
       label: 'Approved to Prepare',
       className: tone.progress,
       domain: 'tender',
-      order: 2,
+      order: 3,
     },
     preparation: {
       label: 'Preparing',
       className: tone.warning,
       domain: 'tender',
-      order: 3,
+      order: 4,
     },
     ready: {
       label: 'Ready',
       className: tone.success,
       domain: 'tender',
-      order: 4,
+      order: 5,
     },
     submitted: {
       label: 'Submitted',
       className: tone.progress,
       domain: 'tender',
-      order: 5,
+      order: 6,
     },
     evaluation: {
       label: 'Evaluation',
       className: tone.progress,
       domain: 'tender',
-      order: 6,
+      order: 7,
     },
     awarded: {
       label: 'Awarded',
       className: tone.warning,
       domain: 'tender',
-      order: 7,
+      order: 8,
     },
     lost: { label: 'Lost / Rejected', className: tone.danger, domain: 'tender' },
     closed: { label: 'Closed', className: tone.done, domain: 'tender' },

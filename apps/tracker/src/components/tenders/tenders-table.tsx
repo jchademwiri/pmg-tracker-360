@@ -191,7 +191,7 @@ export function TendersTable({
               <TableCell className="max-w-[200px] truncate hidden sm:table-cell">
                 {tender.description || '-'}
               </TableCell>
-              <TableCell><StatusBadge status={tender.status} /></TableCell>
+              <TableCell><StatusBadge domain="tender" status={tender.status} /></TableCell>
               <TableCell className="hidden md:table-cell">
                 {formatCurrency(Number(tender.value || 0))}
               </TableCell>
