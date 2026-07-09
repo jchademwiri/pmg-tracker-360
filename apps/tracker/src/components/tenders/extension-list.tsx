@@ -54,6 +54,9 @@ export function ExtensionList({
   const [editExtensionId, setEditExtensionId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
+  // Extensions are sorted by extensionDate desc from the server; first = latest
+  const latestExtensionId = extensions.length > 0 ? extensions[0].id : null;
+
   const extToDelete = deleteDialogId
     ? extensions.find((e) => e.id === deleteDialogId)
     : undefined;
@@ -61,6 +64,8 @@ export function ExtensionList({
   const extToEdit = editExtensionId
     ? extensions.find((e) => e.id === editExtensionId)
     : undefined;
+
+  const isEditingLatestExtension = !!editExtensionId && editExtensionId === latestExtensionId;
 
   const editExtensionData: EditableExtension | undefined = extToEdit
     ? {
@@ -244,6 +249,7 @@ export function ExtensionList({
         organizationId={organizationId}
         tenderId={tenderId}
         extension={editExtensionData}
+        isLatestExtension={isEditingLatestExtension}
         open={editExtensionId !== null}
         onOpenChange={(open) => { if (!open) setEditExtensionId(null); }}
         trigger={<span />}

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Loader2, Upload } from 'lucide-react';
+import { Plus, Loader2, Upload, AlertTriangle } from 'lucide-react';
 import { createTenderExtension, updateTenderExtension } from '@/server/modules/extensions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -56,6 +56,8 @@ interface ExtensionFormProps {
   tenderId: string;
   /** If provided, the form opens in edit mode for this extension */
   extension?: EditableExtension;
+  /** Whether this extension is the latest (governing the tender's live evaluation date) */
+  isLatestExtension?: boolean;
   /** Controlled open state for edit mode */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -72,6 +74,7 @@ export function ExtensionForm({
   organizationId,
   tenderId,
   extension,
+  isLatestExtension,
   open: controlledOpen,
   onOpenChange,
   trigger,
@@ -170,6 +173,20 @@ export function ExtensionForm({
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Tender Extension' : 'Add Tender Extension'}</DialogTitle>
         </DialogHeader>
+
+        {isEdit && !isLatestExtension && (
+          <div className="flex items-start gap-3 rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+            <div>
+              <p className="font-medium text-amber-700 dark:text-amber-400">Not the active extension</p>
+              <p className="mt-1 text-muted-foreground">
+                This is not the latest extension. Editing this record will update its metadata
+                (dates, contact details, notes) but <strong>will not affect</strong> the tender's
+                current evaluation deadline — that is governed by the most recent extension.
+              </p>
+            </div>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
