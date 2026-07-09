@@ -109,6 +109,53 @@ export function TendersTable({
         actionHref: '/tenders/create',
       }}
       className={className}
+      mobileContent={
+        <MobileCardList>
+        {tenders.map((tender) => {
+          const daysLeft = getDaysUntilDeadline(tender.submissionDate);
+          const actions = [
+            ...(onViewTender ? [{ label: 'View' as const, onClick: () => onViewTender(tender.id) }] : []),
+            ...(onEditTender ? [{ label: 'Edit' as const, onClick: () => onEditTender(tender.id) }] : []),
+            ...(onDeleteTender ? [{ label: 'Delete' as const, onClick: () => onDeleteTender(tender.id), variant: 'destructive' as const }] : []),
+          ];
+
+          const daysLeftContent = tender.status === 'evaluation'
+            ? `Submitted ${formatDate(tender.updatedAt)}`
+            : daysLeft === null
+              ? '-'
+              : daysLeft < 0
+                ? `${Math.abs(daysLeft)} days overdue`
+                : daysLeft === 0
+                  ? 'Due today'
+                  : `${daysLeft} days left`;
+
+          return (
+            <MobileCard key={tender.id} onClick={() => onRowClick?.(tender.id)}>
+              <MobileCardHeader
+                identifier={tender.tenderNumber}
+                status={tender.status}
+                actions={actions}
+              />
+              <MobileCardBody>
+                <h3 className="font-semibold text-foreground text-sm">
+                  {tender.client?.name || 'Unknown Client'}
+                </h3>
+                {tender.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">{tender.description}</p>
+                )}
+                <MobileCardGrid>
+                  <MobileCardField label="Value">{formatCurrency(Number(tender.value || 0))}</MobileCardField>
+                  <MobileCardField label="Closing Date">{formatDate(tender.submissionDate)}</MobileCardField>
+                  <MobileCardField label="Time Left" className="col-span-2">
+                    {daysLeftContent}
+                  </MobileCardField>
+                </MobileCardGrid>
+              </MobileCardBody>
+            </MobileCard>
+          );
+        })}
+        </MobileCardList>
+      }
     >
       {/* Desktop table */}
       <Table className="w-full min-w-[800px]">
@@ -184,54 +231,6 @@ export function TendersTable({
           ))}
         </TableBody>
       </Table>
-
-      mobileContent={
-        <MobileCardList>
-        {tenders.map((tender) => {
-          const daysLeft = getDaysUntilDeadline(tender.submissionDate);
-          const actions = [
-            ...(onViewTender ? [{ label: 'View' as const, onClick: () => onViewTender(tender.id) }] : []),
-            ...(onEditTender ? [{ label: 'Edit' as const, onClick: () => onEditTender(tender.id) }] : []),
-            ...(onDeleteTender ? [{ label: 'Delete' as const, onClick: () => onDeleteTender(tender.id), variant: 'destructive' as const }] : []),
-          ];
-
-          const daysLeftContent = tender.status === 'evaluation'
-            ? `Submitted ${formatDate(tender.updatedAt)}`
-            : daysLeft === null
-              ? '-'
-              : daysLeft < 0
-                ? `${Math.abs(daysLeft)} days overdue`
-                : daysLeft === 0
-                  ? 'Due today'
-                  : `${daysLeft} days left`;
-
-          return (
-            <MobileCard key={tender.id} onClick={() => onRowClick?.(tender.id)}>
-              <MobileCardHeader
-                identifier={tender.tenderNumber}
-                status={tender.status}
-                actions={actions}
-              />
-              <MobileCardBody>
-                <h3 className="font-semibold text-foreground text-sm">
-                  {tender.client?.name || 'Unknown Client'}
-                </h3>
-                {tender.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{tender.description}</p>
-                )}
-                <MobileCardGrid>
-                  <MobileCardField label="Value">{formatCurrency(Number(tender.value || 0))}</MobileCardField>
-                  <MobileCardField label="Closing Date">{formatDate(tender.submissionDate)}</MobileCardField>
-                  <MobileCardField label="Time Left" className="col-span-2">
-                    {daysLeftContent}
-                  </MobileCardField>
-                </MobileCardGrid>
-              </MobileCardBody>
-            </MobileCard>
-          );
-        })}
-        </MobileCardList>
-      }
     </DataTableShell>
   );
 }

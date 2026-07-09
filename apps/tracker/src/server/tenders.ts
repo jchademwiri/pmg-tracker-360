@@ -979,7 +979,7 @@ export async function getAvailableTendersForProjects(
   organizationId: string,
   clientId?: string,
   page: number = 1,
-  limit: number = 100
+  limit: number = 10
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1420,7 +1420,7 @@ export async function getTendersOverview(
     sortOrder?: 'asc' | 'desc';
   },
   page: number = 1,
-  limit: number = 20
+  limit: number = 10
 ) {
   try {
     await validateSessionAndOrg(organizationId);
