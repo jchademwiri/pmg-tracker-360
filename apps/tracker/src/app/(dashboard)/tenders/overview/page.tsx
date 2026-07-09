@@ -22,9 +22,8 @@ import { RecentActivity } from '@/components/tenders/recent-activity';
 import { UpcomingDeadlines } from '@/components/tenders/upcoming-deadlines';
 import { PipelineFunnel } from '@/components/tenders/pipeline-funnel';
 import { TenderActionQueue } from '@/components/tenders/tender-action-queue';
-import { TenderWorkloadSummary } from '@/components/tenders/tender-workload-summary';
 import { TenderCalendarStrip } from '@/components/tenders/tender-calendar-strip';
-import { getTenderWorkloadStats, getTenderCalendarEvents } from '@/server/tender-workload';
+import { getTenderCalendarEvents } from '@/server/tender-workload';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -57,13 +56,12 @@ export default async function TendersOverviewPage() {
   }
 
   // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult, actionQueueResult, workloadResult, calendarResult] =
+  const [statsResult, activityResult, deadlinesResult, actionQueueResult, calendarResult] =
     await Promise.all([
       getTenderStats(session.activeOrganizationId),
       getRecentActivity(session.activeOrganizationId, 3),
       getUpcomingDeadlines(session.activeOrganizationId, 3),
       getTenderActionQueue(session.activeOrganizationId),
-      getTenderWorkloadStats(session.activeOrganizationId),
       getTenderCalendarEvents(session.activeOrganizationId),
     ]);
 
@@ -85,10 +83,6 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
-  
-  const workloadStats = workloadResult.success ? workloadResult.stats : {
-    missingDocuments: 0, missingContact: 0, overdueActions: 0, awaitingResults: 0,
-  };
   
   const calendarEvents = calendarResult.success ? calendarResult.events : [];
   
@@ -120,9 +114,6 @@ export default async function TendersOverviewPage() {
           </Link>
         </Button>
       </header>
-
-      {/* Workload Summary Widget */}
-      <TenderWorkloadSummary stats={workloadStats} />
 
       {/* Action Queue Section */}
       <TenderActionQueue

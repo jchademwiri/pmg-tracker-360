@@ -1,22 +1,11 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { tender, client, document, tenderFollowUp, tenderExtension } from '@pmg/db/schema';
+import { tender, tenderFollowUp, tenderExtension } from '@pmg/db/schema';
 import { and, eq, isNull, isNotNull, inArray, lte, gte, or, sql } from 'drizzle-orm';
 import { validateSessionAndOrg } from './utils';
 import { nowInSAST } from '@/lib/timezone';
 import { URGENCY_WINDOWS, daysFromNow } from '@/lib/urgency-windows';
-
-export interface WorkloadStats {
-  /** Tenders in active pre-submission statuses with no documents uploaded */
-  missingDocuments: number;
-  /** Tenders whose client has no contact name, email, or phone, and the tender itself also has no contact info */
-  missingContact: number;
-  /** Tenders past their submission date still in active pre-submission status */
-  overdueActions: number;
-  /** Tenders in submitted/evaluation status awaiting results */
-  awaitingResults: number;
-}
 
 export interface CalendarEvent {
   id: string;
@@ -27,113 +16,6 @@ export interface CalendarEvent {
   tenderId: string;
   description?: string | null;
   urgency: 'critical' | 'warning' | 'info';
-}
-
-/**
- * Returns workload statistics for the tender overview dashboard.
- * Focuses on: missing documents, missing client contact, overdue actions, awaiting results.
- */
-export async function getTenderWorkloadStats(organizationId: string): Promise<{
-  success: boolean;
-  stats: WorkloadStats;
-  error?: string;
-}> {
-  try {
-    await validateSessionAndOrg(organizationId);
-
-    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'];
-    const now = nowInSAST();
-
-    // Get all active tenders with client info
-    const activeTenders = await db
-      .select({
-        id: tender.id,
-        tenderNumber: tender.tenderNumber,
-        submissionDate: tender.submissionDate,
-        clientId: tender.clientId,
-        contactName: tender.contactName,
-        contactEmail: tender.contactEmail,
-        contactPhone: tender.contactPhone,
-        client: {
-          id: client.id,
-          contactName: client.contactName,
-          contactEmail: client.contactEmail,
-          contactPhone: client.contactPhone,
-        },
-      })
-      .from(tender)
-      .leftJoin(client, eq(tender.clientId, client.id))
-      .where(
-        and(
-          eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt),
-          inArray(tender.status, activeStatuses)
-        )
-      );
-
-    const activeTenderIds = activeTenders.map((t) => t.id);
-
-    // Get document counts per tender
-    let docTenderIds = new Set<string>();
-    if (activeTenderIds.length > 0) {
-      const docs = await db
-        .select({ tenderId: document.tenderId })
-        .from(document)
-        .where(
-          and(
-            eq(document.organizationId, organizationId),
-            inArray(document.tenderId, activeTenderIds)
-          )
-        );
-      docTenderIds = new Set(docs.map((d) => d.tenderId).filter(Boolean) as string[]);
-    }
-
-    // Missing documents: active tenders with no uploaded documents
-    const missingDocuments = activeTenders.filter((t) => !docTenderIds.has(t.id)).length;
-
-    // Missing contact: no contact on the tender AND no contact on the client
-    const missingContact = activeTenders.filter(
-      (t) =>
-        !t.contactName &&
-        !t.contactEmail &&
-        !t.contactPhone &&
-        (!t.client || (!t.client.contactName && !t.client.contactEmail && !t.client.contactPhone))
-    ).length;
-
-    // Overdue: submission date in the past
-    const overdueActions = activeTenders.filter(
-      (t) => t.submissionDate && t.submissionDate < now
-    ).length;
-
-    // Awaiting results: in submitted/evaluation
-    const awaitingResultsResult = await db
-      .select({ count: tender.id })
-      .from(tender)
-      .where(
-        and(
-          eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt),
-          inArray(tender.status, ['submitted', 'evaluation'])
-        )
-      );
-
-    return {
-      success: true,
-      stats: {
-        missingDocuments,
-        missingContact,
-        overdueActions,
-        awaitingResults: awaitingResultsResult.length,
-      },
-    };
-  } catch (error: any) {
-    console.error('Error fetching tender workload stats:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to fetch workload stats',
-      stats: { missingDocuments: 0, missingContact: 0, overdueActions: 0, awaitingResults: 0 },
-    };
-  }
 }
 
 /**
