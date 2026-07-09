@@ -852,7 +852,7 @@ export const purchaseOrderDeliveryItemRelations = relations(
 
 export const tenderExtensionRelations = relations(
   tenderExtension,
-  ({ one }) => ({
+  ({ one, many }) => ({
     organization: one(organization, {
       fields: [tenderExtension.organizationId],
       references: [organization.id],
@@ -865,6 +865,7 @@ export const tenderExtensionRelations = relations(
       fields: [tenderExtension.createdBy],
       references: [user.id],
     }),
+    documents: many(document),
   })
 );
 

@@ -116,20 +116,6 @@ export async function uploadDocument(
 
         uniqueKey = `${orgPathSegment}/projects/${po.project.projectNumber}/purchase-orders/${monthFolder}/${poFolder}/${file.name}`;
       }
-    } else if (linkedEntity?.extensionId) {
-      // Fetch Extension and its parent Tender
-      const ext = await db.query.tenderExtension.findFirst({
-        where: eq(tenderExtension.id, linkedEntity.extensionId),
-        with: {
-          tender: {
-            columns: { tenderNumber: true },
-          },
-        },
-      });
-
-      if (ext && ext.tender?.tenderNumber) {
-        uniqueKey = `${orgPathSegment}/tenders/${ext.tender.tenderNumber}/extensions/${file.name}`;
-      }
     }
 
     // 4. Upload to Storage
