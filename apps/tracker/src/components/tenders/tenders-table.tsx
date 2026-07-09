@@ -181,7 +181,7 @@ export function TendersTable({
               <TableCell className="font-medium">
                 <Link
                   href={`/tenders/${tender.id}`}
-                  className="text-blue-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                  className="text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
                   onClick={(event) => event.stopPropagation()}
                 >
                   {tender.tenderNumber}

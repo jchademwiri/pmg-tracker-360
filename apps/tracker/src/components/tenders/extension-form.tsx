@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -83,6 +83,7 @@ export function ExtensionForm({
   const isEdit = !!extension;
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ExtensionFormValues>({
     resolver: zodResolver(extensionFormSchema),
@@ -97,10 +98,7 @@ export function ExtensionForm({
   });
 
   const onSubmit = async (data: ExtensionFormValues) => {
-    const fileInput = document.querySelector(
-      'input[type="file"]'
-    ) as HTMLInputElement;
-    const file = fileInput?.files?.[0];
+    const file = fileInputRef.current?.files?.[0];
 
     if (!isEdit && !file) {
       toast.error('File Required', {
@@ -278,6 +276,7 @@ export function ExtensionForm({
                 type="file"
                 accept=".pdf,.doc,.docx,.jpg,.png"
                 className="cursor-pointer"
+                ref={fileInputRef}
                 required={!isEdit}
               />
               {isEdit && extension?.documents?.[0] && (
