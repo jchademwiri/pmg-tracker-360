@@ -193,40 +193,37 @@ async function run() {
     let skippedWithWarning = 0;
 
     for (const { oldNumber, newNumber } of updatedEntries) {
-      // Pre-check: verify no unique constraint violation would occur
-      const conflict = await sql`
-        SELECT 1
-        FROM tender
-        WHERE tender_number = ${newNumber}
-          AND tender_number != ${oldNumber}
-          AND deleted_at IS NULL
-        LIMIT 1
-      `;
-      if (conflict.length > 0) {
-        console.warn(
-          `  ⚠️  Skipping "${oldNumber}" → "${newNumber}" — value already exists in database.`,
-        );
-        skippedWithWarning++;
-        continue;
+      // Attempt to update tender table — wrapped in try-catch so a single
+      // unexpected constraint violation doesn't crash the entire migration.
+      try {
+        const tenderResult = await sql`
+          UPDATE tender
+          SET tender_number = ${newNumber}, updated_at = NOW()
+          WHERE tender_number = ${oldNumber}
+            AND deleted_at IS NULL
+        `;
+        tenderUpdates += tenderResult.count ?? 0;
+
+        // Update project table for projects that inherited the old tender number
+        const projectResult = await sql`
+          UPDATE project
+          SET project_number = ${newNumber}, updated_at = NOW()
+          WHERE project_number = ${oldNumber}
+            AND deleted_at IS NULL
+        `;
+        projectUpdates += projectResult.count ?? 0;
+      } catch (err: any) {
+        const isUniqueViolation = err?.code === "23505";
+        if (isUniqueViolation) {
+          console.warn(
+            `  ⚠️  Skipping "${oldNumber}" → "${newNumber}" — value already exists (constraint violation).`,
+          );
+          skippedWithWarning++;
+        } else {
+          // Re-throw unexpected errors so the operator is aware
+          throw err;
+        }
       }
-
-      // Update tender table
-      const tenderResult = await sql`
-        UPDATE tender
-        SET tender_number = ${newNumber}, updated_at = NOW()
-        WHERE tender_number = ${oldNumber}
-          AND deleted_at IS NULL
-      `;
-      tenderUpdates += tenderResult.count ?? 0;
-
-      // Update project table for projects that inherited the old tender number
-      const projectResult = await sql`
-        UPDATE project
-        SET project_number = ${newNumber}, updated_at = NOW()
-        WHERE project_number = ${oldNumber}
-          AND deleted_at IS NULL
-      `;
-      projectUpdates += projectResult.count ?? 0;
     }
 
     console.log(`\n✅ Done.`);
