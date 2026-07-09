@@ -4,12 +4,14 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, Phone, Mail, FileText, Download, Trash2, Loader2 } from 'lucide-react';
+import { Calendar, User, Phone, Mail, FileText, Download, Trash2 } from 'lucide-react';
 import { ExtensionForm } from './extension-form';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { deleteTenderExtension } from '@/server/modules/extensions';
+import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { formatFileSize } from '@/lib/format';
 
 export interface ExtensionDocument {
   id: string;
@@ -42,34 +44,31 @@ interface ExtensionListProps {
   tenderId: string;
 }
 
-function formatFileSize(bytes: number) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
 export function ExtensionList({
   extensions,
   organizationId,
   tenderId,
 }: ExtensionListProps) {
   const router = useRouter();
-  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const handleDelete = (extensionId: string) => {
-    setIsDeletingId(extensionId);
+  const extToDelete = deleteDialogId
+    ? extensions.find((e) => e.id === deleteDialogId)
+    : undefined;
+
+  const handleDeleteConfirm = () => {
+    if (!deleteDialogId) return;
+    const id = deleteDialogId;
+    setDeleteDialogId(null);
     startTransition(async () => {
-      const result = await deleteTenderExtension(organizationId, extensionId);
+      const result = await deleteTenderExtension(organizationId, id);
       if (result.success) {
         toast.success('Extension deleted');
         router.refresh();
       } else {
         toast.error(result.error || 'Failed to delete extension');
       }
-      setIsDeletingId(null);
     });
   };
 
@@ -200,14 +199,9 @@ export function ExtensionList({
                     variant="ghost"
                     size="sm"
                     className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                    onClick={() => handleDelete(ext.id)}
-                    disabled={isDeletingId === ext.id}
+                    onClick={() => setDeleteDialogId(ext.id)}
                   >
-                    {isDeletingId === ext.id ? (
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3 w-3 mr-1" />
-                    )}
+                    <Trash2 className="h-3 w-3 mr-1" />
                     Delete
                   </Button>
                 </div>
@@ -216,6 +210,14 @@ export function ExtensionList({
           ))}
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        isOpen={deleteDialogId !== null}
+        onClose={() => setDeleteDialogId(null)}
+        onConfirm={handleDeleteConfirm}
+        itemName={extToDelete ? format(new Date(extToDelete.extensionDate), 'PPP') : 'this extension'}
+        itemType="Extension"
+      />
     </div>
   );
 }

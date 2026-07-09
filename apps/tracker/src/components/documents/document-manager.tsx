@@ -8,15 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Trash2, Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner'; // Assuming sonner is used based on package.json
 import { uploadDocument, deleteDocument } from '@/server/documents';
-
-// Inline formatBytes if generic utils doesn't have it
-function formatFileSize(bytes: number) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+import { formatFileSize } from '@/lib/format';
 
 interface Document {
   id: string;
