@@ -1,5 +1,28 @@
 import { toSASTDateString, toSASTDateTimeString, parseDateToUTC, parseDateTimeToUTC } from './timezone';
 
+function isDateOnlyUtcMidnight(date: Date) {
+  return (
+    date.getUTCHours() === 0 &&
+    date.getUTCMinutes() === 0 &&
+    date.getUTCSeconds() === 0 &&
+    date.getUTCMilliseconds() === 0
+  );
+}
+
+function getSastEndOfDateOnlyDay(date: Date) {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      21,
+      59,
+      59,
+      999
+    )
+  );
+}
+
 /**
  * Resolves the dynamic status of a tender based on its submission deadline.
  * If status is evaluation, awarded, or lost, it remains locked.
@@ -26,10 +49,11 @@ export function resolveTenderStatus(
 
   const now = new Date();
   const submission = new Date(submissionDate);
+  const deadline = isDateOnlyUtcMidnight(submission)
+    ? getSastEndOfDateOnlyDay(submission)
+    : submission;
 
-  // Compare timestamps directly - submission dates are stored as UTC midnight
-  // which aligns with SAST date comparisons
-  if (now <= submission) {
+  if (now <= deadline) {
     return 'open';
   } else {
     return 'closed';

@@ -13,7 +13,7 @@ import {
   Calendar,
   MoreHorizontal,
   Building,
-  CheckSquare,
+
   CheckCircle2,
   Plus,
   PhoneCall,
@@ -834,87 +834,6 @@ export function TenderDetails({
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Bidding Compliance Checklist */}
-              <Card className="rounded-lg shadow-sm border border-border/40 bg-card/60 backdrop-blur-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CheckSquare className="h-5 w-5 text-blue-500" />
-                    Bidding Compliance
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Required document checklist for submission
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {(() => {
-                    const checkComplianceItem = (keywords: string[]) => {
-                      return documents.some((doc) =>
-                        keywords.some((kw) => doc.name.toLowerCase().includes(kw))
-                      );
-                    };
-
-                    const complianceItems = [
-                      { id: 'tax', label: 'Tax Clearance Certificate', keywords: ['tax', 'clearance'] },
-                      { id: 'bee', label: 'B-BBEE / BEE Certificate', keywords: ['bee', 'b-bbee'] },
-                      { id: 'tech', label: 'Technical Proposal Spec', keywords: ['technical', 'proposal', 'scope'] },
-                      { id: 'price', label: 'Financial / Pricing Schedule', keywords: ['price', 'pricing', 'financial', 'schedule'] },
-                      { id: 'sbd', label: 'Signed Bidding Docs (SBD)', keywords: ['sbd'] },
-                      { id: 'ck', label: 'Company Profile / CIPC (CK)', keywords: ['ck', 'cipc', 'profile', 'registration'] },
-                    ];
-
-                    const completedCount = complianceItems.filter(item => checkComplianceItem(item.keywords)).length;
-
-                    return (
-                      <>
-                        {/* Progress Bar */}
-                        <div className="space-y-1.5 pb-2 border-b border-border/30">
-                          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                            <span>Documents Attached</span>
-                            <span>{completedCount} / {complianceItems.length}</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-blue-500 transition-all duration-500 ease-in-out" 
-                              style={{ width: `${(completedCount / complianceItems.length) * 100}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Checklist Items */}
-                        <div className="space-y-2.5 pt-1">
-                          {complianceItems.map((item) => {
-                            const isDone = checkComplianceItem(item.keywords);
-                            return (
-                              <div key={item.id} className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                  {isDone ? (
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                                  ) : (
-                                    <div className="h-4 w-4 rounded-full border-2 border-dashed border-muted-foreground/30 shrink-0" />
-                                  )}
-                                  <span className={`text-xs truncate ${isDone ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                                    {item.label}
-                                  </span>
-                                </div>
-                                {!isDone && (
-                                  <Button 
-                                    variant="ghost" 
-                                    onClick={() => setActiveTab('documents')}
-                                    className="h-6 text-[10px] px-2 py-0 text-blue-500 hover:text-blue-700 cursor-pointer"
-                                  >
-                                    Attach
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </>
-                    );
-                  })()}
-                </CardContent>
-              </Card>
-
               {/* Quick Actions */}
               <Card className="rounded-lg shadow-sm">
                 <CardHeader>
