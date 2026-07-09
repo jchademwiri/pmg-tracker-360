@@ -23,10 +23,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Loader2, Upload } from 'lucide-react';
-import { createTenderExtension } from '@/server/modules/extensions';
+import { createTenderExtension, updateTenderExtension } from '@/server/modules/extensions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-// import { useToast } from '@/hook/use-toast'; // Removed
+import { format } from 'date-fns';
 
 const extensionFormSchema = z.object({
   extensionDate: z.string().min(1, 'Extension date is required'),
@@ -35,45 +35,74 @@ const extensionFormSchema = z.object({
   contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().optional(),
   notes: z.string().optional(),
-  file: z.any().optional(), // File handling is manual usually or via ref
+  file: z.any().optional(),
 });
 
 type ExtensionFormValues = z.infer<typeof extensionFormSchema>;
 
+export interface EditableExtension {
+  id: string;
+  extensionDate: Date;
+  newEvaluationDate: Date;
+  contactName: string | null;
+  contactEmail: string;
+  contactPhone: string | null;
+  notes: string | null;
+  documents: { id: string; name: string }[];
+}
+
 interface ExtensionFormProps {
   organizationId: string;
   tenderId: string;
+  /** If provided, the form opens in edit mode for this extension */
+  extension?: EditableExtension;
+  /** Controlled open state for edit mode */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Trigger button variant for edit mode */
+  trigger?: React.ReactNode;
+}
+
+function toDateInputValue(date: Date | string): string {
+  const d = new Date(date);
+  return d.toISOString().slice(0, 10);
 }
 
 export function ExtensionForm({
   organizationId,
   tenderId,
+  extension,
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
 }: ExtensionFormProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  // const { toast } = useToast(); // Removed
+
+  const isEdit = !!extension;
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const form = useForm<ExtensionFormValues>({
     resolver: zodResolver(extensionFormSchema),
     defaultValues: {
-      extensionDate: '',
-      newEvaluationDate: '',
-      contactName: '',
-      contactEmail: '',
-      contactPhone: '',
-      notes: '',
+      extensionDate: extension ? toDateInputValue(extension.extensionDate) : '',
+      newEvaluationDate: extension ? toDateInputValue(extension.newEvaluationDate) : '',
+      contactName: extension?.contactName || '',
+      contactEmail: extension?.contactEmail || '',
+      contactPhone: extension?.contactPhone || '',
+      notes: extension?.notes || '',
     },
   });
 
   const onSubmit = async (data: ExtensionFormValues) => {
-    // Validate file
     const fileInput = document.querySelector(
       'input[type="file"]'
     ) as HTMLInputElement;
     const file = fileInput?.files?.[0];
 
-    if (!file) {
+    if (!isEdit && !file) {
       toast.error('File Required', {
         description: 'Please upload the extension letter.',
       });
@@ -81,36 +110,50 @@ export function ExtensionForm({
     }
 
     startTransition(async () => {
-      const formData = new FormData();
-      formData.append('file', file);
+      const formData = file ? new FormData() : undefined;
+      if (file && formData) {
+        formData.append('file', file);
+      }
 
-      const input = {
-        tenderId,
-        extensionDate: data.extensionDate,
-        newEvaluationDate: data.newEvaluationDate,
-        contactName: data.contactName,
-        contactEmail: data.contactEmail,
-        contactPhone: data.contactPhone,
-        notes: data.notes,
-      };
+      if (isEdit && extension) {
+        const input = {
+          extensionId: extension.id,
+          extensionDate: data.extensionDate,
+          newEvaluationDate: data.newEvaluationDate,
+          contactName: data.contactName,
+          contactEmail: data.contactEmail,
+          contactPhone: data.contactPhone,
+          notes: data.notes,
+        };
 
-      const result = await createTenderExtension(
-        organizationId,
-        input,
-        formData
-      );
-
-      if (result.success) {
-        toast.success('Success', {
-          description: 'Tender extension created successfully.',
-        });
-        setOpen(false);
-        form.reset();
-        router.refresh(); // Refresh to show new extension in list and updated tender date
+        const result = await updateTenderExtension(organizationId, input, formData);
+        if (result.success) {
+          toast.success('Extension updated successfully');
+          setOpen(false);
+          router.refresh();
+        } else {
+          toast.error(result.error || 'Failed to update extension');
+        }
       } else {
-        toast.error('Error', {
-          description: result.error || 'Failed to create extension.',
-        });
+        const input = {
+          tenderId,
+          extensionDate: data.extensionDate,
+          newEvaluationDate: data.newEvaluationDate,
+          contactName: data.contactName,
+          contactEmail: data.contactEmail,
+          contactPhone: data.contactPhone,
+          notes: data.notes,
+        };
+
+        const result = await createTenderExtension(organizationId, input, formData!);
+        if (result.success) {
+          toast.success('Tender extension created successfully');
+          setOpen(false);
+          form.reset();
+          router.refresh();
+        } else {
+          toast.error(result.error || 'Failed to create extension');
+        }
       }
     });
   };
@@ -118,14 +161,16 @@ export function ExtensionForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Extension
-        </Button>
+        {trigger || (
+          <Button className="cursor-pointer">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Extension
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Add Tender Extension</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit Tender Extension' : 'Add Tender Extension'}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -228,19 +273,24 @@ export function ExtensionForm({
             />
 
             <div className="space-y-2">
-              <FormLabel>Extension Letter *</FormLabel>
+              <FormLabel>Extension Letter {isEdit ? '(optional — new file replaces existing)' : '*'}</FormLabel>
               <Input
                 type="file"
                 accept=".pdf,.doc,.docx,.jpg,.png"
                 className="cursor-pointer"
-                required
+                required={!isEdit}
               />
+              {isEdit && extension?.documents?.[0] && (
+                <p className="text-xs text-muted-foreground">
+                  Current file: {extension.documents[0].name}
+                </p>
+              )}
             </div>
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Extension
+                {isEdit ? 'Update Extension' : 'Save Extension'}
               </Button>
             </div>
           </form>

@@ -4,8 +4,8 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, Phone, Mail, FileText, Download, Trash2 } from 'lucide-react';
-import { ExtensionForm } from './extension-form';
+import { Calendar, User, Phone, Mail, FileText, Download, Trash2, Pencil } from 'lucide-react';
+import { ExtensionForm, EditableExtension } from './extension-form';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -51,10 +51,28 @@ export function ExtensionList({
 }: ExtensionListProps) {
   const router = useRouter();
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
+  const [editExtensionId, setEditExtensionId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const extToDelete = deleteDialogId
     ? extensions.find((e) => e.id === deleteDialogId)
+    : undefined;
+
+  const extToEdit = editExtensionId
+    ? extensions.find((e) => e.id === editExtensionId)
+    : undefined;
+
+  const editExtensionData: EditableExtension | undefined = extToEdit
+    ? {
+        id: extToEdit.id,
+        extensionDate: extToEdit.extensionDate,
+        newEvaluationDate: extToEdit.newEvaluationDate,
+        contactName: extToEdit.contactName,
+        contactEmail: extToEdit.contactEmail,
+        contactPhone: extToEdit.contactPhone,
+        notes: extToEdit.notes,
+        documents: extToEdit.documents.map((d) => ({ id: d.id, name: d.name })),
+      }
     : undefined;
 
   const handleDeleteConfirm = () => {
@@ -195,21 +213,41 @@ export function ExtensionList({
                       {ext.createdByUser?.name || 'Unknown'}
                     </span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                    onClick={() => setDeleteDialogId(ext.id)}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Delete
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs cursor-pointer"
+                      onClick={() => setEditExtensionId(ext.id)}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                      onClick={() => setDeleteDialogId(ext.id)}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <ExtensionForm
+        organizationId={organizationId}
+        tenderId={tenderId}
+        extension={editExtensionData}
+        open={editExtensionId !== null}
+        onOpenChange={(open) => { if (!open) setEditExtensionId(null); }}
+        trigger={<span />}
+      />
 
       <DeleteConfirmationDialog
         isOpen={deleteDialogId !== null}

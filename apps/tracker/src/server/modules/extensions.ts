@@ -150,7 +150,10 @@ export async function getTenderExtensions(
     }
 
     const extensions = await db.query.tenderExtension.findMany({
-      where: eq(tenderExtension.tenderId, tenderId),
+      where: and(
+        eq(tenderExtension.tenderId, tenderId),
+        isNull(tenderExtension.deletedAt)
+      ),
       orderBy: [desc(tenderExtension.extensionDate)],
       with: {
         createdByUser: {
@@ -179,6 +182,123 @@ export async function getTenderExtensions(
   } catch (error) {
     console.error('Error fetching extensions:', error);
     return { success: false, error: 'Failed to fetch extensions' };
+  }
+}
+
+const updateExtensionSchema = z.object({
+  extensionId: z.string(),
+  extensionDate: z.string().transform((str) => new Date(str)),
+  newEvaluationDate: z.string().transform((str) => new Date(str)),
+  contactName: z.string().optional(),
+  contactEmail: z.string().email(),
+  contactPhone: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export type UpdateExtensionInput = z.input<typeof updateExtensionSchema>;
+
+export async function updateTenderExtension(
+  organizationId: string,
+  input: UpdateExtensionInput,
+  formData?: FormData
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (
+      !session ||
+      !session.session.activeOrganizationId ||
+      session.session.activeOrganizationId !== organizationId
+    ) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const validatedData = updateExtensionSchema.parse(input);
+
+    // Fetch existing extension
+    const existing = await db.query.tenderExtension.findFirst({
+      where: and(
+        eq(tenderExtension.id, validatedData.extensionId),
+        eq(tenderExtension.organizationId, organizationId),
+        isNull(tenderExtension.deletedAt)
+      ),
+    });
+
+    if (!existing) {
+      return { success: false, error: 'Extension not found' };
+    }
+
+    // Update the extension record
+    await db
+      .update(tenderExtension)
+      .set({
+        extensionDate: validatedData.extensionDate,
+        newEvaluationDate: validatedData.newEvaluationDate,
+        contactName: validatedData.contactName,
+        contactEmail: validatedData.contactEmail,
+        contactPhone: validatedData.contactPhone,
+        notes: validatedData.notes,
+        updatedAt: new Date(),
+      })
+      .where(eq(tenderExtension.id, validatedData.extensionId));
+
+    // Update tender evaluation date
+    await db
+      .update(tender)
+      .set({
+        evaluationDate: validatedData.newEvaluationDate,
+        updatedAt: new Date(),
+      })
+      .where(eq(tender.id, existing.tenderId));
+
+    // Handle file upload (replace old file if new one provided)
+    if (formData) {
+      const file = formData.get('file');
+      if (file && file instanceof File && file.size > 0) {
+        // Delete existing documents for this extension
+        const existingDocs = await db
+          .select()
+          .from(document)
+          .where(eq(document.extensionId, validatedData.extensionId));
+
+        for (const doc of existingDocs) {
+          try {
+            await StorageService.deleteFile(doc.url);
+          } catch (e) {
+            console.error('Error deleting old extension document:', e);
+          }
+        }
+        await db.delete(document).where(eq(document.extensionId, validatedData.extensionId));
+
+        // Upload new file
+        const extensionPrefix = 'Extension - ';
+        const newFileName = `${extensionPrefix}${file.name}`;
+        const newFile = new File([file], newFileName, { type: file.type });
+
+        const newFormData = new FormData();
+        newFormData.append('file', newFile);
+
+        const uploadResult = await uploadDocument(organizationId, newFormData, {
+          tenderId: existing.tenderId,
+          extensionId: validatedData.extensionId,
+        });
+
+        if (!uploadResult.success) {
+          console.error('Failed to upload new extension document:', uploadResult.error);
+        }
+      }
+    }
+
+    revalidatePath(`/tenders/${existing.tenderId}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating tender extension:', error);
+    if (error instanceof z.ZodError) {
+      return { success: false, error: 'Validation failed', details: error.errors };
+    }
+    return { success: false, error: 'Failed to update extension' };
   }
 }
 
