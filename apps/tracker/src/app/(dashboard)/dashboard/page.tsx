@@ -67,7 +67,7 @@ export default async function DashboardPage() {
   try {
     const sessionDetails = await validateSessionAndOrg(organizationId);
     role = sessionDetails.role;
-    memberName = sessionDetails.user?.name || 'there';
+    memberName = sessionDetails.session?.user?.name || 'there';
   } catch (error) {
     console.error('Failed to validate session role:', error);
   }
