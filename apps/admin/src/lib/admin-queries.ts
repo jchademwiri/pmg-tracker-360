@@ -536,8 +536,8 @@ export async function getSuspiciousSessions(): Promise<SuspiciousSession[]> {
     lastActivity: row.lastActivity,
     logoutTime: row.logoutTime,
     ipAddress: row.ipAddress,
-    deviceInfo: row.deviceInfo,
-    locationInfo: row.locationInfo,
+    deviceInfo: row.deviceInfo as string | null,
+    locationInfo: row.locationInfo as string | null,
     isSuspicious: row.isSuspicious,
     userEmail: row.userEmail ?? null,
   }));
@@ -574,8 +574,8 @@ export async function getAllActiveSessions(): Promise<SuspiciousSession[]> {
     lastActivity: row.lastActivity,
     logoutTime: row.logoutTime,
     ipAddress: row.ipAddress,
-    deviceInfo: row.deviceInfo,
-    locationInfo: row.locationInfo,
+    deviceInfo: row.deviceInfo as string | null,
+    locationInfo: row.locationInfo as string | null,
     isSuspicious: row.isSuspicious,
     userEmail: row.userEmail ?? null,
   }));
