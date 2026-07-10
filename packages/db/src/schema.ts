@@ -96,7 +96,7 @@ export const organization = pgTable('organization', {
   slug: text('slug').unique(),
   logo: text('logo'),
   createdAt: timestamp('created_at').notNull(),
-  metadata: jsonb('metadata'),
+  metadata: jsonb('metadata').$type<string | null>(),
   // Soft deletion fields
   deletedAt: timestamp('deleted_at'),
   deletedBy: text('deleted_by').references(() => user.id),

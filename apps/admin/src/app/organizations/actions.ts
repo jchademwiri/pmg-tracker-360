@@ -51,7 +51,7 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
       name: organization.name,
       slug: organization.slug,
       logo: organization.logo,
-      metadata: organization.metadata as string | null,
+      metadata: organization.metadata,
       createdAt: organization.createdAt,
       deletedAt: organization.deletedAt,
       deletionReason: organization.deletionReason,
