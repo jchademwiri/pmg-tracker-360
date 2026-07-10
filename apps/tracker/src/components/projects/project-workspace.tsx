@@ -102,7 +102,7 @@ interface PurchaseOrderType {
 interface DocumentType {
   id: string;
   name: string;
-  size: string;
+  size: number;
   type: string;
   createdAt: Date;
   signedUrl?: string;

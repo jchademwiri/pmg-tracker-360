@@ -17,7 +17,7 @@ export interface ExtensionDocument {
   id: string;
   name: string;
   url: string;
-  size: string;
+  size: number;
   type: string;
   createdAt: Date;
   signedUrl?: string;
@@ -152,7 +152,7 @@ export function ExtensionList({
                             {doc.name}
                           </span>
                           <span className="text-[10px] text-muted-foreground shrink-0">
-                            ({formatFileSize(parseInt(doc.size))})
+                            ({formatFileSize(doc.size)})
                           </span>
                         </div>
                         {doc.signedUrl && (
