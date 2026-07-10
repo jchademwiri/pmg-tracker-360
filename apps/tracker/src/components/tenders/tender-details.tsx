@@ -72,7 +72,7 @@ interface TenderWithClient {
 interface Document {
   id: string;
   name: string;
-  size: string;
+  size: number;
   type: string;
   createdAt: Date;
   signedUrl?: string;
