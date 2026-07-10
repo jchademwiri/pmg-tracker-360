@@ -612,7 +612,7 @@ export async function getPurchaseOrders(
 
     // Add status filter if provided
     if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(purchaseOrder.status, status));
+      whereCondition = and(whereCondition, eq(purchaseOrder.status, status as any));
     }
 
     // Add supplier filter if provided
@@ -1482,15 +1482,25 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
   try {
     const { userId } = await validateSessionAndOrg(organizationId);
 
-    // Fetch delivery note
+    // Fetch delivery note with purchase order to verify org ownership
     const note = await db.query.purchaseOrderDeliveryNote.findFirst({
       where: eq(purchaseOrderDeliveryNote.id, deliveryNoteId),
       with: {
         items: true,
+        purchaseOrder: {
+          columns: {
+            organizationId: true,
+          },
+        },
       }
     });
 
     if (!note) {
+      return { success: false, error: 'Delivery note not found' };
+    }
+
+    // Verify the delivery note belongs to this organization
+    if (note.purchaseOrder.organizationId !== organizationId) {
       return { success: false, error: 'Delivery note not found' };
     }
 
@@ -1502,6 +1512,8 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
         .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
 
       // 2. Fetch purchase order and recalculate status based on verified notes
+      //    The current note is already included because we updated its status
+      //    to 'verified' in step 1, within the same transaction.
       const po = await tx.query.purchaseOrder.findFirst({
         where: eq(purchaseOrder.id, note.purchaseOrderId),
         with: {
@@ -1518,10 +1530,8 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
       if (po) {
         // Accumulate verified delivery quantities per line item
         const deliveredQtyMap = new Map<string, number>();
-        // Include the current note we just verified
-        const allVerifiedNotes = [...po.deliveryNotes, { ...note, status: 'verified' }];
 
-        for (const vn of allVerifiedNotes) {
+        for (const vn of po.deliveryNotes) {
           for (const item of vn.items || []) {
             const current = deliveredQtyMap.get(item.lineItemId) || 0;
             deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
@@ -1586,12 +1596,24 @@ export async function voidDeliveryNote(organizationId: string, deliveryNoteId: s
   try {
     const { userId } = await validateSessionAndOrg(organizationId);
 
-    // Fetch delivery note
+    // Fetch delivery note with purchase order to verify org ownership
     const note = await db.query.purchaseOrderDeliveryNote.findFirst({
       where: eq(purchaseOrderDeliveryNote.id, deliveryNoteId),
+      with: {
+        purchaseOrder: {
+          columns: {
+            organizationId: true,
+          },
+        },
+      },
     });
 
     if (!note) {
+      return { success: false, error: 'Delivery note not found' };
+    }
+
+    // Verify the delivery note belongs to this organization
+    if (note.purchaseOrder.organizationId !== organizationId) {
       return { success: false, error: 'Delivery note not found' };
     }
 

@@ -68,7 +68,7 @@ export function UpcomingDeadlines({ deadlines }: UpcomingDeadlinesProps) {
                       {getDeadlineUrgencyLabel(deadline.daysUntilDeadline)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {deadline.tenderNumber}
+                      {deadline.tenderNumber.toUpperCase()}
                     </span>
                   </div>
                   <p className="text-sm font-medium truncate">

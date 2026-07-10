@@ -94,7 +94,7 @@ function makeDocument(name: string) {
   return {
     id: 'doc-1',
     name,
-    size: '100KB',
+    size: 100000,
     type: 'application/pdf',
     createdAt: new Date(),
   };

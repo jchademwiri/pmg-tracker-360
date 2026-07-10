@@ -11,14 +11,15 @@ const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+const S3_API = process.env.S3_API; // Optional custom endpoint override
 
-// Initialize S3 Client for Cloudflare R2
+// Initialize S3 Client for Cloudflare R2 (or custom S3-compatible endpoint)
 // https://developers.cloudflare.com/r2/examples/aws-sdk-js-v3/
 const s3Client =
-  R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY
+  R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && (R2_ACCOUNT_ID || S3_API)
     ? new S3Client({
         region: 'auto',
-        endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        endpoint: S3_API || `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
         credentials: {
           accessKeyId: R2_ACCESS_KEY_ID,
           secretAccessKey: R2_SECRET_ACCESS_KEY,

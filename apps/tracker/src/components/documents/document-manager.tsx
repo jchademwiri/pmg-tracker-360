@@ -1,178 +1,259 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FileUploader } from '@/components/ui/file-uploader';
+import { toast } from 'sonner';
+import {
+  FileText,
+  Download,
+  Trash2,
+  Upload,
+  File,
+  Image,
+  FileSpreadsheet,
+  FileArchive,
+  FileCode,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Trash2, Download, Loader2 } from 'lucide-react';
-import { toast } from 'sonner'; // Assuming sonner is used based on package.json
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { formatDate, formatFileSize } from '@/lib/format';
 import { uploadDocument, deleteDocument } from '@/server/documents';
-
-// Inline formatBytes if generic utils doesn't have it
-function formatFileSize(bytes: number) {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Document {
   id: string;
   name: string;
-  size: string;
+  size: number;
   type: string;
   createdAt: Date;
-  signedUrl?: string; // Optional if we fetch signed URLs
+  signedUrl?: string;
   url?: string;
+  uploadedBy?: { id: string; name: string | null } | null;
 }
 
 interface DocumentManagerProps {
   organizationId: string;
   entityId: string;
-  entityType: 'tender' | 'project' | 'purchase_order';
-  initialDocuments: Document[];
+  entityType: 'tender' | 'project' | 'purchaseOrder';
+  initialDocuments?: Document[];
+}
+
+function getFileIcon(mimeType: string) {
+  if (mimeType.startsWith('image/')) return Image;
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return FileSpreadsheet;
+  if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar')) return FileArchive;
+  if (mimeType.includes('text') || mimeType.includes('json') || mimeType.includes('xml')) return FileCode;
+  return File;
+}
+
+function getFileColor(mimeType: string) {
+  if (mimeType.includes('pdf')) return 'text-red-500 bg-red-500/10';
+  if (mimeType.startsWith('image/')) return 'text-purple-500 bg-purple-500/10';
+  if (mimeType.includes('word') || mimeType.includes('document')) return 'text-blue-500 bg-blue-500/10';
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'text-green-500 bg-green-500/10';
+  return 'text-zinc-500 bg-zinc-500/10';
 }
 
 export function DocumentManager({
   organizationId,
   entityId,
   entityType,
-  initialDocuments,
+  initialDocuments = [],
 }: DocumentManagerProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [uploading, setUploading] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>(initialDocuments);
+  const [isUploading, setIsUploading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleUpload = async (files: File[]) => {
-    setUploading(true);
-    const formData = new FormData();
-    // Currently handling single file upload for simplicity in UI feedback, but loop for multiple
-    // If FileUploader supports multiple, we should iterate.
-    // For now, let's assume we upload them one by one or batch.
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    // We'll just take the first file for MVP simplicity or loop if needed.
-    // Let's loop.
-    let successCount = 0;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);      const result = await uploadDocument(organizationId, formData, {
+  [entityType === 'tender' ? 'tenderId' : entityType === 'project' ? 'projectId' : 'purchaseOrderId']: entityId,
+});
 
-    for (const file of files) {
-      formData.set('file', file);
-
-      try {
-        const result = await uploadDocument(organizationId, formData, {
-          [entityType + 'Id']: entityId,
-        });
-
-        if (result.success) {
-          successCount++;
-        } else {
-          toast.error(`Failed to upload ${file.name}: ${result.error}`);
-        }
-      } catch (err) {
-        toast.error(`Error uploading ${file.name}`);
+      if (result.success && result.document) {
+        setDocuments((prev) => [
+          {
+            id: result.document!.id,
+            name: result.document!.name,
+            size: result.document!.size,
+            type: result.document!.type,
+            createdAt: new Date(),
+            url: result.document!.url,
+          },
+          ...prev,
+        ]);
+        toast.success('Document uploaded successfully');
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to upload document');
       }
+    } catch (err) {
+      toast.error('Failed to upload document');
+    } finally {
+      setIsUploading(false);
+      // Reset the input so the same file can be re-selected
+      e.target.value = '';
     }
+  }, [organizationId, entityId, entityType, router]);
 
-    setUploading(false);
-    if (successCount > 0) {
-      toast.success(`Successfully uploaded ${successCount} file(s)`);
-      router.refresh();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteDocument(organizationId, deleteTarget.id);
+      if (result.success) {
+        setDocuments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+        toast.success('Document deleted');
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to delete document');
+      }
+    } catch (err) {
+      toast.error('Failed to delete document');
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
-  const handleDelete = (docId: string) => {
-    startTransition(async () => {
-      const result = await deleteDocument(organizationId, docId);
-      if (result.success) {
-        toast.success('Document deleted');
-        // router.refresh() is called in server action revalidate, but specific to path.
-        // Client router refresh ensures we see it.
-        // Actually router.refresh() only refreshes server components?
-        // Yes.
-      } else {
-        toast.error('Failed to delete document');
-      }
-    });
+  const getDownloadUrl = (doc: Document) => {
+    return doc.signedUrl || doc.url || '#';
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Documents</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <FileUploader
-            onValueChange={handleUpload}
-            disabled={uploading || isPending}
-            maxFiles={5}
-          />
-          {uploading && (
-            <div className="flex items-center justify-center text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Uploading...
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div>
+          <CardTitle>Documents</CardTitle>
+          <CardDescription>
+            Upload and manage tender documents, specifications, and attachments
+          </CardDescription>
+        </div>
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isUploading}
+            className="relative cursor-pointer"
+            asChild
+          >
+            <label className="cursor-pointer">
+              <Upload className="h-4 w-4 mr-2" />
+              {isUploading ? 'Uploading...' : 'Upload'}
+              <input
+                type="file"
+                className="hidden"
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.txt"
+                disabled={isUploading}
+              />
+            </label>
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {documents.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+            <FileText className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+            <p className="font-semibold text-sm">No documents uploaded yet</p>
+            <p className="text-xs mt-1">
+              Upload PDFs, Word documents, Excel files, or images
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {documents.map((doc) => {
+              const Icon = getFileIcon(doc.type);
+              const colorClass = getFileColor(doc.type);
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {initialDocuments.map((doc) => (
-          <Card key={doc.id} className="overflow-hidden">
-            <div className="p-4 flex items-start justify-between space-x-4">
-              <div className="flex items-start space-x-3 truncate">
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-600">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div className="space-y-1 truncate">
-                  <p className="font-medium text-sm truncate" title={doc.name}>
-                    {doc.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatFileSize(parseInt(doc.size))} •{' '}
-                    {new Date(doc.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-1">
-                {doc.signedUrl && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    asChild
-                  >
-                    <a
-                      href={doc.signedUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Download"
-                    >
-                      <Download className="h-4 w-4" />
-                    </a>
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(doc.id)}
-                  disabled={isPending}
-                  title="Delete"
+              return (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors group"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-        {initialDocuments.length === 0 && !uploading && (
-          <div className="col-span-full text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-            <p>No documents attached</p>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={`p-2 rounded-lg ${colorClass}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{doc.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(doc.size)} • {formatDate(doc.createdAt)}
+                        {doc.uploadedBy?.name && ` • by ${doc.uploadedBy.name}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Download"
+                      asChild
+                    >
+                      <a
+                        href={getDownloadUrl(doc)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={doc.name}
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                      title="Delete"
+                      onClick={() => setDeleteTarget(doc)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deleteTarget?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 }

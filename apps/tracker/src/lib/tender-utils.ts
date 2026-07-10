@@ -24,6 +24,31 @@ function getSastEndOfDateOnlyDay(date: Date) {
 }
 
 /**
+ * Sanitizes a tender number by:
+ * - Trimming whitespace
+ * - Converting to lowercase (stored lowercase, displayed uppercase)
+ * - Replacing forward slashes (/) with hyphens (-)
+ * - Replacing backslashes (\) with hyphens (-)
+ * - Replacing spaces ( ) with hyphens (-)
+ * - Replacing other URL-unsafe characters with hyphens
+ * - Collapsing multiple consecutive hyphens into one
+ * - Trimming leading/trailing hyphens
+ *
+ * Storage:  "DRT 03/01/2026" → "drt-03-01-2026"
+ * Display:  toUpperCase() on render → "DRT-03-01-2026"
+ */
+export function sanitizeTenderNumber(tenderNumber: string): string {
+  return tenderNumber
+    .trim()
+    .toLowerCase()
+    .replace(/[\\/]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
  * Resolves the dynamic status of a tender based on its submission deadline.
  * If status is evaluation, awarded, or lost, it remains locked.
  * If date has passed, it is closed; otherwise open.
@@ -82,7 +107,6 @@ export function toLocalDateTimeString(
 }
 
 export function fromLocalDateTimeString(
-  dateTimeStr: string | null | undefined
-): Date | null {
+  dateTimeStr: string | null | undefined): Date | null {
   return parseDateTimeToUTC(dateTimeStr);
 }

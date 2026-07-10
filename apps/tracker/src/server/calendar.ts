@@ -88,7 +88,7 @@ export async function getCalendarEvents(
       gte(tender.submissionDate, start),
       lte(tender.submissionDate, end),
       clientId ? eq(tender.clientId, clientId) : undefined,
-      statusFilter ? inArray(tender.status, statusFilter) : undefined
+      statusFilter ? inArray(tender.status, statusFilter as any[]) : undefined
     );
 
     const tenderRows = await db
@@ -108,7 +108,7 @@ export async function getCalendarEvents(
       events.push({
         id: row.id,
         type: 'tender_submission',
-        title: `${row.tenderNumber} submission`,
+        title: `${row.tenderNumber.toUpperCase()} submission`,
         date: row.submissionDate.toISOString(),
         color: EVENT_TYPE_TO_COLOR.tender_submission,
         metadata: {
@@ -127,7 +127,7 @@ export async function getCalendarEvents(
       isNull(purchaseOrder.deletedAt),
       gte(purchaseOrder.expectedDeliveryDate, start),
       lte(purchaseOrder.expectedDeliveryDate, end),
-      statusFilter ? inArray(purchaseOrder.status, statusFilter) : undefined
+      statusFilter ? inArray(purchaseOrder.status, statusFilter as any[]) : undefined
     );
 
     const poExpectedRows = await db
@@ -163,7 +163,7 @@ export async function getCalendarEvents(
       isNull(purchaseOrder.deletedAt),
       gte(purchaseOrder.deliveredAt, start),
       lte(purchaseOrder.deliveredAt, end),
-      statusFilter ? inArray(purchaseOrder.status, statusFilter) : undefined
+      statusFilter ? inArray(purchaseOrder.status, statusFilter as any[]) : undefined
     );
 
     const poDeliveredRows = await db

@@ -24,10 +24,9 @@ import {
 } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Loader } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Loader, UserPlus, Check, X } from 'lucide-react';
 import { signInWithGoogle } from '@/lib/auth-client';
-import { UserPlus } from 'lucide-react';
 
 const signUpFormSchema = z.object({
   name: z.string().min(2).max(100),
@@ -50,6 +49,26 @@ export function SignUpForm({
       password: '',
     },
   });
+
+  // Password strength calculation
+  const password = form.watch('password');
+  const strength = useMemo(() => {
+    if (!password) return { score: 0, label: '', color: '', checks: { length: false, upper: false, lower: false, number: false, special: false } };
+    const checks = {
+      length: password.length >= 8,
+      upper: /[A-Z]/.test(password),
+      lower: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[^A-Za-z0-9]/.test(password),
+    };
+    const passed = Object.values(checks).filter(Boolean).length;
+    let label: string, color: string;
+    if (passed <= 2) { label = 'Weak'; color = 'bg-red-500'; }
+    else if (passed <= 3) { label = 'Fair'; color = 'bg-amber-500'; }
+    else if (passed <= 4) { label = 'Good'; color = 'bg-blue-500'; }
+    else { label = 'Strong'; color = 'bg-emerald-500'; }
+    return { score: (passed / 5) * 100, label, color, checks };
+  }, [password]);
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof signUpFormSchema>) {
@@ -142,6 +161,66 @@ export function SignUpForm({
                           className="bg-background/50"
                         />
                       </FormControl>
+                      {password && password.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          <div className="flex items-center gap-2">
+                            <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                              <div
+                                className="h-full w-full rounded-full transition-all duration-200"
+                                style={{
+                                  width: `${strength.score}%`,
+                                  backgroundColor:
+                                    strength.score <= 40
+                                      ? '#ef4444'
+                                      : strength.score <= 60
+                                        ? '#f59e0b'
+                                        : strength.score <= 80
+                                          ? '#3b82f6'
+                                          : '#10b981',
+                                }}
+                              />
+                            </div>
+                            <span
+                              className={`text-xs font-medium min-w-[2.5rem] text-right ${
+                                strength.label === 'Weak'
+                                  ? 'text-red-500'
+                                  : strength.label === 'Fair'
+                                    ? 'text-amber-500'
+                                    : strength.label === 'Good'
+                                      ? 'text-blue-500'
+                                      : 'text-emerald-500'
+                              }`}
+                            >
+                              {password ? strength.label : ''}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                            {[
+                              { key: 'length' as const, label: '8+ characters' },
+                              { key: 'upper' as const, label: 'Uppercase letter' },
+                              { key: 'lower' as const, label: 'Lowercase letter' },
+                              { key: 'number' as const, label: 'Number' },
+                              { key: 'special' as const, label: 'Special character' },
+                            ].map(({ key, label }) => (
+                              <div
+                                key={key}
+                                className={`flex items-center gap-1.5 text-xs ${
+                                  strength.checks[key]
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                {strength.checks[key] ? (
+                                  <Check className="h-3 w-3 shrink-0" />
+                                ) : (
+                                  <X className="h-3 w-3 shrink-0" />
+                                )}
+                                {label}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

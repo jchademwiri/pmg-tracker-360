@@ -1,7 +1,7 @@
 [
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "JHB-25-27",
+    "tenderNumber": "jhb-25-27",
     "clientName": "City of Johannesburg",
     "description": "Tender document",
     "submissionDate": "2026-01-22",
@@ -11,7 +11,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "GT-GDE-069-2025",
+    "tenderNumber": "gt-gde-069-2025",
     "clientName": "Gauteng Department of Education",
     "description": "Tender document",
     "submissionDate": "2026-01-23",
@@ -21,7 +21,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 10-2025/26",
+    "tenderNumber": "eebu-10-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-18",
@@ -31,7 +31,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 15-2025/26",
+    "tenderNumber": "eebu-15-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-18",
@@ -41,7 +41,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 08-2025/26",
+    "tenderNumber": "eebu-08-2025-26",
     "clientName": "City of Tshwane",
     "description": "3-year primary substation tender",
     "submissionDate": "2026-02-19",
@@ -51,7 +51,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "ROC 04-2025/26",
+    "tenderNumber": "roc-04-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-20",
@@ -61,7 +61,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EAM 05-2025/26",
+    "tenderNumber": "eam-05-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-24",
@@ -71,7 +71,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "HS 03-2025/26",
+    "tenderNumber": "hs-03-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-24",
@@ -81,7 +81,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "IEM(IWM) 04-2026",
+    "tenderNumber": "iem-iwm-04-2026",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-24",
@@ -91,7 +91,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "IEM(IWM) 06-2026",
+    "tenderNumber": "iem-iwm-06-2026",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-24",
@@ -101,7 +101,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "IDS (R&T) 10-2026",
+    "tenderNumber": "ids-r-t-10-2026",
     "clientName": "City of Tshwane",
     "description": "Tender document / pricing",
     "submissionDate": "2026-02-25",
@@ -111,7 +111,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "WSBU 08-2025/26",
+    "tenderNumber": "wsbu-08-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-02-26",
@@ -121,7 +121,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "DRT 03 01 2026",
+    "tenderNumber": "drt-03-01-2026",
     "clientName": "Gauteng Department of Roads and Transport",
     "description": "Tender document",
     "submissionDate": "2026-03-13",
@@ -131,7 +131,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "Road Maintenance",
+    "tenderNumber": "road-maintenance",
     "clientName": "eMakhazeni Local Municipality / Belfast",
     "description": "Road maintenance",
     "submissionDate": "2026-03-23",
@@ -141,7 +141,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "A-WS-04-2026",
+    "tenderNumber": "a-ws-04-2026",
     "clientName": "City of Ekurhuleni",
     "description": "Cleaning and repairs to sewer pipelines",
     "submissionDate": "2026-04-15",
@@ -151,7 +151,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 16-2025/26",
+    "tenderNumber": "eebu-16-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document / pricing",
     "submissionDate": "2026-04-17",
@@ -161,7 +161,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "A-WS-05-2026",
+    "tenderNumber": "a-ws-05-2026",
     "clientName": "City of Ekurhuleni",
     "description": "Water network",
     "submissionDate": "2026-04-20",
@@ -171,7 +171,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 21-2025/26",
+    "tenderNumber": "eebu-21-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-04-20",
@@ -181,7 +181,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 22-2025/26",
+    "tenderNumber": "eebu-22-2025-26",
     "clientName": "City of Tshwane",
     "description": "Amended tender document",
     "submissionDate": "2026-04-20",
@@ -191,7 +191,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "GFS 06-2025/26",
+    "tenderNumber": "gfs-06-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-04-21",
@@ -211,7 +211,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "RFT81-10-2025/26",
+    "tenderNumber": "rft81-10-2025-26",
     "clientName": "Madibeng Local Municipality",
     "description": "Tender document",
     "submissionDate": "2026-04-30",
@@ -221,7 +221,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "T21-2026",
+    "tenderNumber": "t21-2026",
     "clientName": "Dr Pixley Ka Isaka Seme Local Municipality",
     "description": "Roads material, Volksrust Ward 4",
     "submissionDate": "2026-04-30",
@@ -231,7 +231,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "A-WM-03-2026",
+    "tenderNumber": "a-wm-03-2026",
     "clientName": "City of Ekurhuleni",
     "description": "New wheelie bins and accessories",
     "submissionDate": "2026-05-13",
@@ -271,7 +271,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "E16 of 2026",
+    "tenderNumber": "e16-of-2026",
     "clientName": "Msunduzi Municipality",
     "description": "Supply and delivery of steel street lighting poles and accessories",
     "submissionDate": "2026-05-26",
@@ -281,7 +281,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "ROC-03-2025/26",
+    "tenderNumber": "roc-03-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-05-26",
@@ -291,7 +291,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "GFS-07-2025/26",
+    "tenderNumber": "gfs-07-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-05-29",
@@ -301,7 +301,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "BSM 103/26",
+    "tenderNumber": "bsm-103-26",
     "clientName": "Stellenbosch Municipality",
     "description": "Mowing / grass cutting of open spaces within WC024 ending 30 June 2029",
     "submissionDate": "2026-06-01",
@@ -311,7 +311,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "PM37-25/26",
+    "tenderNumber": "pm37-25-26",
     "clientName": "Polokwane Municipality",
     "description": "Tender document / BOQ",
     "submissionDate": "2026-06-02",
@@ -321,7 +321,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "RLM-DTIS-0118-2025/26",
+    "tenderNumber": "rlm-dtis-0118-2025-26",
     "clientName": "Rustenburg Local Municipality",
     "description": "Streetlight poles",
     "submissionDate": "2026-06-02",
@@ -331,7 +331,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "A-WS-06-2026",
+    "tenderNumber": "a-ws-06-2026",
     "clientName": "City of Ekurhuleni",
     "description": "Mobile water tankers",
     "submissionDate": "2026-06-04",
@@ -351,7 +351,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "TSD04-2025/26",
+    "tenderNumber": "tsd04-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tow truck tender",
     "submissionDate": "2026-06-11",
@@ -361,7 +361,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "IDS (R&T) 14-2026",
+    "tenderNumber": "ids-r-t-14-2026",
     "clientName": "City of Tshwane",
     "description": "Final tender document",
     "submissionDate": "2026-06-17",
@@ -371,7 +371,7 @@
   },
   {
     "userEmail": "accounts@livhuandmusa.co.za",
-    "tenderNumber": "EEBU 24-2025/26",
+    "tenderNumber": "eebu-24-2025-26",
     "clientName": "City of Tshwane",
     "description": "Tender document",
     "submissionDate": "2026-06-23",

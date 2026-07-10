@@ -61,6 +61,7 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
     if (initialQueues.overdue.length > 0) return 'overdue';
     if (initialQueues.closingSoon.length > 0) return 'closingSoon';
     if (initialQueues.briefingPending.length > 0) return 'briefingPending';
+    if (initialQueues.awaitingResults.length > 0) return 'awaitingResults';
     if (initialQueues.awardedToConvert.length > 0) return 'awardedToConvert';
     return 'overdue';
   });
@@ -220,7 +221,7 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                 </Badge>
               </div>
               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                {key === 'closingSoon' ? 'Closing Soon (14d)' : config.label}
+                {key === 'closingSoon' ? 'Closing Soon' : config.label}
               </span>
               <span className="text-lg font-bold mt-1 tracking-tight">
                 {list.length > 0 ? `${list.length} action${list.length > 1 ? 's' : ''}` : 'Cleared'}
@@ -299,7 +300,7 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                             href={`/tenders/${t.id}`}
                             className="text-blue-500 hover:text-blue-600 hover:underline font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
                           >
-                            {t.tenderNumber}
+                            {t.tenderNumber.toUpperCase()}
                           </Link>
                         </TableCell>
                         

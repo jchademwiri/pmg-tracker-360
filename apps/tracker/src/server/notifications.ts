@@ -11,7 +11,7 @@ import { nanoid } from 'nanoid';
 // Get notifications for the current user
 export async function getNotifications(
   organizationId: string,
-  limit: number = 20
+  limit: number = 10
 ) {
   try {
     const session = await auth.api.getSession({

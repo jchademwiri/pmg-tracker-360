@@ -18,7 +18,7 @@ type DataTableProps<T> = {
   onRowClick?: (row: T) => void;
 };
 
-export const PAGE_SIZE = 50;
+export const PAGE_SIZE = 10;
 
 /**
  * Pure helper — exported for property-based testing.

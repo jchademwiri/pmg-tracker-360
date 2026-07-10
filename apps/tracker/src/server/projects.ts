@@ -40,7 +40,7 @@ export async function getProjectBreadcrumbLabel(projectId: string) {
       .where(and(eq(project.id, projectId), isNull(project.deletedAt)))
       .limit(1);
 
-    return projectData[0]?.projectNumber || null;
+    return projectData[0]?.projectNumber?.toUpperCase() || null;
   } catch (error) {
     console.error('Error fetching project breadcrumb label:', error);
     return null;
@@ -79,7 +79,7 @@ export async function getProjects(
 
     // Add status filter if provided
     if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(project.status, status));
+      whereCondition = and(whereCondition, eq(project.status, status as any));
     }
 
     // Add client filter if provided
@@ -97,6 +97,14 @@ export async function getProjects(
         tender: true,
         purchaseOrders: {
           where: isNull(purchaseOrder.deletedAt),
+          with: {
+            deliveryNotes: {
+              where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+              with: {
+                items: true,
+              },
+            },
+          },
         },
       },
     });
@@ -104,14 +112,23 @@ export async function getProjects(
     const projects = projectsData.map((proj) => {
       const pos = proj.purchaseOrders || [];
       const totalPOAmount = pos.reduce((sum, po) => sum + parseFloat(po.totalAmount || '0'), 0);
-      const deliveredAmount = pos
-        .filter((po) => po.status === 'delivered' || po.status === 'completed')
-        .reduce((sum, po) => sum + parseFloat(po.totalAmount || '0'), 0);
-      const partialAmount = pos
-        .filter((po) => po.status === 'partially_delivered')
-        .reduce((sum, po) => sum + parseFloat(po.totalAmount || '0') * 0.5, 0);
 
-      const totalDelivered = deliveredAmount + partialAmount;
+      // Calculate actual delivered value from verified delivery items
+      let totalDelivered = 0;
+      for (const po of pos) {
+        if (po.status === 'completed' || po.status === 'delivered') {
+          // Full amount delivered
+          totalDelivered += parseFloat(po.totalAmount || '0');
+        } else {
+          // Sum actual delivery item values for partially_delivered and other statuses
+          for (const note of po.deliveryNotes || []) {
+            for (const item of (note as any).items || []) {
+              totalDelivered += parseFloat(item.deliveryValue || '0');
+            }
+          }
+        }
+      }
+
       const completionPercentage = totalPOAmount > 0
         ? Math.round((totalDelivered / totalPOAmount) * 100)
         : 0;
@@ -156,7 +173,7 @@ export async function createProject(
       .from(project)
       .where(
         and(
-          eq(project.projectNumber, validatedData.projectNumber.toUpperCase()),
+          eq(project.projectNumber, validatedData.projectNumber.toLowerCase()),
           eq(project.organizationId, organizationId),
           isNull(project.deletedAt)
         )
@@ -214,7 +231,7 @@ export async function createProject(
         id: crypto.randomUUID(),
         organizationId,
         ...validatedData,
-        projectNumber: validatedData.projectNumber.toUpperCase(),
+        projectNumber: validatedData.projectNumber.toLowerCase(),
       })
       .returning();
 
@@ -336,7 +353,7 @@ export async function getRecentProjectActivities(
         organizationId,
         organizationName: org.name,
         type: 'project_created',
-        description: `Project ${proj.projectNumber} was created${proj.client?.name ? ` for ${proj.client.name}` : ''}`,
+        description: `Project ${proj.projectNumber.toUpperCase()} was created${proj.client?.name ? ` for ${proj.client.name}` : ''}`,
         timestamp: proj.createdAt,
         metadata: {
           projectId: proj.id,
@@ -353,7 +370,7 @@ export async function getRecentProjectActivities(
           organizationId,
           organizationName: org.name,
           type: 'project_status_changed',
-          description: `Project ${proj.projectNumber} status changed to ${proj.status}`,
+          description: `Project ${proj.projectNumber.toUpperCase()} status changed to ${proj.status}`,
           timestamp: proj.updatedAt,
           metadata: {
             projectId: proj.id,
@@ -489,7 +506,7 @@ export async function updateProject(
           and(
             eq(
               project.projectNumber,
-              validatedData.projectNumber.toUpperCase()
+              validatedData.projectNumber.toLowerCase()
             ),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt),
@@ -550,7 +567,7 @@ export async function updateProject(
       .set({
         ...validatedData,
         projectNumber: validatedData.projectNumber
-          ? validatedData.projectNumber.toUpperCase()
+          ? validatedData.projectNumber.toLowerCase()
           : undefined,
         updatedAt: new Date(),
       })
@@ -1186,7 +1203,7 @@ export async function getProjectActionQueue(organizationId: string) {
         and(
           eq(purchaseOrder.organizationId, organizationId),
           isNull(purchaseOrder.deletedAt),
-          inArray(purchaseOrder.status, ['open', 'sent', 'partially_delivered']),
+          inArray(purchaseOrder.status, ['open', 'sent', 'partially_delivered'] as const),
           lt(purchaseOrder.expectedDeliveryDate, now)
         )
       )

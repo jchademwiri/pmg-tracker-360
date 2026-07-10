@@ -121,7 +121,7 @@ export function DataTableShell({
 
   const itemsPerPage = totalCount > 0 && currentPage > 0
     ? Math.ceil(totalCount / totalPages)
-    : 20;
+    : 10;
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalCount);
   const hasActiveFilters = activeFilters && activeFilters.length > 0;

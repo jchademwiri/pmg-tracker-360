@@ -837,7 +837,7 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
           <DocumentManager
             organizationId={organizationId}
             entityId={po.id}
-            entityType="purchase_order"
+            entityType="purchaseOrder"
             initialDocuments={initialDocuments}
           />
         </TabsContent>

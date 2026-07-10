@@ -3,7 +3,6 @@
 import { db } from '@pmg/db';
 import { tender, project, purchaseOrder } from '@pmg/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 import { resolveTenderStatus } from '@/lib/tender-utils';
 import { validateSessionAndOrg } from './utils';
 

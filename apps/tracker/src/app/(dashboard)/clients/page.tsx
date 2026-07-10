@@ -1,8 +1,7 @@
-import { getCurrentUser } from '@/server';
-import { getClients, getClientStats } from '@/server';
+import { getCurrentUser, getClients, getClientStats, getClientsExportCsv } from '@/server';
 import { ClientList } from '@/components/clients/client-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, UserCheck, UserPlus, TrendingUp } from 'lucide-react';
+import { Users, UserCheck, UserPlus, TrendingUp, Download } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,16 +35,36 @@ export default async function ClientsPage() {
         totalClients: 0,
         clientsWithContact: 0,
         clientsWithoutContact: 0,
+        clientsThisMonth: 0,
       };
+
+  // Generate CSV export link
+  const csvResult = await getClientsExportCsv(session.activeOrganizationId);
+  const csvData = csvResult.success ? csvResult.csv : null;
+  const csvFilename = csvResult.success ? csvResult.filename : 'clients-export.csv';
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-        <p className="text-muted-foreground">
-          Manage your client relationships and contact information.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
+          <p className="text-muted-foreground">
+            Manage your client relationships and contact information.
+          </p>
+        </div>
+        {csvData && (
+          <div className="flex-shrink-0">
+            <a
+              href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`}
+              download={csvFilename}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -103,8 +122,8 @@ export default async function ClientsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{stats.totalClients}</div>
-            <p className="text-xs text-muted-foreground">Total clients added</p>
+            <div className="text-2xl font-bold">+{stats.clientsThisMonth}</div>
+            <p className="text-xs text-muted-foreground">Clients added this month</p>
           </CardContent>
         </Card>
       </div>

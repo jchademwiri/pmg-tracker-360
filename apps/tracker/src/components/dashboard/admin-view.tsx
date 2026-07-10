@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { DashboardMetrics } from '@/components/dashboard/dashboard-metrics';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
 import { DashboardDeadlines } from '@/components/dashboard/dashboard-deadlines';
-import { OperationalRisks } from '@/components/dashboard/operational-risks';
 import { BarChart3, Users, CreditCard, ChevronRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,12 +27,6 @@ export async function AdminView({ organizationId }: AdminViewProps) {
       >
         <DashboardMetrics organizationId={organizationId} />
       </Suspense>
-
-      {/* Operational Risks & Bottlenecks */}
-      <Suspense fallback={<Skeleton className="h-[250px] rounded-xl" />}>
-        <OperationalRisks organizationId={organizationId} />
-      </Suspense>
-
 
       {/* Admin Funnel & Quick Links Grid */}
       <div className="grid gap-6 md:grid-cols-3">

@@ -10,6 +10,9 @@ import {
   integer,
   uniqueIndex,
   decimal,
+  index,
+  jsonb,
+  bigint,
 } from 'drizzle-orm/pg-core';
 
 /* =========================
@@ -68,14 +71,20 @@ export const account = pgTable('account', {
   updatedAt: timestamp('updated_at').notNull(),
 });
 
-export const verification = pgTable('verification', {
-  id: text('id').primaryKey(),
-  identifier: text('identifier').notNull(),
-  value: text('value').notNull(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').$defaultFn(() => new Date()),
-  updatedAt: timestamp('updated_at').$defaultFn(() => new Date()),
-});
+export const verification = pgTable(
+  'verification',
+  {
+    id: text('id').primaryKey(),
+    identifier: text('identifier').notNull(),
+    value: text('value').notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').$defaultFn(() => new Date()),
+    updatedAt: timestamp('updated_at').$defaultFn(() => new Date()),
+  },
+  (table) => ({
+    identifierValueUnique: unique('verification_identifier_value_unique').on(table.identifier, table.value),
+  })
+);
 
 /* =========================
    ORGANISATIONS
@@ -87,7 +96,7 @@ export const organization = pgTable('organization', {
   slug: text('slug').unique(),
   logo: text('logo'),
   createdAt: timestamp('created_at').notNull(),
-  metadata: text('metadata'),
+  metadata: jsonb('metadata').$type<string | null>(),
   // Soft deletion fields
   deletedAt: timestamp('deleted_at'),
   deletedBy: text('deleted_by').references(() => user.id),
@@ -95,7 +104,18 @@ export const organization = pgTable('organization', {
   permanentDeletionScheduledAt: timestamp('permanent_deletion_scheduled_at'),
 });
 
+/* =========================
+   ENUMS
+========================= */
 export const role = pgEnum('role', ['owner', 'admin', 'manager', 'member']);
+export const tenderStatus = pgEnum('tender_status', ['draft', 'open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled', 'new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted']);
+export const projectStatus = pgEnum('project_status', ['active', 'completed', 'cancelled']);
+export const poStatus = pgEnum('po_status', ['open', 'draft', 'sent', 'delivered', 'completed', 'cancelled', 'partially_delivered', 'disputed']);
+export const invitationStatus = pgEnum('invitation_status', ['pending', 'accepted', 'rejected', 'expired', 'cancelled']);
+export const ownershipTransferStatus = pgEnum('ownership_transfer_status', ['pending', 'accepted', 'cancelled', 'expired']);
+export const riskSeverity = pgEnum('risk_severity', ['low', 'medium', 'high', 'critical']);
+export const riskStatus = pgEnum('risk_status', ['open', 'mitigated', 'closed']);
+export const tenderPriority = pgEnum('tender_priority', ['low', 'medium', 'high', 'urgent']);
 export type Role = (typeof role.enumValues)[number];
 
 export const member = pgTable(
@@ -116,6 +136,8 @@ export const member = pgTable(
       table.organizationId,
       table.userId
     ),
+    orgIdIdx: index('idx_member_org_id').on(table.organizationId),
+    userIdIdx: index('idx_member_user_id').on(table.userId),
   })
 );
 
@@ -136,7 +158,7 @@ export const invitation = pgTable(
       .references(() => organization.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     role: role('role'),
-    status: text('status').default('pending').notNull(),
+    status: invitationStatus('status').default('pending').notNull(),
     expiresAt: timestamp('expires_at').notNull(),
     inviterId: text('inviter_id')
       .notNull()
@@ -207,7 +229,7 @@ export const ownershipTransfer = pgTable('ownership_transfer', {
   toUserId: text('to_user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  status: text('status').default('pending').notNull(), // pending, accepted, cancelled, expired
+  status: ownershipTransferStatus('status').default('pending').notNull(),
   transferToken: text('transfer_token').unique().notNull(),
   reason: text('reason'),
   transferMessage: text('transfer_message'),
@@ -229,7 +251,7 @@ export const securityAuditLog = pgTable('security_audit_log', {
   action: text('action').notNull(),
   resourceType: text('resource_type').notNull(),
   resourceId: text('resource_id'),
-  details: text('details'), // JSON string
+  details: jsonb('details'),
   severity: text('severity').default('info').notNull(), // info, warning, critical
   sessionId: text('session_id'),
   ipAddress: text('ip_address'),
@@ -253,8 +275,8 @@ export const sessionTracking = pgTable('session_tracking', {
   logoutTime: timestamp('logout_time'),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  deviceInfo: text('device_info'), // JSON string
-  locationInfo: text('location_info'), // JSON string
+  deviceInfo: jsonb('device_info'),
+  locationInfo: jsonb('location_info'),
   isSuspicious: boolean('is_suspicious').default(false).notNull(),
 });
 
@@ -321,6 +343,7 @@ export const client = pgTable(
       table.organizationId,
       table.name
     ),
+    orgIdIdx: index('idx_client_org_id').on(table.organizationId),
   })
 );
 
@@ -343,8 +366,8 @@ export const tender = pgTable(
     lossReason: text('loss_reason'),
     lossDetails: text('loss_details'),
     evaluationNotes: text('evaluation_notes'),
-    status: text('status').default('open').notNull(), // open, closed, evaluation, awarded, lost, cancelled
-    priority: text('priority').default('medium').notNull(), // low, medium, high, urgent
+    status: tenderStatus('status').default('open').notNull(),
+    priority: tenderPriority('priority').default('medium').notNull(),
     evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
     validityDays: integer('validity_days'),
     validityDate: timestamp('validity_date'),
@@ -364,6 +387,9 @@ export const tender = pgTable(
       table.organizationId,
       table.tenderNumber
     ),
+    statusIdx: index('idx_tender_status').on(table.status),
+    clientIdIdx: index('idx_tender_client_id').on(table.clientId),
+    orgIdIdx: index('idx_tender_org_id').on(table.organizationId),
   })
 );
 
@@ -379,7 +405,7 @@ export const project = pgTable(
     description: text('description'), // Inherited from tender or custom
     tenderId: text('tender_id').references(() => tender.id), // Optional link to originating tender
     clientId: text('client_id').references(() => client.id), // Inherited from tender or custom
-    status: text('status').default('active').notNull(), // active, completed, cancelled
+    status: projectStatus('status').default('active').notNull(),
     contractStartDate: timestamp('contract_start_date'),
     contractEndDate: timestamp('contract_end_date'),
     awardValue: decimal('award_value', { precision: 15, scale: 2 }),
@@ -397,6 +423,8 @@ export const project = pgTable(
       table.organizationId,
       table.projectNumber
     ),
+    statusIdx: index('idx_project_status').on(table.status),
+    orgIdIdx: index('idx_project_org_id').on(table.organizationId),
   })
 );
 
@@ -419,27 +447,52 @@ export const projectLineItem = pgTable('project_line_item', {
 });
 
 // Purchase Order table with project relationships
-export const purchaseOrder = pgTable('purchase_order', {
+export const purchaseOrder = pgTable(
+  'purchase_order',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => project.id, { onDelete: 'cascade' }),
+    poNumber: text('po_number').notNull().unique(), // Unique PO number
+    supplierName: text('supplier_name'), // Optional supplier name
+    description: text('description').notNull(),
+    totalAmount: decimal('total_amount', { precision: 15, scale: 2 }).notNull(),
+    status: poStatus('status').default('open').notNull(),
+    // Calendar-related dates
+    poDate: timestamp('po_date'), // Purchase order date
+    expectedDeliveryDate: timestamp('expected_delivery_date'),
+    deliveredAt: timestamp('delivered_at'),
+    deliveryAddress: text('delivery_address'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'), // Soft deletion
+  },
+  (table) => ({
+    projectIdIdx: index('idx_po_project_id').on(table.projectId),
+    orgIdIdx: index('idx_po_org_id').on(table.organizationId),
+  })
+);
+
+// Purchase Order Delivery Note table
+export const purchaseOrderDeliveryNote = pgTable('purchase_order_delivery_note', {
   id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+  purchaseOrderId: text('purchase_order_id')
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
+    .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
   projectId: text('project_id')
     .notNull()
     .references(() => project.id, { onDelete: 'cascade' }),
-  poNumber: text('po_number').notNull().unique(), // Unique PO number
-  supplierName: text('supplier_name'), // Optional supplier name
-  description: text('description').notNull(),
-  totalAmount: decimal('total_amount', { precision: 15, scale: 2 }).notNull(),
-  status: text('status').default('open').notNull(), // open, sent, delivered
-  // Calendar-related dates
-  poDate: timestamp('po_date'), // Purchase order date
-  expectedDeliveryDate: timestamp('expected_delivery_date'),
-  deliveredAt: timestamp('delivered_at'),
-  deliveryAddress: text('delivery_address'),
+  deliveryNoteNumber: text('delivery_note_number').notNull(),
+  recipientName: text('recipient_name').notNull(),
+  receivedAt: timestamp('received_at').notNull(),
+  status: text('status').default('received').notNull(), // received, verified, disputed
+  podFileUrl: text('pod_file_url'), // Link to uploaded PDF/Image in storage
+  notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft deletion
 });
 
 export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
@@ -459,23 +512,6 @@ export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
   subtotal: decimal('subtotal', { precision: 15, scale: 2 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-export const purchaseOrderDeliveryNote = pgTable('purchase_order_delivery_note', {
-  id: text('id').primaryKey(),
-  purchaseOrderId: text('purchase_order_id')
-    .notNull()
-    .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
-  projectId: text('project_id')
-    .notNull()
-    .references(() => project.id, { onDelete: 'cascade' }),
-  deliveryNoteNumber: text('delivery_note_number').notNull(),
-  recipientName: text('recipient_name').notNull(),
-  receivedAt: timestamp('received_at').notNull(),
-  status: text('status').default('received').notNull(), // received, verified, disputed
-  podFileUrl: text('pod_file_url'), // Link to uploaded PDF/Image in storage
-  notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const purchaseOrderDeliveryItem = pgTable('purchase_order_delivery_item', {
@@ -517,8 +553,8 @@ export const projectRisk = pgTable('project_risk', {
     .references(() => project.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   description: text('description').notNull(),
-  severity: text('severity').default('medium').notNull(), // low, medium, high, critical
-  status: text('status').default('open').notNull(), // open, mitigated, closed
+  severity: riskSeverity('severity').default('medium').notNull(),
+  status: riskStatus('status').default('open').notNull(),
   mitigationPlan: text('mitigation_plan'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -583,35 +619,43 @@ export type TenderActivity = typeof tenderActivity.$inferSelect;
 
 
 // Document table for file attachments
-export const document = pgTable('document', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
-    .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  url: text('url').notNull(),
-  size: text('size').notNull(), // String to store bytes size
-  type: text('type').notNull(), // MIME type
-  tenderId: text('tender_id').references(() => tender.id, {
-    onDelete: 'cascade',
-  }),
-  projectId: text('project_id').references(() => project.id, {
-    onDelete: 'cascade',
-  }),
-  purchaseOrderId: text('purchase_order_id').references(
-    () => purchaseOrder.id,
-    {
+export const document = pgTable(
+  'document',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    url: text('url').notNull(),
+    size: bigint('size', { mode: 'number' }).notNull(),
+    type: text('type').notNull(), // MIME type
+    tenderId: text('tender_id').references(() => tender.id, {
       onDelete: 'cascade',
-    }
-  ),
-  extensionId: text('extension_id').references(() => tenderExtension.id, {
-    onDelete: 'cascade',
-  }),
-  uploadedBy: text('uploaded_by')
-    .notNull()
-    .references(() => user.id),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+    }),
+    projectId: text('project_id').references(() => project.id, {
+      onDelete: 'cascade',
+    }),
+    purchaseOrderId: text('purchase_order_id').references(
+      () => purchaseOrder.id,
+      {
+        onDelete: 'cascade',
+      }
+    ),
+    extensionId: text('extension_id').references(() => tenderExtension.id, {
+      onDelete: 'cascade',
+    }),
+    uploadedBy: text('uploaded_by')
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    tenderIdIdx: index('idx_doc_tender_id').on(table.tenderId),
+    projectIdIdx: index('idx_doc_project_id').on(table.projectId),
+    purchaseOrderIdIdx: index('idx_doc_po_id').on(table.purchaseOrderId),
+  })
+);
 
 /* =========================
    RELATIONS
@@ -852,7 +896,7 @@ export const purchaseOrderDeliveryItemRelations = relations(
 
 export const tenderExtensionRelations = relations(
   tenderExtension,
-  ({ one }) => ({
+  ({ one, many }) => ({
     organization: one(organization, {
       fields: [tenderExtension.organizationId],
       references: [organization.id],
@@ -865,6 +909,7 @@ export const tenderExtensionRelations = relations(
       fields: [tenderExtension.createdBy],
       references: [user.id],
     }),
+    documents: many(document),
   })
 );
 

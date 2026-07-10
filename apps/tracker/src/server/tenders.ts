@@ -6,11 +6,13 @@ import { tender, client, project, tenderExtension, tenderFollowUp, tenderActivit
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, isNotNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { URGENCY_WINDOWS, daysAgo, daysFromNow } from '@/lib/urgency-windows';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
 import { randomUUID } from 'crypto';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { nowInSAST } from '@/lib/timezone';
+import { sanitizeTenderNumber } from '@/lib/tender-utils';
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -45,7 +47,7 @@ async function autoCreateProjectForTender(
     await db.insert(project).values({
       id: projectId,
       organizationId,
-      projectNumber: tenderData.tenderNumber.toUpperCase(),
+      projectNumber: tenderData.tenderNumber.toLowerCase(),
       description: tenderData.description || `Project for Tender ${tenderData.tenderNumber}`,
       tenderId,
       clientId: tenderData.clientId,
@@ -132,7 +134,7 @@ export async function getTenders(
         or(eq(tender.status, 'evaluation'), eq(tender.status, 'closed'))
       );
     } else if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(tender.status, status));
+      whereCondition = and(whereCondition, eq(tender.status, status as any));
     }
 
     const tenders = await db
@@ -193,8 +195,11 @@ export async function createTender(
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    // Validate input
+    // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderCreateSchema.parse(data);
+    if (validatedData.tenderNumber) {
+      validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
+    }
 
     // Check if tender number is unique within organization
     const existingTender = await db
@@ -202,7 +207,7 @@ export async function createTender(
       .from(tender)
       .where(
         and(
-          eq(tender.tenderNumber, validatedData.tenderNumber.toUpperCase()),
+          eq(tender.tenderNumber, validatedData.tenderNumber.toLowerCase()),
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt)
         )
@@ -239,7 +244,7 @@ export async function createTender(
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, validatedData.tenderNumber.toUpperCase()),
+            eq(project.projectNumber, validatedData.tenderNumber.toLowerCase()),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt)
           )
@@ -268,7 +273,7 @@ export async function createTender(
         organizationId,
         ...validatedData,
         evaluationDate,
-        tenderNumber: validatedData.tenderNumber.toUpperCase(),
+        tenderNumber: validatedData.tenderNumber.toLowerCase(),
       })
       .returning();
 
@@ -369,7 +374,7 @@ export async function getTenderBreadcrumbLabel(tenderId: string) {
       )
       .limit(1);
 
-    return tenderData[0]?.tenderNumber ?? null;
+    return tenderData[0]?.tenderNumber?.toUpperCase() ?? null;
   } catch (error) {
     console.error('Error fetching tender breadcrumb label:', error);
     return null;
@@ -384,8 +389,11 @@ export async function updateTender(
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    // Validate input
+    // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderUpdateSchema.parse(data);
+    if (validatedData.tenderNumber) {
+      validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
+    }
 
     // Check if tender exists and belongs to organization
     const existingTender = await db
@@ -411,7 +419,7 @@ export async function updateTender(
         .from(tender)
         .where(
           and(
-            eq(tender.tenderNumber, validatedData.tenderNumber.toUpperCase()),
+            eq(tender.tenderNumber, validatedData.tenderNumber.toLowerCase()),
             eq(tender.organizationId, organizationId),
             isNull(tender.deletedAt),
             // Exclude current tender from uniqueness check
@@ -486,7 +494,7 @@ export async function updateTender(
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, tenderNum.toUpperCase()),
+            eq(project.projectNumber, tenderNum.toLowerCase()),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt)
           )
@@ -526,7 +534,7 @@ export async function updateTender(
         ...validatedData,
         evaluationDate,
         tenderNumber: validatedData.tenderNumber
-          ? validatedData.tenderNumber.toUpperCase()
+          ? validatedData.tenderNumber.toLowerCase()
           : undefined,
         updatedAt: new Date(),
       })
@@ -633,7 +641,7 @@ export async function updateTenderStatus(
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, existingTender[0].tenderNumber.toUpperCase()),
+            eq(project.projectNumber, existingTender[0].tenderNumber.toLowerCase()),
             eq(project.organizationId, organizationId),
             isNull(project.deletedAt)
           )
@@ -919,6 +927,16 @@ export async function getTendersWithSorting(
         sortColumn = tender.createdAt;
     }
 
+    // Build order expression, handling nulls-last for submissionDate
+    const orderByExpression =
+      sortBy === 'submissionDate'
+        ? sortOrder === 'desc'
+          ? sql`${tender.submissionDate} desc nulls last`
+          : sql`${tender.submissionDate} asc nulls last`
+        : sortOrder === 'desc'
+          ? desc(sortColumn)
+          : sortColumn;
+
     const tenders = await db
       .select({
         id: tender.id,
@@ -946,7 +964,7 @@ export async function getTendersWithSorting(
       .from(tender)
       .leftJoin(client, eq(tender.clientId, client.id))
       .where(whereCondition)
-      .orderBy(desc(tender.createdAt))
+      .orderBy(orderByExpression)
       .limit(limit)
       .offset(offset);
 
@@ -979,7 +997,7 @@ export async function getAvailableTendersForProjects(
   organizationId: string,
   clientId?: string,
   page: number = 1,
-  limit: number = 100
+  limit: number = 10
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1102,11 +1120,9 @@ export async function getTenderStats(organizationId: string) {
     // Calculate average value
     const averageValue = totalTenders > 0 ? totalValue / totalTenders : 0;
 
-    // Count upcoming deadlines (next 30 days)
+    // Count upcoming deadlines
     const now = nowInSAST();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
+    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
     const upcomingDeadlines = stats.filter(
       (tender) =>
         tender.submissionDate &&
@@ -1120,7 +1136,7 @@ export async function getTenderStats(organizationId: string) {
     ).length;
 
     // --- Trend Calculation (vs 30 days ago) ---
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = daysAgo(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
 
     // Filter stats to represent the state 30 days ago
     const previousStats = stats.filter(
@@ -1236,8 +1252,8 @@ export async function getRecentActivity(
       .orderBy(desc(tender.createdAt))
       .limit(limit);
 
-    // Get recent status changes (tenders updated in last 7 days)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // Get recent status changes
+    const sevenDaysAgo = daysAgo(URGENCY_WINDOWS.RECENT_ACTIVITY_DAYS);
     const recentChanges = await db
       .select({
         id: tender.id,
@@ -1290,9 +1306,7 @@ export async function getUpcomingDeadlines(
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
+    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
 
     const upcomingTenders = await db
       .select({
@@ -1352,9 +1366,7 @@ export async function getUpcomingBriefings(
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const thirtyDaysFromNow = new Date(
-      now.getTime() + 30 * 24 * 60 * 60 * 1000
-    );
+    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
 
     const upcomingBriefings = await db
       .select({
@@ -1420,7 +1432,7 @@ export async function getTendersOverview(
     sortOrder?: 'asc' | 'desc';
   },
   page: number = 1,
-  limit: number = 20
+  limit: number = 10
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1436,7 +1448,7 @@ export async function getTendersOverview(
       if (filters.status === 'open') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'])
+          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const)
         );
       } else if (filters.status === 'awarded') {
         whereCondition = and(
@@ -1447,22 +1459,22 @@ export async function getTendersOverview(
       } else if (filters.status === 'closing_soon') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open']),
+          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const),
           isNotNull(tender.submissionDate),
           gte(tender.submissionDate, new Date())
         );
       } else if (filters.status === 'awaiting_results') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['submitted', 'evaluation'])
+          inArray(tender.status, ['submitted', 'evaluation'] as const)
         );
       } else if (filters.status === 'under_preparation') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['approved_to_prepare', 'preparation'])
+          inArray(tender.status, ['approved_to_prepare', 'preparation'] as const)
         );
       } else {
-        whereCondition = and(whereCondition, eq(tender.status, filters.status));
+        whereCondition = and(whereCondition, eq(tender.status, filters.status as any));
       }
     }
 
@@ -1574,65 +1586,6 @@ export async function getTendersOverview(
       totalCount: 0,
       currentPage: page,
       totalPages: 0,
-    };
-  }
-}
-
-// Get tenders closing soon (within 7 days) for the overview dashboard
-export async function getClosingSoonTenders(organizationId: string) {
-  try {
-    await validateSessionAndOrg(organizationId);
-    const now = nowInSAST();
-    const sevenDaysFromNow = new Date(
-      now.getTime() + 7 * 24 * 60 * 60 * 1000
-    );
-
-    const closingSoonTenders = await db
-      .select({
-        id: tender.id,
-        tenderNumber: tender.tenderNumber,
-        description: tender.description,
-        submissionDate: tender.submissionDate,
-        status: tender.status,
-        value: tender.value,
-        client: {
-          name: client.name,
-        },
-      })
-      .from(tender)
-      .leftJoin(client, eq(tender.clientId, client.id))
-      .where(
-        and(
-          eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt),
-          gte(tender.submissionDate, now),
-          lte(tender.submissionDate, sevenDaysFromNow)
-        )
-      )
-      .orderBy(tender.submissionDate)
-      .limit(10);
-
-    // Calculate days until deadline for each tender
-    const tendersWithDays = closingSoonTenders.map((t) => ({
-      ...t,
-      daysUntilDeadline: t.submissionDate
-        ? Math.ceil(
-            (t.submissionDate.getTime() - now.getTime()) /
-              (1000 * 60 * 60 * 24)
-          )
-        : null,
-    }));
-
-    return {
-      success: true,
-      tenders: tendersWithDays,
-    };
-  } catch (error: any) {
-    console.error('Error fetching closing soon tenders:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to fetch closing soon tenders',
-      tenders: [],
     };
   }
 }
@@ -1792,7 +1745,7 @@ export async function getTenderActionQueue(organizationId: string) {
     await validateSessionAndOrg(organizationId);
     
     // Active pre-submission statuses
-    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'];
+    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const;
     const now = nowInSAST();
     
     // 1. Overdue Tenders: Active pre-submission status, and closing date (submissionDate) in the past.
@@ -1822,7 +1775,7 @@ export async function getTenderActionQueue(organizationId: string) {
       .orderBy(tender.submissionDate);
 
     // 2. Closing Soon: Active pre-submission status, and closing date (submissionDate) within the next 14 days (inclusive of today).
-    const fourteenDaysFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const fourteenDaysFromNow = daysFromNow(URGENCY_WINDOWS.CLOSING_SOON_DAYS);
     const closingSoon = await db
       .select({
         id: tender.id,
@@ -1897,7 +1850,7 @@ export async function getTenderActionQueue(organizationId: string) {
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          inArray(tender.status, ['submitted', 'evaluation'])
+          inArray(tender.status, ['submitted', 'evaluation'] as const)
         )
       )
       .orderBy(desc(tender.submissionDate));

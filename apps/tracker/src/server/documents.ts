@@ -1,270 +1,235 @@
 'use server';
 
 import { db } from '@pmg/db';
+import { document, tender, tenderExtension } from '@pmg/db/schema';
 import { validateSessionAndOrg } from './utils';
-import {
-  document,
-  tender,
-  project,
-  organization,
-  purchaseOrder,
-  tenderExtension,
-} from '@pmg/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import { StorageService } from '@/lib/storage';
-import { nanoid } from 'nanoid';
 
-// Upload a document
+
+interface DocumentUploadTarget {
+  tenderId?: string;
+  projectId?: string;
+  purchaseOrderId?: string;
+  extensionId?: string;
+}
+
+/**
+ * Upload a document and store it in R2, then save the metadata in the database.
+ */
 export async function uploadDocument(
   organizationId: string,
   formData: FormData,
-  linkedEntity?: {
-    tenderId?: string;
-    projectId?: string;
-    purchaseOrderId?: string;
-    extensionId?: string;
-  }
+  target: DocumentUploadTarget
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
-    // 1. Check Session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const { userId } = await validateSessionAndOrg(organizationId);
 
-    if (!session || !session.session.activeOrganizationId) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    if (session.session.activeOrganizationId !== organizationId) {
-      return { success: false, error: 'Unauthorized organization access' };
-    }
-
-    const userId = session.user.id;
-
-    // 2. Extract File
-    const file = formData.get('file') as File;
+    const file = formData.get('file') as File | null;
     if (!file) {
       return { success: false, error: 'No file provided' };
     }
 
-    // 3. Determine Storage Path
-    // Fetch organization details for path construction
-    const org = await db.query.organization.findFirst({
-      where: eq(organization.id, organizationId),
-      columns: { slug: true, name: true },
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return { success: false, error: 'File size exceeds 10MB limit' };
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'text/plain',
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, error: 'File type not supported. Please upload PDF, Word, Excel, images, or text files.' };
+    }
+
+    // Read file as buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
+
+    // Resolve tender number for storage key prefix (for tender and extension documents)
+    let storagePrefix = '';
+    if (target.tenderId) {
+      const t = await db
+        .select({ tenderNumber: tender.tenderNumber })
+        .from(tender)
+        .where(eq(tender.id, target.tenderId))
+        .limit(1);
+      if (t.length > 0) {
+        storagePrefix = t[0].tenderNumber.toLowerCase().replace(/[^a-z0-9._-]/g, '_');
+      }
+    } else if (target.extensionId) {
+      const ext = await db
+        .select({ tenderNumber: tender.tenderNumber })
+        .from(tenderExtension)
+        .innerJoin(tender, eq(tenderExtension.tenderId, tender.id))
+        .where(eq(tenderExtension.id, target.extensionId))
+        .limit(1);
+      if (ext.length > 0) {
+        storagePrefix = ext[0].tenderNumber.toLowerCase().replace(/[^a-z0-9._-]/g, '_');
+      }
+    }
+
+    // Generate a unique storage key with tender number prefix where applicable
+    const entityPrefix = target.tenderId ? 'tenders' : target.extensionId ? 'extensions' : target.projectId ? 'projects' : target.purchaseOrderId ? 'purchase-orders' : 'documents';
+    const entityId = target.tenderId || target.projectId || target.purchaseOrderId || target.extensionId || 'unknown';
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const prefixPath = storagePrefix ? `${storagePrefix}/` : '';
+    const storageKey = `${organizationId}/${entityPrefix}/${prefixPath}${entityId}/${timestamp}-${safeName}`;
+
+    // Upload to R2
+    const uploadedKey = await StorageService.uploadFile(fileBuffer, storageKey, file.type);
+
+    // Save document record in database
+    const docId = crypto.randomUUID();
+    await db.insert(document).values({
+      id: docId,
+      organizationId,
+      name: file.name,
+      url: uploadedKey,
+      size: file.size,
+      type: file.type,
+      tenderId: target.tenderId || null,
+      projectId: target.projectId || null,
+      purchaseOrderId: target.purchaseOrderId || null,
+      extensionId: target.extensionId || null,
+      uploadedBy: userId,
     });
 
-    const orgIdentifier = org?.slug || org?.name || 'org';
-    const safeOrgIdentifier = orgIdentifier
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .toLowerCase();
-    const orgPathSegment = `organizations/${safeOrgIdentifier}`; // Using organizations (plural)
-
-    const fileExtension = file.name.split('.').pop();
-    let uniqueKey = `${orgPathSegment}/general/${nanoid()}.${fileExtension}`; // Fallback
-
-    if (linkedEntity?.extensionId) {
-      // Fetch Extension and its parent Tender
-      const ext = await db.query.tenderExtension.findFirst({
-        where: eq(tenderExtension.id, linkedEntity.extensionId),
-        with: {
-          tender: {
-            columns: { tenderNumber: true },
-          },
-        },
-      });
-
-      if (ext && ext.tender?.tenderNumber) {
-        uniqueKey = `${orgPathSegment}/tenders/${ext.tender.tenderNumber}/extensions/${file.name}`;
-      }
-    } else if (linkedEntity?.tenderId) {
-      const parentTender = await db.query.tender.findFirst({
-        where: eq(tender.id, linkedEntity.tenderId),
-        columns: { tenderNumber: true },
-      });
-      if (parentTender?.tenderNumber) {
-        uniqueKey = `${orgPathSegment}/tenders/${parentTender.tenderNumber}/${file.name}`;
-      }
-    } else if (linkedEntity?.projectId) {
-      const parentProject = await db.query.project.findFirst({
-        where: eq(project.id, linkedEntity.projectId),
-        columns: { projectNumber: true },
-      });
-      if (parentProject?.projectNumber) {
-        uniqueKey = `${orgPathSegment}/projects/${parentProject.projectNumber}/documents/${file.name}`;
-      }
-    } else if (linkedEntity?.purchaseOrderId) {
-      // Fetch PO and its parent project
-      const po = await db.query.purchaseOrder.findFirst({
-        where: eq(purchaseOrder.id, linkedEntity.purchaseOrderId),
-        with: {
-          project: {
-            columns: { projectNumber: true },
-          },
-        },
-      });
-
-      if (po && po.project?.projectNumber) {
-        // Path: organizations/[slug]/projects/[num]/purchase-orders/[month]/[po-num]/filename
-        const poDate = po.poDate ? new Date(po.poDate) : new Date();
-        const monthFolder = poDate.toISOString().slice(0, 7); // YYYY-MM
-        const poFolder = po.poNumber;
-
-        uniqueKey = `${orgPathSegment}/projects/${po.project.projectNumber}/purchase-orders/${monthFolder}/${poFolder}/${file.name}`;
-      }
-    } else if (linkedEntity?.extensionId) {
-      // Fetch Extension and its parent Tender
-      const ext = await db.query.tenderExtension.findFirst({
-        where: eq(tenderExtension.id, linkedEntity.extensionId),
-        with: {
-          tender: {
-            columns: { tenderNumber: true },
-          },
-        },
-      });
-
-      if (ext && ext.tender?.tenderNumber) {
-        uniqueKey = `${orgPathSegment}/tenders/${ext.tender.tenderNumber}/extensions/${file.name}`;
-      }
+    // Revalidate relevant paths
+    if (target.tenderId) {
+      revalidatePath(`/tenders/${target.tenderId}`);
+    }
+    if (target.projectId) {
+      revalidatePath(`/projects/${target.projectId}`);
     }
 
-    // 4. Upload to Storage
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Perform upload
-    const storageKey = await StorageService.uploadFile(
-      buffer,
-      uniqueKey,
-      file.type
-    );
-
-    // 5. Save to Database
-    const newDocument = await db
-      .insert(document)
-      .values({
-        id: nanoid(),
-        organizationId,
+    return {
+      success: true,
+      document: {
+        id: docId,
         name: file.name,
-        url: storageKey, // Saving the storage key as the URL (or path)
-        size: file.size.toString(),
+        size: file.size,
         type: file.type,
-        tenderId: linkedEntity?.tenderId,
-        projectId: linkedEntity?.projectId,
-        purchaseOrderId: linkedEntity?.purchaseOrderId,
-        extensionId: linkedEntity?.extensionId,
-        uploadedBy: userId,
-      })
-      .returning();
-
-    // 6. Revalidate
-    if (linkedEntity?.tenderId) {
-      revalidatePath(`/tenders/${linkedEntity.tenderId}`);
-    } else if (linkedEntity?.projectId) {
-      revalidatePath(`/projects/${linkedEntity.projectId}`);
-    } else if (linkedEntity?.purchaseOrderId) {
-      // Assuming route for PO details
-      revalidatePath(
-        `/projects/purchase-orders/${linkedEntity.purchaseOrderId}`
-      );
-    }
-
-    return { success: true, document: newDocument[0] };
+        url: uploadedKey,
+      },
+    };
   } catch (error: any) {
     console.error('Error uploading document:', error);
     return { success: false, error: error.message || 'Failed to upload document' };
   }
 }
 
-// Get documents for a tender/project/purchase_order
+/**
+ * Get all documents for a specific entity (tender, project, etc.)
+ */
 export async function getDocuments(
   organizationId: string,
-  entityType: 'tender' | 'project' | 'purchase_order',
+  entityType: 'tender' | 'project' | 'purchaseOrder',
   entityId: string
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const whereCondition = and(
-      eq(document.organizationId, organizationId),
-      entityType === 'tender'
-        ? eq(document.tenderId, entityId)
-        : entityType === 'project'
-        ? eq(document.projectId, entityId)
-        : eq(document.purchaseOrderId, entityId)
-    );
 
-    const docs = await db.select().from(document).where(whereCondition);
+    let whereCondition;
+    switch (entityType) {
+      case 'tender':
+        whereCondition = and(
+          eq(document.organizationId, organizationId),
+          eq(document.tenderId, entityId)
+        );
+        break;
+      case 'project':
+        whereCondition = and(
+          eq(document.organizationId, organizationId),
+          eq(document.projectId, entityId)
+        );
+        break;
+      case 'purchaseOrder':
+        whereCondition = and(
+          eq(document.organizationId, organizationId),
+          eq(document.purchaseOrderId, entityId)
+        );
+        break;
+    }
 
-    // Enhance docs with signed URLs if necessary (assuming private bucket)
-    // For public buckets, we can construct the URL.
-    // Assuming private for now as per StorageService.
+    const docs = await db.query.document.findMany({
+      where: whereCondition,
+      orderBy: [desc(document.createdAt)],
+      with: {
+        uploader: {
+          columns: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
 
-    const enhancedDocs = await Promise.all(
+    // Generate signed URLs for each document
+    const docsWithUrls = await Promise.all(
       docs.map(async (doc) => {
         const signedUrl = await StorageService.getSignedUrl(doc.url);
         return {
           ...doc,
-          signedUrl, // Use this for display/download
+          signedUrl,
         };
       })
     );
 
-    return { success: true, documents: enhancedDocs };
+    return { success: true, documents: docsWithUrls };
   } catch (error: any) {
     console.error('Error fetching documents:', error);
-    return { success: false, error: error.message || 'Failed to fetch documents' };
+    return { success: false, error: error.message || 'Failed to fetch documents', documents: [] };
   }
 }
 
-// Delete a document
-export async function deleteDocument(
-  organizationId: string,
-  documentId: string
-) {
+/**
+ * Delete a document (from storage and database)
+ */
+export async function deleteDocument(organizationId: string, documentId: string) {
   try {
-    await validateSessionAndOrg(organizationId);
-    // 1. Check Session
-    const session = await auth.api.getSession({
-      headers: await headers(),
+    const { userId } = await validateSessionAndOrg(organizationId);
+
+    // Fetch the document
+    const doc = await db.query.document.findFirst({
+      where: and(
+        eq(document.id, documentId),
+        eq(document.organizationId, organizationId)
+      ),
     });
 
-    if (!session || !session.session.activeOrganizationId) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    // 2. Fetch Document to get Storage Key
-    const targetDoc = await db
-      .select()
-      .from(document)
-      .where(
-        and(
-          eq(document.id, documentId),
-          eq(document.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-
-    if (targetDoc.length === 0) {
+    if (!doc) {
       return { success: false, error: 'Document not found' };
     }
 
-    const docToDelete = targetDoc[0];
+    // Delete from storage
+    await StorageService.deleteFile(doc.url);
 
-    // 3. Delete from Storage
-    await StorageService.deleteFile(docToDelete.url);
-
-    // 4. Delete from DB
+    // Delete from database
     await db.delete(document).where(eq(document.id, documentId));
 
-    revalidatePath('/tenders');
-    if (docToDelete.tenderId)
-      revalidatePath(`/tenders/${docToDelete.tenderId}`);
+    // Revalidate paths
+    if (doc.tenderId) {
+      revalidatePath(`/tenders/${doc.tenderId}`);
+    }
+    if (doc.projectId) {
+      revalidatePath(`/projects/${doc.projectId}`);
+    }
 
-    return { success: true, message: 'Document deleted' };
+    return { success: true };
   } catch (error: any) {
     console.error('Error deleting document:', error);
     return { success: false, error: error.message || 'Failed to delete document' };

@@ -308,12 +308,12 @@ class AuditLogger {
 
       // Apply filters (simplified for now - in production would use proper query building)
       const results = await query
-        .limit(filters.limit || 100)
+        .limit(filters.limit || 10)
         .offset(filters.offset || 0);
 
       return results.map((entry) => ({
         ...entry,
-        details: entry.details ? JSON.parse(entry.details) : null,
+        details: entry.details ? JSON.parse(String(entry.details)) : null,
       }));
     } catch (error) {
       console.error('Failed to retrieve audit log:', error);

@@ -183,6 +183,20 @@
       "when": 1781515346942,
       "tag": "0025_add_item_number_sap_reference",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1783605705817,
+      "tag": "0026_cooing_rumiko_fujikawa",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1783684380337,
+      "tag": "0027_expand-status-enums",
+      "breakpoints": true
     }
   ]
 }
