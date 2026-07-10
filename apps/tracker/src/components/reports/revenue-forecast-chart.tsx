@@ -82,7 +82,7 @@ export function RevenueForecastChart({ stats }: RevenueForecastChartProps) {
                   className="text-xs"
                 />
                 <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), 'Value']}
+                  formatter={(value: any) => [formatCurrency(value), 'Value']}
                   contentStyle={{
                     background: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',

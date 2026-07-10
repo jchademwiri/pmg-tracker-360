@@ -79,7 +79,7 @@ export async function getProjects(
 
     // Add status filter if provided
     if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(project.status, status));
+      whereCondition = and(whereCondition, eq(project.status, status as any));
     }
 
     // Add client filter if provided
@@ -1203,7 +1203,7 @@ export async function getProjectActionQueue(organizationId: string) {
         and(
           eq(purchaseOrder.organizationId, organizationId),
           isNull(purchaseOrder.deletedAt),
-          inArray(purchaseOrder.status, ['open', 'sent', 'partially_delivered']),
+          inArray(purchaseOrder.status, ['open', 'sent', 'partially_delivered'] as const),
           lt(purchaseOrder.expectedDeliveryDate, now)
         )
       )

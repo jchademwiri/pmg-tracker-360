@@ -108,9 +108,9 @@ export const organization = pgTable('organization', {
    ENUMS
 ========================= */
 export const role = pgEnum('role', ['owner', 'admin', 'manager', 'member']);
-export const tenderStatus = pgEnum('tender_status', ['draft', 'open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled']);
+export const tenderStatus = pgEnum('tender_status', ['draft', 'open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled', 'new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted']);
 export const projectStatus = pgEnum('project_status', ['active', 'completed', 'cancelled']);
-export const poStatus = pgEnum('po_status', ['open', 'draft', 'sent', 'delivered', 'completed', 'cancelled']);
+export const poStatus = pgEnum('po_status', ['open', 'draft', 'sent', 'delivered', 'completed', 'cancelled', 'partially_delivered', 'disputed']);
 export const invitationStatus = pgEnum('invitation_status', ['pending', 'accepted', 'rejected', 'expired', 'cancelled']);
 export const ownershipTransferStatus = pgEnum('ownership_transfer_status', ['pending', 'accepted', 'cancelled', 'expired']);
 export const riskSeverity = pgEnum('risk_severity', ['low', 'medium', 'high', 'critical']);

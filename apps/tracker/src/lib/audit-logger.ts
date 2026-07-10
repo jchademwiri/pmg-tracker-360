@@ -313,7 +313,7 @@ class AuditLogger {
 
       return results.map((entry) => ({
         ...entry,
-        details: entry.details ? JSON.parse(entry.details) : null,
+        details: entry.details ? JSON.parse(String(entry.details)) : null,
       }));
     } catch (error) {
       console.error('Failed to retrieve audit log:', error);

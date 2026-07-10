@@ -35,7 +35,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
     const events: CalendarEvent[] = [];
 
     // 1. Closing dates (submissionDate) for active pre-submission tenders
-    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'];
+    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const;
     const closingSoon = await db
       .select({
         id: tender.id,
@@ -120,7 +120,7 @@ export async function getTenderCalendarEvents(organizationId: string, daysAhead:
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          inArray(tender.status, ['submitted', 'evaluation', 'awarded']),
+          inArray(tender.status, ['submitted', 'evaluation', 'awarded'] as const),
           isNotNull(tender.evaluationDate),
           lte(tender.evaluationDate, horizon),
           gte(tender.evaluationDate, now)

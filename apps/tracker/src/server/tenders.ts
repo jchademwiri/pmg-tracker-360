@@ -134,7 +134,7 @@ export async function getTenders(
         or(eq(tender.status, 'evaluation'), eq(tender.status, 'closed'))
       );
     } else if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(tender.status, status));
+      whereCondition = and(whereCondition, eq(tender.status, status as any));
     }
 
     const tenders = await db
@@ -1448,7 +1448,7 @@ export async function getTendersOverview(
       if (filters.status === 'open') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'])
+          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const)
         );
       } else if (filters.status === 'awarded') {
         whereCondition = and(
@@ -1459,22 +1459,22 @@ export async function getTendersOverview(
       } else if (filters.status === 'closing_soon') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open']),
+          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const),
           isNotNull(tender.submissionDate),
           gte(tender.submissionDate, new Date())
         );
       } else if (filters.status === 'awaiting_results') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['submitted', 'evaluation'])
+          inArray(tender.status, ['submitted', 'evaluation'] as const)
         );
       } else if (filters.status === 'under_preparation') {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['approved_to_prepare', 'preparation'])
+          inArray(tender.status, ['approved_to_prepare', 'preparation'] as const)
         );
       } else {
-        whereCondition = and(whereCondition, eq(tender.status, filters.status));
+        whereCondition = and(whereCondition, eq(tender.status, filters.status as any));
       }
     }
 
@@ -1745,7 +1745,7 @@ export async function getTenderActionQueue(organizationId: string) {
     await validateSessionAndOrg(organizationId);
     
     // Active pre-submission statuses
-    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'];
+    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const;
     const now = nowInSAST();
     
     // 1. Overdue Tenders: Active pre-submission status, and closing date (submissionDate) in the past.
@@ -1850,7 +1850,7 @@ export async function getTenderActionQueue(organizationId: string) {
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          inArray(tender.status, ['submitted', 'evaluation'])
+          inArray(tender.status, ['submitted', 'evaluation'] as const)
         )
       )
       .orderBy(desc(tender.submissionDate));

@@ -612,7 +612,7 @@ export async function getPurchaseOrders(
 
     // Add status filter if provided
     if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(purchaseOrder.status, status));
+      whereCondition = and(whereCondition, eq(purchaseOrder.status, status as any));
     }
 
     // Add supplier filter if provided
