@@ -106,7 +106,7 @@ export class StorageService {
     });
 
     try {
-      return await getSignedUrl(s3Client as any, command, { expiresIn: 3600 });
+      return await getSignedUrl(s3Client as any, command as any, { expiresIn: 3600 });
     } catch (error) {
       console.error('Error generating signed URL:', error);
       return '#error-generating-url';
