@@ -30,6 +30,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Platform Admin console | Tender Track 360',
   description: 'System-wide platform controls for Tender Track 360.',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default async function RootLayout({
