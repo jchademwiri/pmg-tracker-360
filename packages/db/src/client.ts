@@ -10,7 +10,7 @@ export const client = postgres(process.env.DATABASE_URL, {
   max: 20,
   idle_timeout: 20,
   connect_timeout: 10,
-  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+  ssl: 'require',
   // Connection retry settings
   max_lifetime: 60 * 30, // 30 minutes
 });

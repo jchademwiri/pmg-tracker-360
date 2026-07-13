@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { adminSignIn, adminSendMagicLink, verifyAdminOTP } from '../actions';
+import { adminSendMagicLink, verifyAdminOTP } from '../actions';
 import { ShieldAlert, Loader, Lock, Mail, Key, ShieldCheck } from 'lucide-react';
 
 export default function LoginForm() {
@@ -21,11 +21,21 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await adminSignIn(email, password);
-      if (response.success) {
+      // Use Better Auth's API route handler directly instead of a server action
+      // so the session cookie is properly set via HTTP Set-Cookie headers.
+      const res = await fetch('/api/auth/sign-in/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        // Navigate to dashboard — the root page validates admin role.
+        // Non-admin users will be redirected back to login by the server component.
         window.location.replace('/');
       } else {
-        setError(response.error ?? 'Authentication failed');
+        const data = await res.json().catch(() => ({}));
+        setError(data?.error || data?.message || 'Invalid email or password');
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');

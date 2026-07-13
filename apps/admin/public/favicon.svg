@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <!-- Brand orange rounded square background -->
+  <rect width="40" height="40" rx="8" fill="#F97316"/>
+  <!-- Shield shape for admin/security motif -->
+  <path d="M20 8L30 13V21C30 27 25 33 20 35C15 33 10 27 10 21V13L20 8Z" fill="white" opacity="0.95"/>
+  <!-- Checkmark inside shield -->
+  <path d="M15 21L19 25L26 17" stroke="#F97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

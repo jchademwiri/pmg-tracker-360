@@ -11,6 +11,7 @@ import {
   MessageSquare,
   ShieldAlert,
   Shield,
+  Database,
   LogOut,
   type LucideIcon,
 } from 'lucide-react';
@@ -67,6 +68,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Security',
     items: [{ href: '/sessions', label: 'Sessions', icon: ShieldAlert }],
+  },
+  {
+    label: 'Operations',
+    items: [{ href: '/backups', label: 'Backups', icon: Database }],
   },
 ];
 
