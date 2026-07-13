@@ -108,7 +108,7 @@ const ORG_SCOPED_TABLES = new Set([
   'tender_extension', 'tender_follow_up', 'tender_activity',
   'project', 'project_line_item', 'project_activity', 'project_risk',
   'purchase_order', 'purchase_order_line_item', 'purchase_order_delivery_note',
-  'purchase_order_delivery_item', 'notification', 'notification_preferences',
+  'purchase_order_delivery_item', 'notification',
   'session_tracking', 'security_audit_log', 'ownership_transfer', 'document',
 ]);
 
@@ -363,6 +363,41 @@ export async function restoreOrganization(key: string, orgId: string): Promise<B
   }
 
   try {
+    const sql = await getDb();
+
+    // Phase 1: Delete existing data for this organization in reverse dependency order
+    const reversed = [...INSERT_ORDER].reverse();
+    for (const tableName of reversed) {
+      if (!ORG_SCOPED_TABLES.has(tableName)) continue;
+      
+      try {
+        if (tableName === 'organization') {
+           await sql.unsafe(`DELETE FROM "organization" WHERE id = $1`, [orgId]);
+        } else if (tableName === 'purchase_order_delivery_item') {
+           await sql.unsafe(`
+             DELETE FROM "purchase_order_delivery_item" 
+             WHERE delivery_note_id IN (
+               SELECT id FROM "purchase_order_delivery_note" WHERE purchase_order_id IN (
+                 SELECT id FROM "purchase_order" WHERE organization_id = $1
+               )
+             )
+           `, [orgId]);
+        } else if (tableName === 'purchase_order_line_item' || tableName === 'purchase_order_delivery_note') {
+           await sql.unsafe(`
+             DELETE FROM "${tableName.replace(/"/g, '""')}" 
+             WHERE purchase_order_id IN (
+               SELECT id FROM "purchase_order" WHERE organization_id = $1
+             )
+           `, [orgId]);
+        } else {
+           await sql.unsafe(`DELETE FROM "${tableName.replace(/"/g, '""')}" WHERE organization_id = $1`, [orgId]);
+        }
+      } catch (err) {
+        console.warn(`Could not clear table ${tableName} for org ${orgId}:`, (err as Error).message);
+      }
+    }
+
+    // Phase 2: Re-insert data from backup
     let insertedRows = 0;
     let skippedTables = 0;
 
@@ -372,10 +407,25 @@ export async function restoreOrganization(key: string, orgId: string): Promise<B
       const rows = backup.tables[tableName];
       if (!rows || rows.length === 0) continue;
 
-      const orgRows = rows.filter((row: Record<string, unknown>) => {
-        if (tableName === 'organization') return row.id === orgId;
-        return row.organization_id === orgId;
-      });
+      let orgRows: Record<string, unknown>[] = [];
+      
+      if (tableName === 'organization') {
+        orgRows = rows.filter(row => row.id === orgId);
+      } else if (tableName === 'purchase_order_line_item' || tableName === 'purchase_order_delivery_note') {
+        const poTable = backup.tables['purchase_order'] || [];
+        const orgPoIds = new Set(poTable.filter(po => po.organization_id === orgId).map(po => po.id));
+        orgRows = rows.filter(row => orgPoIds.has(row.purchase_order_id as string));
+      } else if (tableName === 'purchase_order_delivery_item') {
+        const poTable = backup.tables['purchase_order'] || [];
+        const orgPoIds = new Set(poTable.filter(po => po.organization_id === orgId).map(po => po.id));
+        
+        const dnTable = backup.tables['purchase_order_delivery_note'] || [];
+        const orgDnIds = new Set(dnTable.filter(dn => orgPoIds.has(dn.purchase_order_id as string)).map(dn => dn.id));
+        
+        orgRows = rows.filter(row => orgDnIds.has(row.delivery_note_id as string));
+      } else {
+        orgRows = rows.filter(row => row.organization_id === orgId);
+      }
 
       if (orgRows.length === 0) { skippedTables++; continue; }
       insertedRows += await insertRows(tableName, orgRows);

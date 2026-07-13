@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Crown,
   CreditCard,
   Check,
+  Zap,
   Sparkles,
   ShieldCheck,
+  AlertTriangle,
   Building2,
   ClipboardList,
   History,
@@ -27,7 +30,6 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { updateUserPlan } from '@/server/billing';
 import { formatCurrency } from '@/lib/format';
-import { calculateStatementAgeing, type StatementAgeingSummary } from '@/lib/statements';
 
 interface BillingClientProps {
   currentPlan: string;
@@ -51,217 +53,8 @@ interface PlanDetails {
   description: string;
 }
 
-interface InvoiceLog {
-  id: string;
-  date: string;
-  dueDate: string;
-  description: string;
-  amount: number;
-  balanceDue: number;
-  status: 'Paid' | 'Open' | 'Overdue';
-  receipt: string;
-}
-
-const ageingLabels: Array<[keyof StatementAgeingSummary, string]> = [
-  ['current', 'Current'],
-  ['days1To30', '1-30 Days'],
-  ['days31To60', '31-60 Days'],
-  ['days61To90', '61-90 Days'],
-  ['days90Plus', '90+ Days'],
-  ['totalDue', 'Total Due'],
-];
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function renderStatementPdfHtml({
-  invoice,
-  ageingSummary,
-}: {
-  invoice: InvoiceLog;
-  ageingSummary: StatementAgeingSummary;
-}) {
-  const ageingHeader = ageingLabels
-    .map(([, label]) => `<th>${escapeHtml(label)}</th>`)
-    .join('');
-  const ageingValues = ageingLabels
-    .map(([key]) => `<td>${formatCurrency(ageingSummary[key], {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}</td>`)
-    .join('');
-
-  return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>${escapeHtml(invoice.id)} Statement</title>
-    <style>
-      @page { margin: 18mm; }
-      * { box-sizing: border-box; }
-      body {
-        color: #111827;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 12px;
-        line-height: 1.45;
-        margin: 0;
-      }
-      .header {
-        align-items: flex-start;
-        border-bottom: 2px solid #111827;
-        display: flex;
-        justify-content: space-between;
-        padding-bottom: 18px;
-      }
-      h1 {
-        font-size: 26px;
-        letter-spacing: 0;
-        margin: 0 0 8px;
-      }
-      h2 {
-        font-size: 14px;
-        margin: 28px 0 8px;
-      }
-      .muted { color: #6b7280; }
-      .summary {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(3, 1fr);
-        margin: 22px 0;
-      }
-      .box {
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        padding: 10px;
-      }
-      .label {
-        color: #6b7280;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      .value {
-        font-size: 16px;
-        font-weight: 700;
-        margin-top: 3px;
-      }
-      table {
-        border-collapse: collapse;
-        width: 100%;
-      }
-      th {
-        background: #f3f4f6;
-        color: #374151;
-        font-size: 11px;
-        text-align: left;
-      }
-      th, td {
-        border: 1px solid #d1d5db;
-        padding: 8px;
-      }
-      .right { text-align: right; }
-      .center { text-align: center; }
-      .ageing th,
-      .ageing td {
-        text-align: right;
-        white-space: nowrap;
-      }
-      .ageing th:last-child,
-      .ageing td:last-child {
-        font-weight: 700;
-      }
-      .notes {
-        border-top: 1px solid #d1d5db;
-        color: #6b7280;
-        margin-top: 28px;
-        padding-top: 12px;
-      }
-      @media print {
-        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <div>
-        <h1>Statement</h1>
-        <div class="muted">PMG Tracker 360</div>
-      </div>
-      <div class="right">
-        <strong>${escapeHtml(invoice.id)}</strong><br />
-        <span class="muted">Statement date: ${escapeHtml(invoice.date)}</span>
-      </div>
-    </div>
-
-    <div class="summary">
-      <div class="box">
-        <div class="label">Status</div>
-        <div class="value">${escapeHtml(invoice.status)}</div>
-      </div>
-      <div class="box">
-        <div class="label">Amount</div>
-        <div class="value">${formatCurrency(invoice.amount)}</div>
-      </div>
-      <div class="box">
-        <div class="label">Balance Due</div>
-        <div class="value">${formatCurrency(invoice.balanceDue, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}</div>
-      </div>
-    </div>
-
-    <h2>Transactions</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Transaction ID</th>
-          <th>Billing Date</th>
-          <th>Due Date</th>
-          <th>Description</th>
-          <th class="right">Amount</th>
-          <th class="right">Balance Due</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>${escapeHtml(invoice.id)}</td>
-          <td>${escapeHtml(invoice.date)}</td>
-          <td>${escapeHtml(invoice.dueDate)}</td>
-          <td>${escapeHtml(invoice.description)}</td>
-          <td class="right">${formatCurrency(invoice.amount)}</td>
-          <td class="right">${formatCurrency(invoice.balanceDue, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h2>Ageing Summary</h2>
-    <table class="ageing">
-      <thead>
-        <tr>${ageingHeader}</tr>
-      </thead>
-      <tbody>
-        <tr>${ageingValues}</tr>
-      </tbody>
-    </table>
-
-    <div class="notes">
-      Outstanding balances are grouped by invoice due date. Paid receipts show zero outstanding ageing.
-    </div>
-  </body>
-</html>`;
-}
-
 export default function BillingClient({ currentPlan, usage }: BillingClientProps) {
+  const router = useRouter();
   const [activePlan, setActivePlan] = useState<'free' | 'starter' | 'pro'>(
     (currentPlan.toLowerCase() as any) || 'free'
   );
@@ -381,45 +174,37 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
   const orgUsagePercent = Math.min((usage.organizations / maxOrganizations) * 100, 100);
 
   // Mock invoice/billing log records
-  const invoiceLogs: InvoiceLog[] = [
+  const invoiceLogs = [
     {
       id: 'INV-2026-004',
       date: 'May 01, 2026',
-      dueDate: 'May 01, 2026',
       description: 'PMG Tracker 360 Plan (Pro Tier)',
       amount: 499,
-      balanceDue: 0,
-      status: 'Paid' as const,
+      status: 'Paid',
       receipt: '#',
     },
     {
       id: 'INV-2026-003',
       date: 'Apr 01, 2026',
-      dueDate: 'Apr 01, 2026',
       description: 'PMG Tracker 360 Plan (Pro Tier)',
       amount: 499,
-      balanceDue: 0,
-      status: 'Paid' as const,
+      status: 'Paid',
       receipt: '#',
     },
     {
       id: 'INV-2026-002',
       date: 'Mar 01, 2026',
-      dueDate: 'Mar 01, 2026',
       description: 'PMG Tracker 360 Plan (Starter Tier)',
       amount: 249,
-      balanceDue: 0,
-      status: 'Paid' as const,
+      status: 'Paid',
       receipt: '#',
     },
     {
       id: 'INV-2026-001',
       date: 'Feb 01, 2026',
-      dueDate: 'Feb 01, 2026',
       description: 'PMG Tracker 360 Plan (Starter Tier)',
       amount: 249,
-      balanceDue: 0,
-      status: 'Paid' as const,
+      status: 'Paid',
       receipt: '#',
     },
   ].filter((inv) => {
@@ -427,28 +212,6 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
     if (activePlan === 'starter') return inv.amount <= 249;
     return true;
   });
-
-  const handleDownloadPdf = (invoice: InvoiceLog) => {
-    const ageingSummary = calculateStatementAgeing(
-      [{ dueDate: invoice.dueDate, balanceDue: invoice.balanceDue }],
-      new Date()
-    );
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
-
-    if (!printWindow) {
-      toast.error('Please allow popups to export the PDF.');
-      return;
-    }
-
-    printWindow.document.open();
-    printWindow.document.write(
-      renderStatementPdfHtml({ invoice, ageingSummary })
-    );
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    toast.success(`Statement ${invoice.id} opened for PDF export.`);
-  };
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-6xl font-sans">
@@ -699,7 +462,7 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDownloadPdf(inv)}
+                          onClick={() => toast.success(`Receipt ${inv.id} download started!`)}
                           className="text-primary hover:text-primary/80 font-bold p-0 h-auto cursor-pointer"
                         >
                           Download PDF
