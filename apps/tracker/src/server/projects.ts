@@ -731,7 +731,7 @@ export async function getProjectStats(organizationId: string) {
     );
 
     // Calculate Project Health (active projects only)
-    let healthStats = {
+    const healthStats = {
       onTrack: 0,
       delayed: 0,
       critical: 0,
