@@ -21,13 +21,13 @@ vi.mock('lucide-react', () => ({
 
 describe('OrgDrawer', () => {
   it('can be imported without throwing', async () => {
-    const module = await import('../OrgDrawer');
-    expect(typeof module.default).toBe('function');
+    const mod = await import('../OrgDrawer');
+    expect(typeof mod.default).toBe('function');
   });
 
   it('exports a default function (the component)', async () => {
-    const module = await import('../OrgDrawer');
-    expect(module.default).toBeDefined();
-    expect(module.default.name).toBeTruthy();
+    const mod = await import('../OrgDrawer');
+    expect(mod.default).toBeDefined();
+    expect(mod.default.name).toBeTruthy();
   });
 });

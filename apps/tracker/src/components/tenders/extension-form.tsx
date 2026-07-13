@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,11 +22,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Loader2, Upload, AlertTriangle } from 'lucide-react';
+import { Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { createTenderExtension, updateTenderExtension } from '@/server/modules/extensions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+
 
 const extensionFormSchema = z.object({
   extensionDate: z.string().min(1, 'Extension date is required'),
@@ -80,13 +80,20 @@ export function ExtensionForm({
   trigger,
 }: ExtensionFormProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const isEdit = !!extension;
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset the selected file when the dialog opens or extension changes
+  useEffect(() => {
+    if (open) {
+      setSelectedFile(null);
+    }
+  }, [open, extension?.id]);
 
   const form = useForm<ExtensionFormValues>({
     resolver: zodResolver(extensionFormSchema),
@@ -100,10 +107,8 @@ export function ExtensionForm({
     },
   });
 
-  const onSubmit = async (data: ExtensionFormValues) => {
-    const file = fileInputRef.current?.files?.[0];
-
-    if (!isEdit && !file) {
+  const onSubmit = useCallback(async (data: ExtensionFormValues) => {
+    if (!isEdit && !selectedFile) {
       toast.error('File Required', {
         description: 'Please upload the extension letter.',
       });
@@ -111,9 +116,9 @@ export function ExtensionForm({
     }
 
     startTransition(async () => {
-      const formData = file ? new FormData() : undefined;
-      if (file && formData) {
-        formData.append('file', file);
+      const formData = selectedFile ? new FormData() : undefined;
+      if (selectedFile && formData) {
+        formData.append('file', selectedFile);
       }
 
       if (isEdit && extension) {
@@ -157,7 +162,7 @@ export function ExtensionForm({
         }
       }
     });
-  };
+  }, [extension, organizationId, tenderId, setOpen, router, form, selectedFile, isEdit]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -293,7 +298,9 @@ export function ExtensionForm({
                 type="file"
                 accept=".pdf,.doc,.docx,.jpg,.png"
                 className="cursor-pointer"
-                ref={fileInputRef}
+                onChange={(e) => {
+                  setSelectedFile(e.target.files?.[0] ?? null);
+                }}
                 required={!isEdit}
               />
               {isEdit && extension?.documents?.[0] && (
