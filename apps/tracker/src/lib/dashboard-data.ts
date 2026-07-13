@@ -88,7 +88,6 @@ export function getTenderStatusChartData(
   ].filter((item) => item.value > 0);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getMonthlyTrendsData(
   tenderStats: DashboardData['tenderStats']
 ) {

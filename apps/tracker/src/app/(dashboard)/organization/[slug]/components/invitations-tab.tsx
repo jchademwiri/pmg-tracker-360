@@ -162,7 +162,7 @@ function canManageInvitations(role: Role): boolean {
 export function InvitationsTab({
   organization,
   userRole,
-  currentUser: _currentUser, // eslint-disable-line @typescript-eslint/no-unused-vars
+  currentUser: _currentUser,
 }: InvitationsTabProps) {
   const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
   const [selectedInvitations, setSelectedInvitations] = useState<string[]>([]);

@@ -46,7 +46,6 @@ export default async function RootLayout({
   });
 
   const user = session?.user;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isAdmin = user && (user as any).role === 'admin';
 
   return (

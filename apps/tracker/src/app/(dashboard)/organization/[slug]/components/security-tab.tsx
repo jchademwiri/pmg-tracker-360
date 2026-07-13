@@ -111,7 +111,7 @@ function getDeviceIcon(device: string) {
 export function SecurityTab({
   organization,
   userRole,
-  currentUser: _currentUser, // eslint-disable-line @typescript-eslint/no-unused-vars
+  currentUser: _currentUser,
 }: SecurityTabProps) {
   const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);

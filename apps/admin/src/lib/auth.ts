@@ -93,13 +93,11 @@ export const auth = betterAuth({
   },
   callbacks: {
     session: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       after: async (session: any, user: any) => {
         return {
           ...session,
           user: {
             ...session.user,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             role: (user as any).role || 'user',
           },
         };

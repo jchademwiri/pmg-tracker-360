@@ -11,7 +11,6 @@ export default async function SessionsPage({
 }) {
   // 1. Auth guard
   const session = await auth.api.getSession({ headers: await headers() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!session || (session.user as any).role !== 'admin') redirect('/login');
 
   // 2. Read view param

@@ -67,7 +67,6 @@ export async function adminSignIn(email: string, password: string) {
     }
 
     // Role Enforcement: Ensure user role is 'admin'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const role = (response.user as any).role;
     if (role !== 'admin') {
       // Sign out immediately to invalidate the session cookie
