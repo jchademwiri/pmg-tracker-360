@@ -21,26 +21,26 @@ WITH tender_rows (
   status
 ) AS (
   VALUES
-    ('gt-gde-069-2025', 'Gauteng Department of Education', 'Tender document', '2026-01-23'::timestamp, 'draft'),
-    ('drt-03-01-2026', 'Gauteng Department of Roads and Transport', 'Tender document', '2026-03-13'::timestamp, 'draft'),
-    ('road-maintenance', 'eMakhazeni Local Municipality / Belfast', 'Road maintenance', '2026-03-23'::timestamp, 'draft'),
-    ('a-ws-04-2026', 'City of Ekurhuleni', 'Cleaning and repairs to sewer pipelines', '2026-04-15'::timestamp, 'draft'),
-    ('a-ws-03-2026', 'City of Ekurhuleni', 'Water meters', '2026-04-16'::timestamp, 'draft'),
-    ('a-ws-05-2026', 'City of Ekurhuleni', 'Water network', '2026-04-20'::timestamp, 'draft'),
-    ('200420265907', 'Eskom / Medupi Power Station', 'Office cleaning, park homes, ablution facilities, mobile toilets', '2026-04-24'::timestamp, 'draft'),
-    ('rft81-10-2025-26', 'Madibeng Local Municipality', 'Tender document', '2026-04-30'::timestamp, 'draft'),
-    ('t21-2026', 'Dr Pixley Ka Isaka Seme Local Municipality', 'Roads material, Volksrust Ward 4', '2026-04-30'::timestamp, 'draft'),
-    ('a-ws-03-2026', 'City of Ekurhuleni', 'Water meters, erratum/revised pricing', '2026-05-07'::timestamp, 'draft'),
-    ('a-wm-03-2026', 'City of Ekurhuleni', 'New wheelie bins and accessories', '2026-05-13'::timestamp, 'draft'),
-    ('8-2-4-244', 'Midvaal Local Municipality', 'Bid document', '2026-05-19'::timestamp, 'draft'),
-    ('8-2-4-245', 'Midvaal Local Municipality', 'Bid document', '2026-05-20'::timestamp, 'draft'),
-    ('8-2-4-246', 'Midvaal Local Municipality', 'Bid document', '2026-05-22'::timestamp, 'draft'),
-    ('e16-of-2026', 'Msunduzi Municipality', 'Supply and delivery of steel street lighting poles and accessories', '2026-05-26'::timestamp, 'draft'),
-    ('bsm-103-26', 'Stellenbosch Municipality', 'Mowing / grass cutting of open spaces within WC024 ending 30 June 2029', '2026-06-01'::timestamp, 'draft'),
-    ('pm37-25-26', 'Polokwane Municipality', 'Tender document / BOQ', '2026-06-02'::timestamp, 'draft'),
-    ('rlm-dtis-0118-2025-26', 'Rustenburg Local Municipality', 'Streetlight poles', '2026-06-02'::timestamp, 'draft'),
-    ('a-ws-06-2026', 'City of Ekurhuleni', 'Mobile water tankers', '2026-06-04'::timestamp, 'draft'),
-    ('11-2026', 'Lesedi Local Municipality', 'Supply of cables', '2026-06-08'::timestamp, 'draft')
+    ('gt-gde-069-2025', 'Gauteng Department of Education', 'Tender document', '2026-01-23'::timestamp, 'draft'::tender_status),
+    ('drt-03-01-2026', 'Gauteng Department of Roads and Transport', 'Tender document', '2026-03-13'::timestamp, 'draft'::tender_status),
+    ('road-maintenance', 'eMakhazeni Local Municipality / Belfast', 'Road maintenance', '2026-03-23'::timestamp, 'draft'::tender_status),
+    ('a-ws-04-2026', 'City of Ekurhuleni', 'Cleaning and repairs to sewer pipelines', '2026-04-15'::timestamp, 'draft'::tender_status),
+    ('a-ws-03-2026', 'City of Ekurhuleni', 'Water meters', '2026-04-16'::timestamp, 'draft'::tender_status),
+    ('a-ws-05-2026', 'City of Ekurhuleni', 'Water network', '2026-04-20'::timestamp, 'draft'::tender_status),
+    ('200420265907', 'Eskom / Medupi Power Station', 'Office cleaning, park homes, ablution facilities, mobile toilets', '2026-04-24'::timestamp, 'draft'::tender_status),
+    ('rft81-10-2025-26', 'Madibeng Local Municipality', 'Tender document', '2026-04-30'::timestamp, 'draft'::tender_status),
+    ('t21-2026', 'Dr Pixley Ka Isaka Seme Local Municipality', 'Roads material, Volksrust Ward 4', '2026-04-30'::timestamp, 'draft'::tender_status),
+    ('a-ws-03-2026', 'City of Ekurhuleni', 'Water meters, erratum/revised pricing', '2026-05-07'::timestamp, 'draft'::tender_status),
+    ('a-wm-03-2026', 'City of Ekurhuleni', 'New wheelie bins and accessories', '2026-05-13'::timestamp, 'draft'::tender_status),
+    ('8-2-4-244', 'Midvaal Local Municipality', 'Bid document', '2026-05-19'::timestamp, 'draft'::tender_status),
+    ('8-2-4-245', 'Midvaal Local Municipality', 'Bid document', '2026-05-20'::timestamp, 'draft'::tender_status),
+    ('8-2-4-246', 'Midvaal Local Municipality', 'Bid document', '2026-05-22'::timestamp, 'draft'::tender_status),
+    ('e16-of-2026', 'Msunduzi Municipality', 'Supply and delivery of steel street lighting poles and accessories', '2026-05-26'::timestamp, 'draft'::tender_status),
+    ('bsm-103-26', 'Stellenbosch Municipality', 'Mowing / grass cutting of open spaces within WC024 ending 30 June 2029', '2026-06-01'::timestamp, 'draft'::tender_status),
+    ('pm37-25-26', 'Polokwane Municipality', 'Tender document / BOQ', '2026-06-02'::timestamp, 'draft'::tender_status),
+    ('rlm-dtis-0118-2025-26', 'Rustenburg Local Municipality', 'Streetlight poles', '2026-06-02'::timestamp, 'draft'::tender_status),
+    ('a-ws-06-2026', 'City of Ekurhuleni', 'Mobile water tankers', '2026-06-04'::timestamp, 'draft'::tender_status),
+    ('11-2026', 'Lesedi Local Municipality', 'Supply of cables', '2026-06-08'::timestamp, 'draft'::tender_status)
 ),
 deduped_tenders AS (
   SELECT DISTINCT ON (tender_number)
@@ -85,7 +85,7 @@ SELECT
   status,
   now() AS updated_at
 FROM tenders_with_clients
-ON CONFLICT (tender_number) DO UPDATE SET
+ON CONFLICT (organization_id, tender_number) DO UPDATE SET
   organization_id = EXCLUDED.organization_id,
   description = EXCLUDED.description,
   client_id = EXCLUDED.client_id,
