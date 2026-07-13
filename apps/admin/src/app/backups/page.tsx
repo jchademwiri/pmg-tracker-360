@@ -11,7 +11,6 @@ export default async function BackupsPage() {
     headers: await headers(),
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!session || (session.user as any).role !== 'admin') {
     const adminCountResult = await db
       .select({ count: count() })

@@ -691,8 +691,8 @@ class BulkOperationsManager {
   }
 
   async rollbackOperation(
-    _rollbackToken: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _performingUserId: string // eslint-disable-line @typescript-eslint/no-unused-vars
+    _rollbackToken: string,
+    _performingUserId: string
   ): Promise<BulkOperationResult> {
     // In a real implementation, retrieve and apply rollback data
     // For now, return a placeholder result

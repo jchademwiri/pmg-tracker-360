@@ -78,7 +78,7 @@ function getOrganizationInitials(name: string): string {
 export function GeneralTab({
   organization,
   userRole,
-  currentUser: _currentUser, // eslint-disable-line @typescript-eslint/no-unused-vars
+  currentUser: _currentUser,
 }: GeneralTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const canEdit = canEditOrganization(userRole);

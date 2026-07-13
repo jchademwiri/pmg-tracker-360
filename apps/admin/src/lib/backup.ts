@@ -171,7 +171,6 @@ async function insertRows(
       const values: unknown[] = columns.map(c => row[c]);
       const updateSet = columns.map(c => `"${c.replace(/"/g, '""')}" = EXCLUDED."${c.replace(/"/g, '""')}"`).join(', ');
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (sql.unsafe as any)(
         `INSERT INTO "${tableName.replace(/"/g, '""')}" (${colNames}) VALUES (${placeholders}) ON CONFLICT (id) DO UPDATE SET ${updateSet}`,
         values

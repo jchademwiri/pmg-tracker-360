@@ -17,7 +17,6 @@ import {
  */
 async function requireAdmin(): Promise<{ authorized: false; error: string } | { authorized: true }> {
   const session = await auth.api.getSession({ headers: await headers() });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!session || (session.user as any).role !== 'admin') {
     return { authorized: false, error: 'Unauthorized: Admin access required.' };
   }

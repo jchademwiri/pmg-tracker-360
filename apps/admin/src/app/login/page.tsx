@@ -19,7 +19,6 @@ export default async function AdminLoginPage() {
   });
 
   if (session) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((session.user as any).role === 'admin') {
       redirect('/');
     }

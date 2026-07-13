@@ -79,7 +79,7 @@ function canEditOwnerSettings(role: Role): boolean {
 export function SettingsTab({
   organization,
   userRole,
-  currentUser: _currentUser, // eslint-disable-line @typescript-eslint/no-unused-vars
+  currentUser: _currentUser,
 }: SettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(

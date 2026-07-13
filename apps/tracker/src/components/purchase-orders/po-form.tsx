@@ -135,7 +135,6 @@ export function POForm({
 }: POFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projects, setProjects] = useState<any[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [projectLineItems, setProjectLineItems] = useState<any[]>([]);
