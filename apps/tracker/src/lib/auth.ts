@@ -125,17 +125,6 @@ export const auth = betterAuth({
     },
   },
   callbacks: {
-    session: {
-      after: async (session: any, user: any) => {
-        return {
-          ...session,
-          user: {
-            ...session.user,
-            role: (user as any).role || 'user', // Expose role to frontend
-          },
-        };
-      },
-    },
   },
   database: drizzleAdapter(db, {
     provider: 'pg', // or "mysql", "sqlite"

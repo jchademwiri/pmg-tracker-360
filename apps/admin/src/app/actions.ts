@@ -47,49 +47,6 @@ function getAdminBaseURL() {
   );
 }
 
-
-/**
- * Validates and signs in platform administrators.
- */
-export async function adminSignIn(email: string, password: string) {
-  try {
-    // Perform standard email/password authentication
-    const response = await auth.api.signInEmail({
-      body: {
-        email,
-        password,
-      },
-      headers: await headers(),
-    });
-
-    if (!response || !response.user) {
-      return { success: false, error: 'Invalid email or password' };
-    }
-
-    // Role Enforcement: Ensure user role is 'admin'
-    const role = (response.user as any).role;
-    if (role !== 'admin') {
-      // Sign out immediately to invalidate the session cookie
-      await auth.api.signOut({
-        headers: await headers(),
-      });
-      return {
-        success: false,
-        error:
-          'Access Denied: Only system administrators are authorized to access this platform console.',
-      };
-    }
-
-    return { success: true, message: 'Authentication successful' };
-  } catch (error) {
-    const e = error as Error;
-    return {
-      success: false,
-      error: e.message || 'An error occurred during authentication',
-    };
-  }
-}
-
 /**
  * Sends a magic link and 6-digit OTP code to registered administrators.
  */

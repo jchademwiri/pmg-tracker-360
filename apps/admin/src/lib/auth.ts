@@ -92,17 +92,6 @@ export const auth = betterAuth({
     },
   },
   callbacks: {
-    session: {
-      after: async (session: any, user: any) => {
-        return {
-          ...session,
-          user: {
-            ...session.user,
-            role: (user as any).role || 'user',
-          },
-        };
-      },
-    },
   },
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -112,7 +101,6 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [
-    nextCookies(),
     magicLink({
       sendMagicLink: async ({ email, token }) => {
         try {
@@ -169,5 +157,6 @@ export const auth = betterAuth({
         }
       },
     }),
+    nextCookies(),
   ]
 });
