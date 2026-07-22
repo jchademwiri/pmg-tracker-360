@@ -1,7 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 import { magicLinkClient } from 'better-auth/client/plugins';
-
-const ADMIN_PRODUCTION_URL = 'https://admin.tendertrack360.co.za';
+import { ADMIN_PRODUCTION_URL } from '@/lib/urls';
 
 export const authClient = createAuthClient({
   baseURL:
