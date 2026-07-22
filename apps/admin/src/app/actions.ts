@@ -7,56 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@pmg/db';
 import { user, verification } from '@pmg/db/schema';
 import { eq, sql } from 'drizzle-orm';
-
-const ADMIN_PRODUCTION_URL = 'https://admin.tendertrack360.co.za';
-
-function getOrigin(value?: string) {
-  if (!value) return null;
-
-  try {
-    const url = new URL(
-      value.startsWith('http://') || value.startsWith('https://')
-        ? value
-        : `https://${value}`
-    );
-
-    return url.origin;
-  } catch {
-    return null;
-  }
-}
-
-function getAdminOrigin(value?: string) {
-  const origin = getOrigin(value);
-  if (!origin) return null;
-
-  return new URL(origin).hostname.startsWith('admin.') ? origin : null;
-}
-
-function getAdminBaseURL() {
-  // 1. User-configured env vars (highest priority)
-  const configured =
-    getOrigin(process.env.NEXT_PUBLIC_ADMIN_URL) ||
-    getOrigin(process.env.ADMIN_PUBLIC_URL);
-  if (configured) return configured;
-
-  // 2. Production — use the hardcoded production URL directly.
-  //    Avoid Vercel auto-injected vars (VERCEL_URL etc.) in production
-  //    because they can clash with the custom domain and cause the
-  //    session cookie to be set for the wrong origin.
-  if (process.env.NODE_ENV === 'production') {
-    return ADMIN_PRODUCTION_URL;
-  }
-
-  // 3. Non-production — preview deployments / local dev
-  return (
-    getAdminOrigin(process.env.NEXT_PUBLIC_URL) ||
-    getAdminOrigin(process.env.BETTER_AUTH_URL) ||
-    getAdminOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
-    getAdminOrigin(process.env.VERCEL_URL) ||
-    'http://localhost:3001'
-  );
-}
+import { getAdminBaseURL } from '@/lib/urls';
 
 /**
  * Sends a magic link and 6-digit OTP code to registered administrators.
