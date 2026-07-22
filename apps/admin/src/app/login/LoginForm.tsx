@@ -79,16 +79,18 @@ export default function LoginForm() {
     try {
       const response = await verifyAdminOTP(email, otp);
       if (response.success && response.token) {
+        setStatusMessage('Signing you in...');
         // Redirect to standard magic-link verify endpoint to log in programmatically
         window.location.replace(
           `/api/auth/magic-link/verify?token=${response.token}&callbackURL=${encodeURIComponent(window.location.origin)}`
         );
+        // Do not turn off loading state while redirecting
       } else {
         setError(response.error ?? 'Invalid or expired passcode.');
+        setLoading(false);
       }
     } catch {
       setError('Verification failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getSessionCookie } from 'better-auth/cookies';
 
 // Paths allowed without a session cookie (exact match)
 const EXACT_PUBLIC = new Set(['/login', '/setup', '/favicon.ico']);
 
 // Paths allowed without a session cookie (prefix match)
-const PREFIX_PUBLIC = ['/api/auth', '/_next/static', '/_next/image'];
+const PREFIX_PUBLIC = ['/api/auth', '/api/cron', '/_next/static', '/_next/image'];
 
 /**
  * Pure helper: returns true iff the pathname is a public (unauthenticated) path.
@@ -35,11 +36,11 @@ export function proxy(request: NextRequest) {
 
   if (isPublicPath(pathname)) return NextResponse.next();
 
-  const sessionCookie =
-    request.cookies.get('tender-track-360.session_token') ||
-    request.cookies.get('better-auth.session_token');
+  const sessionCookie = getSessionCookie(request, {
+    cookiePrefix: 'tender-track-360',
+  });
 
-  if (!sessionCookie?.value) {
+  if (!sessionCookie) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl, 307);
