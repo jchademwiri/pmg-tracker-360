@@ -34,16 +34,27 @@ function getAdminOrigin(value?: string) {
 }
 
 function getAdminBaseURL() {
-  return (
+  // 1. User-configured env vars (highest priority)
+  const configured =
     getOrigin(process.env.NEXT_PUBLIC_ADMIN_URL) ||
-    getOrigin(process.env.ADMIN_PUBLIC_URL) ||
+    getOrigin(process.env.ADMIN_PUBLIC_URL);
+  if (configured) return configured;
+
+  // 2. Production — use the hardcoded production URL directly.
+  //    Avoid Vercel auto-injected vars (VERCEL_URL etc.) in production
+  //    because they can clash with the custom domain and cause the
+  //    session cookie to be set for the wrong origin.
+  if (process.env.NODE_ENV === 'production') {
+    return ADMIN_PRODUCTION_URL;
+  }
+
+  // 3. Non-production — preview deployments / local dev
+  return (
     getAdminOrigin(process.env.NEXT_PUBLIC_URL) ||
     getAdminOrigin(process.env.BETTER_AUTH_URL) ||
     getAdminOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
     getAdminOrigin(process.env.VERCEL_URL) ||
-    (process.env.NODE_ENV === 'production'
-      ? ADMIN_PRODUCTION_URL
-      : 'http://localhost:3001')
+    'http://localhost:3001'
   );
 }
 

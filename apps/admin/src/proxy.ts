@@ -6,7 +6,7 @@ import { getSessionCookie } from 'better-auth/cookies';
 const EXACT_PUBLIC = new Set(['/login', '/setup', '/favicon.ico']);
 
 // Paths allowed without a session cookie (prefix match)
-const PREFIX_PUBLIC = ['/api/auth', '/_next/static', '/_next/image'];
+const PREFIX_PUBLIC = ['/api/auth', '/api/cron', '/_next/static', '/_next/image'];
 
 /**
  * Pure helper: returns true iff the pathname is a public (unauthenticated) path.
