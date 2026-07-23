@@ -9,7 +9,7 @@ import { runAutomatedBackup } from '@/lib/backup';
  *   "crons": [
  *     {
  *       "path": "/api/cron/backup",
- *       "schedule": "0 0 * * *"
+ *       "schedule": "0 22 * * *"
  *     }
  *   ]
  * }

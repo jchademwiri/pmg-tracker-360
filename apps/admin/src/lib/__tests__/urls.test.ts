@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   getOrigin,
   getAdminOrigin,
@@ -109,8 +109,7 @@ describe('getAdminBaseURL', () => {
     // Reset env vars before each test
     delete process.env.NEXT_PUBLIC_ADMIN_URL;
     delete process.env.ADMIN_PUBLIC_URL;
-    // @ts-expect-error - testing
-    delete process.env.NODE_ENV;
+    vi.stubEnv('NODE_ENV', '');
     delete process.env.NEXT_PUBLIC_URL;
     delete process.env.BETTER_AUTH_URL;
     delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
@@ -120,6 +119,7 @@ describe('getAdminBaseURL', () => {
   afterEach(() => {
     // Restore original env vars
     process.env = { ...ORIGINAL_ENV };
+    vi.unstubAllEnvs();
   });
 
   // ── User-configured env vars (priority 1) ─────────────────────────
@@ -143,21 +143,18 @@ describe('getAdminBaseURL', () => {
   // ── Production fallback (priority 2) ──────────────────────────────
 
   it('falls back to ADMIN_PRODUCTION_URL in production', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('NODE_ENV', 'production');
     expect(getAdminBaseURL()).toBe(ADMIN_PRODUCTION_URL);
   });
 
   it('uses NEXT_PUBLIC_ADMIN_URL even when NODE_ENV is production', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('NODE_ENV', 'production');
     process.env.NEXT_PUBLIC_ADMIN_URL = 'https://admin.custom.com';
     expect(getAdminBaseURL()).toBe('https://admin.custom.com');
   });
 
   it('ignores Vercel auto-vars in production', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('NODE_ENV', 'production');
     process.env.VERCEL_URL = 'admin-tendertrack360.vercel.app';
     process.env.VERCEL_PROJECT_PRODUCTION_URL = 'admin.vercel.app';
     expect(getAdminBaseURL()).toBe(ADMIN_PRODUCTION_URL);
@@ -166,49 +163,42 @@ describe('getAdminBaseURL', () => {
   // ── Non-production fallback (priority 3) ──────────────────────────
 
   it('falls back to localhost in non-production when nothing is set', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     expect(getAdminBaseURL()).toBe('http://localhost:3001');
   });
 
   it('uses NEXT_PUBLIC_URL in non-production when hostname starts with admin.', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     process.env.NEXT_PUBLIC_URL = 'https://admin.preview.vercel.app';
     expect(getAdminBaseURL()).toBe('https://admin.preview.vercel.app');
   });
 
   it('skips NEXT_PUBLIC_URL in non-production when hostname does not start with admin.', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     process.env.NEXT_PUBLIC_URL = 'https://tendertrack360.co.za';
     expect(getAdminBaseURL()).toBe('http://localhost:3001');
   });
 
   it('uses BETTER_AUTH_URL in non-production when hostname starts with admin.', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     process.env.BETTER_AUTH_URL = 'https://admin.betterauth.dev';
     expect(getAdminBaseURL()).toBe('https://admin.betterauth.dev');
   });
 
   it('uses VERCEL_PROJECT_PRODUCTION_URL in non-production when hostname starts with admin.', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     process.env.VERCEL_PROJECT_PRODUCTION_URL = 'https://admin.prod.vercel.app';
     expect(getAdminBaseURL()).toBe('https://admin.prod.vercel.app');
   });
 
   it('uses VERCEL_URL in non-production when hostname starts with admin.', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     process.env.VERCEL_URL = 'https://admin.deploy.vercel.app';
     expect(getAdminBaseURL()).toBe('https://admin.deploy.vercel.app');
   });
 
   it('chains fallbacks correctly in non-production', () => {
-    // @ts-expect-error - testing
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     process.env.NEXT_PUBLIC_URL = 'https://admin.staging.com';
     process.env.BETTER_AUTH_URL = 'https://admin.should-not-be-used.com';
     // NEXT_PUBLIC_URL wins because it's checked first
