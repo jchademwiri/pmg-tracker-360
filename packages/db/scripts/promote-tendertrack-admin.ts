@@ -3,12 +3,12 @@ import { user } from '../src/schema';
 import { eq } from 'drizzle-orm';
 
 async function run() {
-  console.log('Promoting hello@jacobc.co.za to admin...');
+  console.log('Promoting info@tendertrack360.co.za to admin...');
   await db
     .update(user)
     .set({ role: 'admin' })
-    .where(eq(user.email, 'hello@jacobc.co.za'));
-  console.log('✅ hello@jacobc.co.za promoted successfully.');
+    .where(eq(user.email, 'info@tendertrack360.co.za'));
+  console.log('✅ info@tendertrack360.co.za promoted successfully.');
 }
 
 run()
