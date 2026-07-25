@@ -126,7 +126,7 @@ const VerifyEmail = (props: VerifyEmailProps) => {
 };
 
 VerifyEmail.PreviewProps = {
-  username: 'Jacob Chademwiri',
+  username: 'Tender Track 360',
   verificationUrl: 'https://yourapp.com/verify-email?token=abc123xyz789',
 };
 

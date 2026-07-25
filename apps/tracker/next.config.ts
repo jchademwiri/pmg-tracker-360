@@ -3,13 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   transpilePackages: ["@t3-oss/env-core", "@t3-oss/env-nextjs", "better-auth"],
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "www.jacobc.co.za",
-        port: "",
-      },
-    ],
+    remotePatterns: [],
   },
   reactCompiler: true,
   experimental: {

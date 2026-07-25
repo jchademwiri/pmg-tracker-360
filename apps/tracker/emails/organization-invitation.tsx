@@ -174,7 +174,7 @@ const OrganizationInvitation = (props: OrganizationInvitationProps) => {
 };
 
 OrganizationInvitation.PreviewProps = {
-  email: 'hello@jacobc.co.za',
+  email: 'info@tendertrack360.co.za',
   invitedByUsername: 'John Smith',
   invitedByEmail: 'john.smith@organization.com',
   teamName: 'Acme Corporation',

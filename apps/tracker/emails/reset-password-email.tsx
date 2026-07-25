@@ -129,10 +129,10 @@ const ResetPasswordEmail = (props: ResetPasswordEmailProps) => {
 };
 
 ResetPasswordEmail.PreviewProps = {
-  username: 'Jacob Chademwiri',
+  username: 'Tender Track 360',
   resetUrl:
     'https://tender-track-360.vercel.app/reset-password?token=bt_abc123xyz789def456',
-  userEmail: 'hello@jacobc.co.za',
+  userEmail: 'info@tendertrack360.co.za',
 };
 
 export default ResetPasswordEmail;
