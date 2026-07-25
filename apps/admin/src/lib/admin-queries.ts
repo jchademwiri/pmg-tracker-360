@@ -78,7 +78,7 @@ export type OrgWithCounts = {
   name: string;
   slug: string | null;
   logo: string | null;
-  metadata: string | null;
+  metadata: Record<string, unknown> | string | null;
   createdAt: Date;
   deletedAt: Date | null;
   deletionReason: string | null;

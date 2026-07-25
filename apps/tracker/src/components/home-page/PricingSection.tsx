@@ -29,7 +29,7 @@ export function PricingSection() {
       features: [
         '1 organization',
         'Basic tender management',
-        '5 tenders per month',
+        '20 tenders / month',
         '0 Active Projects',
         '100MB storage',
         'Community support',

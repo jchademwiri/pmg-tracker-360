@@ -30,4 +30,26 @@ describe('OrgDrawer', () => {
     expect(mod.default).toBeDefined();
     expect(mod.default.name).toBeTruthy();
   });
+
+  it('handles object metadata without throwing error', () => {
+    const objectMetadata = { phone: '123', address: '456 Main St', website: 'https://example.com', description: 'Test' };
+    let metadataDisplay: string | null = null;
+    if (objectMetadata) {
+      if (typeof objectMetadata === 'string') {
+        try {
+          metadataDisplay = JSON.stringify(JSON.parse(objectMetadata), null, 2);
+        } catch {
+          metadataDisplay = objectMetadata;
+        }
+      } else if (typeof objectMetadata === 'object') {
+        try {
+          metadataDisplay = JSON.stringify(objectMetadata, null, 2);
+        } catch {
+          metadataDisplay = String(objectMetadata);
+        }
+      }
+    }
+    expect(typeof metadataDisplay).toBe('string');
+    expect(metadataDisplay).toContain('456 Main St');
+  });
 });

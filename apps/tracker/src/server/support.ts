@@ -1,7 +1,8 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { supportTickets } from '@pmg/db/schema';
+import { supportTickets, user as userTable } from '@pmg/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const supportTicketSchema = z.object({
@@ -20,12 +21,33 @@ export async function createSupportTicket(input: SupportTicketInput) {
   try {
     const validated = supportTicketSchema.parse(input);
 
+    // Enforce requirement: Tickets can only be opened by verified users
+    const existingUser = await db.query.user.findFirst({
+      where: validated.userId
+        ? eq(userTable.id, validated.userId)
+        : eq(sql`lower(${userTable.email})`, validated.email.toLowerCase()),
+    });
+
+    if (!existingUser) {
+      return {
+        success: false,
+        error: 'Support tickets can only be opened by registered users.',
+      };
+    }
+
+    if (!existingUser.emailVerified) {
+      return {
+        success: false,
+        error: 'Support tickets can only be opened by verified user accounts. Please verify your email address first.',
+      };
+    }
+
     await db.insert(supportTickets).values({
       id: crypto.randomUUID(),
       name: validated.name,
       email: validated.email,
       message: validated.message,
-      userId: validated.userId || null,
+      userId: existingUser.id,
       status: 'open',
     });
 

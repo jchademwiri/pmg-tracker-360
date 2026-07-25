@@ -9,6 +9,8 @@ vi.mock('next/navigation', () => ({
   useSearchParams: vi.fn(() => new URLSearchParams()),
   usePathname: vi.fn(() => '/'),
 }));
+vi.mock('@/components/UserDrawer', () => ({ default: vi.fn(() => null) }));
+vi.mock('@/app/users/actions', () => ({ getUserDetail: vi.fn() }));
 
 import { applyUserFilters, type UserFilters } from './UserListClient';
 import type { UserWithMemberships } from '@/lib/admin-queries';

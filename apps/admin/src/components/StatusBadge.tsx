@@ -45,6 +45,21 @@ const STATUS_MAP: Record<string, StatusClasses> = {
     text: 'text-blue-400',
     border: 'border-blue-500/20',
   },
+  free: {
+    bg: 'bg-blue-500/10',
+    text: 'text-blue-400',
+    border: 'border-blue-500/20',
+  },
+  starter: {
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-400',
+    border: 'border-emerald-500/20',
+  },
+  pro: {
+    bg: 'bg-purple-500/10',
+    text: 'text-purple-300 font-semibold',
+    border: 'border-purple-500/30',
+  },
   other: {
     bg: 'bg-zinc-800/60',
     text: 'text-zinc-400',

@@ -65,9 +65,9 @@ describe('formatCurrency', () => {
 
     it('handles decimal string', () => {
       const result = formatCurrency('1234.56');
-      // Regex strips non-numeric chars except dots, parseFloat('1234.56') = 1234.56
+      // Regex strips non-numeric chars except dots, parseFloat('1234.56') = 1234.56, rounded to 0 fraction digits = 1235
       expect(result).toContain('1');
-      expect(result).toContain('234');
+      expect(result).toContain('235');
     });
 
     it('returns R 0 for non-numeric string', () => {

@@ -4,7 +4,8 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { db } from '@pmg/db';
 import { organization, member, user, invitation } from '@pmg/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 /* ─── Return Types ─────────────────────────────────────────────────────── */
 
@@ -14,7 +15,7 @@ export type OrgDetail = {
     name: string;
     slug: string | null;
     logo: string | null;
-    metadata: string | null;
+    metadata: Record<string, unknown> | string | null;
     createdAt: Date;
     deletedAt: Date | null;
     deletionReason: string | null;
@@ -110,3 +111,224 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     })),
   };
 }
+
+/**
+ * Updates an organization's name and slug.
+ */
+export async function updateOrgDetails(
+  orgId: string,
+  name: string,
+  slug?: string
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    const trimmedName = name.trim();
+    const trimmedSlug = slug?.trim() || null;
+
+    if (!trimmedName) {
+      return { success: false, error: 'Organization name is required.' };
+    }
+
+    await db
+      .update(organization)
+      .set({
+        name: trimmedName,
+        slug: trimmedSlug,
+      })
+      .where(eq(organization.id, orgId));
+
+    return { success: true, message: 'Organization updated successfully.' };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed to update organization.' };
+  }
+}
+
+/**
+ * Suspends an organization (soft deletion + schedules 72h purge date).
+ */
+export async function suspendOrg(orgId: string, reason?: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    const now = new Date();
+    const purgeDate = new Date(now.getTime() + 72 * 60 * 60 * 1000); // 72 hours
+
+    await db
+      .update(organization)
+      .set({
+        deletedAt: now,
+        deletedBy: session.user.id,
+        deletionReason: reason?.trim() || 'Suspended by system administrator',
+        permanentDeletionScheduledAt: purgeDate,
+      })
+      .where(eq(organization.id, orgId));
+
+    return { success: true, message: 'Organization suspended and purge scheduled.' };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed to suspend organization.' };
+  }
+}
+
+/**
+ * Restores a suspended organization.
+ */
+export async function restoreOrg(orgId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    await db
+      .update(organization)
+      .set({
+        deletedAt: null,
+        deletedBy: null,
+        deletionReason: null,
+        permanentDeletionScheduledAt: null,
+      })
+      .where(eq(organization.id, orgId));
+
+    return { success: true, message: 'Organization restored successfully.' };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed to restore organization.' };
+  }
+}
+
+/**
+ * Immediately purges an organization permanently from the database.
+ */
+export async function purgeOrg(orgId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    await db.delete(organization).where(eq(organization.id, orgId));
+    return { success: true, message: 'Organization permanently purged.' };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed to purge organization.' };
+  }
+}
+
+/**
+ * Removes a member from an organization.
+ */
+export async function removeOrgMember(orgId: string, userId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    await db
+      .delete(member)
+      .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)));
+
+    return { success: true, message: 'Member removed from organization.' };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed to remove member.' };
+  }
+}
+
+/**
+ * Bulk suspends multiple organizations.
+ */
+export async function bulkSuspendOrgs(orgIds: string[], reason?: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+  if (!orgIds || orgIds.length === 0) {
+    return { success: false, error: 'No organizations selected.' };
+  }
+
+  try {
+    const now = new Date();
+    const purgeDate = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+
+    await db
+      .update(organization)
+      .set({
+        deletedAt: now,
+        deletedBy: session.user.id,
+        deletionReason: reason?.trim() || 'Bulk suspended by system administrator',
+        permanentDeletionScheduledAt: purgeDate,
+      })
+      .where(inArray(organization.id, orgIds));
+
+    revalidatePath('/organizations');
+    return { success: true, message: `Suspended ${orgIds.length} organization(s).` };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed bulk org suspension.' };
+  }
+}
+
+/**
+ * Bulk restores multiple organizations.
+ */
+export async function bulkRestoreOrgs(orgIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+  if (!orgIds || orgIds.length === 0) {
+    return { success: false, error: 'No organizations selected.' };
+  }
+
+  try {
+    await db
+      .update(organization)
+      .set({
+        deletedAt: null,
+        deletedBy: null,
+        deletionReason: null,
+        permanentDeletionScheduledAt: null,
+      })
+      .where(inArray(organization.id, orgIds));
+
+    revalidatePath('/organizations');
+    return { success: true, message: `Restored ${orgIds.length} organization(s).` };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed bulk org restoration.' };
+  }
+}
+
+/**
+ * Bulk purges multiple organizations permanently.
+ */
+export async function bulkPurgeOrgs(orgIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+  if (!orgIds || orgIds.length === 0) {
+    return { success: false, error: 'No organizations selected.' };
+  }
+
+  try {
+    await db.delete(organization).where(inArray(organization.id, orgIds));
+    revalidatePath('/organizations');
+    return { success: true, message: `Permanently purged ${orgIds.length} organization(s).` };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed bulk org purge.' };
+  }
+}
+
+

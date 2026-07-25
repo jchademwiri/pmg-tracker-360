@@ -25,6 +25,7 @@ vi.mock('@pmg/db/schema', () => ({
 }));
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((_col: unknown, _val: unknown) => ({ col: _col, val: _val })),
+  inArray: vi.fn((_col: unknown, _val: unknown) => ({ col: _col, val: _val })),
 }));
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue({}) }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));

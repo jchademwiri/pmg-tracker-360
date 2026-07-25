@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Loader, UserPlus, Check, X } from 'lucide-react';
 import { signInWithGoogle } from '@/lib/auth-client';
 
@@ -32,6 +32,7 @@ const signUpFormSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   password: z.string().min(8).max(100),
+  website: z.string().optional(), // Honeypot trap field for AI scrapers/bots
 });
 
 export function SignUpForm({
@@ -39,7 +40,13 @@ export function SignUpForm({
   ...props
 }: React.ComponentProps<'div'>) {
   const [isLoading, setIsLoading] = useState(false);
+  const [formMountedAt, setFormMountedAt] = useState<number | undefined>(undefined);
   const router = useRouter();
+
+  useEffect(() => {
+    setFormMountedAt(Date.now());
+  }, []);
+
   // 1. Define your form.
   const form = useForm<z.infer<typeof signUpFormSchema>>({
     resolver: zodResolver(signUpFormSchema),
@@ -47,6 +54,7 @@ export function SignUpForm({
       name: '',
       email: '',
       password: '',
+      website: '',
     },
   });
 
@@ -76,7 +84,9 @@ export function SignUpForm({
     const { success, message } = await signUp(
       values.name,
       values.email,
-      values.password
+      values.password,
+      values.website,
+      formMountedAt
     );
     if (success) {
       toast.success(`${message as string}`);
@@ -113,6 +123,30 @@ export function SignUpForm({
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-4">
+                {/* Honeypot field (hidden visually from human users; AI bots automatically fill this input) */}
+                <div
+                  className="opacity-0 absolute -left-[9999px] h-0 w-0 overflow-hidden pointer-events-none"
+                  aria-hidden="true"
+                >
+                  <FormField
+                    control={form.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website (Do not fill)</FormLabel>
+                        <FormControl>
+                          <Input
+                            tabIndex={-1}
+                            autoComplete="off"
+                            placeholder="Your website"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
                   name="name"

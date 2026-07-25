@@ -55,7 +55,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex bg-background text-foreground select-none"
+        className="min-h-full flex bg-background text-foreground"
         suppressHydrationWarning
       >
         {isAdmin ? (

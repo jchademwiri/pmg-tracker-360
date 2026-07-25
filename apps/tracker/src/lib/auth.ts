@@ -95,6 +95,35 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          if (user.email) {
+            const domain = user.email.split('@')[1]?.toLowerCase().trim();
+            const disposableDomains = new Set([
+              'mailinator.com',
+              'tempmail.com',
+              'guerrillamail.com',
+              '10minutemail.com',
+              'dispostable.com',
+              'trashmail.com',
+              'yopmail.com',
+              'sharklasers.com',
+              'getairmail.com',
+              'throwawaymail.com',
+              'temp-mail.org',
+              'fakeinbox.com',
+            ]);
+
+            if (domain && disposableDomains.has(domain)) {
+              throw new Error('Disposable or temporary email addresses are not allowed.');
+            }
+          }
+
+          return { data: user };
+        },
+      },
+    },
     session: {
       create: {
         before: async (session) => {

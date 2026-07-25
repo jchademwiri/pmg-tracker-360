@@ -127,7 +127,7 @@ export default function BackupsClient() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 font-sans">
+    <div className="space-y-8 animate-in fade-in duration-500 font-sans select-text">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
@@ -264,6 +264,34 @@ export default function BackupsClient() {
         </div>
       )}
 
+      {/* Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+          <HardDriveUpload className="h-5 w-5 text-emerald-400" />
+          <h3 className="text-sm font-semibold text-white">Automatic Backups</h3>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Backups run automatically via cron job. Each backup is a complete snapshot of all database tables,
+            compressed and stored securely in Cloudflare R2.
+          </p>
+        </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+          <Construction className="h-5 w-5 text-amber-400" />
+          <h3 className="text-sm font-semibold text-white">30-Day Retention</h3>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Backups older than 30 days are automatically purged. The system keeps a rolling window of backups
+            so you can always restore to a recent state.
+          </p>
+        </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
+          <Building2 className="h-5 w-5 text-indigo-400" />
+          <h3 className="text-sm font-semibold text-white">Org-Level Restore</h3>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Need to recover data for a specific organization? Use the "Org Restore" option to selectively
+            restore data scoped to a single organization without affecting others.
+          </p>
+        </div>
+      </div>
+
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20">
@@ -308,7 +336,7 @@ export default function BackupsClient() {
                               <FileArchive className={`h-4 w-4 ${idx === 0 ? 'text-amber-400' : 'text-zinc-500'}`} />
                             </div>
                             <div>
-                              <span className="text-white font-medium text-xs font-mono">
+                              <span className="text-white font-medium text-xs font-mono select-all">
                                 {backup.filename}
                               </span>
                               {idx === 0 && (
@@ -354,34 +382,6 @@ export default function BackupsClient() {
           )}
         </div>
       )}
-
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-          <HardDriveUpload className="h-5 w-5 text-emerald-400" />
-          <h3 className="text-sm font-semibold text-white">Automatic Backups</h3>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Backups run automatically via cron job. Each backup is a complete snapshot of all database tables,
-            compressed and stored securely in Cloudflare R2.
-          </p>
-        </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-          <Construction className="h-5 w-5 text-amber-400" />
-          <h3 className="text-sm font-semibold text-white">30-Day Retention</h3>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Backups older than 30 days are automatically purged. The system keeps a rolling window of backups
-            so you can always restore to a recent state.
-          </p>
-        </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-          <Building2 className="h-5 w-5 text-indigo-400" />
-          <h3 className="text-sm font-semibold text-white">Org-Level Restore</h3>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Need to recover data for a specific organization? Use the "Org Restore" option to selectively
-            restore data scoped to a single organization without affecting others.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
