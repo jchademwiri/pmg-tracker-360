@@ -9,7 +9,7 @@ Managing sub-contractor and supplier costs is vital to project profitability. **
 
 ## 1. Creating a Purchase Order
 
-1. Navigate to `/dashboard/billing` or inside any active project and click **Create Purchase Order**.
+1. Navigate to `/billing` or inside any active project and click **Create Purchase Order**.
 2. Complete the PO issue form:
    * **PO Number**: Unique purchase order number (e.g., `PO-2026-0412`).
    * **Target Project**: Select the active project this PO is billed against.

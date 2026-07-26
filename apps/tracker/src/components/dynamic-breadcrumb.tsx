@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -198,7 +198,7 @@ export function DynamicBreadcrumb() {
             formatSegmentName(segment);
 
           return (
-            <div key={`${href}-${segment}`} className="flex items-center min-w-0">
+            <Fragment key={`${href}-${segment}`}>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem className="min-w-0">
                 {isLast ? (
@@ -211,7 +211,7 @@ export function DynamicBreadcrumb() {
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
-            </div>
+            </Fragment>
           );
         })}
       </BreadcrumbList>

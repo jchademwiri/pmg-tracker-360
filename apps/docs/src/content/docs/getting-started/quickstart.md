@@ -12,7 +12,7 @@ With PMG Tracker 360, you can centralize your client directory, manage public an
 ## Key Features Overview
 
 * **Multi-Tenant Workspaces**: Manage one or multiple organization workspaces with isolated client directories and tendering pipelines.
-* **End-to-End Procurement Flow**: Link Tenders → Won Bids → Projects → Purchase Orders.
+* **End-to-End Procurement Flow**: Link Tenders → Awarded Tenders → Projects → Purchase Orders.
 * **Role-Based Access Control (RBAC)**: Assign granular permissions across `Owner`, `Admin`, `Manager`, and `Member` roles.
 * **Interactive Calendar**: Track tender closing dates, submission deadlines, and PO delivery timelines in a single view.
 * **Real-time Reports & Analytics**: Monitor win/loss ratios, allocated vs remaining project budgets, and total procurement expenditure.
@@ -31,11 +31,11 @@ Upon your initial login, you will land on the **Onboarding Wizard**:
 
 ### Step 3: Add Your First Client & Tender
 1. Go to **Clients** in the side navigation menu and click **New Client**. Input the buyer's organization name, contact email, and tax details.
-2. Go to **Tenders** and click **Create Tender**. Link the tender to your client, set the closing date, upload specifications, and set the initial status to `draft` or `submitted`.
+2. Go to **Tenders** and click **Create Tender**. Link the tender to your client, set the closing date, upload specifications, and set the initial status to `open` or `evaluation`.
 
-### Step 4: Convert Won Bids to Projects & POs
+### Step 4: Convert Awarded Tenders to Projects & POs
 When your tender bid is successful:
-1. Update the tender status to **Won**.
+1. Update the tender status to **Awarded**.
 2. Click **Create Project from Tender** to initialize an active project.
 3. Issue **Purchase Orders** to sub-contractors or suppliers directly from the project detail page.
 

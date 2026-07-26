@@ -10,7 +10,7 @@ Managing tender submissions accurately is critical for revenue growth and contra
 ## 1. Creating a New Tender Record
 
 To log a new tender in the system:
-1. Navigate to `/dashboard/tenders` and click **Create Tender**.
+1. Navigate to `/tenders` and click **Create Tender**.
 2. Fill out the tender specification details:
    * **Tender Title**: Descriptive title of the RFP or bid opportunity.
    * **Tender Reference Number**: Official reference code (e.g., `TND-2026-9921`).
@@ -28,17 +28,17 @@ Every tender progresses through defined lifecycle states:
 
 ```mermaid
 graph TD
-    Draft[Draft] --> Submitted[Submitted / Pending]
-    Submitted --> Won[Won / Awarded]
-    Submitted --> Lost[Lost / Declined]
-    Submitted --> Cancelled[Cancelled]
+    Open[Open] --> Evaluation[Under Evaluation]
+    Evaluation --> Awarded[Awarded]
+    Evaluation --> Lost[Lost / Declined]
+    Open --> Closed[Closed / Cancelled]
 ```
 
-* **Draft**: Initial bid compilation. Documents and pricing schedules are being prepared.
-* **Submitted**: Bid paperwork has been submitted to the buyer. Awaiting evaluation.
-* **Won / Awarded**: Tender contract awarded! Ready to convert into an active project.
-* **Lost / Declined**: Tender was not awarded to your team. Win/loss reasons can be recorded for future analytical reporting.
-* **Cancelled**: Buyer cancelled or withdrew the tender advertisement.
+* **Open**: Initial bid compilation and active submission. Documents and pricing schedules are being prepared.
+* **Under Evaluation**: Bid paperwork submitted to buyer and under active tender committee review.
+* **Awarded**: Tender contract awarded! Ready to convert into an active project.
+* **Lost / Declined**: Tender was not awarded to your team. Win/loss reasons can be recorded for analytical reporting.
+* **Closed / Cancelled**: Tender deadline passed or opportunity was cancelled.
 
 ---
 

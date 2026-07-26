@@ -3,13 +3,13 @@ title: Projects & Execution Tracking
 description: How to convert awarded tenders into active operational projects, track delivery milestones, and monitor completion progress.
 ---
 
-Once a tender transitions to **Won**, operational delivery begins. **PMG Tracker 360** allows you to seamless convert won bids into active projects to track execution timelines and budget allocations.
+Once a tender transitions to **Awarded**, operational delivery begins. **PMG Tracker 360** allows you to seamlessly convert awarded bids into active projects to track execution timelines and budget allocations.
 
 ---
 
-## 1. Initializing a Project from a Won Tender
+## 1. Initializing a Project from an Awarded Tender
 
-1. Navigate to `/dashboard/tenders` and select the awarded tender.
+1. Navigate to `/tenders` and select the awarded tender.
 2. Click **Create Project from Tender**.
 3. The platform pre-fills the project details automatically:
    * **Project Name**: Inherits tender title.
@@ -22,7 +22,7 @@ Once a tender transitions to **Won**, operational delivery begins. **PMG Tracker
 
 ## 2. Managing Milestones & Execution Stages
 
-Inside any active project (`/dashboard/projects/[id]`):
+Inside any active project (`/projects/[id]`):
 
 ### Milestone Tracker
 * Break down contract delivery into key milestones (e.g. *Site Survey, Phase 1 Equipment Delivery, Installation & Testing, Final Sign-off*).

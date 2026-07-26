@@ -36,9 +36,10 @@ Mandatory compliance documents (e.g. Tax Clearance Pin, B-BBEE Certificate, CSD 
 
 | Status | Applicable Entity | Description |
 | :--- | :--- | :--- |
-| **Draft** | Tender / PO | Record created; documentation and line items being compiled. |
-| **Submitted** | Tender | Paperwork submitted to buyer; awaiting evaluation decision. |
-| **Won** | Tender | Bid awarded; eligible for conversion to an active project. |
+| **Open** | Tender | Record created; submission open and documentation being compiled. |
+| **Evaluation** | Tender | Paperwork submitted to buyer; awaiting evaluation decision. |
+| **Closed** | Tender | Tender closing date passed or opportunity cancelled. |
+| **Awarded** | Tender | Bid awarded; eligible for conversion to an active project. |
 | **Lost** | Tender | Bid declined or awarded to a competitor. |
 | **Active** | Project | Operational delivery underway. |
 | **Sent** | Purchase Order | Transmitted to supplier/sub-contractor. |

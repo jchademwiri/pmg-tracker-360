@@ -163,7 +163,7 @@ export function UpgradeDialog({
 
     if (usageContext === 'tenders') {
       return {
-        title: 'Monthly Tender Limit Reached (20/20)',
+        title: `Monthly Tender Limit Reached (${currentCount}/${maxCount})`,
         description: `You have reached your Free Tier monthly limit of ${maxCount} tenders. Upgrade to Starter or Pro for unlimited tender tracking.`,
       };
     }
@@ -188,7 +188,10 @@ export function UpgradeDialog({
       const result = await updateUserPlan(targetPlan);
       if (result.success) {
         toast.success(`Successfully upgraded to ${targetPlan.toUpperCase()} Plan!`, {
-          description: 'Your monthly tender limit has been upgraded to Unlimited Tenders.',
+          description:
+            targetPlan === 'pro'
+              ? 'Your monthly tender limit has been upgraded to Unlimited Tenders.'
+              : 'Your monthly tender limit has been upgraded to 20 tenders / month.',
         });
         onOpenChange(false);
         window.location.reload();
