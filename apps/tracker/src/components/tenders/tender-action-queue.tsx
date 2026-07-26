@@ -14,8 +14,17 @@ import {
   Trophy, 
   Eye, 
   Check, 
-  Loader2
+  Loader2,
+  Building2,
+  MoreHorizontalIcon,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatCurrency, formatDate } from '@/lib/format';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -266,33 +275,21 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table className="w-full min-w-[700px]">
-                <TableHeader className="bg-muted/5">
-                  <TableRow>
-                    <TableHead className="py-3 pl-4 font-semibold text-xs text-muted-foreground">Tender Number</TableHead>
-                    <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Client</TableHead>
-                    <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Description</TableHead>
-                    
-                    {/* Conditional Headers */}
-                    {selectedQueue === 'overdue' && (
-                      <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Passed Deadline</TableHead>
-                    )}
-                    {selectedQueue === 'closingSoon' && (
-                      <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Days Left</TableHead>
-                    )}
-                    {selectedQueue === 'briefingPending' && (
-                      <>
-                        <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Briefing Date</TableHead>
-                        <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Location</TableHead>
-                      </>
-                    )}
-                    {selectedQueue === 'awaitingResults' && (
-                      <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Submitted Date</TableHead>
-                    )}
-                    
-                    <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Value</TableHead>
-                    <TableHead className="py-3 font-semibold text-xs text-muted-foreground">Current Status</TableHead>
-                    <TableHead className="py-3 pr-4 text-right font-semibold text-xs text-muted-foreground w-[120px]">Actions</TableHead>
+              <Table className="w-full table-fixed">
+                <TableHeader className="bg-muted/30">
+                  <TableRow className="hover:bg-transparent border-b border-border/60">
+                    <TableHead className="w-[36%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Tender & Client</TableHead>
+                    <TableHead className="w-[20%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Description</TableHead>
+                    <TableHead className="w-[14%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                    <TableHead className="w-[14%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Value</TableHead>
+                    <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                      {selectedQueue === 'overdue' && 'Passed Deadline'}
+                      {selectedQueue === 'closingSoon' && 'Closing Date'}
+                      {selectedQueue === 'briefingPending' && 'Briefing Info'}
+                      {selectedQueue === 'awaitingResults' && 'Submitted Date'}
+                      {selectedQueue === 'awardedToConvert' && 'Award Status'}
+                    </TableHead>
+                    <TableHead className="w-[10%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -300,78 +297,117 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                     const daysLeft = getDaysUntil(t.submissionDate);
                     
                     return (
-                      <TableRow key={t.id} className="hover:bg-muted/5 transition-colors">
-                        {/* Tender Number */}
-                        <TableCell className="py-3 pl-4 font-medium text-sm">
-                          <Link
-                            href={`/tenders/${t.id}`}
-                            className="text-blue-500 hover:text-blue-600 hover:underline font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded"
-                          >
-                            {t.tenderNumber.toUpperCase()}
-                          </Link>
-                        </TableCell>
-                        
-                        {/* Client */}
-                        <TableCell className="py-3 text-sm text-muted-foreground">
-                          {t.client?.name || 'Unknown Client'}
+                      <TableRow
+                        key={t.id}
+                        className="transition-colors duration-150 border-b border-border/40 hover:bg-accent/40 cursor-pointer"
+                        onClick={() => router.push(`/tenders/${t.id}`)}
+                      >
+                        {/* Tender & Client */}
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                              <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+                            </div>
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <div className="font-semibold text-foreground text-sm truncate">
+                                {t.client?.name || 'Unknown Client'}
+                              </div>
+                              <Link
+                                href={`/tenders/${t.id}`}
+                                className="text-xs font-mono text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 hover:underline transition-colors truncate w-fit"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                {t.tenderNumber.toUpperCase()}
+                              </Link>
+                            </div>
+                          </div>
                         </TableCell>
                         
                         {/* Description */}
-                        <TableCell className="py-3 text-sm max-w-[200px] truncate" title={t.description || ''}>
-                          {t.description || '—'}
+                        <TableCell className="py-3">
+                          <p className="text-xs text-muted-foreground line-clamp-2" title={t.description || ''}>
+                            {t.description || '—'}
+                          </p>
                         </TableCell>
                         
-                        {/* Conditional Columns */}
-                        {selectedQueue === 'overdue' && (
-                          <TableCell className="py-3 text-sm text-red-500 font-medium">
-                            {t.submissionDate ? formatDate(t.submissionDate) : '—'}
-                          </TableCell>
-                        )}
-                        {selectedQueue === 'closingSoon' && (
-                          <TableCell className="py-3 text-sm font-medium">
-                            {daysLeft !== null ? (
-                              daysLeft === 0 ? (
-                                <span className="text-red-500 animate-pulse font-semibold">Today</span>
-                              ) : daysLeft === 1 ? (
-                                <span className="text-red-500 font-medium">Tomorrow</span>
-                              ) : (
-                                <span className={daysLeft <= 3 ? 'text-orange-500 font-medium' : 'text-amber-500'}>
-                                  {daysLeft} days
-                                </span>
-                              )
-                            ) : (
-                              '—'
-                            )}
-                          </TableCell>
-                        )}
-                        {selectedQueue === 'briefingPending' && (
-                          <>
-                            <TableCell className="py-3 text-sm">
-                              {t.briefingDate ? formatDate(t.briefingDate) : '—'}
-                            </TableCell>
-                            <TableCell className="py-3 text-sm text-muted-foreground truncate max-w-[150px]">
-                              {t.briefingLocation || '—'}
-                            </TableCell>
-                          </>
-                        )}
-                        {selectedQueue === 'awaitingResults' && (
-                          <TableCell className="py-3 text-sm text-muted-foreground">
-                            {t.submissionDate ? formatDate(t.submissionDate) : '—'}
-                          </TableCell>
-                        )}
-
+                        {/* Status */}
+                        <TableCell className="py-3">
+                          <StatusBadge domain="tender" status={t.status} />
+                        </TableCell>
+                        
                         {/* Value */}
-                        <TableCell className="py-3 text-sm font-medium">
-                          {t.value ? formatCurrency(t.value) : '—'}
+                        <TableCell className="py-3">
+                          <span className="font-mono font-semibold text-sm text-emerald-600 dark:text-emerald-400">
+                            {t.value ? formatCurrency(Number(t.value)) : '—'}
+                          </span>
                         </TableCell>
 
-                        {/* Status */}
-                        <TableCell className="py-3 text-sm">
-                          <StatusBadge domain="tender" status={t.status} />
+                        {/* Date / Context Cell */}
+                        <TableCell className="py-3">
+                          {selectedQueue === 'overdue' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-red-500 flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                                {t.submissionDate ? formatDate(t.submissionDate) : '—'}
+                              </div>
+                              {daysLeft !== null && (
+                                <div className="text-[11px] text-red-500 font-semibold pl-5">
+                                  {Math.abs(daysLeft)}d overdue
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedQueue === 'closingSoon' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {t.submissionDate ? formatDate(t.submissionDate) : '—'}
+                              </div>
+                              {daysLeft !== null && (
+                                <div className="text-[11px] pl-5 font-semibold text-amber-500">
+                                  {daysLeft === 0 ? 'Due today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft}d left`}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedQueue === 'briefingPending' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {t.briefingDate ? formatDate(t.briefingDate) : '—'}
+                              </div>
+                              {t.briefingLocation && (
+                                <div className="text-[11px] text-muted-foreground pl-5 truncate max-w-[140px]" title={t.briefingLocation}>
+                                  {t.briefingLocation}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedQueue === 'awaitingResults' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {t.submissionDate ? formatDate(t.submissionDate) : '—'}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground pl-5">Submitted</div>
+                            </div>
+                          )}
+
+                          {selectedQueue === 'awardedToConvert' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                <Trophy className="h-3.5 w-3.5 shrink-0" />
+                                Awarded
+                              </div>
+                            </div>
+                          )}
                         </TableCell>
 
                         {/* Actions */}
-                        <TableCell className="py-2 pr-4 text-right">
+                        <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
                             {selectedQueue === 'briefingPending' && (
                               <Button
@@ -395,16 +431,23 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                                 Convert
                               </Button>
                             )}
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
-                              asChild
-                              className="h-7 w-7 cursor-pointer"
-                            >
-                              <Link href={`/tenders/${t.id}`}>
-                                <Eye className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                              </Link>
-                            </Button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-8 cursor-pointer hover:bg-accent">
+                                  <MoreHorizontalIcon className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.push(`/tenders/${t.id}`)}>
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/tenders/${t.id}/edit`)}>
+                                  Edit Tender
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
