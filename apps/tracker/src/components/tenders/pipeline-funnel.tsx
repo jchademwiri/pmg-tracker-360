@@ -80,16 +80,18 @@ export function PipelineFunnel({ statusCounts, className = '' }: PipelineFunnelP
                     </div>
                   </div>
                   <div className="relative h-8 rounded-md overflow-hidden bg-muted/50">
-                    {/* Funnel bar — uses clip-path for tapered funnel shape */}
-                    <div
-                      className={`absolute inset-y-0 left-0 ${stage.color} transition-all duration-500 ease-out`}
-                      style={{
-                        width: `${Math.max(barWidth, 3)}%`,
-                        clipPath: 'polygon(0 0, 100% 4%, 100% 96%, 0 100%)',
-                      }}
-                    />
+                    {/* Funnel bar — only rendered when count > 0 */}
+                    {count > 0 && (
+                      <div
+                        className={`absolute inset-y-0 left-0 ${stage.color} transition-all duration-500 ease-out`}
+                        style={{
+                          width: `${Math.max(barWidth, 3)}%`,
+                          clipPath: 'polygon(0 0, 100% 4%, 100% 96%, 0 100%)',
+                        }}
+                      />
+                    )}
                     {/* Count label inside the bar */}
-                    {barWidth > 15 && (
+                    {count > 0 && barWidth > 15 && (
                       <span className="absolute inset-y-0 left-3 flex items-center text-xs font-semibold text-white z-10">
                         {count}
                       </span>
