@@ -30,7 +30,7 @@ export default function RevenueAnalytics({
       badge: 'Default',
       badgeColor: 'bg-zinc-800 text-zinc-300 border-zinc-700',
       description: 'Basic access for new users',
-      features: ['1 Organization', 'Basic tender tracking', '20 tenders / month', '100MB Storage'],
+      features: ['1 Organization', 'Basic tender tracking', '10 tenders / month', '100MB Storage'],
       subscribers: freeUsers,
     },
     {
@@ -42,7 +42,7 @@ export default function RevenueAnalytics({
       badge: 'Popular',
       badgeColor: 'bg-blue-950 text-blue-300 border-blue-800',
       description: 'For consultants & small teams',
-      features: ['1 Organization', 'Unlimited tenders', '2 Active Projects', '1GB Storage'],
+      features: ['1 Organization', '20 tenders / month', '2 Active Projects', '1GB Storage'],
       subscribers: 0,
     },
     {

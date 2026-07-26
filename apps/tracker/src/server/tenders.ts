@@ -201,10 +201,12 @@ export async function createTender(
       validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
     }
 
-    // Server-side Tender Quota Check for Free Tier
+    // Server-side Tender Quota Check (Free: 10, Starter: 20, Pro: Unlimited)
     const session = await auth.api.getSession({ headers: await headers() });
     const userPlan = (session?.user as any)?.plan || 'free';
-    if (userPlan === 'free') {
+    const maxTendersAllowed = userPlan === 'free' ? 10 : userPlan === 'starter' ? 20 : Infinity;
+
+    if (maxTendersAllowed !== Infinity) {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
 
@@ -220,10 +222,10 @@ export async function createTender(
         );
 
       const currentCount = Number(activeTendersCount[0]?.count || 0);
-      if (currentCount >= 20) {
+      if (currentCount >= maxTendersAllowed) {
         return {
           success: false,
-          error: 'Monthly tender quota reached on Free Tier (20 tenders / month). Upgrade to Starter or Pro for unlimited tenders.',
+          error: `Monthly tender quota reached on ${userPlan.toUpperCase()} Plan (${maxTendersAllowed} tenders / month). Upgrade your subscription plan to track more tenders.`,
         };
       }
     }

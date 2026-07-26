@@ -420,28 +420,27 @@ export default function OrgDetailClient({ data }: Props) {
                   (t) => new Date(t.createdAt) >= currentMonthStart
                 ).length;
 
+                const ownerPlan = (owner?.plan || 'free').toLowerCase();
+                const maxTendersQuota = ownerPlan === 'pro' ? Infinity : ownerPlan === 'starter' ? 20 : 10;
+                const isOverQuota = maxTendersQuota !== Infinity && tendersThisMonth >= maxTendersQuota;
+                const quotaPercent = maxTendersQuota !== Infinity ? Math.min(100, Math.round((tendersThisMonth / maxTendersQuota) * 100)) : 100;
+
                 return (
                   <div className="space-y-4 text-sm">
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs text-zinc-400">
                         <span>Monthly Tender Quota</span>
                         <span className="font-semibold text-white">
-                          {tendersThisMonth} / {owner?.plan === 'free' ? '20 tenders / month' : 'Unlimited'}
+                          {tendersThisMonth} / {maxTendersQuota === Infinity ? 'Unlimited' : `${maxTendersQuota} tenders / month`}
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
                         <div
                           className={`h-full transition-all ${
-                            owner?.plan === 'free' && tendersThisMonth >= 20
-                              ? 'bg-red-500'
-                              : 'bg-emerald-500'
+                            isOverQuota ? 'bg-red-500' : 'bg-emerald-500'
                           }`}
                           style={{
-                            width: `${
-                              owner?.plan === 'free'
-                                ? Math.min(100, Math.round((tendersThisMonth / 20) * 100))
-                                : 100
-                            }%`,
+                            width: `${quotaPercent}%`,
                           }}
                         />
                       </div>

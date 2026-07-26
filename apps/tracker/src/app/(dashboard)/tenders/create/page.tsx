@@ -23,13 +23,20 @@ export default async function NewTenderPage() {
     );
   }
 
-  // Quota Gate Check for Free Tier
+  // Quota Gate Check for Subscription Tier (Free: 10, Starter: 20, Pro: Unlimited)
   const usageStats = await getUserUsageStats();
-  const isFreePlan = (currentUser?.plan || 'free') === 'free';
+  const userPlan = (currentUser?.plan || 'free').toLowerCase();
   const monthlyTendersCount = usageStats?.usage?.tenders || 0;
+  const maxAllowed = userPlan === 'free' ? 10 : userPlan === 'starter' ? 20 : Infinity;
 
-  if (isFreePlan && monthlyTendersCount >= 20) {
-    return <QuotaExceededTenderGate currentCount={monthlyTendersCount} />;
+  if (monthlyTendersCount >= maxAllowed) {
+    return (
+      <QuotaExceededTenderGate
+        currentCount={monthlyTendersCount}
+        maxCount={maxAllowed}
+        plan={userPlan}
+      />
+    );
   }
 
   return (

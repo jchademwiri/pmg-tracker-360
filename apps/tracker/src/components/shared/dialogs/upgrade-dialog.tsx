@@ -90,7 +90,7 @@ export function UpgradeDialog({
       features: [
         '1 organization',
         'Basic tender tracking',
-        '20 tenders / month',
+        '10 tenders / month',
         '0 Active Projects',
         '100MB Storage',
         'Community support',
@@ -103,7 +103,7 @@ export function UpgradeDialog({
       description: 'For freelancers & consultants',
       features: [
         '1 organization',
-        'Unlimited tenders',
+        '20 tenders / month',
         '2 Active Projects',
         '1GB Storage',
         'Email support',

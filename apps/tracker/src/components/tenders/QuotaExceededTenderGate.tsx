@@ -8,10 +8,14 @@ import Link from 'next/link';
 
 type Props = {
   currentCount: number;
+  maxCount?: number;
+  plan?: string;
 };
 
-export default function QuotaExceededTenderGate({ currentCount }: Props) {
+export default function QuotaExceededTenderGate({ currentCount, maxCount = 10, plan = 'free' }: Props) {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(true);
+
+  const planName = plan.toUpperCase();
 
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 space-y-6">
@@ -29,11 +33,11 @@ export default function QuotaExceededTenderGate({ currentCount }: Props) {
 
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
-            Monthly Tender Limit Reached ({currentCount}/20)
+            Monthly Tender Limit Reached ({currentCount}/{maxCount})
           </h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            You have used all <strong>20 tenders</strong> allocated for this calendar month on the <strong>Free Tier</strong>.
-            Upgrade your subscription plan to unlock unlimited tender tracking.
+            You have used all <strong>{maxCount} tenders</strong> allocated for this calendar month on the <strong>{planName} Plan</strong>.
+            Upgrade your subscription plan to unlock more tender tracking capacity.
           </p>
         </div>
 
@@ -43,8 +47,8 @@ export default function QuotaExceededTenderGate({ currentCount }: Props) {
             What happens when you upgrade:
           </div>
           <ul className="space-y-1.5 text-muted-foreground pl-5 list-disc">
-            <li><strong>Unlimited Tenders</strong> — Track as many tenders as you need with zero monthly caps.</li>
-            <li><strong>Instant Free Upgrade</strong> — Switch to Starter (R249) or Pro (R499) instantly.</li>
+            <li><strong>Higher Tender Limits</strong> — Get up to 20 tenders / month on Starter or Unlimited tenders on Pro.</li>
+            <li><strong>Instant Plan Upgrade</strong> — Switch to Starter (R249) or Pro (R499) instantly.</li>
             <li><strong>Active Projects & Storage</strong> — Access up to 5 active projects and 10GB storage.</li>
           </ul>
         </div>
@@ -68,7 +72,7 @@ export default function QuotaExceededTenderGate({ currentCount }: Props) {
         open={showUpgradeDialog}
         onOpenChange={setShowUpgradeDialog}
         currentCount={currentCount}
-        maxCount={20}
+        maxCount={maxCount}
         usageContext="tenders"
       />
     </div>

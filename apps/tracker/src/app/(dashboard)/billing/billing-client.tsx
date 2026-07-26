@@ -9,11 +9,13 @@ import {
   Zap,
   Sparkles,
   ShieldCheck,
-  AlertTriangle,
   Building2,
   ClipboardList,
   History,
   CheckCircle2,
+  FolderKanban,
+  HardDrive,
+  Download,
 } from 'lucide-react';
 import {
   Card,
@@ -28,16 +30,20 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { updateUserPlan } from '@/server/billing';
+import { updateUserPlan, BillingInvoice } from '@/server/billing';
 import { formatCurrency } from '@/lib/format';
 
 interface BillingClientProps {
   currentPlan: string;
+  userUpdatedAt?: Date | string;
   usage: {
     organizations: number;
     tenders: number;
+    lifetimeTenders?: number;
+    projects: number;
     storage: number;
   };
+  invoices: BillingInvoice[];
 }
 
 interface PlanDetails {
@@ -45,6 +51,9 @@ interface PlanDetails {
   name: string;
   price: number;
   maxOrgs: number;
+  maxTenders: number | 'Unlimited';
+  maxProjects: number;
+  maxStorageMb: number;
   projects: string;
   support: string;
   features: string[];
@@ -53,7 +62,12 @@ interface PlanDetails {
   description: string;
 }
 
-export default function BillingClient({ currentPlan, usage }: BillingClientProps) {
+export default function BillingClient({
+  currentPlan,
+  userUpdatedAt,
+  usage,
+  invoices = [],
+}: BillingClientProps) {
   const router = useRouter();
   const [activePlan, setActivePlan] = useState<'free' | 'starter' | 'pro'>(
     (currentPlan.toLowerCase() as any) || 'free'
@@ -66,13 +80,16 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
       name: 'Free Plan',
       price: 0,
       maxOrgs: 1,
+      maxTenders: 10,
+      maxProjects: 0,
+      maxStorageMb: 100,
       projects: '0 Active Projects',
       support: 'Community Support',
       description: 'Perfect for getting started',
       features: [
         '1 Organization Ownership',
         'Basic Tender Tracking',
-        '20 Tenders / Month',
+        '10 Tenders / Month',
         '0 Active Projects',
         '100 MB Storage Cap',
         'Community Support',
@@ -84,16 +101,19 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
       name: 'Starter Plan',
       price: 249,
       maxOrgs: 1,
+      maxTenders: 20,
+      maxProjects: 2,
+      maxStorageMb: 1000,
       projects: '2 Active Projects',
       support: 'Email Support',
       description: 'For freelancers & consultants',
       features: [
         '1 Organization Ownership',
-        'Unlimited Tenders Tracked',
+        'Advanced Tender Tracking',
+        '20 Tenders / Month',
         '2 Active Projects',
         '1 GB Secure Storage',
         'Email Support',
-        'Auto-verification Fallbacks',
       ],
       color: 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/10',
     },
@@ -102,6 +122,9 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
       name: 'Pro Plan',
       price: 499,
       maxOrgs: 2,
+      maxTenders: 'Unlimited',
+      maxProjects: 5,
+      maxStorageMb: 10000,
       projects: '5 Active Projects',
       support: 'Priority 24/7 Support',
       description: 'For growing teams',
@@ -115,45 +138,75 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
         'Analytics Dashboard Reports',
       ],
       color: 'border-primary bg-primary/5 shadow-lg relative',
+      popular: true,
     },
   ];
 
-  // 1. Plan Upgrade / Downgrade Selection Action
+  // Calculate Next Monthly Renewal Date dynamically
+  const calculateRenewalDate = () => {
+    const baseDate = userUpdatedAt ? new Date(userUpdatedAt) : new Date();
+    const nextMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
+    return nextMonth.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  };
+
+  const renewalDateString = calculateRenewalDate();
+
+  // Downgrade Safeguard Action
   const handleSelectPlan = async (targetPlanId: 'free' | 'starter' | 'pro') => {
     if (targetPlanId === activePlan) {
-      toast.info(`You are already subscribed to the ${planTiers.find(p => p.id === targetPlanId)?.name || targetPlanId}.`);
+      toast.info(
+        `You are already subscribed to the ${
+          planTiers.find((p) => p.id === targetPlanId)?.name || targetPlanId
+        }.`
+      );
       return;
     }
 
     const targetPlanDetails = planTiers.find((p) => p.id === targetPlanId);
-    const targetMaxOrgs = targetPlanDetails?.maxOrgs || 1;
+    if (!targetPlanDetails) return;
 
-    // Downgrade Safeguard: Block if current owned org count exceeds target plan capacity
-    if (usage.organizations > targetMaxOrgs) {
-      toast.error('Subscription Downgrade Prevented', {
-        description: `You currently own ${usage.organizations} organizations, but the ${targetPlanDetails?.name} limit is ${targetMaxOrgs} organization. Please delete or archive one of your organizations first.`,
+    // Downgrade Safeguard Validations
+    if (usage.organizations > targetPlanDetails.maxOrgs) {
+      toast.error('Subscription Plan Change Prevented', {
+        description: `You currently own ${usage.organizations} organizations, but the ${targetPlanDetails.name} limit is ${targetPlanDetails.maxOrgs}. Please delete or archive an organization first.`,
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (usage.projects > targetPlanDetails.maxProjects) {
+      toast.error('Subscription Plan Change Prevented', {
+        description: `You currently have ${usage.projects} active projects, but the ${targetPlanDetails.name} limit is ${targetPlanDetails.maxProjects}. Please complete or archive projects first.`,
+        duration: 5000,
+      });
+      return;
+    }
+
+    if (typeof targetPlanDetails.maxTenders === 'number' && usage.tenders > targetPlanDetails.maxTenders) {
+      toast.error('Subscription Plan Change Prevented', {
+        description: `You have created ${usage.tenders} tenders this month, which exceeds the ${targetPlanDetails.name} limit of ${targetPlanDetails.maxTenders} tenders per month.`,
         duration: 5000,
       });
       return;
     }
 
     setLoadingPlan(targetPlanId);
-    toast.loading(`Processing subscription payment to ${planTiers.find(p => p.id === targetPlanId)?.name}...`);
+    toast.loading(`Processing subscription update to ${targetPlanDetails.name}...`);
 
     try {
-      // Simulate API latency/Checkout Gateway processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
       const result = await updateUserPlan(targetPlanId);
 
       if (result.success) {
         setActivePlan(targetPlanId);
         toast.dismiss();
-        toast.success(`Successfully switched to the ${planTiers.find(p => p.id === targetPlanId)?.name}!`, {
-          description: `Your limits and project active privileges have been updated dynamically.`,
+        toast.success(`Successfully switched to the ${targetPlanDetails.name}!`, {
+          description: `Your monthly quotas and features have been updated dynamically in PostgreSQL database.`,
         });
-        
-        // Force full page reload to flush cache and reload cookie headers
+
         setTimeout(() => {
           window.location.reload();
         }, 1000);
@@ -170,49 +223,56 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
     }
   };
 
-  const currentPlanDetails = planTiers.find((p) => p.id === activePlan) || planTiers[0];
-  const maxOrganizations = currentPlanDetails.maxOrgs;
-  const orgUsagePercent = Math.min((usage.organizations / maxOrganizations) * 100, 100);
+  // Download PDF Receipt Generator
+  const handleDownloadReceipt = (inv: BillingInvoice) => {
+    try {
+      const receiptContent = `=================================================
+PMG TRACKER 360 - SUBSCRIPTION RECEIPT
+=================================================
+Receipt ID    : ${inv.id}
+Date          : ${inv.date}
+Status        : ${inv.status}
+Plan          : ${inv.description}
+Amount Paid   : R ${inv.amount}.00 ZAR
+Payment Method: Electronic Funds Transfer / Card
+=================================================
+Thank you for subscribing to PMG Tracker 360.
+Website: http://localhost:3000
+Support: support@tendertrack360.co.za
+=================================================`;
 
-  // Mock invoice/billing log records
-  const invoiceLogs = [
-    {
-      id: 'INV-2026-004',
-      date: 'May 01, 2026',
-      description: 'PMG Tracker 360 Plan (Pro Tier)',
-      amount: 499,
-      status: 'Paid',
-      receipt: '#',
-    },
-    {
-      id: 'INV-2026-003',
-      date: 'Apr 01, 2026',
-      description: 'PMG Tracker 360 Plan (Pro Tier)',
-      amount: 499,
-      status: 'Paid',
-      receipt: '#',
-    },
-    {
-      id: 'INV-2026-002',
-      date: 'Mar 01, 2026',
-      description: 'PMG Tracker 360 Plan (Starter Tier)',
-      amount: 249,
-      status: 'Paid',
-      receipt: '#',
-    },
-    {
-      id: 'INV-2026-001',
-      date: 'Feb 01, 2026',
-      description: 'PMG Tracker 360 Plan (Starter Tier)',
-      amount: 249,
-      status: 'Paid',
-      receipt: '#',
-    },
-  ].filter((inv) => {
-    if (activePlan === 'free') return false; // Free plans don't show invoices
-    if (activePlan === 'starter') return inv.amount <= 249;
-    return true;
-  });
+      const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${inv.id}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded receipt ${inv.id}`);
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error('Failed to download receipt');
+    }
+  };
+
+  const currentPlanDetails = planTiers.find((p) => p.id === activePlan) || planTiers[0];
+
+  // Live Metric Percentages
+  const maxOrgs = currentPlanDetails.maxOrgs;
+  const orgUsagePercent = Math.min((usage.organizations / maxOrgs) * 100, 100);
+
+  const maxTenders = currentPlanDetails.maxTenders;
+  const tendersUsagePercent =
+    typeof maxTenders === 'number' ? Math.min((usage.tenders / maxTenders) * 100, 100) : 100;
+
+  const maxProjects = currentPlanDetails.maxProjects;
+  const projectsUsagePercent =
+    maxProjects > 0 ? Math.min((usage.projects / maxProjects) * 100, 100) : usage.projects > 0 ? 100 : 0;
+
+  const maxStorage = currentPlanDetails.maxStorageMb;
+  const storageUsagePercent = Math.min((usage.storage / maxStorage) * 100, 100);
 
   return (
     <div className="container mx-auto py-6 space-y-8 max-w-6xl font-sans">
@@ -225,7 +285,7 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Billing & Subscriptions</h1>
             <p className="text-muted-foreground">
-              Manage your plan, review usage limits, and view your billing receipts.
+              Manage your subscription plan, view live PostgreSQL database limits, and download billing receipts.
             </p>
           </div>
         </div>
@@ -237,10 +297,10 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="h-5 w-5 text-primary" />
-              Active Plan Status
+              Active Plan Status & DB Quotas
             </CardTitle>
             <CardDescription>
-              Review your current plan quotas and limits
+              Live database limits and subscription details for your account
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -263,16 +323,19 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
               </div>
               <div className="text-right">
                 <span className="text-sm font-semibold text-muted-foreground">
-                  {activePlan === 'free' ? 'Free Forever' : `${formatCurrency(currentPlanDetails.price)} / month`}
+                  {activePlan === 'free'
+                    ? 'Free Forever'
+                    : `${formatCurrency(currentPlanDetails.price)} / month`}
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Renewal date: Jun 01, 2026 (Simulated)
+                  Renewal date: {renewalDateString}
                 </p>
               </div>
             </div>
 
-            {/* Quota Progress Indicators */}
+            {/* Quota Progress Indicators Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Orgs */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm font-medium">
                   <span className="flex items-center gap-2 text-muted-foreground">
@@ -280,26 +343,72 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
                     Organization Ownerships
                   </span>
                   <span className="font-bold">
-                    {usage.organizations} / {maxOrganizations}
+                    {usage.organizations} / {maxOrgs}
                   </span>
                 </div>
                 <Progress value={orgUsagePercent} className="h-2.5" />
                 <p className="text-xs text-muted-foreground">
-                  You are utilizing {usage.organizations} of {maxOrganizations} allowed organization ownerships.
+                  You own {usage.organizations} of {maxOrgs} allowed organization ownerships.
                 </p>
               </div>
 
+              {/* Tenders */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm font-medium">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <ClipboardList className="h-4 w-4" />
-                    Active Tenders Tracked
+                    Monthly Tenders Tracked
                   </span>
-                  <span className="font-bold">{usage.tenders} / Unlimited</span>
+                  <span className="font-bold">
+                    {usage.tenders} / {typeof maxTenders === 'number' ? `${maxTenders}` : 'Unlimited'}
+                  </span>
                 </div>
-                <Progress value={100} className="h-2.5 bg-emerald-500" />
+                <Progress
+                  value={tendersUsagePercent}
+                  className={`h-2.5 ${
+                    typeof maxTenders === 'number' && usage.tenders >= maxTenders ? 'bg-red-500' : ''
+                  }`}
+                />
                 <p className="text-xs text-muted-foreground">
-                  Your current tier permits unlimited tracked tenders.
+                  {typeof maxTenders === 'number'
+                    ? `${usage.tenders} of ${maxTenders} monthly tenders created.`
+                    : 'Your Pro tier permits unlimited monthly tenders.'}
+                </p>
+              </div>
+
+              {/* Projects */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <FolderKanban className="h-4 w-4" />
+                    Active Projects
+                  </span>
+                  <span className="font-bold">
+                    {usage.projects} / {maxProjects}
+                  </span>
+                </div>
+                <Progress value={projectsUsagePercent} className="h-2.5" />
+                <p className="text-xs text-muted-foreground">
+                  {maxProjects === 0
+                    ? 'Active projects require Starter or Pro tier.'
+                    : `${usage.projects} of ${maxProjects} allowed active projects.`}
+                </p>
+              </div>
+
+              {/* Storage */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <HardDrive className="h-4 w-4" />
+                    Storage Space
+                  </span>
+                  <span className="font-bold">
+                    {usage.storage} MB / {maxStorage >= 1000 ? `${maxStorage / 1000} GB` : `${maxStorage} MB`}
+                  </span>
+                </div>
+                <Progress value={storageUsagePercent} className="h-2.5" />
+                <p className="text-xs text-muted-foreground">
+                  {usage.storage} MB consumed by stored documents.
                 </p>
               </div>
             </div>
@@ -333,8 +442,10 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
             <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-3 rounded-lg text-xs flex gap-2 items-start mt-2">
               <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold">Sandbox Simulated Mode</span>
-                <p className="text-muted-foreground mt-0.5">Upgrade simulation securely saves settings directly to PostgreSQL databases without firing checkout charges.</p>
+                <span className="font-bold">Database Backed Mode</span>
+                <p className="text-muted-foreground mt-0.5">
+                  Plan changes persist securely directly to your PostgreSQL database.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -398,7 +509,7 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
                     type="button"
                     onClick={() => handleSelectPlan(tier.id)}
                     disabled={isActive || loadingPlan !== null}
-                    className="w-full font-semibold transition-all duration-300"
+                    className="w-full font-semibold transition-all duration-300 cursor-pointer"
                     variant={isActive ? 'outline' : tier.id === 'pro' ? 'default' : 'secondary'}
                   >
                     {loadingPlan === tier.id ? (
@@ -421,18 +532,26 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
       </div>
 
       {/* 4. Billing History Invoices Section */}
-      {invoiceLogs.length > 0 && (
-        <Card className="shadow-sm border border-muted/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <History className="h-5 w-5 text-primary" />
-              Receipts & Billing History
-            </CardTitle>
-            <CardDescription>
-              Review past transactions and download invoice files
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
+      <Card className="shadow-sm border border-muted/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <History className="h-5 w-5 text-primary" />
+            Receipts & Billing History
+          </CardTitle>
+          <CardDescription>
+            Review past transaction logs stored in PostgreSQL and download invoice receipts
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {invoices.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground space-y-2">
+              <History className="h-8 w-8 mx-auto text-muted-foreground/50" />
+              <p className="font-semibold text-foreground">No Billing Receipts Found</p>
+              <p className="text-xs">
+                You are currently on the Free Plan. Upgrade to Starter or Pro to manage billing transactions.
+              </p>
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left border-collapse">
                 <thead>
@@ -446,7 +565,7 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-muted/30">
-                  {invoiceLogs.map((inv) => (
+                  {invoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-muted/10 transition-colors">
                       <td className="p-4 font-mono font-medium text-foreground">{inv.id}</td>
                       <td className="p-4 text-muted-foreground">{inv.date}</td>
@@ -463,10 +582,10 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toast.success(`Receipt ${inv.id} download started!`)}
-                          className="text-primary hover:text-primary/80 font-bold p-0 h-auto cursor-pointer"
+                          onClick={() => handleDownloadReceipt(inv)}
+                          className="text-primary hover:text-primary/80 font-bold p-0 h-auto cursor-pointer flex items-center gap-1 ml-auto"
                         >
-                          Download PDF
+                          <Download className="h-3.5 w-3.5" /> Download PDF
                         </Button>
                       </td>
                     </tr>
@@ -474,9 +593,9 @@ export default function BillingClient({ currentPlan, usage }: BillingClientProps
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export const PLAN_CONFIGS: Record<'free' | 'starter' | 'pro', PlanTierConfig> = 
     name: 'Free Tier',
     priceZar: 0,
     maxOwnedOrgs: 1,
-    tendersPerMonth: 20,
+    tendersPerMonth: 10,
     activeProjects: 0,
     storageMb: 100,
   },
@@ -25,7 +25,7 @@ export const PLAN_CONFIGS: Record<'free' | 'starter' | 'pro', PlanTierConfig> = 
     name: 'Starter Tier',
     priceZar: 249,
     maxOwnedOrgs: 1,
-    tendersPerMonth: 'unlimited',
+    tendersPerMonth: 20,
     activeProjects: 2,
     storageMb: 1000,
   },
@@ -89,8 +89,10 @@ describe('Subscription Upgrade & Downgrade Capacity Logic', () => {
     expect(PLAN_CONFIGS.pro.priceZar).toBe(499);
   });
 
-  it('correctly sets Free tier limits (20 tenders/mo, 0 active projects, 100MB)', () => {
-    expect(PLAN_CONFIGS.free.tendersPerMonth).toBe(20);
+  it('correctly sets tier tender limits (10 Free, 20 Starter, unlimited Pro)', () => {
+    expect(PLAN_CONFIGS.free.tendersPerMonth).toBe(10);
+    expect(PLAN_CONFIGS.starter.tendersPerMonth).toBe(20);
+    expect(PLAN_CONFIGS.pro.tendersPerMonth).toBe('unlimited');
     expect(PLAN_CONFIGS.free.activeProjects).toBe(0);
     expect(PLAN_CONFIGS.free.storageMb).toBe(100);
   });
