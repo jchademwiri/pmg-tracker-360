@@ -9,7 +9,7 @@ Organizations in **PMG Tracker 360** act as isolated operational environments. T
 
 ## 1. Managing Workspace Profile & Details
 
-Organization Owners and Admins can manage organization settings via `/dashboard/organization`:
+Organization Owners and Admins can manage organization settings via `/organization`:
 
 * **Organization Name**: Update the official display name of your business entity.
 * **Workspace Slug**: Unique URL slug used for workspace routing. Modifying the slug updates workspace URLs for all team members.
@@ -30,7 +30,7 @@ Your organization capability and resource allowances depend on your active plan 
 | **Storage Allocation** | 100 MB | 5 GB | 20 GB |
 
 > [!TIP]
-> If your company requires managing multiple subsidiary entities or separate bidding divisions, upgrade to the **Pro Plan** under `/dashboard/billing` to create additional tenant workspaces under a single user account.
+> If your company requires managing multiple subsidiary entities or separate bidding divisions, upgrade to the **Pro Plan** under `/billing` to create additional tenant workspaces under a single user account.
 
 ---
 

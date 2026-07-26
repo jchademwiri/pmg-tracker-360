@@ -3,13 +3,13 @@ title: Clients Directory Management
 description: How to add, organize, and manage client records, buyer profiles, and contact details in PMG Tracker 360.
 ---
 
-The **Clients Directory** (`/dashboard/clients`) is the central repository for all buyer entities, government bodies, municipalities, and private enterprises with whom your organization conducts business or submits bids.
+The **Clients Directory** (`/clients`) is the central repository for all buyer entities, government bodies, municipalities, and private enterprises with whom your organization conducts business or submits bids.
 
 ---
 
 ## 1. Creating a New Client Profile
 
-1. Navigate to `/dashboard/clients` and click **New Client**.
+1. Navigate to `/clients` and click **New Client**.
 2. Complete the buyer registration form:
    * **Company / Department Name**: Official buyer name (e.g. *Eskom Holdings SOC Ltd*, *City of Johannesburg*).
    * **Client Category**: Select *Public Sector*, *Private Commercial*, *State-Owned Entity (SOE)*, or *Municipal*.
@@ -31,5 +31,5 @@ Inside any client details page:
 
 ## 3. Searching & Filtering Clients
 
-* Use the search bar on `/dashboard/clients` to quickly filter clients by name, contact officer, or registration number.
+* Use the search bar on `/clients` to quickly filter clients by name, contact officer, or registration number.
 * Filter by sector or active status to analyze client portfolio distribution.

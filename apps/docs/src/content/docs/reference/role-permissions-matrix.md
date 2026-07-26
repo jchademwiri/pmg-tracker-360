@@ -25,4 +25,4 @@ This matrix details the permissions assigned to each tenant role inside **PMG Tr
 | **Mark PO as Delivered** | ✅ | ✅ | ✅ | ❌ |
 | **View Dashboard & Calendar** | ✅ | ✅ | ✅ | ✅ |
 | **View Reports & Analytics** | ✅ | ✅ | ✅ | ✅ |
-| **Export Reports (PDF/CSV)** | ✅ | ✅ | ✅ | ✅ |
+| **Export Reports (PDF/CSV)** | ✅ | ✅ | ✅ | ❌ |

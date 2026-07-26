@@ -10,7 +10,7 @@ Collaboration is at the heart of **PMG Tracker 360**. Organization Owners and Ad
 ## 1. Inviting Team Members
 
 To invite a colleague or employee to your workspace:
-1. Navigate to `/dashboard/organization` and select the **Members** tab.
+1. Navigate to `/organization` and select the **Members** tab.
 2. Click **Invite Member**.
 3. Enter the recipient's email address.
 4. Select the initial role (`Admin`, `Manager`, or `Member`).

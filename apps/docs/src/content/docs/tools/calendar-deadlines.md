@@ -3,13 +3,13 @@ title: Calendar & Deadlines
 description: Master the interactive calendar view to track tender closing dates, project milestones, and delivery deadlines.
 ---
 
-Never miss a tender submission deadline or project delivery milestone again. **PMG Tracker 360** includes an integrated **Interactive Calendar** (`/dashboard/calendar`) powered by FullCalendar.
+Never miss a tender submission deadline or project delivery milestone again. **PMG Tracker 360** includes an integrated **Interactive Calendar** (`/calendar`) powered by FullCalendar.
 
 ---
 
 ## 1. Calendar View Modes
 
-Navigate to `/dashboard/calendar` to access visual timeline modes:
+Navigate to `/calendar` to access visual timeline modes:
 * **Month View**: Overview of all tender closing dates, site inspection dates, and project milestones across the month.
 * **Week View**: Detailed hourly breakdown of scheduled briefings and deadline cutoffs.
 * **Day View**: Focused daily agenda for execution teams.

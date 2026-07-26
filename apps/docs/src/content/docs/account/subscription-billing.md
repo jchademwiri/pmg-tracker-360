@@ -13,9 +13,10 @@ description: Explore subscription tiers, organization limits, upgrade flows, and
 | :--- | :--- | :--- | :--- |
 | **Price** | R0 / month | R249 / month | R499 / month |
 | **Owned Organizations** | **1 Workspace** | **1 Workspace** | **2 Workspaces** |
-| **Active Projects** | Unlimited | Unlimited | Unlimited |
+| **Monthly Tenders** | 10 tenders / mo | 20 tenders / mo | Unlimited |
+| **Active Projects** | 0 Active Projects | 2 Active Projects | 5 Active Projects |
 | **Team Members** | Up to 3 | Up to 10 | Unlimited |
-| **Document Storage** | 100 MB | 5 GB | 20 GB |
+| **Document Storage** | 100 MB | 1 GB | 10 GB |
 | **Support Level** | Community | Email Support | Priority Support |
 
 ---

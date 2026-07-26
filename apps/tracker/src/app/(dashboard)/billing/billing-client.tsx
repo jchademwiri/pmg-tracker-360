@@ -144,7 +144,12 @@ export default function BillingClient({
 
   // Calculate Next Monthly Renewal Date dynamically
   const calculateRenewalDate = () => {
-    const baseDate = userUpdatedAt ? new Date(userUpdatedAt) : new Date();
+    const latestInvoiceDate = invoices[0]?.date;
+    const baseDate = latestInvoiceDate
+      ? new Date(latestInvoiceDate)
+      : userUpdatedAt
+        ? new Date(userUpdatedAt)
+        : new Date();
     const nextMonth = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
     return nextMonth.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -223,9 +228,10 @@ export default function BillingClient({
     }
   };
 
-  // Download PDF Receipt Generator
+  // Download Receipt Generator
   const handleDownloadReceipt = (inv: BillingInvoice) => {
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tendertrack360.co.za';
       const receiptContent = `=================================================
 PMG TRACKER 360 - SUBSCRIPTION RECEIPT
 =================================================
@@ -237,7 +243,7 @@ Amount Paid   : R ${inv.amount}.00 ZAR
 Payment Method: Electronic Funds Transfer / Card
 =================================================
 Thank you for subscribing to PMG Tracker 360.
-Website: http://localhost:3000
+Website: ${appUrl}
 Support: support@tendertrack360.co.za
 =================================================`;
 
@@ -265,7 +271,7 @@ Support: support@tendertrack360.co.za
 
   const maxTenders = currentPlanDetails.maxTenders;
   const tendersUsagePercent =
-    typeof maxTenders === 'number' ? Math.min((usage.tenders / maxTenders) * 100, 100) : 100;
+    typeof maxTenders === 'number' ? Math.min((usage.tenders / maxTenders) * 100, 100) : 0;
 
   const maxProjects = currentPlanDetails.maxProjects;
   const projectsUsagePercent =
@@ -585,7 +591,7 @@ Support: support@tendertrack360.co.za
                           onClick={() => handleDownloadReceipt(inv)}
                           className="text-primary hover:text-primary/80 font-bold p-0 h-auto cursor-pointer flex items-center gap-1 ml-auto"
                         >
-                          <Download className="h-3.5 w-3.5" /> Download PDF
+                          <Download className="h-3.5 w-3.5" /> Download Receipt
                         </Button>
                       </td>
                     </tr>

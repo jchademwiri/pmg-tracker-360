@@ -99,18 +99,15 @@ export async function getUserUsageStats() {
 
     // 4. Storage Space Calculation (sum of size in document table)
     let storageUsedMb = 0;
-    const documentWhere =
-      ownedOrgIds.length > 0
-        ? or(inArray(document.organizationId, ownedOrgIds), eq(document.uploadedBy, currentUser.id))
-        : eq(document.uploadedBy, currentUser.id);
+    if (ownedOrgIds.length > 0) {
+      const storageResult = await db
+        .select({ totalSize: sql<number>`coalesce(sum(${document.size}), 0)` })
+        .from(document)
+        .where(inArray(document.organizationId, ownedOrgIds));
 
-    const storageResult = await db
-      .select({ totalSize: sql<number>`coalesce(sum(${document.size}), 0)` })
-      .from(document)
-      .where(documentWhere);
-
-    const totalBytes = Number(storageResult[0]?.totalSize || 0);
-    storageUsedMb = Number((totalBytes / (1024 * 1024)).toFixed(2));
+      const totalBytes = Number(storageResult[0]?.totalSize || 0);
+      storageUsedMb = Number((totalBytes / (1024 * 1024)).toFixed(2));
+    }
 
     // 5. Invoice & Subscription History from securityAuditLog
     const auditLogs = await db
@@ -124,7 +121,7 @@ export async function getUserUsageStats() {
       )
       .orderBy(desc(securityAuditLog.createdAt));
 
-    let invoices: BillingInvoice[] = auditLogs.map((log) => {
+    const invoices: BillingInvoice[] = auditLogs.map((log) => {
       let detailsObj: any = {};
       if (typeof log.details === 'string') {
         try {
@@ -157,7 +154,7 @@ export async function getUserUsageStats() {
       const planPrice = userPlan === 'pro' ? 499 : 249;
       invoices.push({
         id: `INV-${currentUser.id.slice(-6).toUpperCase()}-01`,
-        date: new Date(currentUser.updatedAt || currentUser.createdAt).toLocaleDateString('en-US', {
+        date: new Date(currentUser.createdAt).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: '2-digit',
@@ -211,6 +208,12 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
 
     // Fetch live usage metrics for downgrade checks
     const usageStats = await getUserUsageStats();
+    if (!usageStats.success) {
+      return {
+        success: false,
+        error: usageStats.error || 'Failed to fetch usage stats',
+      };
+    }
     const { organizations, projects, tenders, storage } = usageStats.usage;
 
     // Plan limits:
@@ -265,29 +268,31 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
       .from(member)
       .where(and(eq(member.userId, currentUser.id), eq(member.role, 'owner')));
 
-    const primaryOrgId = ownerMemberships[0]?.organizationId || 'org_platform_admin';
+    const primaryOrgId = ownerMemberships[0]?.organizationId;
     const planPrice = plan === 'pro' ? 499 : plan === 'starter' ? 249 : 0;
 
     // Log subscription change to securityAuditLog
-    try {
-      await db.insert(securityAuditLog).values({
-        id: crypto.randomUUID(),
-        organizationId: primaryOrgId,
-        userId: currentUser.id,
-        action: 'subscription_plan_updated',
-        resourceType: 'billing',
-        resourceId: plan,
-        details: JSON.stringify({
-          plan,
-          amount: planPrice,
-          date: now.toISOString(),
-          invoiceId: `INV-${Date.now().toString().slice(-6)}`,
-        }),
-        severity: 'info',
-        createdAt: now,
-      });
-    } catch (auditError) {
-      console.warn('Failed to insert billing audit log:', auditError);
+    if (primaryOrgId) {
+      try {
+        await db.insert(securityAuditLog).values({
+          id: crypto.randomUUID(),
+          organizationId: primaryOrgId,
+          userId: currentUser.id,
+          action: 'subscription_plan_updated',
+          resourceType: 'billing',
+          resourceId: plan,
+          details: JSON.stringify({
+            plan,
+            amount: planPrice,
+            date: now.toISOString(),
+            invoiceId: `INV-${Date.now().toString().slice(-6)}`,
+          }),
+          severity: 'info',
+          createdAt: now,
+        });
+      } catch (auditError) {
+        console.warn('Failed to insert billing audit log:', auditError);
+      }
     }
 
     return { success: true };
