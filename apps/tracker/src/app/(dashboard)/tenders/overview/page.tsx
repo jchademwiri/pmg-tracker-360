@@ -4,7 +4,9 @@ import {
   getRecentActivity,
   getUpcomingDeadlines,
   getTenderActionQueue,
+  getTendersOverview,
 } from '@/server/tenders';
+import { getClients } from '@/server/clients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   FileText,
@@ -26,8 +28,47 @@ import { TenderCalendarStrip } from '@/components/tenders/tender-calendar-strip'
 import { getTenderCalendarEvents } from '@/server/tender-workload';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { TendersOverviewClient } from './client-wrapper';
 
 export const dynamic = 'force-dynamic';
+
+type SearchParams = {
+  search?: string;
+  status?: string;
+  clientId?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: string;
+};
+
+const validSortBy = ['tenderNumber', 'createdAt', 'submissionDate', 'status'] as const;
+const validSortOrder = ['asc', 'desc'] as const;
+
+function parseTenderFilters(searchParams: SearchParams) {
+  const status = searchParams.status || 'all';
+  const sortBy = validSortBy.includes(searchParams.sortBy as any)
+    ? (searchParams.sortBy as (typeof validSortBy)[number])
+    : status === 'open' || status === 'all'
+      ? 'submissionDate'
+      : 'createdAt';
+  const sortOrder = validSortOrder.includes(searchParams.sortOrder as any)
+    ? (searchParams.sortOrder as (typeof validSortOrder)[number])
+    : status === 'open' || status === 'all'
+      ? 'asc'
+      : 'desc';
+  const page = Math.max(Number(searchParams.page || '1') || 1, 1);
+
+  return {
+    filters: {
+      search: searchParams.search || '',
+      status,
+      clientId: searchParams.clientId || 'all',
+      sortBy,
+      sortOrder,
+    },
+    page,
+  };
+}
 
 const statusCards = [
   { label: 'Open Tenders', status: 'open', color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Clock },
@@ -37,7 +78,11 @@ const statusCards = [
   { label: 'Lost / Rejected', status: 'lost', color: 'text-red-600', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: XCircle },
 ];
 
-export default async function TendersOverviewPage() {
+export default async function TendersOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const { session } = await getCurrentUser();
 
   if (!session.activeOrganizationId) {
@@ -55,15 +100,26 @@ export default async function TendersOverviewPage() {
     );
   }
 
+  const { filters, page } = parseTenderFilters(await searchParams);
+
   // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult, actionQueueResult, calendarResult] =
-    await Promise.all([
-      getTenderStats(session.activeOrganizationId),
-      getRecentActivity(session.activeOrganizationId, 3),
-      getUpcomingDeadlines(session.activeOrganizationId, 3),
-      getTenderActionQueue(session.activeOrganizationId),
-      getTenderCalendarEvents(session.activeOrganizationId),
-    ]);
+  const [
+    statsResult,
+    activityResult,
+    deadlinesResult,
+    actionQueueResult,
+    calendarResult,
+    tendersResult,
+    clientsResult,
+  ] = await Promise.all([
+    getTenderStats(session.activeOrganizationId),
+    getRecentActivity(session.activeOrganizationId, 3),
+    getUpcomingDeadlines(session.activeOrganizationId, 3),
+    getTenderActionQueue(session.activeOrganizationId),
+    getTenderCalendarEvents(session.activeOrganizationId),
+    getTendersOverview(session.activeOrganizationId, filters, page, 20),
+    getClients(session.activeOrganizationId),
+  ]);
 
   const stats = statsResult.success
     ? statsResult.stats
@@ -83,9 +139,9 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
-  
+
   const calendarEvents = calendarResult.success ? calendarResult.events : [];
-  
+
   const initialQueues = actionQueueResult.success
     ? actionQueueResult.queues
     : {
@@ -96,6 +152,20 @@ export default async function TendersOverviewPage() {
         awardedToConvert: [],
       };
 
+  const tendersData = tendersResult.success
+    ? tendersResult
+    : {
+        tenders: [],
+        totalCount: 0,
+        currentPage: 1,
+        totalPages: 0,
+      };
+
+  const clients = clientsResult.clients.map((c) => ({
+    id: c.id,
+    name: c.name,
+  }));
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -104,7 +174,7 @@ export default async function TendersOverviewPage() {
             Tender Overview
           </h1>
           <p className="text-muted-foreground">
-            Quick snapshot of your tender pipeline and key metrics.
+            Quick snapshot of your tender pipeline, action items, and register.
           </p>
         </div>
         <Button asChild size="lg">
@@ -185,7 +255,7 @@ export default async function TendersOverviewPage() {
             const count =
               stats.statusCounts[card.status as keyof typeof stats.statusCounts] ?? 0;
             return (
-              <Link key={card.status} href={`/tenders?status=${card.status}`}>
+              <Link key={card.status} href={`/tenders/overview?status=${card.status}`}>
                 <Card className={`hover:shadow-md transition-shadow cursor-pointer group ${card.border} border`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -226,6 +296,28 @@ export default async function TendersOverviewPage() {
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
         <UpcomingDeadlines deadlines={deadlines} />
       </div>
+
+      {/* Tender Register Table */}
+      <section className="space-y-4 pt-6 border-t border-border/40">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Tender Register</h2>
+          <p className="text-sm text-muted-foreground">
+            Search, filter, and manage all tender records directly from this overview.
+          </p>
+        </div>
+
+        <TendersOverviewClient
+          initialTenders={tendersData.tenders}
+          initialTotalCount={tendersData.totalCount}
+          initialCurrentPage={tendersData.currentPage}
+          initialTotalPages={tendersData.totalPages}
+          initialFilters={filters}
+          clients={clients}
+          organizationId={session.activeOrganizationId}
+          basePath="/tenders/overview"
+        />
+      </section>
     </div>
   );
 }
+
