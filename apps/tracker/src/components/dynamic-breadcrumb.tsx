@@ -198,13 +198,17 @@ export function DynamicBreadcrumb() {
             formatSegmentName(segment);
 
           return (
-            <div key={`${href}-${segment}`} className="flex items-center">
+            <div key={`${href}-${segment}`} className="flex items-center min-w-0">
               <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
+              <BreadcrumbItem className="min-w-0">
                 {isLast ? (
-                  <BreadcrumbPage>{displayName}</BreadcrumbPage>
+                  <BreadcrumbPage className="max-w-[110px] sm:max-w-none truncate inline-block">
+                    {displayName}
+                  </BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink href={href}>{displayName}</BreadcrumbLink>
+                  <BreadcrumbLink href={href} className="max-w-[90px] sm:max-w-none truncate inline-block">
+                    {displayName}
+                  </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
             </div>

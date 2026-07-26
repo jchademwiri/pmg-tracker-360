@@ -245,7 +245,11 @@ export function OrganizationHeader({
               {/* Organization Description/Metadata */}
               {organization.metadata && (
                 <p className="mt-2 text-muted-foreground text-sm sm:text-base">
-                  {organization.metadata}
+                  {typeof organization.metadata === 'string'
+                    ? organization.metadata
+                    : typeof organization.metadata === 'object' && (organization.metadata as any).description
+                    ? (organization.metadata as any).description
+                    : JSON.stringify(organization.metadata)}
                 </p>
               )}
             </div>

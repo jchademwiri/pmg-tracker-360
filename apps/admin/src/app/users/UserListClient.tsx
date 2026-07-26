@@ -10,7 +10,7 @@ import StatusBadge from '@/components/StatusBadge';
 ============================================================================= */
 
 export type UserFilters = {
-  planFilter: 'all' | 'free' | 'pro';
+  planFilter: 'all' | 'free' | 'starter' | 'pro';
   roleFilter: 'all' | 'user' | 'admin';
   verifiedFilter: 'all' | 'verified' | 'unverified';
   search: string;
@@ -39,15 +39,48 @@ export function applyUserFilters(
    Component
 ============================================================================= */
 
+import UserDrawer from '@/components/UserDrawer';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import {
+  bulkUpdateUserRole,
+  bulkUpdateUserPlan,
+  bulkToggleUserSuspension,
+  bulkDeleteUserAccounts,
+} from './actions';
+import { useRouter } from 'next/navigation';
+import { ShieldAlert, Trash2, User, Zap, CheckSquare, X, Crown } from 'lucide-react';
+
 type Props = {
   users: UserWithMemberships[];
 };
 
 export default function UserListClient({ users }: Props) {
-  const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'pro'>('all');
+  const router = useRouter();
+  const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'starter' | 'pro'>('all');
   const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
   const [verifiedFilter, setVerifiedFilter] = useState<'all' | 'verified' | 'unverified'>('all');
   const [search, setSearch] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+
+  // Confirm dialog state
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText: string;
+    variant: 'danger' | 'warning' | 'info';
+    requireValue?: string;
+    action: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmText: 'Confirm',
+    variant: 'danger',
+    action: async () => {},
+  });
+  const [actionLoading, setActionLoading] = useState(false);
 
   const filtered = applyUserFilters(users, { planFilter, roleFilter, verifiedFilter, search });
 
@@ -66,7 +99,7 @@ export default function UserListClient({ users }: Props) {
       key: 'verified',
       header: 'Verified',
       render: (u) => (
-        <StatusBadge status={u.emailVerified ? 'active' : 'deleted'} />
+        <StatusBadge status={u.emailVerified ? 'verified' : 'unverified'} />
       ),
     },
     {
@@ -138,13 +171,147 @@ export default function UserListClient({ users }: Props) {
     },
   ];
 
+  // Bulk actions handlers
+  async function handleBulkRole(newRole: 'user' | 'admin') {
+    const ids = Array.from(selectedUserIds);
+    setActionLoading(true);
+    await bulkUpdateUserRole(ids, newRole);
+    setActionLoading(false);
+    setSelectedUserIds(new Set());
+    setDialogState((prev) => ({ ...prev, isOpen: false }));
+    router.refresh();
+  }
+
+  async function handleBulkPlan(newPlan: 'free' | 'starter' | 'pro') {
+    const ids = Array.from(selectedUserIds);
+    setActionLoading(true);
+    await bulkUpdateUserPlan(ids, newPlan);
+    setActionLoading(false);
+    setSelectedUserIds(new Set());
+    setDialogState((prev) => ({ ...prev, isOpen: false }));
+    router.refresh();
+  }
+
+  async function handleBulkSuspend() {
+    const ids = Array.from(selectedUserIds);
+    setActionLoading(true);
+    await bulkToggleUserSuspension(ids, true);
+    setActionLoading(false);
+    setSelectedUserIds(new Set());
+    setDialogState((prev) => ({ ...prev, isOpen: false }));
+    router.refresh();
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedUserIds);
+    setActionLoading(true);
+    await bulkDeleteUserAccounts(ids);
+    setActionLoading(false);
+    setSelectedUserIds(new Set());
+    setDialogState((prev) => ({ ...prev, isOpen: false }));
+    router.refresh();
+  }
+
   return (
     <div className="space-y-4">
+      {/* Selection Action Toolbar */}
+      {selectedUserIds.size > 0 && (
+        <div className="p-3 bg-indigo-950/40 border border-indigo-800/80 rounded-xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2 text-sm font-semibold text-indigo-200">
+            <CheckSquare className="h-4 w-4 text-indigo-400" />
+            <span>{selectedUserIds.size} user(s) selected</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setDialogState({
+                  isOpen: true,
+                  title: 'Bulk Update User Roles',
+                  description: `Are you sure you want to promote ${selectedUserIds.size} selected user(s) to System Administrators?`,
+                  confirmText: 'Make Admin',
+                  variant: 'info',
+                  action: () => handleBulkRole('admin'),
+                })
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-xs font-semibold text-white rounded-lg transition-colors cursor-pointer"
+            >
+              <User className="h-3.5 w-3.5" />
+              Make Admin
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setDialogState({
+                  isOpen: true,
+                  title: 'Bulk Upgrade User Plans',
+                  description: `Upgrade ${selectedUserIds.size} selected user(s) to PRO plan?`,
+                  confirmText: 'Upgrade to PRO',
+                  variant: 'info',
+                  action: () => handleBulkPlan('pro'),
+                })
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-xs font-semibold text-amber-300 rounded-lg transition-colors cursor-pointer"
+            >
+              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              Upgrade to PRO
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setDialogState({
+                  isOpen: true,
+                  title: 'Bulk Suspend User Accounts',
+                  description: `Revoke all active sessions and suspend ${selectedUserIds.size} selected user(s)?`,
+                  confirmText: 'Suspend Selected',
+                  variant: 'warning',
+                  action: handleBulkSuspend,
+                })
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-950 border border-amber-800 hover:bg-amber-900 text-xs font-semibold text-amber-200 rounded-lg transition-colors cursor-pointer"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Suspend
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setDialogState({
+                  isOpen: true,
+                  title: 'Bulk Delete User Accounts',
+                  description: `Permanently delete ${selectedUserIds.size} selected user account(s)? This action cannot be reversed.`,
+                  confirmText: 'Delete Selected Users',
+                  variant: 'danger',
+                  requireValue: 'DELETE',
+                  action: handleBulkDelete,
+                })
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-950 border border-red-800 hover:bg-red-900 text-xs font-semibold text-red-200 rounded-lg transition-colors cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete Selected
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedUserIds(new Set())}
+              className="p-1.5 text-zinc-400 hover:text-white transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Plan filter */}
         <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
-          {(['all', 'free', 'pro'] as const).map((v) => (
+          {(['all', 'free', 'starter', 'pro'] as const).map((v) => (
             <button
               key={v}
               type="button"
@@ -216,6 +383,29 @@ export default function UserListClient({ users }: Props) {
         columns={columns}
         data={filtered}
         rowKey={(u) => u.id}
+        onRowClick={(u) => setSelectedUserId(u.id)}
+        selectable={true}
+        selectedKeys={selectedUserIds}
+        onSelectionChange={setSelectedUserIds}
+      />
+
+      {/* User Drawer */}
+      <UserDrawer
+        userId={selectedUserId}
+        onClose={() => setSelectedUserId(null)}
+      />
+
+      {/* Custom Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={dialogState.isOpen}
+        title={dialogState.title}
+        description={dialogState.description}
+        confirmText={dialogState.confirmText}
+        variant={dialogState.variant}
+        requireConfirmationValue={dialogState.requireValue}
+        loading={actionLoading}
+        onConfirm={() => dialogState.action()}
+        onClose={() => setDialogState((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

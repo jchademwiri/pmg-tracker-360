@@ -13,6 +13,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/components/DataTable', () => ({ default: vi.fn(), PAGE_SIZE: 50, getPaginationSlice: (d: unknown[], p: number, s: number) => d.slice((p-1)*s, p*s), getTotalPages: (n: number, s: number) => Math.max(1, Math.ceil(n/s)) }));
 vi.mock('@/components/OrgDrawer', () => ({ default: vi.fn(() => null) }));
 vi.mock('@/components/StatusBadge', () => ({ default: vi.fn(() => null) }));
+vi.mock('./actions', () => ({ bulkSuspendOrgs: vi.fn(), bulkRestoreOrgs: vi.fn(), bulkPurgeOrgs: vi.fn() }));
 
 import { isPurgeImminent } from './OrgListClient';
 

@@ -44,6 +44,11 @@ function formatRelativeTime(date: Date): string {
 /*  Page                                                                       */
 /* -------------------------------------------------------------------------- */
 
+import QuickActionsBar from '@/components/dashboard/QuickActionsBar';
+import RevenueAnalytics from '@/components/dashboard/RevenueAnalytics';
+import SystemHealthWidget from '@/components/dashboard/SystemHealthWidget';
+import SecurityLogStream from '@/components/dashboard/SecurityLogStream';
+
 export default async function AdminDashboardPage() {
   // 1. Auth guard
   const session = await auth.api.getSession({
@@ -67,7 +72,7 @@ export default async function AdminDashboardPage() {
     await Promise.all([
       getDashboardMetrics(),
       getAlertCounts(),
-      getRecentActivity(20),
+      getRecentActivity(25),
       getSuspiciousSessions(),
     ]);
 
@@ -138,17 +143,17 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 font-sans">
+    <div className="space-y-8 animate-in fade-in duration-500 font-sans pb-8">
       {/* ------------------------------------------------------------------ */}
       {/* a. Page header                                                      */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
-            Platform Dashboard
+            Platform Overview
           </h1>
           <p className="text-sm text-zinc-400">
-            Real-time platform health, alerts, and operational metrics.
+            Real-time platform health, revenue metrics, security audit stream, and administrative controls.
           </p>
         </div>
         <form action={adminSignOut}>
@@ -162,14 +167,13 @@ export default async function AdminDashboardPage() {
         </form>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* b. Alert tray                                                       */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Quick Action Shortcuts Bar */}
+      <QuickActionsBar />
+
+      {/* Alert tray */}
       <AlertTray alerts={alerts} />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* c. KPI grid — 8 cards, 4-col                                       */}
-      {/* ------------------------------------------------------------------ */}
+      {/* KPI grid — 8 cards, 4-col */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Total Users"
@@ -229,184 +233,117 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* d. Tender pipeline health                                           */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-white">Tender Pipeline</h2>
-        <div className="space-y-3">
-          {pipelineStatuses.map(({ key, label, color }) => {
-            const cnt = metrics.tenderByStatus[key];
-            const pct =
-              totalTenders > 0
-                ? ((cnt / totalTenders) * 100).toFixed(1)
-                : '0';
-            return (
-              <div key={key} className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>{label}</span>
-                  <span>
-                    {cnt} ({pct}%)
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-zinc-800">
-                  <div
-                    className={`h-2 rounded-full ${color}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Revenue & Subscription Analytics Card */}
+      <RevenueAnalytics
+        totalUsers={metrics.totalUsers}
+        proUsers={metrics.planDistribution.pro}
+        freeUsers={metrics.planDistribution.free}
+        newUsersThisWeek={metrics.newUsersThisWeek}
+      />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* e. Plan distribution                                               */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-white">Plan Distribution</h2>
-        <div className="space-y-3">
-          {(
-            [
-              { key: 'free' as const, label: 'Free', color: 'bg-blue-500' },
-              { key: 'pro' as const, label: 'Pro', color: 'bg-purple-500' },
-            ] as const
-          ).map(({ key, label, color }) => {
-            const cnt = metrics.planDistribution[key];
-            const pct =
-              metrics.totalUsers > 0
-                ? ((cnt / metrics.totalUsers) * 100).toFixed(1)
-                : '0';
-            return (
-              <div key={key} className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-zinc-400">
-                  <span>{label}</span>
-                  <span>
-                    {cnt} ({pct}%)
-                  </span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-zinc-800">
-                  <div
-                    className={`h-2 rounded-full ${color}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* System & Storage Infrastructure Health */}
+      <SystemHealthWidget
+        totalUsers={metrics.totalUsers}
+        activeOrgs={metrics.activeOrgs}
+        totalTenders={metrics.totalTenders}
+        activeProjects={metrics.activeProjects}
+        liveSessions={metrics.liveSessions}
+      />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* f. Quick-status panels                                             */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* Panel 1 — Suspicious Sessions */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">
-            Suspicious Sessions
-          </h3>
-          <p className="text-2xl font-bold text-red-400">
-            {alertCounts.suspiciousSessions}
-          </p>
-          {suspiciousSessions.length > 0 ? (
-            <ul className="space-y-1">
-              {suspiciousSessions.slice(0, 5).map((s) => (
-                <li key={s.id} className="text-xs text-zinc-400 truncate">
-                  {s.userEmail ?? '(unknown)'}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-xs text-zinc-500">No suspicious sessions.</p>
-          )}
-          <a
-            href="/sessions"
-            className="inline-block text-xs text-indigo-400 hover:underline mt-1"
-          >
-            View all sessions →
-          </a>
-        </div>
-
-        {/* Panel 2 — Support Tickets */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">Support Tickets</h3>
-          <div className="space-y-1 text-xs text-zinc-400">
-            <div className="flex justify-between">
-              <span>Open</span>
-              <span className="font-semibold text-red-400">
-                {metrics.openTickets}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>In Progress</span>
-              <span className="font-semibold text-amber-400">
-                {metrics.inProgressTickets}
-              </span>
-            </div>
-          </div>
-          <a
-            href="/support-tickets"
-            className="inline-block text-xs text-indigo-400 hover:underline mt-1"
-          >
-            View all tickets →
-          </a>
-        </div>
-
-        {/* Panel 3 — Ownership Transfers */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">
-            Ownership Transfers
-          </h3>
-          <p className="text-2xl font-bold text-amber-400">
-            {alertCounts.expiringTransfers}
-          </p>
-          <p className="text-xs text-zinc-500">
-            transfer(s) expiring within 24 hours
-          </p>
-          <p className="text-xs text-zinc-600">
-            Full transfer management available in the database.
-          </p>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* g. Recent activity feed                                            */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-white">Recent Activity</h2>
-        {recentActivity.length === 0 ? (
-          <p className="text-xs text-zinc-500">No recent activity.</p>
-        ) : (
-          <ul className="space-y-2">
-            {recentActivity.map((entry) => {
-              const dotColor =
-                entry.severity === 'critical'
-                  ? 'bg-red-500'
-                  : entry.severity === 'warning'
-                    ? 'bg-amber-500'
-                    : 'bg-blue-500';
+      {/* Tender Pipeline Health & Quick Status Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Tender pipeline health */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-white">Tender Pipeline Distribution</h2>
+          <div className="space-y-3">
+            {pipelineStatuses.map(({ key, label, color }) => {
+              const cnt = metrics.tenderByStatus[key];
+              const pct =
+                totalTenders > 0
+                  ? ((cnt / totalTenders) * 100).toFixed(1)
+                  : '0';
               return (
-                <li key={entry.id} className="flex items-start gap-3 text-xs">
-                  <span
-                    className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dotColor}`}
-                  />
-                  <span className="font-medium text-zinc-300 shrink-0">
-                    {entry.userName ?? 'System'}
-                  </span>
-                  <span className="text-zinc-400 flex-1 min-w-0 truncate">
-                    {entry.action}
-                  </span>
-                  <span className="text-zinc-600 shrink-0">
-                    {formatRelativeTime(entry.createdAt)}
-                  </span>
-                </li>
+                <div key={key} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs text-zinc-400">
+                    <span>{label}</span>
+                    <span>
+                      {cnt} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-zinc-800">
+                    <div
+                      className={`h-2 rounded-full ${color}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
               );
             })}
-          </ul>
-        )}
+          </div>
+        </div>
+
+        {/* Quick-status panels */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Suspicious Sessions */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3 flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-white">
+                Suspicious Active Sessions
+              </h3>
+              <p className="text-2xl font-bold text-red-400 mt-1">
+                {alertCounts.suspiciousSessions}
+              </p>
+              {suspiciousSessions.length > 0 ? (
+                <ul className="space-y-1 mt-2">
+                  {suspiciousSessions.slice(0, 3).map((s) => (
+                    <li key={s.id} className="text-xs text-zinc-400 truncate">
+                      {s.userEmail ?? '(unknown)'}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-zinc-500 mt-2">No active suspicious sessions.</p>
+              )}
+            </div>
+            <a
+              href="/sessions"
+              className="inline-block text-xs text-indigo-400 hover:underline pt-2 font-medium"
+            >
+              Inspect all sessions →
+            </a>
+          </div>
+
+          {/* Support Tickets Overview */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3 flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-white">Support Ticket Status</h3>
+              <div className="space-y-2 text-xs text-zinc-400 mt-3">
+                <div className="flex justify-between items-center p-2 bg-zinc-950/60 rounded-lg">
+                  <span>Open Tickets</span>
+                  <span className="font-bold text-red-400">
+                    {metrics.openTickets}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-zinc-950/60 rounded-lg">
+                  <span>In Progress</span>
+                  <span className="font-bold text-amber-400">
+                    {metrics.inProgressTickets}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <a
+              href="/support-tickets"
+              className="inline-block text-xs text-indigo-400 hover:underline pt-2 font-medium"
+            >
+              Review all tickets →
+            </a>
+          </div>
+        </div>
       </div>
+
+      {/* Security Audit Feed with Severity Filter */}
+      <SecurityLogStream activity={recentActivity} />
     </div>
   );
 }

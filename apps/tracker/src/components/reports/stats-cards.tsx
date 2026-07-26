@@ -20,7 +20,7 @@ interface ReportStatsProps {
 
 export function ReportStatsCards({ stats }: ReportStatsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-5">
       {/* 1. Win Rate Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

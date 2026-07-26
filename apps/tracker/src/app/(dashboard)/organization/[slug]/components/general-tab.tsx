@@ -85,7 +85,9 @@ export function GeneralTab({
 
   // Parse metadata if it exists
   const metadata = organization.metadata
-    ? JSON.parse(organization.metadata)
+    ? typeof organization.metadata === 'string'
+      ? (() => { try { return JSON.parse(organization.metadata); } catch { return {}; } })()
+      : organization.metadata
     : {};
 
   const form = useForm<OrganizationFormData>({

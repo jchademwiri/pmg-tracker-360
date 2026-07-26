@@ -29,7 +29,7 @@ export function PricingSection() {
       features: [
         '1 organization',
         'Basic tender management',
-        '5 tenders per month',
+        '10 tenders / month',
         '0 Active Projects',
         '100MB storage',
         'Community support',
@@ -45,7 +45,7 @@ export function PricingSection() {
       description: 'For freelancers & consultants',
       features: [
         '1 organization',
-        'Unlimited tenders',
+        '20 tenders / month',
         '2 Active Projects',
         '1GB storage',
         'Email support',

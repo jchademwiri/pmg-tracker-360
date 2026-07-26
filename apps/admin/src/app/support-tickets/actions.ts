@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { db } from '@pmg/db';
 import { supportTickets, securityAuditLog } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { PLATFORM_ORG_ID } from '@/lib/constants';
 import { validateStatusTransition } from './ticket-utils';
@@ -51,4 +51,52 @@ export async function updateTicketStatus(ticketId: string, newStatus: string): P
   }
 
   revalidatePath('/support-tickets');
+}
+
+/**
+ * Bulk updates status for multiple tickets.
+ */
+export async function bulkUpdateTicketStatus(ticketIds: string[], newStatus: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+  if (!ticketIds || ticketIds.length === 0) {
+    return { success: false, error: 'No tickets selected.' };
+  }
+
+  try {
+    await db
+      .update(supportTickets)
+      .set({ status: newStatus })
+      .where(inArray(supportTickets.id, ticketIds));
+
+    revalidatePath('/support-tickets');
+    return { success: true, message: `Updated ${ticketIds.length} ticket(s).` };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed bulk status update.' };
+  }
+}
+
+/**
+ * Bulk deletes multiple tickets.
+ */
+export async function bulkDeleteTickets(ticketIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== 'admin') {
+    return { success: false, error: 'Unauthorized' };
+  }
+  if (!ticketIds || ticketIds.length === 0) {
+    return { success: false, error: 'No tickets selected.' };
+  }
+
+  try {
+    await db.delete(supportTickets).where(inArray(supportTickets.id, ticketIds));
+    revalidatePath('/support-tickets');
+    return { success: true, message: `Deleted ${ticketIds.length} ticket(s).` };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || 'Failed bulk ticket deletion.' };
+  }
 }

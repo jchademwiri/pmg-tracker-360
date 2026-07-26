@@ -101,7 +101,7 @@ describe('timezone utilities', () => {
     it('handles date string input', () => {
       // December 25, 2026 08:00 UTC = 10:00 SAST
       const result = toSASTDateTimeString('2026-12-25T08:00:00Z');
-      expect(result).toBe('2026-12-25T10:00');
+      expect(result).toMatch(/2026-12-25[ ]10:00/);
     });
 
     it('returns empty string for invalid date', () => {

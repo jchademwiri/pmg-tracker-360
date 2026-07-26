@@ -43,7 +43,12 @@ async function OrganizationManagementContent({ slug }: { slug: string }) {
   return (
     <OrganizationSettingsWrapper>
       <OrganizationManagementTabs
-        organization={organizationData}
+        organization={{
+          ...organizationData,
+          metadata: typeof organizationData.metadata === 'object' && organizationData.metadata !== null
+            ? JSON.stringify(organizationData.metadata)
+            : (organizationData.metadata as string | null | undefined),
+        }}
         userRole={userMembership.role}
         currentUser={currentUser}
       />

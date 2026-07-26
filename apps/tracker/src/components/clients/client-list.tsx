@@ -160,60 +160,47 @@ export function ClientList({
         actionHref="/clients/create"
       >
         {/* Desktop table */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Client Name</TableHead>
-              <TableHead>Contact Person</TableHead>
-              <TableHead>Contact Info</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+        <Table className="w-full table-fixed">
+          <TableHeader className="bg-muted/30">
+            <TableRow className="hover:bg-transparent border-b border-border/60">
+              <TableHead className="w-[45%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Client Name</TableHead>
+              <TableHead className="w-[32%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Primary Contact</TableHead>
+              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Created</TableHead>
+              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
               <TableRow
                 key={client.id}
-                className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
+                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
                 onClick={() => router.push(`/clients/${client.id}`)}
               >
-                <TableCell>
-                  <div className="font-medium">{client.name}</div>
-                  {client.notes && (
-                    <div className="text-sm text-gray-500 truncate max-w-[200px]">{client.notes}</div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {client.contactName ? (
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 mr-2 text-gray-400" />
-                      {client.contactName}
+                <TableCell className="py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <User className="h-4.5 w-4.5 text-muted-foreground" />
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground">No contact</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    {client.contactEmail && (
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3 mr-1" />
-                        {client.contactEmail}
-                      </div>
-                    )}
-                    {client.contactPhone && (
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Phone className="h-3 w-3 mr-1" />
-                        {client.contactPhone}
-                      </div>
-                    )}
-                    {!client.contactEmail && !client.contactPhone && (
-                      <span className="text-muted-foreground text-sm">No contact info</span>
-                    )}
+                    <div className="font-semibold text-foreground text-sm truncate">
+                      {client.name}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm text-muted-foreground">{formatDate(client.createdAt)}</span>
+                  <div className="flex flex-col gap-0.5 text-xs">
+                    {client.contactName ? (
+                      <div className="font-medium text-foreground">{client.contactName}</div>
+                    ) : (
+                      <span className="text-muted-foreground">No contact name</span>
+                    )}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      {client.contactEmail && <span>{client.contactEmail}</span>}
+                      {client.contactPhone && <span>{client.contactPhone}</span>}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-muted-foreground">{formatDate(client.createdAt)}</span>
                 </TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>

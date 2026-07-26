@@ -7,6 +7,7 @@ import {
   Search,
   Plus,
   MoreHorizontalIcon,
+  Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -297,66 +298,67 @@ export function ProjectList({
         }
       >
         {/* Desktop Table */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Project Number</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Delivery Progress</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Tender</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+        <Table className="w-full table-fixed">
+          <TableHeader className="bg-muted/30">
+            <TableRow className="hover:bg-transparent border-b border-border/60">
+              <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Project & Client</TableHead>
+              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
+              <TableHead className="w-[20%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Delivery Progress</TableHead>
+              <TableHead className="w-[15%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Tender</TableHead>
+              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {projects.map((project) => (
               <TableRow
                 key={project.id}
-                className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
+                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
                 onClick={() => router.push(`/projects/${project.id}`)}
               >
-                <TableCell>
-                  <div className="font-medium text-blue-600">{project.projectNumber.toUpperCase()}</div>
+                <TableCell className="py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="font-semibold text-foreground text-sm font-mono text-sky-500 dark:text-sky-400 truncate">
+                        {project.projectNumber.toUpperCase()}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {project.client?.name || 'No Client'}
+                      </div>
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium">{project.client?.name || 'No Client'}</div>
-                  {project.client?.contactName && (
-                    <div className="text-sm text-muted-foreground">{project.client.contactName}</div>
-                  )}
+                  <StatusBadge status={project.status} domain="project" />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2 min-w-[120px]">
-                    <div className="relative w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                    <div className="relative w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
                       <div
                         className="absolute left-0 top-0 h-full bg-blue-500 rounded-full"
                         style={{ width: `${project.completionPercentage || 0}%` }}
                       />
                     </div>
-                    <span className="text-xs font-semibold text-zinc-300">{project.completionPercentage || 0}%</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{project.completionPercentage || 0}%</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="max-w-[200px] truncate">{project.description || 'No description'}</div>
-                </TableCell>
-                <TableCell><StatusBadge status={project.status} domain="project" /></TableCell>
-                <TableCell>
-                  <div className="text-sm">
+                  <div className="text-xs">
                     {project.tender ? (
                       <Link
                         href={`/tenders/${project.tender.id}`}
-                        className="text-blue-600 hover:text-blue-400 hover:underline transition-colors"
+                        className="text-blue-600 dark:text-blue-400 font-mono hover:underline transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {project.tender.tenderNumber.toUpperCase()}
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">None</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell><span className="text-sm text-muted-foreground">{formatDate(project.createdAt)}</span></TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

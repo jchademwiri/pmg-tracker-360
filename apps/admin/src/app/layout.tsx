@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/sidebar';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
+import { BreadcrumbProvider } from '@/lib/breadcrumb-context';
 import {
   Database,
   Activity,
@@ -55,50 +56,52 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className="min-h-full flex bg-background text-foreground select-none"
+        className="min-h-full flex bg-background text-foreground"
         suppressHydrationWarning
       >
         {isAdmin ? (
           <div className="h-screen flex w-full">
-            <SidebarProvider>
-              <AdminSidebar
-                userName={user?.name}
-                userEmail={user?.email}
-              />
-              <SidebarInset className="flex-1 flex flex-col">
-                {/* Header Bar */}
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                  <div className="flex items-center gap-2 px-4 w-full">
-                    <SidebarTrigger className="-ml-1">
-                      <Menu className="size-4" />
-                      <span className="sr-only">Toggle Sidebar</span>
-                    </SidebarTrigger>
-                    <Separator
-                      orientation="vertical"
-                      className="mr-2 data-[orientation=vertical]:h-4"
-                    />
-                    <AdminBreadcrumb />
-                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest ml-auto">
-                      <Database className="h-4 w-4 text-emerald-500" />
-                      Live Cluster Nominal
-                    </div>
-                    <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
-                        <span>Beta v1.0</span>
+            <BreadcrumbProvider>
+              <SidebarProvider>
+                <AdminSidebar
+                  userName={user?.name}
+                  userEmail={user?.email}
+                />
+                <SidebarInset className="flex-1 flex flex-col">
+                  {/* Header Bar */}
+                  <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                    <div className="flex items-center gap-2 px-4 w-full">
+                      <SidebarTrigger className="-ml-1">
+                        <Menu className="size-4" />
+                        <span className="sr-only">Toggle Sidebar</span>
+                      </SidebarTrigger>
+                      <Separator
+                        orientation="vertical"
+                        className="mr-2 data-[orientation=vertical]:h-4"
+                      />
+                      <AdminBreadcrumb />
+                      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest ml-auto">
+                        <Database className="h-4 w-4 text-emerald-500" />
+                        Live Cluster Nominal
+                      </div>
+                      <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
+                          <span>Beta v1.0</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </header>
+                  </header>
 
-                {/* Main Panel Body */}
-                <div className="flex-1 flex flex-col gap-4 p-4 pt-0 overflow-y-auto">
-                  <main className="flex-1 max-w-7xl w-full mx-auto space-y-8 py-4">
-                    {children}
-                  </main>
-                </div>
-              </SidebarInset>
-            </SidebarProvider>
+                  {/* Main Panel Body */}
+                  <div className="flex-1 flex flex-col gap-4 p-4 pt-0 overflow-y-auto">
+                    <main className="flex-1 max-w-7xl w-full mx-auto space-y-8 py-4">
+                      {children}
+                    </main>
+                  </div>
+                </SidebarInset>
+              </SidebarProvider>
+            </BreadcrumbProvider>
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-screen justify-center items-center font-sans bg-zinc-950">

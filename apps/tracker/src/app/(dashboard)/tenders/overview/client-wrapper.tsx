@@ -87,7 +87,7 @@ export function TendersOverviewClient({
           organizationId,
           newFilters,
           1,
-          20
+          10
         );
         if (result.success) {
           setTenders(result.tenders);
@@ -114,7 +114,7 @@ export function TendersOverviewClient({
           organizationId,
           filters,
           page,
-          20
+          10
         );
         if (result.success) {
           setTenders(result.tenders);
@@ -170,7 +170,7 @@ export function TendersOverviewClient({
           organizationId,
           filters,
           currentPage,
-          20
+          10
         );
         if (refreshResult.success) {
           setTenders(refreshResult.tenders);

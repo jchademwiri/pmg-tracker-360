@@ -12,6 +12,7 @@ import ResetPasswordEmail from '@/emails/reset-password-email';
 import VerifyEmail from '@/emails/verify-email';
 import { getActiveOrganization } from '@/server';
 import OrganizationInvitation from '@/emails/organization-invitation';
+import { verifyBotProtection } from '@/lib/bot-protection';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -95,6 +96,22 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const botCheck = await verifyBotProtection({
+            name: user.name,
+            email: user.email,
+          });
+
+          if (botCheck.isBot) {
+            throw new Error(botCheck.reason || 'Account creation rejected by security rules.');
+          }
+
+          return { data: user };
+        },
+      },
+    },
     session: {
       create: {
         before: async (session) => {

@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
             Manage and track all your construction projects.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2">
           {(
             await auth.api.hasPermission({
               headers: headersList,
@@ -49,7 +49,7 @@ export default async function ProjectsPage() {
               },
             })
           ).success && (
-            <Button asChild size={'lg'}>
+            <Button asChild size="default" className="flex-1 sm:flex-none">
               <Link href="/projects/create">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Project
@@ -67,7 +67,7 @@ export default async function ProjectsPage() {
               },
             })
           ).success && (
-            <Button asChild size={'lg'}>
+            <Button asChild size="default" className="flex-1 sm:flex-none">
               <Link href="/projects/purchase-orders/create">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Purchase Order

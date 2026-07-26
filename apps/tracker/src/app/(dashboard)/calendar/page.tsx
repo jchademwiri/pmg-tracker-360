@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function CalendarPage() {
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full p-4 gap-4">
+    <div className="flex flex-col min-h-[calc(100vh-10rem)] md:h-[calc(100vh-4rem)] pb-20 md:pb-0 w-full p-4 gap-4">
       {/* Decorative background accents */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-0 left-0 h-64 w-64 -translate-y-1/2 -translate-x-1/2 rounded-full bg-secondary/30 blur-3xl opacity-70" />

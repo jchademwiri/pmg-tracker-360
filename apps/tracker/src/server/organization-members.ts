@@ -367,11 +367,15 @@ export async function updateOrganizationDetails(
         where: eq(organization.id, organizationId),
       });
 
-      // Parse existing metadata (it's stored as JSON string)
+      // Parse existing metadata
       let currentMetadata: Record<string, unknown> = {};
       try {
         if (currentOrg?.metadata) {
-          currentMetadata = JSON.parse(currentOrg.metadata);
+          if (typeof currentOrg.metadata === 'string') {
+            currentMetadata = JSON.parse(currentOrg.metadata);
+          } else if (typeof currentOrg.metadata === 'object') {
+            currentMetadata = currentOrg.metadata as Record<string, unknown>;
+          }
         }
       } catch (error) {
         console.warn('Failed to parse existing metadata:', error);
@@ -459,11 +463,15 @@ export async function updateOrganizationSettings(
       return createServerActionError('NOT_FOUND', 'Organization not found');
     }
 
-    // Parse existing metadata (it's stored as JSON string)
+    // Parse existing metadata
     let currentMetadata: Record<string, unknown> = {};
     try {
       if (currentOrg.metadata) {
-        currentMetadata = JSON.parse(currentOrg.metadata);
+        if (typeof currentOrg.metadata === 'string') {
+          currentMetadata = JSON.parse(currentOrg.metadata);
+        } else if (typeof currentOrg.metadata === 'object') {
+          currentMetadata = currentOrg.metadata as Record<string, unknown>;
+        }
       }
     } catch (error) {
       console.warn('Failed to parse existing metadata:', error);

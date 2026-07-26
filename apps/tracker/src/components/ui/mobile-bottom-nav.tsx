@@ -59,7 +59,7 @@ export function MobileBottomNav() {
 
       {/* Overflow menu */}
       {menuOpen && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 rounded-2xl border border-white/10 bg-zinc-900 p-2 shadow-2xl md:hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-50 rounded-2xl border border-white/10 bg-zinc-900 p-2 shadow-2xl md:hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="flex items-center justify-between px-3 py-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
               More
@@ -101,7 +101,7 @@ export function MobileBottomNav() {
       )}
 
       {/* Bottom navigation bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-zinc-950/95 backdrop-blur-xl md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/5 bg-zinc-950/95 backdrop-blur-xl md:hidden pb-[env(safe-area-inset-bottom,0px)]">
         <div className="flex items-center justify-around px-2 py-1">
           {primaryItems.map((item) => {
             const Icon = item.icon;

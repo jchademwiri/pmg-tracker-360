@@ -17,7 +17,9 @@ export default async function BillingPage() {
   return (
     <BillingClient
       currentPlan={usageResult.plan || 'free'}
+      userUpdatedAt={usageResult.userUpdatedAt}
       usage={usageResult.usage}
+      invoices={usageResult.invoices || []}
     />
   );
 }

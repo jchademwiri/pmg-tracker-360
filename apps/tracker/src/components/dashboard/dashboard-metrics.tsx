@@ -62,12 +62,13 @@ export async function DashboardMetrics({
   return (
     <>
       {/* Primary KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Pipeline Value"
           value={formatCurrency(tenderStats.totalValue)}
           description="Combined value of all tenders"
           icon={<Banknote className="h-4 w-4" />}
+          variant="primary"
           trend={{
             value: tenderStats.trends?.value || 0,
             isPositive: (tenderStats.trends?.value || 0) >= 0,
@@ -78,6 +79,7 @@ export async function DashboardMetrics({
           value={formatPercentage(tenderStats.winRate)}
           description="Percentage of won tenders"
           icon={<Target className="h-4 w-4" />}
+          variant="success"
           trend={{
             value: tenderStats.trends?.winRate || 0,
             isPositive: (tenderStats.trends?.winRate || 0) >= 0,
@@ -88,6 +90,7 @@ export async function DashboardMetrics({
           value={formatNumber(projectStats.totalProjects)}
           description="Currently active projects"
           icon={<TrendingUp className="h-4 w-4" />}
+          variant="info"
           trend={{
             value: projectStats.growth,
             isPositive: projectStats.growth >= 0,
@@ -98,30 +101,35 @@ export async function DashboardMetrics({
           value={formatNumber(tenderStats.upcomingDeadlines)}
           description="Due in next 30 days"
           icon={<Calendar className="h-4 w-4" />}
+          variant="warning"
         />
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Tenders"
           value={formatNumber(tenderStats.totalTenders)}
           description={`${tenderStats.statusCounts.open} open, ${tenderStats.statusCounts.evaluation} in evaluation`}
+          variant="default"
         />
         <MetricCard
           title="Client Engagement"
           value={`${clientStats.clientsWithContact}/${clientStats.totalClients}`}
           description="Clients with complete contact info"
+          variant="info"
         />
         <MetricCard
           title="Purchase Orders"
           value={formatNumber(projectStats.deliveryStats.pendingDeliveries + projectStats.deliveryStats.partialDeliveries)}
           description={`Total: ${formatCurrency(projectStats.financialStats.totalPOValue)}`}
+          variant="primary"
         />
         <MetricCard
           title="Under Evaluation"
           value={formatNumber(tenderStats.statusCounts.evaluation)}
           description="Tenders currently under evaluation"
+          variant="warning"
         />
       </div>
     </>

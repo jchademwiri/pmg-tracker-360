@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db } from '@pmg/db';
 import { user, verification } from '@pmg/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, count } from 'drizzle-orm';
 import { getAdminBaseURL } from '@/lib/urls';
 
 /**
@@ -107,12 +107,22 @@ export async function adminSignOut() {
  */
 export async function createSystemAdmin(name: string, email: string, password: string) {
   try {
-    // Check if the current user is authorized (must be admin)
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session || !session.user || (session.user as any).role !== 'admin') {
-      return { success: false, error: 'Access Denied: Unauthorized.' };
+    // Check total admins in DB. If zero exist, allow initial setup without session.
+    const adminCountResult = await db
+      .select({ count: count() })
+      .from(user)
+      .where(eq(user.role, 'admin'));
+
+    const adminCount = adminCountResult[0]?.count ?? 0;
+
+    if (adminCount > 0) {
+      // Must be an active system administrator to create or promote another admin
+      const session = await auth.api.getSession({
+        headers: await headers(),
+      });
+      if (!session || !session.user || (session.user as any).role !== 'admin') {
+        return { success: false, error: 'Access Denied: Unauthorized.' };
+      }
     }
 
     // 1. Check if user already exists (case-insensitive)

@@ -16,6 +16,7 @@ import {
   Award,
   XCircle,
   Eye,
+  ListFilter,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
 import { RecentActivity } from '@/components/tenders/recent-activity';
@@ -55,15 +56,20 @@ export default async function TendersOverviewPage() {
     );
   }
 
-  // Fetch all data in parallel
-  const [statsResult, activityResult, deadlinesResult, actionQueueResult, calendarResult] =
-    await Promise.all([
-      getTenderStats(session.activeOrganizationId),
-      getRecentActivity(session.activeOrganizationId, 3),
-      getUpcomingDeadlines(session.activeOrganizationId, 3),
-      getTenderActionQueue(session.activeOrganizationId),
-      getTenderCalendarEvents(session.activeOrganizationId),
-    ]);
+  // Fetch dashboard overview data in parallel
+  const [
+    statsResult,
+    activityResult,
+    deadlinesResult,
+    actionQueueResult,
+    calendarResult,
+  ] = await Promise.all([
+    getTenderStats(session.activeOrganizationId),
+    getRecentActivity(session.activeOrganizationId, 3),
+    getUpcomingDeadlines(session.activeOrganizationId, 3),
+    getTenderActionQueue(session.activeOrganizationId),
+    getTenderCalendarEvents(session.activeOrganizationId),
+  ]);
 
   const stats = statsResult.success
     ? statsResult.stats
@@ -83,9 +89,9 @@ export default async function TendersOverviewPage() {
     : { recentTenders: [], recentChanges: [] };
 
   const deadlines = deadlinesResult.success ? deadlinesResult.deadlines : [];
-  
+
   const calendarEvents = calendarResult.success ? calendarResult.events : [];
-  
+
   const initialQueues = actionQueueResult.success
     ? actionQueueResult.queues
     : {
@@ -104,15 +110,23 @@ export default async function TendersOverviewPage() {
             Tender Overview
           </h1>
           <p className="text-muted-foreground">
-            Quick snapshot of your tender pipeline and key metrics.
+            Executive summary of your active tender pipeline and action items.
           </p>
         </div>
-        <Button asChild size="lg">
-          <Link href="/tenders/create">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Tender
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline">
+            <Link href="/tenders">
+              <ListFilter className="h-4 w-4 mr-2" />
+              Full Register
+            </Link>
+          </Button>
+          <Button asChild size="default">
+            <Link href="/tenders/create">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Tender
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {/* Action Queue Section */}
@@ -179,7 +193,7 @@ export default async function TendersOverviewPage() {
 
       {/* Quick Links - Status Cards */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Browse by Status</h2>
+        <h2 className="text-lg font-semibold mb-3">Browse Register by Status</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {statusCards.map((card) => {
             const count =
@@ -213,7 +227,7 @@ export default async function TendersOverviewPage() {
       {/* Pipeline Funnel */}
       <PipelineFunnel statusCounts={stats.statusCounts} />
 
-      {/* Calendar Events Strip and Workload */}
+      {/* Calendar Events Strip and Activity */}
       <div className="grid gap-6 md:grid-cols-2">
         <TenderCalendarStrip events={calendarEvents} />
         <RecentActivity
@@ -223,9 +237,11 @@ export default async function TendersOverviewPage() {
       </div>
 
       {/* Upcoming Deadlines */}
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 pb-6">
         <UpcomingDeadlines deadlines={deadlines} />
       </div>
     </div>
   );
 }
+
+

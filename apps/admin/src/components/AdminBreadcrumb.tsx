@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Home } from 'lucide-react';
+import { useBreadcrumb } from '@/lib/breadcrumb-context';
 
 const SEGMENT_LABELS: Record<string, string> = {
   organizations: 'Organizations',
@@ -15,18 +16,9 @@ const SEGMENT_LABELS: Record<string, string> = {
   login: 'Login',
 };
 
-function formatSegment(segment: string) {
-  return (
-    SEGMENT_LABELS[segment] ||
-    segment
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ')
-  );
-}
-
 export function AdminBreadcrumb() {
   const pathname = usePathname();
+  const { labels } = useBreadcrumb();
 
   const segments = useMemo(
     () => pathname.split('/').filter(Boolean),
@@ -34,6 +26,18 @@ export function AdminBreadcrumb() {
   );
 
   if (segments.length === 0) return null;
+
+  function formatSegment(segment: string) {
+    if (labels[segment]) return labels[segment];
+    if (SEGMENT_LABELS[segment]) return SEGMENT_LABELS[segment];
+    // If it looks like a database ID (nanoid / uuid > 15 chars)
+    if (segment.length > 15) return 'Detail View';
+
+    return segment
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
 
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm">
@@ -54,13 +58,14 @@ export function AdminBreadcrumb() {
           <div key={href} className="flex items-center gap-1">
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             {isLast ? (
-              <span className="font-medium text-foreground truncate max-w-[200px]">
+              <span className="font-medium text-foreground truncate max-w-[240px]" title={label}>
                 {label}
               </span>
             ) : (
               <Link
                 href={href}
-                className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[200px]"
+                className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[240px]"
+                title={label}
               >
                 {label}
               </Link>

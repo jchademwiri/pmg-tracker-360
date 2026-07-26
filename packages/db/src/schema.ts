@@ -96,12 +96,15 @@ export const organization = pgTable('organization', {
   slug: text('slug').unique(),
   logo: text('logo'),
   createdAt: timestamp('created_at').notNull(),
-  metadata: jsonb('metadata').$type<string | null>(),
-  // Soft deletion fields
+  metadata: jsonb('metadata').$type<Record<string, unknown> | string | null>(),
+  // Soft deletion & appeal fields
   deletedAt: timestamp('deleted_at'),
   deletedBy: text('deleted_by').references(() => user.id),
   deletionReason: text('deletion_reason'),
   permanentDeletionScheduledAt: timestamp('permanent_deletion_scheduled_at'),
+  appealStatus: text('appeal_status').default('none'),
+  appealReason: text('appeal_reason'),
+  appealedAt: timestamp('appealed_at'),
 });
 
 /* =========================

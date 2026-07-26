@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { StorageService } from '@/lib/storage';
 import { revalidatePath } from 'next/cache';
 import { validateSessionAndOrg } from './utils';
+import { verifyBotProtection } from '@/lib/bot-protection';
 
 export const getCurrentUser = async () => {
   const session = await auth.api.getSession({
@@ -62,8 +63,30 @@ export const signIn = async (email: string, password: string) => {
   }
 };
 
-export const signUp = async (name: string, email: string, password: string) => {
+export const signUp = async (
+  name: string,
+  email: string,
+  password: string,
+  honeypot?: string,
+  formMountedAt?: number,
+  turnstileToken?: string
+) => {
   try {
+    const botCheck = await verifyBotProtection({
+      name,
+      email,
+      honeypot,
+      formMountedAt,
+      turnstileToken,
+    });
+
+    if (botCheck.isBot) {
+      return {
+        success: false,
+        message: botCheck.reason || 'Account creation rejected.',
+      };
+    }
+
     await auth.api.signUpEmail({
       body: {
         name,

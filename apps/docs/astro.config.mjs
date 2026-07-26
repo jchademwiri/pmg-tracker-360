@@ -6,16 +6,28 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: 'PMG Tracker 360 Docs',
+			title: 'PMG Tracker 360 User Guide',
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/jchademwiri/pmg-tracker-360' }],
 			sidebar: [
 				{
-					label: 'Guides',
-					items: [
-						{ label: 'System Admin Portal', slug: 'guides/admin-portal' },
-						{ label: 'Tracker Client Portal', slug: 'guides/tracker-portal' },
-						{ label: 'Tendering Pipeline Flow', slug: 'guides/tendering-pipeline' },
-					],
+					label: 'Getting Started',
+					autogenerate: { directory: 'getting-started' },
+				},
+				{
+					label: 'Organization & Teams',
+					autogenerate: { directory: 'organization' },
+				},
+				{
+					label: 'Procurement Workflows',
+					autogenerate: { directory: 'workflows' },
+				},
+				{
+					label: 'Tools & Intelligence',
+					autogenerate: { directory: 'tools' },
+				},
+				{
+					label: 'Account & Billing',
+					autogenerate: { directory: 'account' },
 				},
 				{
 					label: 'Reference',
@@ -25,3 +37,5 @@ export default defineConfig({
 		}),
 	],
 });
+
+
