@@ -77,4 +77,27 @@ describe('verifyBotProtection', () => {
     expect(result.isBot).toBe(true);
     expect(result.reason).toContain('Automated browser client');
   });
+
+  it('detects randomized gibberish account names (e.g. gjXXbSUjXRQzMhoVQw)', async () => {
+    const result = await verifyBotProtection({
+      name: 'gjXXbSUjXRQzMhoVQw',
+      email: 'reservations@angelinnthesand.com',
+      honeypot: '',
+      formMountedAt: Date.now() - 5000,
+    });
+
+    expect(result.isBot).toBe(true);
+    expect(result.reason).toContain('Invalid or automated account name');
+  });
+
+  it('allows valid human names like Jacob Chademwiri', async () => {
+    const result = await verifyBotProtection({
+      name: 'Jacob Chademwiri',
+      email: 'hello@example.com',
+      honeypot: '',
+      formMountedAt: Date.now() - 5000,
+    });
+
+    expect(result.isBot).toBe(false);
+  });
 });

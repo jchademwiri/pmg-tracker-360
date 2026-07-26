@@ -27,6 +27,8 @@ import {
 } from '@/components/ui/mobile-card';
 import {
   MoreHorizontalIcon,
+  Building2,
+  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatCurrency, formatDate } from '@/lib/format';
@@ -68,15 +70,38 @@ function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   return diffDays;
 }
 
-function DaysLeftCell({ submissionDate, status, updatedAt }: { submissionDate: Date | null; status: string; updatedAt: Date }) {
+function DeadlineCell({ submissionDate, status, updatedAt }: { submissionDate: Date | null; status: string; updatedAt: Date }) {
   if (status === 'evaluation') {
-    return <>Submitted {formatDate(updatedAt)}</>;
+    return (
+      <div className="flex flex-col text-xs gap-0.5">
+        <span className="font-semibold text-foreground">Under Evaluation</span>
+        <div className="text-muted-foreground text-[11px]">Submitted {formatDate(updatedAt)}</div>
+      </div>
+    );
   }
+  if (!submissionDate) return <span className="text-muted-foreground text-xs">-</span>;
   const daysLeft = getDaysUntilDeadline(submissionDate);
-  if (daysLeft === null) return <>-</>;
-  if (daysLeft < 0) return <span className="text-red-600 font-medium">{Math.abs(daysLeft)} days overdue</span>;
-  if (daysLeft === 0) return <span className="text-orange-600 font-medium">Due today</span>;
-  return <span className={daysLeft <= 3 ? 'text-orange-600 font-medium' : ''}>{daysLeft} days</span>;
+
+  let badge = null;
+  if (daysLeft !== null) {
+    if (daysLeft < 0) {
+      badge = <span className="text-red-500 dark:text-red-400 font-semibold">{Math.abs(daysLeft)}d overdue</span>;
+    } else if (daysLeft === 0) {
+      badge = <span className="text-amber-500 font-semibold">Due today</span>;
+    } else {
+      badge = <span className={daysLeft <= 3 ? 'text-amber-500 font-semibold' : 'text-muted-foreground'}>{daysLeft}d left</span>;
+    }
+  }
+
+  return (
+    <div className="flex flex-col text-xs gap-0.5">
+      <div className="font-semibold text-foreground flex items-center gap-1.5">
+        <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        {formatDate(submissionDate)}
+      </div>
+      {badge && <div className="text-[11px] pl-5">{badge}</div>}
+    </div>
+  );
 }
 
 export function TendersTable({
@@ -157,70 +182,76 @@ export function TendersTable({
         </MobileCardList>
       }
     >
-      {/* Desktop table */}
-      <Table className="w-full min-w-[800px]">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="min-w-[120px]">Tender Number</TableHead>
-            <TableHead className="min-w-[150px]">Client</TableHead>
-            <TableHead className="min-w-[200px] hidden sm:table-cell">Description</TableHead>
-            <TableHead className="min-w-[100px]">Status</TableHead>
-            <TableHead className="min-w-[100px] hidden md:table-cell">Value</TableHead>
-            <TableHead className="min-w-[120px] hidden lg:table-cell">Closing Date</TableHead>
-            <TableHead className="min-w-[100px] hidden sm:table-cell">Days Left</TableHead>
-            <TableHead className="w-[100px] text-right">Actions</TableHead>
+      {/* Desktop table with explicit table-fixed column widths */}
+      <Table className="w-full table-fixed">
+        <TableHeader className="bg-muted/30">
+          <TableRow className="hover:bg-transparent border-b border-border/60">
+            <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Tender & Client</TableHead>
+            <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
+            <TableHead className="w-[17%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Value</TableHead>
+            <TableHead className="w-[18%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Deadline</TableHead>
+            <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tenders.map((tender) => (
             <TableRow
               key={tender.id}
-              className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
+              className={`transition-colors duration-150 border-b border-border/40 ${
+                onRowClick ? 'cursor-pointer hover:bg-accent/40' : ''
+              }`}
               onClick={() => onRowClick?.(tender.id)}
             >
-              <TableCell className="font-medium">
-                <Link
-                  href={`/tenders/${tender.id}`}
-                  className="text-blue-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  {tender.tenderNumber.toUpperCase()}
-                </Link>
+              <TableCell className="py-3">
+                <div className="flex items-center gap-3">
+                  <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                    <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="font-semibold text-foreground text-sm truncate">
+                      {tender.client?.name || 'Unknown Client'}
+                    </div>
+                    <Link
+                      href={`/tenders/${tender.id}`}
+                      className="text-xs font-mono text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 hover:underline transition-colors truncate w-fit"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {tender.tenderNumber.toUpperCase()}
+                    </Link>
+                  </div>
+                </div>
               </TableCell>
-              <TableCell>{tender.client?.name || 'Unknown Client'}</TableCell>
-              <TableCell className="max-w-[200px] truncate hidden sm:table-cell">
-                {tender.description || '-'}
+              <TableCell className="py-3">
+                <StatusBadge domain="tender" status={tender.status} />
               </TableCell>
-              <TableCell><StatusBadge domain="tender" status={tender.status} /></TableCell>
-              <TableCell className="hidden md:table-cell">
-                {formatCurrency(Number(tender.value || 0))}
+              <TableCell className="py-3">
+                <span className="font-mono font-semibold text-sm text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(Number(tender.value || 0))}
+                </span>
               </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {formatDate(tender.submissionDate)}
+              <TableCell className="py-3">
+                <DeadlineCell submissionDate={tender.submissionDate} status={tender.status} updatedAt={tender.updatedAt} />
               </TableCell>
-              <TableCell className="hidden sm:table-cell">
-                <DaysLeftCell submissionDate={tender.submissionDate} status={tender.status} updatedAt={tender.updatedAt} />
-              </TableCell>
-              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+              <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
+                    <Button variant="ghost" size="icon" className="size-8 cursor-pointer hover:bg-accent">
                       <MoreHorizontalIcon className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {onViewTender && (
-                      <DropdownMenuItem onClick={() => onViewTender(tender.id)}>View</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onViewTender(tender.id)}>View Details</DropdownMenuItem>
                     )}
                     {onEditTender && (
-                      <DropdownMenuItem onClick={() => onEditTender(tender.id)}>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEditTender(tender.id)}>Edit Tender</DropdownMenuItem>
                     )}
                     {onDeleteTender && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => onDeleteTender(tender.id)} variant="destructive">
-                          Delete
+                          Delete Tender
                         </DropdownMenuItem>
                       </>
                     )}

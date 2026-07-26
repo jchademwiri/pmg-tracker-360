@@ -1,10 +1,12 @@
 import { getCurrentUser } from '@/server';
+import { getUserUsageStats } from '@/server/billing';
 import { TenderForm } from '@/components/tenders/tender-form';
+import QuotaExceededTenderGate from '@/components/tenders/QuotaExceededTenderGate';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewTenderPage() {
-  const { session } = await getCurrentUser();
+  const { session, currentUser } = await getCurrentUser();
 
   if (!session.activeOrganizationId) {
     return (
@@ -19,6 +21,15 @@ export default async function NewTenderPage() {
         </div>
       </div>
     );
+  }
+
+  // Quota Gate Check for Free Tier
+  const usageStats = await getUserUsageStats();
+  const isFreePlan = (currentUser?.plan || 'free') === 'free';
+  const monthlyTendersCount = usageStats?.usage?.tenders || 0;
+
+  if (isFreePlan && monthlyTendersCount >= 20) {
+    return <QuotaExceededTenderGate currentCount={monthlyTendersCount} />;
   }
 
   return (

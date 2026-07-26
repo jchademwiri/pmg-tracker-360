@@ -161,6 +161,13 @@ export function UpgradeDialog({
       }
     }
 
+    if (usageContext === 'tenders') {
+      return {
+        title: 'Monthly Tender Limit Reached (20/20)',
+        description: `You have reached your Free Tier monthly limit of ${maxCount} tenders. Upgrade to Starter or Pro for unlimited tender tracking.`,
+      };
+    }
+
     return {
       title: 'Unlock More Potential',
       description:
@@ -173,26 +180,24 @@ export function UpgradeDialog({
     router.push('/dashboard');
   };
 
-  const handleUpgradeToPro = async () => {
+  const handleUpgradePlan = async (targetPlan: 'starter' | 'pro') => {
     setIsUpgrading(true);
     try {
-      // Simulate API latency/payment gateway processing
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      const result = await updateUserPlan('pro');
+      const result = await updateUserPlan(targetPlan);
       if (result.success) {
-        toast.success("Successfully upgraded to the Pro plan!", {
-          description: "Your organization creation limit has been increased to 2 owned organizations.",
+        toast.success(`Successfully upgraded to ${targetPlan.toUpperCase()} Plan!`, {
+          description: 'Your monthly tender limit has been upgraded to Unlimited Tenders.',
         });
         onOpenChange(false);
-        // Force fully reload page to flush and rebuild Better Auth cookies / state
         window.location.reload();
       } else {
-        toast.error(result.error || "Failed to update your subscription plan.");
+        toast.error(result.error || 'Failed to update subscription plan.');
       }
     } catch (error) {
       console.error('Upgrade failed:', error);
-      toast.error("An unexpected error occurred during your upgrade.");
+      toast.error('An unexpected error occurred during your upgrade.');
     } finally {
       setIsUpgrading(false);
     }
@@ -372,33 +377,39 @@ export function UpgradeDialog({
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
-                onClick={handleUpgradeToPro}
+                onClick={() => handleUpgradePlan('starter')}
                 disabled={isUpgrading}
-                className="h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-base font-medium cursor-pointer"
+                className="h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold cursor-pointer"
               >
                 {isUpgrading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Processing...
+                    Upgrading...
                   </>
                 ) : (
                   <>
-                    <Crown className="h-5 w-5 mr-2" />
-                    Upgrade to Pro
+                    <Zap className="h-4 w-4 mr-2" />
+                    Upgrade to Starter (R249/mo)
                   </>
                 )}
               </Button>
 
               <Button
-                variant="outline"
-                onClick={() => {
-                  onOpenChange(false);
-                  window.location.href = '/dashboard';
-                }}
-                className="h-12 cursor-pointer"
+                onClick={() => handleUpgradePlan('pro')}
+                disabled={isUpgrading}
+                className="h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm font-semibold cursor-pointer"
               >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Downgrade to Free
+                {isUpgrading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Upgrading...
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-4 w-4 mr-2" />
+                    Upgrade to Pro (R499/mo)
+                  </>
+                )}
               </Button>
             </div>
 

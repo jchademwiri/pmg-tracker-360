@@ -99,7 +99,7 @@ export default function UserListClient({ users }: Props) {
       key: 'verified',
       header: 'Verified',
       render: (u) => (
-        <StatusBadge status={u.emailVerified ? 'active' : 'deleted'} />
+        <StatusBadge status={u.emailVerified ? 'verified' : 'unverified'} />
       ),
     },
     {

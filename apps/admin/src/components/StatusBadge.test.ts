@@ -5,7 +5,7 @@ import * as fc from 'fast-check';
 import { getStatusClasses } from './StatusBadge';
 
 const KNOWN_STATUSES = [
-  'open', 'in_progress', 'closed', 'active', 'deleted',
+  'open', 'in_progress', 'closed', 'active', 'verified', 'unverified', 'deleted',
   'suspicious', 'bug', 'feature', 'other',
 ];
 

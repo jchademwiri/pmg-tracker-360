@@ -6,6 +6,7 @@ import {
   Search,
   Plus,
   MoreHorizontalIcon,
+  Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -372,37 +373,53 @@ export function POList({
         }
       >
         {/* Desktop Table */}
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>PO Number</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Project</TableHead>
-              <TableHead>PO Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total Amount</TableHead>
-              <TableHead>Expected Delivery</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+        <Table className="w-full table-fixed">
+          <TableHeader className="bg-muted/30">
+            <TableRow className="hover:bg-transparent border-b border-border/60">
+              <TableHead className="w-[36%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">PO & Supplier</TableHead>
+              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Project</TableHead>
+              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
+              <TableHead className="w-[15%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Total Amount</TableHead>
+              <TableHead className="w-[10%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Delivery</TableHead>
+              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pos.map((po) => (
               <TableRow
                 key={po.id}
-                className="cursor-pointer group rounded-md hover:bg-accent transition-colors duration-200"
+                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
                 onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}
               >
-                <TableCell><div className="font-medium text-blue-600">{po.poNumber}</div></TableCell>
-                <TableCell><div className="font-medium">{po.supplierName || 'Not specified'}</div></TableCell>
-                <TableCell>
-                  <div className="font-medium text-green-600">
-                    {po.project?.projectNumber.toUpperCase() || 'Unknown Project'}
+                <TableCell className="py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <Package className="h-4.5 w-4.5 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="font-semibold text-foreground text-sm font-mono text-sky-500 dark:text-sky-400 truncate">
+                        {po.poNumber}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {po.supplierName || 'Not specified'}
+                      </div>
+                    </div>
                   </div>
                 </TableCell>
-                <TableCell><span className="text-sm text-muted-foreground">{formatDate(po.poDate)}</span></TableCell>
-                <TableCell><StatusBadge status={po.status} /></TableCell>
-                <TableCell><span className="text-sm">{formatCurrency(po.totalAmount)}</span></TableCell>
-                <TableCell><span className="text-sm text-muted-foreground">{formatDate(po.expectedDeliveryDate)}</span></TableCell>
+                <TableCell>
+                  <div className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                    {po.project?.projectNumber.toUpperCase() || '-'}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={po.status} />
+                </TableCell>
+                <TableCell className="font-semibold text-sm">
+                  {formatCurrency(po.totalAmount)}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {formatDate(po.expectedDeliveryDate)}
+                </TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

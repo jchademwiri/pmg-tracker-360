@@ -25,6 +25,16 @@ const STATUS_MAP: Record<string, StatusClasses> = {
     text: 'text-emerald-400',
     border: 'border-emerald-500/20',
   },
+  verified: {
+    bg: 'bg-emerald-500/10',
+    text: 'text-emerald-400',
+    border: 'border-emerald-500/20',
+  },
+  unverified: {
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-400',
+    border: 'border-amber-500/20',
+  },
   deleted: {
     bg: 'bg-red-500/10',
     text: 'text-red-400',

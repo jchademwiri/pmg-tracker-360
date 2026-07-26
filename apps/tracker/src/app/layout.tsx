@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/shared/providers';
@@ -6,6 +7,16 @@ import { Analytics } from '@vercel/analytics/next';
 import { BetaLabel } from '@/components/shared/beta-label';
 import { HelpWidget } from '@/components/shared/help-widget';
 import Script from 'next/script';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://tendertrack360.co.za'),
@@ -46,9 +57,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      suppressHydrationWarning
+    >
       <body
-        className="font-sans antialiased"
+        className="font-sans antialiased bg-background text-foreground min-h-screen"
         suppressHydrationWarning
       >
         <Script

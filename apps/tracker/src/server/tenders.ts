@@ -201,6 +201,33 @@ export async function createTender(
       validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
     }
 
+    // Server-side Tender Quota Check for Free Tier
+    const session = await auth.api.getSession({ headers: await headers() });
+    const userPlan = (session?.user as any)?.plan || 'free';
+    if (userPlan === 'free') {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+
+      const activeTendersCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(tender)
+        .where(
+          and(
+            eq(tender.organizationId, organizationId),
+            gte(tender.createdAt, startOfMonth),
+            isNull(tender.deletedAt)
+          )
+        );
+
+      const currentCount = Number(activeTendersCount[0]?.count || 0);
+      if (currentCount >= 20) {
+        return {
+          success: false,
+          error: 'Monthly tender quota reached on Free Tier (20 tenders / month). Upgrade to Starter or Pro for unlimited tenders.',
+        };
+      }
+    }
+
     // Check if tender number is unique within organization
     const existingTender = await db
       .select()

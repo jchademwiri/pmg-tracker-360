@@ -68,13 +68,16 @@ export const signUp = async (
   email: string,
   password: string,
   honeypot?: string,
-  formMountedAt?: number
+  formMountedAt?: number,
+  turnstileToken?: string
 ) => {
   try {
     const botCheck = await verifyBotProtection({
+      name,
+      email,
       honeypot,
       formMountedAt,
-      email,
+      turnstileToken,
     });
 
     if (botCheck.isBot) {

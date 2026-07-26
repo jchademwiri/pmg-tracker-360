@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
 import { Loader, UserPlus, Check, X } from 'lucide-react';
 import { signInWithGoogle } from '@/lib/auth-client';
+import { Turnstile } from '@/components/ui/turnstile';
 
 const signUpFormSchema = z.object({
   name: z.string().min(2).max(100),
@@ -41,6 +42,7 @@ export function SignUpForm({
 }: React.ComponentProps<'div'>) {
   const [isLoading, setIsLoading] = useState(false);
   const [formMountedAt, setFormMountedAt] = useState<number | undefined>(undefined);
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
@@ -86,7 +88,8 @@ export function SignUpForm({
       values.email,
       values.password,
       values.website,
-      formMountedAt
+      formMountedAt,
+      turnstileToken
     );
     if (success) {
       toast.success(`${message as string}`);
@@ -258,6 +261,12 @@ export function SignUpForm({
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+
+                <Turnstile
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken(undefined)}
+                  onExpire={() => setTurnstileToken(undefined)}
                 />
 
                 <Button

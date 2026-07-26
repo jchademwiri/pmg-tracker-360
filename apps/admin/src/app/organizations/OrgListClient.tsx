@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import DataTable, { type Column } from '@/components/DataTable';
-import OrgDrawer from '@/components/OrgDrawer';
 import StatusBadge from '@/components/StatusBadge';
 import type { OrgWithCounts } from '@/lib/admin-queries';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { bulkSuspendOrgs, bulkRestoreOrgs, bulkPurgeOrgs } from './actions';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { CheckSquare, ShieldAlert, RotateCcw, Trash2, X } from 'lucide-react';
 
 /* ─── Pure helper — exported for Property 15 PBT test ──────────────────── */
@@ -36,7 +36,12 @@ const columns: Column<OrgWithCounts>[] = [
     header: 'Organisation',
     render: (org) => (
       <div>
-        <div className="font-medium text-white">{org.name}</div>
+        <Link
+          href={`/organizations/${org.id}`}
+          className="font-medium text-white hover:text-indigo-400 transition-colors"
+        >
+          {org.name}
+        </Link>
         <div className="text-xs text-zinc-500 font-mono mt-0.5">
           {org.id.slice(0, 8)}
         </div>
@@ -118,7 +123,6 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<'active' | 'deleted' | 'all'>('active');
   const [search, setSearch] = useState('');
-  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [selectedOrgIds, setSelectedOrgIds] = useState<Set<string>>(new Set());
 
   // Confirm dialog state
@@ -301,19 +305,11 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
         columns={columns}
         data={filtered}
         rowKey={(row) => row.id}
-        onRowClick={(row) => setSelectedOrgId(row.id)}
+        onRowClick={(row) => router.push(`/organizations/${row.id}`)}
         selectable={true}
         selectedKeys={selectedOrgIds}
         onSelectionChange={setSelectedOrgIds}
       />
-
-      {/* Org detail drawer */}
-      {selectedOrgId !== null && (
-        <OrgDrawer
-          orgId={selectedOrgId}
-          onClose={() => setSelectedOrgId(null)}
-        />
-      )}
 
       {/* Custom Confirm Dialog */}
       <ConfirmDialog

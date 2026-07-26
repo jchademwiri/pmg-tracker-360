@@ -25,11 +25,13 @@ export const env = createEnv({
       message: 'GOOGLE_CLIENT_SECRET is required',
     }),
     REPLY_TO_EMAIL: z.string().email().optional(),
+    TURNSTILE_SECRET_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_URL: z.string().min(1, {
       message: 'NEXT_PUBLIC_URL is required',
     }),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -39,6 +41,7 @@ export const env = createEnv({
 
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     REPLY_TO_EMAIL: process.env.REPLY_TO_EMAIL,
+    TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
 
     R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
     R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
@@ -50,6 +53,7 @@ export const env = createEnv({
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
 
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

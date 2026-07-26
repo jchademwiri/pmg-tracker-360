@@ -270,7 +270,7 @@ function UserDrawerBody({
 
         <div className="flex justify-between">
           <span className="text-zinc-500">Email Verified</span>
-          <StatusBadge status={data.emailVerified ? 'active' : 'deleted'} />
+          <StatusBadge status={data.emailVerified ? 'verified' : 'unverified'} />
         </div>
 
         <div className="flex justify-between">

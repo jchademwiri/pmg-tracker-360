@@ -2,8 +2,13 @@
 
 import { db } from '@pmg/db';
 import { user as userTable, member, organization, tender } from '@pmg/db/schema';
-import { eq, inArray, count, isNull, and } from 'drizzle-orm';
+import { eq, inArray, count, isNull, and, gte } from 'drizzle-orm';
 import { getCurrentUser } from './users';
+
+function getStartOfCurrentMonth(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+}
 
 export async function getUserUsageStats() {
   try {
@@ -21,10 +26,25 @@ export async function getUserUsageStats() {
     const ownedOrgIds = ownerMemberships.map((m) => m.organizationId);
     const organizationsCount = ownedOrgIds.length;
 
-    // 2. Tenders Count in owned organizations
+    // 2. Monthly Tenders Count (tenders created in the current month)
     let tendersCount = 0;
+    let totalLifetimeTenders = 0;
     if (ownedOrgIds.length > 0) {
-      const tendersResult = await db
+      const startOfMonth = getStartOfCurrentMonth();
+
+      const monthlyTendersResult = await db
+        .select({ count: count() })
+        .from(tender)
+        .where(
+          and(
+            inArray(tender.organizationId, ownedOrgIds),
+            gte(tender.createdAt, startOfMonth),
+            isNull(tender.deletedAt)
+          )
+        );
+      tendersCount = monthlyTendersResult[0]?.count || 0;
+
+      const lifetimeResult = await db
         .select({ count: count() })
         .from(tender)
         .where(
@@ -33,7 +53,7 @@ export async function getUserUsageStats() {
             isNull(tender.deletedAt)
           )
         );
-      tendersCount = tendersResult[0]?.count || 0;
+      totalLifetimeTenders = lifetimeResult[0]?.count || 0;
     }
 
     // 3. Storage placeholder
@@ -44,7 +64,8 @@ export async function getUserUsageStats() {
       plan: currentUser.plan,
       usage: {
         organizations: organizationsCount,
-        tenders: tendersCount,
+        tenders: tendersCount, // Current Month Tenders Count against monthly quota
+        lifetimeTenders: totalLifetimeTenders,
         storage: storageUsed,
       },
     };

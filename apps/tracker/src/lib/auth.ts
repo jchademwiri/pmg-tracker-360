@@ -12,6 +12,7 @@ import ResetPasswordEmail from '@/emails/reset-password-email';
 import VerifyEmail from '@/emails/verify-email';
 import { getActiveOrganization } from '@/server';
 import OrganizationInvitation from '@/emails/organization-invitation';
+import { verifyBotProtection } from '@/lib/bot-protection';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -98,26 +99,13 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          if (user.email) {
-            const domain = user.email.split('@')[1]?.toLowerCase().trim();
-            const disposableDomains = new Set([
-              'mailinator.com',
-              'tempmail.com',
-              'guerrillamail.com',
-              '10minutemail.com',
-              'dispostable.com',
-              'trashmail.com',
-              'yopmail.com',
-              'sharklasers.com',
-              'getairmail.com',
-              'throwawaymail.com',
-              'temp-mail.org',
-              'fakeinbox.com',
-            ]);
+          const botCheck = await verifyBotProtection({
+            name: user.name,
+            email: user.email,
+          });
 
-            if (domain && disposableDomains.has(domain)) {
-              throw new Error('Disposable or temporary email addresses are not allowed.');
-            }
+          if (botCheck.isBot) {
+            throw new Error(botCheck.reason || 'Account creation rejected by security rules.');
           }
 
           return { data: user };
