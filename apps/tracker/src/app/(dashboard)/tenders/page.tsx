@@ -113,7 +113,7 @@ export default async function TendersRegisterPage({
 
   // Fetch tenders and clients in parallel
   const [tendersResult, clientsResult] = await Promise.all([
-    getTendersOverview(session.activeOrganizationId, filters, page, 20),
+    getTendersOverview(session.activeOrganizationId, filters, page, 10),
     getClients(session.activeOrganizationId),
   ]);
 
