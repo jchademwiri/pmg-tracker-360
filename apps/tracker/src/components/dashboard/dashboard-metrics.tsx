@@ -62,7 +62,7 @@ export async function DashboardMetrics({
   return (
     <>
       {/* Primary KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Pipeline Value"
           value={formatCurrency(tenderStats.totalValue)}
@@ -106,7 +106,7 @@ export async function DashboardMetrics({
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Tenders"
           value={formatNumber(tenderStats.totalTenders)}

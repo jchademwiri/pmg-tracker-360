@@ -1,18 +1,18 @@
 ---
-title: PMG Tracker 360 Documentation
-description: Platform guides, architectural layers, secure SSO pipelines, and monorepo administrator manuals.
+title: PMG Tracker 360 User Guide
+description: Complete user documentation to help you manage tenders, purchase orders, projects, and team workflows.
 template: splash
 hero:
-  tagline: Centralized documentation console for system operators, developer teams, and tenant organizations.
+  tagline: Your comprehensive guide to mastering PMG Tracker 360 procurement, tendering, and project tracking workflows.
   image:
     file: ../../assets/houston.webp
   actions:
-    - text: Get Started
-      link: /guides/admin-portal/
+    - text: Quickstart Guide
+      link: /getting-started/quickstart/
       icon: right-arrow
-    - text: View Workspace Repos
-      link: https://github.com/jchademwiri/pmg-tracker-360
-      icon: external
+    - text: Explore Workflows
+      link: /workflows/tendering-pipeline/
+      icon: open-book
       variant: minimal
 ---
 
@@ -21,17 +21,18 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 ## PMG Tracker Core Modules
 
 <CardGrid stagger>
-	<Card title="System Admin Portal" icon="setting">
-		Configure access control, promote administrators case-insensitively, audit database telemetries, and manage user lifecycles.
+	<Card title="Tenders & Bids" icon="document">
+		Learn how to create, track, and manage public and private tender submissions, set submission deadlines, and track bid outcomes.
 	</Card>
-	<Card title="Shared Auth Engine" icon="open-book">
-		Explore how Better Auth coordinates single sign-on (SSO) session synchronization via shared cookies across subdomains.
+	<Card title="Projects & Execution" icon="rocket">
+		Convert won tenders directly into active projects, track execution milestones, and monitor delivery progress seamlessly.
 	</Card>
-	<Card title="Multi-Tenant Database" icon="document">
-		Review Drizzle schemas, relation structures, and PostgreSQL constraints defining the core Neon cluster mapping.
+	<Card title="Purchase Orders & Budgets" icon="pencil">
+		Issue purchase orders to suppliers, match PO balances to active project budgets, and track delivery status.
 	</Card>
-	<Card title="Tracker Workflows" icon="pencil">
-		Access developer guides for client features like tender submissions, purchase order matching, and project analytics.
+	<Card title="Team & Workspaces" icon="setting">
+		Set up tenant organizations, invite team members, assign granular roles (Owner, Admin, Manager, Member), and collaborate securely.
 	</Card>
 </CardGrid>
+
 
