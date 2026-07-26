@@ -216,7 +216,14 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
                 <div className={`p-2 rounded-lg border bg-background ${isSelected ? 'border-foreground' : 'border-border'}`}>
                   <Icon className={`h-4 w-4 ${config.colorClass.split(' ')[0]}`} />
                 </div>
-                <Badge variant={config.badgeVariant} className={list.length > 0 ? '' : 'bg-muted text-muted-foreground'}>
+                <Badge
+                  variant={list.length > 0 ? config.badgeVariant : 'secondary'}
+                  className={
+                    list.length > 0
+                      ? 'font-bold text-white px-2 py-0.5 min-w-[22px] justify-center'
+                      : 'font-semibold text-foreground bg-accent/80 border border-border/60 px-2 py-0.5 min-w-[22px] justify-center'
+                  }
+                >
                   {list.length}
                 </Badge>
               </div>
