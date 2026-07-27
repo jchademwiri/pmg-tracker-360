@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { db } from '@pmg/db';
-import { member } from '@pmg/db/schema';
+import { member, user } from '@pmg/db/schema';
 import { and, eq } from 'drizzle-orm';
 
 export async function validateSessionAndOrg(organizationId: string) {
@@ -35,4 +35,24 @@ export async function validateSessionAndOrg(organizationId: string) {
     session,
     role: membership[0].role, // owner, admin, manager, member
   };
+}
+
+/**
+ * Looks up the subscription plan of the organization owner.
+ * Subscriptions are linked to the owner, not individual members.
+ */
+export async function getOrganizationOwnerPlan(organizationId: string): Promise<string> {
+  const ownerMembership = await db
+    .select({ plan: user.plan })
+    .from(member)
+    .innerJoin(user, eq(member.userId, user.id))
+    .where(
+      and(
+        eq(member.organizationId, organizationId),
+        eq(member.role, 'owner')
+      )
+    )
+    .limit(1);
+
+  return ownerMembership[0]?.plan || 'free';
 }

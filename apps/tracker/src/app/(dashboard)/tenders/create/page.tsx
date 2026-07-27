@@ -2,11 +2,12 @@ import { getCurrentUser } from '@/server';
 import { getUserUsageStats } from '@/server/billing';
 import { TenderForm } from '@/components/tenders/tender-form';
 import QuotaExceededTenderGate from '@/components/tenders/QuotaExceededTenderGate';
+import { getOrganizationOwnerPlan } from '@/server/utils';
 
 export const dynamic = 'force-dynamic';
 
 export default async function NewTenderPage() {
-  const { session, currentUser } = await getCurrentUser();
+  const { session } = await getCurrentUser();
 
   if (!session.activeOrganizationId) {
     return (
@@ -24,17 +25,18 @@ export default async function NewTenderPage() {
   }
 
   // Quota Gate Check for Subscription Tier (Free: 10, Starter: 20, Pro: Unlimited)
+  // Check against the organization owner's plan — not the current user's plan.
   const usageStats = await getUserUsageStats();
-  const userPlan = (currentUser?.plan || 'free').toLowerCase();
+  const ownerPlan = await getOrganizationOwnerPlan(session.activeOrganizationId);
   const monthlyTendersCount = usageStats?.usage?.tenders || 0;
-  const maxAllowed = userPlan === 'free' ? 10 : userPlan === 'starter' ? 20 : Infinity;
+  const maxAllowed = ownerPlan === 'free' ? 10 : ownerPlan === 'starter' ? 20 : Infinity;
 
   if (monthlyTendersCount >= maxAllowed) {
     return (
       <QuotaExceededTenderGate
         currentCount={monthlyTendersCount}
         maxCount={maxAllowed}
-        plan={userPlan}
+        plan={ownerPlan}
       />
     );
   }
