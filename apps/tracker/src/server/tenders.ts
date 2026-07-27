@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { validateSessionAndOrg } from './utils';
+import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
 import { tender, client, project, tenderExtension, tenderFollowUp, tenderActivity } from '@pmg/db/schema';
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, isNotNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -202,9 +202,10 @@ export async function createTender(
     }
 
     // Server-side Tender Quota Check (Free: 10, Starter: 20, Pro: Unlimited)
-    const session = await auth.api.getSession({ headers: await headers() });
-    const userPlan = (session?.user as any)?.plan || 'free';
-    const maxTendersAllowed = userPlan === 'free' ? 10 : userPlan === 'starter' ? 20 : Infinity;
+    // Check against the organization owner's plan — not the current user's plan.
+    // Subscriptions are linked to the owner, not individual members.
+    const ownerPlan = await getOrganizationOwnerPlan(organizationId);
+    const maxTendersAllowed = ownerPlan === 'free' ? 10 : ownerPlan === 'starter' ? 20 : Infinity;
 
     if (maxTendersAllowed !== Infinity) {
       const now = new Date();
@@ -225,7 +226,7 @@ export async function createTender(
       if (currentCount >= maxTendersAllowed) {
         return {
           success: false,
-          error: `Monthly tender quota reached on ${userPlan.toUpperCase()} Plan (${maxTendersAllowed} tenders / month). Upgrade your subscription plan to track more tenders.`,
+          error: `Monthly tender quota reached on ${ownerPlan.toUpperCase()} Plan (${maxTendersAllowed} tenders / month). Upgrade your subscription plan to track more tenders.`,
         };
       }
     }

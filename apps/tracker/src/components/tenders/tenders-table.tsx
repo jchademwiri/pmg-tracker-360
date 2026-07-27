@@ -74,8 +74,11 @@ function DeadlineCell({ submissionDate, status, updatedAt }: { submissionDate: D
   if (status === 'evaluation') {
     return (
       <div className="flex flex-col text-xs gap-0.5">
-        <span className="font-semibold text-foreground">Under Evaluation</span>
-        <div className="text-muted-foreground text-[11px]">Submitted {formatDate(updatedAt)}</div>
+        <div className="font-semibold text-foreground flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          {submissionDate ? formatDate(submissionDate) : '—'}
+        </div>
+        <div className="text-muted-foreground text-[11px] pl-5">Submitted {formatDate(updatedAt)}</div>
       </div>
     );
   }
@@ -145,7 +148,7 @@ export function TendersTable({
           ];
 
           const daysLeftContent = tender.status === 'evaluation'
-            ? `Submitted ${formatDate(tender.updatedAt)}`
+            ? `Closing ${tender.submissionDate ? formatDate(tender.submissionDate) : '—'} · Submitted ${formatDate(tender.updatedAt)}`
             : daysLeft === null
               ? '-'
               : daysLeft < 0
