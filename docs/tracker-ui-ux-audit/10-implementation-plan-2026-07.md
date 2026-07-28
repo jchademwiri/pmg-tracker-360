@@ -11,9 +11,9 @@ verify it, and effort. Ordered so each phase can ship as its own PR.
 ### 0.1 Label the unlabeled PO icon-links in Project Workspace
 
 - **Files:** `apps/tracker/src/components/projects/project-workspace.tsx:1005-1009` and `:1150-1154`
-- **Problem:** Both are `<Link><Button variant="ghost" size="icon"><ArrowRight /></Button></Link>` with no text, `aria-label`, or `sr-only` span — a screen reader announces an unlabeled button.
-- **Change:** Add `aria-label="View purchase order"` (line ~1006) and `aria-label="View delivery note purchase order"` (line ~1151) directly on the `Button`, matching the existing working pattern already used in `tender-action-queue.tsx:467-470` (icon + `<span className="sr-only">Open menu</span>`).
-- **Verify:** Tab to each control with keyboard only and confirm a screen reader (VoiceOver/NVDA) announces a distinct name, not just "button" or "link."
+- **Problem:** Both are `<Link><Button variant="ghost" size="icon"><ArrowRight /></Button></Link>` — nested interactive elements (an `<a>` wrapping a `<button>`) with no text, `aria-label`, or `sr-only` span. This is both an invalid HTML nesting and an accessible-name gap; adding `aria-label` to the inner `Button` alone doesn't fix the outer `Link` having no name of its own.
+- **Change:** Restructure to a single focusable control instead of nesting two: use `Button asChild` wrapping the `Link` (`<Button variant="ghost" size="icon" asChild><Link href={...} aria-label="View purchase order">...</Link></Button>`), so it renders as one `<a>` styled as a button, and put the `aria-label` on that single control — `"View purchase order"` for the first occurrence (~line 1006), `"View delivery note purchase order"` for the second (~line 1151).
+- **Verify:** Rendered DOM has one focusable element per control (not a button nested in an anchor). Tab to each control with keyboard only and confirm a screen reader (VoiceOver/NVDA) announces a distinct name, not just "button" or "link."
 - **Effort:** S.
 
 ### 0.2 Sweep for the same pattern
@@ -40,7 +40,7 @@ verify it, and effort. Ordered so each phase can ship as its own PR.
   1. Keep `closing_soon`/`under_preparation`/`awaiting_results` as derived quick-view filters (they're useful and don't need to be status values), but implement them as query predicates over the real lifecycle stages + deadline math, not as a fake status string compared against.
   2. Replace the literal `open`/`closed`/`evaluation`/`awarded`/`lost` status filter options with the actual `TENDER_LIFECYCLE` stages plus `lost`/`closed`/`cancelled`, so the filter dropdown and the detail-page stepper always describe the same state machine.
   3. Update `STATUS_OPTIONS` in `tenders-search-filters.tsx` to import its values from `STATUS_MAP_BY_DOMAIN.tender` / `TENDER_LIFECYCLE` instead of a hand-maintained parallel list, so the two can't drift again.
-- **Verify:** Every status shown in the tender list filter also appears, with the same label, in the tender detail lifecycle stepper.
+- **Verify:** Every *persisted lifecycle status* shown in the tender list filter (i.e. not `closing_soon`/`under_preparation`/`awaiting_results`, which stay derived query predicates per resolution #1 above) also appears, with the same label, in the tender detail lifecycle stepper. Separately, confirm the three derived quick-view filters still function correctly as predicates over lifecycle stage + deadline math, not as literal status-string comparisons.
 - **Effort:** M (requires a product/data conversation first; code change itself is S once resolved).
 
 ## Phase 2 — Shared pattern extraction (highest leverage, ~2-3 days)
@@ -62,7 +62,8 @@ The PO list (`po-list.tsx`) already has the best-in-class version of filtering, 
 - **Problem:** Confirmed zero sort affordances in `tenders-table.tsx`, `project-list.tsx`, `po-list.tsx` — audit checked for `onClick`+sort, `ArrowUpDown`, `sortable` and found none.
 - **New component:** A `SortableColumnHeader` (or extend `data-table-shell.tsx`) that renders a header cell with a click handler and `ArrowUpDown`/`ArrowUp`/`ArrowDown` icon reflecting current sort state, writing `sortBy`/`sortOrder` through the same `use-url-filters` hook from 2.1.
 - **Note:** `tenders-search-filters.tsx` already has a `sortBy`/`sortOrder` *select dropdown* (`SORT_OPTIONS`, `SORT_ORDER_OPTIONS`, lines 56-66) — this task is about adding clickable column headers as an additional/replacement affordance, and wiring `project-list.tsx`/`po-list.tsx` to the same capability, since they currently have no sort UI at all.
-- **Verify:** Clicking a sortable column header on all three tables toggles asc/desc and updates the URL.
+- **This must reach the data layer, not just the URL:** `getTendersOverview` already supports `sortBy`/`sortOrder`, but `ProjectList` and `POList` currently only pass `search`/`status`/`page`-style filters into their loaders — `getProjects` and `getPurchaseOrders` have no sort parameter today. Adding clickable headers that only update the URL would look functional while doing nothing for Projects/POs. Scope for this task includes: reading `sortBy`/`sortOrder` out of the shared `use-url-filters` state in `ProjectList`/`POList`, passing them through to `getProjects`/`getPurchaseOrders`, and defining the corresponding server-side sort contract/query for both (Tenders' contract already exists via `getTendersOverview` and should just be reused, not reimplemented).
+- **Verify:** Clicking a sortable column header on all three tables toggles asc/desc, updates the URL, *and* produces actual ascending/descending row reordering in the rendered table — not just a URL change.
 - **Effort:** M.
 
 ## Phase 3 — Project Workspace decomposition (highest effort, ~1 week)
@@ -79,7 +80,7 @@ The PO list (`po-list.tsx`) already has the best-in-class version of filtering, 
 
 - **Exact lines to fix (all in the extracted tab files after 3.1):** `text-emerald-600`/`text-amber-600`/`text-purple-600`/`text-blue-600` at (pre-split) lines 521, 744, 748, 774, 806, 923, 934, 1067, 1109, 1133, 1148.
 - **Change:** Each of these is a semantic status/value color (delivered=success, outstanding=warning, tender link=info, close-out note=neutral). Map each to the existing `tone` palette in `status-badge.tsx` (`tone.success`, `tone.warning`, `tone.info`, etc.) rather than a raw Tailwind color class. Where the text is a monetary value tied to a state (e.g., "delivered value"), consider whether it should render inside a `StatusBadge`-style chip instead of plain colored text, for consistency with how status is shown elsewhere.
-- **Verify:** `grep -rn "text-emerald-600\|text-amber-600\|text-purple-600\|text-blue-600" components/projects/workspace/` returns nothing; visual diff confirms colors are unchanged (tone classes should map 1:1).
+- **Verify:** `grep -rn "text-emerald-600\|text-amber-600\|text-purple-600\|text-blue-600" apps/tracker/src/components/projects/workspace/` (run from repo root — all other paths in this doc are repo-root-relative) returns nothing; visual diff confirms colors are unchanged (tone classes should map 1:1).
 - **Effort:** M (mechanical once 3.1 is done).
 
 ### 3.3 Resolve raw `Badge` vs `StatusBadge` usage
@@ -91,9 +92,9 @@ The PO list (`po-list.tsx`) already has the best-in-class version of filtering, 
 
 ## Phase 4 — Decisions needed before further work (not code tasks)
 
-These three items came out of the audit as things that need a product/architecture decision, not a PR. Flagging them here so they don't get silently skipped:
+These three items came out of the audit as things that need a product/architecture decision, not a PR. Flagging them here so they don't get silently skipped. **Policy: none of these three block Phase 2/3 starting — raise and resolve them in parallel with Phase 0/1.** The one exception is noted inline below (#1), where a late decision has a specific, bounded rework cost rather than a blocking one.
 
-1. **Purchase Orders route nesting** — keep `/projects/purchase-orders/...` or promote POs to a top-level `/purchase-orders` route. Affects Phase 2/3 file organization if changed later, so worth deciding before investing further in the current PO components.
+1. **Purchase Orders route nesting** — keep `/projects/purchase-orders/...` or promote POs to a top-level `/purchase-orders` route. This does not need to block Phase 2/3 starting, but if the promotion decision lands *after* Phase 2 has already touched `po-list.tsx`, expect a follow-up path-rename pass rather than avoidable rework — worth deciding sooner rather than later for that reason alone, not because it gates other work.
 2. **`packages/ui` fate** — `apps/tracker` doesn't import `@pmg/ui` and maintains a fully separate copy of every primitive. Either start consuming `@pmg/ui` from `apps/tracker` (larger migration) or stop describing it as the shared design system in planning docs (smaller, immediate fix to avoid future confusion).
 3. **Route-level `loading.tsx`/`error.tsx`** — currently zero in `tenders/`, `projects/`, `projects/purchase-orders/`. Low effort, but changes the loading/error contract for every page in these route groups, so worth a quick alignment on whether skeleton-per-component (current) or Suspense-boundary-per-route (Next.js convention) is the intended long-term pattern before rolling it out to all three modules at once.
 
@@ -109,6 +110,6 @@ These three items came out of the audit as things that need a product/architectu
 | 3.1 — Workspace split | L | — | 1 PR |
 | 3.2 — Color token cleanup | M | 3.1 | 1 PR, after 3.1 |
 | 3.3 — Badge consistency | S-M | 3.1 (optional but easier after) | Can bundle with 3.2 |
-| 4 — Decisions | — | — | Not a PR — resolve before Phase 2/3 lands broadly |
+| 4 — Decisions | — | — | Not a PR — raise in parallel with Phase 0/1, non-blocking (see caveat on #1) |
 
-Recommended order: Phase 0 → 1.1 → 2.1 → 2.2 → 3.1 → 3.2/3.3 → 1.2 (once the status-model decision lands, whenever that happens). Phase 4 decisions should be raised in parallel with Phase 0/1 so they don't block Phase 2/3.
+Recommended order: Phase 0 → 1.1 → 2.1 → 2.2 → 3.1 → 3.2/3.3 → 1.2 (once the status-model decision lands, whenever that happens). Phase 4 decisions should be raised in parallel with Phase 0/1; none of them block Phase 2/3 starting.
