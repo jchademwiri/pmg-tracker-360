@@ -117,4 +117,5 @@ Cross-check result: no `page.tsx`, route-group page, loading file, or top-level 
 - `07-mobile-responsiveness.md`
 - `08-recommended-roadmap.md`
 - `09-2026-07-audit-refresh-tenders-projects-po.md` — 2026-07-28 verification pass on Tenders/Projects/POs: what's fixed since this audit, what's still open, and new findings.
+- `10-implementation-plan-2026-07.md` — ordered engineering plan for the findings in `09-...`: exact files, changes, verification steps, effort, and sequencing.
 
