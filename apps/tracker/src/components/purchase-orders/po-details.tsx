@@ -14,6 +14,7 @@ import {
   MoreHorizontal,
   Plus,
   FileUp,
+  FileDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -150,6 +151,29 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
     setIsDeleteDialogOpen(true);
   };
 
+  const handleExportPdf = async () => {
+    const toastId = toast.loading('Generating PDF...');
+    try {
+      const response = await fetch(`/api/purchase-orders/${po.id}/pdf`);
+      if (!response.ok) throw new Error('PDF generation failed');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `PO-${po.poNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      toast.success('PDF downloaded successfully', { id: toastId });
+    } catch (error) {
+      console.error('PO PDF export failed:', error);
+      toast.error('Failed to generate PDF. Please try again.', { id: toastId });
+    }
+  };
+
   const handleConfirmDelete = async () => {
     startTransition(async () => {
       const result = await deletePurchaseOrder(organizationId, po.id);
@@ -247,6 +271,10 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
               <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Purchase Order
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer">
+                <FileDown className="h-4 w-4 mr-2" />
+                Export PDF
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDelete}

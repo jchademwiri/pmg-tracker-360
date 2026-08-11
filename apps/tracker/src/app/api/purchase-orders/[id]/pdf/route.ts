@@ -1,0 +1,45 @@
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+
+import { auth } from '@/lib/auth';
+import { generatePurchaseOrderPdf } from '@/lib/pdf/po-pdf';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.session?.activeOrganizationId) {
+    return NextResponse.json({ error: 'No organization selected.' }, { status: 400 });
+  }
+
+  const { success: hasPermission } = await auth.api.hasPermission({
+    headers: await headers(),
+    body: {
+      permissions: {
+        purchase_order: ['read'],
+      },
+    },
+  });
+
+  if (!hasPermission) {
+    return NextResponse.json({ error: 'Insufficient permissions.' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const result = await generatePurchaseOrderPdf(session.session.activeOrganizationId, id);
+
+  if (!result) {
+    return NextResponse.json({ error: 'Purchase order not found.' }, { status: 404 });
+  }
+
+  return new NextResponse(new Uint8Array(result.buffer), {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${result.fileName}"`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}
