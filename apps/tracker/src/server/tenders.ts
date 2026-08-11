@@ -9,8 +9,7 @@ import { z } from 'zod';
 import { URGENCY_WINDOWS, daysAgo, daysFromNow } from '@/lib/urgency-windows';
 import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
 import { randomUUID } from 'crypto';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 import { nowInSAST } from '@/lib/timezone';
 import { sanitizeTenderNumber } from '@/lib/tender-utils';
 
@@ -379,9 +378,7 @@ export async function getTenderById(organizationId: string, tenderId: string) {
 
 export async function getTenderBreadcrumbLabel(tenderId: string) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
     const organizationId = session?.session.activeOrganizationId;
 
     if (!session?.user || !organizationId) {
@@ -580,9 +577,7 @@ export async function updateTender(
       });
     }
 
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
     const userId = session?.user?.id;
 
     if (validatedData.status && existingTender[0].status !== validatedData.status) {
@@ -712,9 +707,7 @@ export async function updateTenderStatus(
       });
     }
 
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
     const userId = session?.user?.id;
 
     if (existingTender[0].status !== validatedData.status) {
@@ -1692,9 +1685,7 @@ export async function createTenderFollowUp(
       updatedAt: new Date(),
     }).returning();
 
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
     const userId = session?.user?.id;
 
     await logTenderActivity(

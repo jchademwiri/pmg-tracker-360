@@ -1269,9 +1269,8 @@ export async function recordPODelivery(
       };
     }
 
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const { getServerSession } = await import('@/lib/auth');
+    const session = await getServerSession();
     const userId = session?.user?.id;
 
     // Get purchase order with line items and existing deliveries

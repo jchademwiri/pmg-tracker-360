@@ -1,3 +1,5 @@
+import { cache } from 'react';
+import { headers } from 'next/headers';
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { organization, magicLink } from 'better-auth/plugins';
@@ -329,4 +331,11 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
+});
+
+// Memoized per-request: many server functions independently need the
+// session, and each auth.api.getSession() call counts against better-auth's
+// rate limiter. cache() ensures a single request-scope fetch is reused.
+export const getServerSession = cache(async () => {
+  return auth.api.getSession({ headers: await headers() });
 });

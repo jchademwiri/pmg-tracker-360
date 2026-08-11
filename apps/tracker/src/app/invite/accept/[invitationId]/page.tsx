@@ -2,8 +2,7 @@ import { db } from '@pmg/db';
 import { invitation, user } from '@pmg/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import AcceptInvitationClient from '@/components/invite/AcceptInvitationClient';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 
 type Props = {
   params: Promise<{
@@ -38,9 +37,7 @@ export default async function InviteAcceptPage({ params }: Props) {
   });
 
   // Check if current user is logged in
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">

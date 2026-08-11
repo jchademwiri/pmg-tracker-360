@@ -16,6 +16,7 @@ import {
   getUserOrganizationMembership,
 } from '@/server/organizations';
 import { getCurrentUser } from '@/server/users';
+import { SessionUserSync } from '@/components/shared/session-user-sync';
 
 // Force dynamic rendering for dashboard layout since it uses server functions with headers
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,17 @@ export default async function MainDashboardLayout({
 
   return (
     <div className="h-screen flex w-full">
+      <SessionUserSync
+        user={
+          currentUser
+            ? {
+                id: currentUser.id,
+                name: currentUser.name,
+                email: currentUser.email,
+              }
+            : null
+        }
+      />
       <SidebarProvider>
         <AppSidebarClient
           initialOrganizations={organizations}

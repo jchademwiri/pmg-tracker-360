@@ -4,8 +4,7 @@ import { db } from '@pmg/db';
 import { notification } from '@pmg/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 
 // Get notifications for the current user
@@ -14,9 +13,7 @@ export async function getNotifications(
   limit: number = 10
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||
@@ -73,9 +70,7 @@ export async function markNotificationDetail(
   notificationId: string
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||
@@ -106,9 +101,7 @@ export async function markNotificationDetail(
 // Mark all as read
 export async function markAllNotificationsRead(organizationId: string) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||

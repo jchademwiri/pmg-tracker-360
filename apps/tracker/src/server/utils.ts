@@ -1,14 +1,11 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 import { db } from '@pmg/db';
 import { member, user } from '@pmg/db/schema';
 import { and, eq } from 'drizzle-orm';
 
 export async function validateSessionAndOrg(organizationId: string) {
   // 1. Fetch current session from Better Auth
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   if (!session || !session.user) {
     throw new Error('Authentication required');

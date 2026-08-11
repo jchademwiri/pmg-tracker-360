@@ -1,9 +1,8 @@
 'use server';
 import { db } from '@pmg/db';
 import { member, user, verification } from '@pmg/db/schema';
-import { auth } from '@/lib/auth';
+import { auth, getServerSession } from '@/lib/auth';
 import { eq, inArray, not } from 'drizzle-orm';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { StorageService } from '@/lib/storage';
 import { revalidatePath } from 'next/cache';
@@ -11,9 +10,7 @@ import { validateSessionAndOrg } from './utils';
 import { verifyBotProtection } from '@/lib/bot-protection';
 
 export const getCurrentUser = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
   if (!session) {
     redirect('/login');
   }
@@ -190,9 +187,7 @@ export const getAllUsers = async (organizationId: string) => {
 
 export const updateUserImage = async (formData: FormData) => {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (!session) {
       return { success: false, error: 'Unauthorized' };
