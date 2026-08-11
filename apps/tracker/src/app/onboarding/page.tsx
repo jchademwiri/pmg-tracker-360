@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrganizationForm } from '@/components/shared/forms/create-organization-form';
+import { SessionUserSync } from '@/components/shared/session-user-sync';
 import { getCurrentUser } from '@/server';
 import { db } from '@pmg/db';
 import { invitation, member } from '@pmg/db/schema';
@@ -31,6 +32,13 @@ export default async function OnboardingPage() {
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+      <SessionUserSync
+        user={{
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email,
+        }}
+      />
       <div className="w-full max-w-2xl">
         <Card>
           <CardHeader className="text-center">

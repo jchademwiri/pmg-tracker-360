@@ -49,16 +49,31 @@ function ensurePage(doc: jsPDF, y: number, needed = 16) {
   return PAGE.margin;
 }
 
+const LOGO_FETCH_TIMEOUT_MS = 5000;
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2MB safety cap
+
 async function fetchLogoBase64(logoUrl: string | null): Promise<string | null> {
   if (!logoUrl) return null;
   try {
-    const response = await fetch(logoUrl);
-    if (!response.ok) return null;
+    const response = await fetch(logoUrl, {
+      signal: AbortSignal.timeout(LOGO_FETCH_TIMEOUT_MS),
+    });
+    if (!response.ok || !response.body) return null;
+
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
+      total += chunk.length;
+      if (total > MAX_LOGO_BYTES) return null;
+      chunks.push(chunk);
+    }
+
     const contentType = response.headers.get('content-type') || 'image/png';
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = Buffer.concat(chunks);
     return `data:${contentType};base64,${buffer.toString('base64')}`;
   } catch {
-    // Logo fetch is best-effort; fall back to text header if it fails.
+    // Logo fetch is best-effort; fall back to text header if it fails,
+    // times out, or exceeds the size cap.
     return null;
   }
 }
@@ -109,10 +124,11 @@ function drawMeta(doc: jsPDF, data: PoPdfData) {
   doc.setTextColor(24, 24, 27);
   doc.text(data.supplierName || 'Not specified', PAGE.margin, y + 7);
 
+  let addressLines: string[] = [];
   if (data.deliveryAddress) {
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    const addressLines = split(doc, data.deliveryAddress, 90);
+    addressLines = split(doc, data.deliveryAddress, 90);
     doc.text(addressLines, PAGE.margin, y + 13);
   }
 
@@ -147,7 +163,14 @@ function drawMeta(doc: jsPDF, data: PoPdfData) {
     doc.text(data.project.projectNumber, PAGE.width - PAGE.margin, y + 14, { align: 'right' });
   }
 
-  y += 24;
+  // Advance past whichever column (address block or PO date/delivery/project
+  // block) rendered taller, instead of a fixed offset that overlaps the
+  // address when it wraps to 4+ lines.
+  const leftColumnHeight = addressLines.length
+    ? 13 + addressLines.length * 3.5
+    : 7;
+  const rightColumnHeight = data.project ? 21 : 14;
+  y += Math.max(leftColumnHeight, rightColumnHeight) + 6;
 
   if (data.description) {
     doc.setFont('helvetica', 'bold');
@@ -165,9 +188,7 @@ function drawMeta(doc: jsPDF, data: PoPdfData) {
   return y + 6;
 }
 
-function drawLineItems(doc: jsPDF, data: PoPdfData, startY: number) {
-  let y = startY;
-
+function drawLineItemsHeader(doc: jsPDF, y: number) {
   doc.setFillColor(249, 250, 251);
   doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 9, 'F');
   doc.setFont('helvetica', 'bold');
@@ -179,14 +200,24 @@ function drawLineItems(doc: jsPDF, data: PoPdfData, startY: number) {
   doc.text('QTY', 134, y + 6, { align: 'right' });
   doc.text('UNIT PRICE', 162, y + 6, { align: 'right' });
   doc.text('SUBTOTAL', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
-  y += 12;
+  return y + 12;
+}
+
+function drawLineItems(doc: jsPDF, data: PoPdfData, startY: number) {
+  let y = drawLineItemsHeader(doc, startY);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   for (const item of data.lineItems) {
     const lines = split(doc, item.description, 82);
     const rowHeight = Math.max(10, lines.length * 4 + 4);
+    const pageBefore = doc.getNumberOfPages();
     y = ensurePage(doc, y, rowHeight);
+    if (doc.getNumberOfPages() !== pageBefore) {
+      y = drawLineItemsHeader(doc, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+    }
     doc.setTextColor(24, 24, 27);
     doc.text(item.itemNumber, PAGE.margin + 2, y + 4);
     doc.text(lines, 32, y + 4);
