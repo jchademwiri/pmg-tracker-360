@@ -9,8 +9,7 @@ import {
 } from '@pmg/db/schema';
 import { eq, desc, and, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 import { uploadDocument } from '@/server/documents';
 import { StorageService } from '@/lib/storage';
@@ -36,9 +35,7 @@ export async function createTenderExtension(
 ) {
   try {
     // 1. Auth Check
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||
@@ -137,9 +134,7 @@ export async function getTenderExtensions(
   tenderId: string
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||
@@ -203,9 +198,7 @@ export async function updateTenderExtension(
   formData?: FormData
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||
@@ -327,9 +320,7 @@ export async function deleteTenderExtension(
   extensionId: string
 ) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (
       !session ||

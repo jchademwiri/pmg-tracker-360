@@ -3,8 +3,7 @@
 import { db } from '@pmg/db';
 import { tender, purchaseOrder, client } from '@pmg/db/schema';
 import { and, eq, gte, isNull, lte, inArray } from 'drizzle-orm';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import { getUserOrganizationMembership } from '@/server/organizations';
 
 type CalendarEventType =
@@ -48,7 +47,7 @@ function clampRange(start: Date, end: Date) {
 export async function getCalendarEvents(
   params: GetCalendarEventsParams
 ): Promise<CalendarEventItem[]> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session?.user) {
     return [];
   }

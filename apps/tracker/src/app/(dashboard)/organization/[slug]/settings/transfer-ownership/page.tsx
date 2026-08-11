@@ -1,8 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getOrganizationBySlug } from '@/server/organizations';
 import { TransferOwnershipClient } from './client';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 
 interface TransferOwnershipPageProps {
   params: Promise<{
@@ -25,9 +24,7 @@ export default async function TransferOwnershipPage({
   }
 
   // Manually check session to handle redirect with callbackUrl
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   if (!session) {
     const callbackUrl = `/organization/${slug}/settings/transfer-ownership?token=${token}`;
