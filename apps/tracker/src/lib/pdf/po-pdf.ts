@@ -6,6 +6,18 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { jsPDF } from 'jspdf';
 
 import { formatCurrency, formatDate } from '@/lib/format';
+import {
+  PAGE,
+  splitText,
+  ensurePage,
+  fetchLogoBase64,
+  parseOrganizationMetadata,
+  drawStandardHeader,
+  drawStandardFooter,
+  drawTable,
+  type OrgBranding,
+  type TableColumn,
+} from './pdf-layout';
 
 const VAT_RATE = 0.15;
 
@@ -20,7 +32,7 @@ type PdfLineItem = {
 };
 
 type PoPdfData = {
-  org: { name: string; logoUrl: string | null };
+  org: OrgBranding;
   poNumber: string;
   status: string;
   description: string;
@@ -33,82 +45,8 @@ type PoPdfData = {
   totals: { subtotal: number; vat: number; total: number };
 };
 
-const PAGE = { width: 210, height: 297, margin: 14, bottom: 280 };
-
 function statusLabel(status: string) {
   return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
-}
-
-function split(doc: jsPDF, text: string | undefined | null, width: number) {
-  return doc.splitTextToSize(text || '', width) as string[];
-}
-
-function ensurePage(doc: jsPDF, y: number, needed = 16) {
-  if (y + needed <= PAGE.bottom) return y;
-  doc.addPage();
-  return PAGE.margin;
-}
-
-const LOGO_FETCH_TIMEOUT_MS = 5000;
-const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2MB safety cap
-
-async function fetchLogoBase64(logoUrl: string | null): Promise<string | null> {
-  if (!logoUrl) return null;
-  try {
-    const response = await fetch(logoUrl, {
-      signal: AbortSignal.timeout(LOGO_FETCH_TIMEOUT_MS),
-    });
-    if (!response.ok || !response.body) return null;
-
-    const chunks: Uint8Array[] = [];
-    let total = 0;
-    for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
-      total += chunk.length;
-      if (total > MAX_LOGO_BYTES) return null;
-      chunks.push(chunk);
-    }
-
-    const contentType = response.headers.get('content-type') || 'image/png';
-    const buffer = Buffer.concat(chunks);
-    return `data:${contentType};base64,${buffer.toString('base64')}`;
-  } catch {
-    // Logo fetch is best-effort; fall back to text header if it fails,
-    // times out, or exceeds the size cap.
-    return null;
-  }
-}
-
-function drawHeader(doc: jsPDF, data: PoPdfData, logoDataUri: string | null) {
-  doc.setFillColor(79, 70, 229); // indigo-600, matches app accent
-  doc.rect(0, 0, PAGE.width, 3, 'F');
-
-  if (logoDataUri) {
-    try {
-      doc.addImage(logoDataUri, PAGE.margin, 10, 20, 20, undefined, 'FAST');
-    } catch {
-      // Corrupt/unsupported image format — fall back to text below.
-    }
-  }
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(24, 24, 27);
-  doc.text(data.org.name, logoDataUri ? PAGE.margin + 26 : PAGE.margin, 18);
-
-  doc.setFontSize(20);
-  doc.setTextColor(161, 161, 170);
-  doc.text('PURCHASE ORDER', PAGE.width - PAGE.margin, 18, { align: 'right' });
-
-  doc.setFontSize(10);
-  doc.setTextColor(63, 63, 70);
-  doc.text(`#${data.poNumber}`, PAGE.width - PAGE.margin, 25, { align: 'right' });
-
-  doc.setFontSize(8);
-  doc.setTextColor(82, 82, 91);
-  doc.text(statusLabel(data.status), PAGE.width - PAGE.margin, 31, { align: 'right' });
-
-  doc.setDrawColor(229, 231, 235);
-  doc.line(PAGE.margin, 40, PAGE.width - PAGE.margin, 40);
 }
 
 function drawMeta(doc: jsPDF, data: PoPdfData) {
@@ -128,7 +66,7 @@ function drawMeta(doc: jsPDF, data: PoPdfData) {
   if (data.deliveryAddress) {
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    addressLines = split(doc, data.deliveryAddress, 90);
+    addressLines = splitText(doc, data.deliveryAddress, 90);
     doc.text(addressLines, PAGE.margin, y + 13);
   }
 
@@ -180,7 +118,7 @@ function drawMeta(doc: jsPDF, data: PoPdfData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    const descLines = split(doc, data.description, PAGE.width - PAGE.margin * 2);
+    const descLines = splitText(doc, data.description, PAGE.width - PAGE.margin * 2);
     doc.text(descLines, PAGE.margin, y + 5);
     y += descLines.length * 4 + 8;
   }
@@ -188,54 +126,21 @@ function drawMeta(doc: jsPDF, data: PoPdfData) {
   return y + 6;
 }
 
-function drawLineItemsHeader(doc: jsPDF, y: number) {
-  doc.setFillColor(249, 250, 251);
-  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 9, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(113, 113, 122);
-  doc.text('ITEM', PAGE.margin + 2, y + 6);
-  doc.text('DESCRIPTION', 32, y + 6);
-  doc.text('UNIT', 118, y + 6, { align: 'right' });
-  doc.text('QTY', 134, y + 6, { align: 'right' });
-  doc.text('UNIT PRICE', 162, y + 6, { align: 'right' });
-  doc.text('SUBTOTAL', PAGE.width - PAGE.margin - 2, y + 6, { align: 'right' });
-  return y + 12;
-}
-
-function drawLineItems(doc: jsPDF, data: PoPdfData, startY: number) {
-  let y = drawLineItemsHeader(doc, startY);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  for (const item of data.lineItems) {
-    const lines = split(doc, item.description, 82);
-    const rowHeight = Math.max(10, lines.length * 4 + 4);
-    const pageBefore = doc.getNumberOfPages();
-    y = ensurePage(doc, y, rowHeight);
-    if (doc.getNumberOfPages() !== pageBefore) {
-      y = drawLineItemsHeader(doc, y);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-    }
-    doc.setTextColor(24, 24, 27);
-    doc.text(item.itemNumber, PAGE.margin + 2, y + 4);
-    doc.text(lines, 32, y + 4);
-    doc.text(item.unit, 118, y + 4, { align: 'right' });
-    doc.text(String(item.quantity), 134, y + 4, { align: 'right' });
-    doc.text(formatCurrency(item.unitPrice), 162, y + 4, { align: 'right' });
-    doc.setFont('helvetica', 'bold');
-    doc.text(formatCurrency(item.subtotal), PAGE.width - PAGE.margin - 2, y + 4, {
-      align: 'right',
-    });
-    doc.setFont('helvetica', 'normal');
-    doc.setDrawColor(244, 244, 245);
-    doc.line(PAGE.margin, y + rowHeight, PAGE.width - PAGE.margin, y + rowHeight);
-    y += rowHeight;
-  }
-
-  return y + 6;
-}
+const LINE_ITEM_COLUMNS: TableColumn[] = [
+  { key: 'itemNumber', label: 'ITEM', widthMm: 28, x: PAGE.margin + 2 },
+  { key: 'description', label: 'DESCRIPTION', widthMm: 82, x: 32, wrap: true },
+  { key: 'unit', label: 'UNIT', widthMm: 12, x: 118, align: 'right' },
+  { key: 'quantity', label: 'QTY', widthMm: 12, x: 134, align: 'right' },
+  { key: 'unitPrice', label: 'UNIT PRICE', widthMm: 24, x: 162, align: 'right' },
+  {
+    key: 'subtotal',
+    label: 'SUBTOTAL',
+    widthMm: 24,
+    x: PAGE.width - PAGE.margin - 2,
+    align: 'right',
+    bold: true,
+  },
+];
 
 function drawTotals(doc: jsPDF, data: PoPdfData, startY: number) {
   let y = ensurePage(doc, startY, 40);
@@ -258,27 +163,30 @@ function drawTotals(doc: jsPDF, data: PoPdfData, startY: number) {
   return y + 4;
 }
 
-function drawFooter(doc: jsPDF) {
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setDrawColor(229, 231, 235);
-    doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(113, 113, 122);
-    doc.text('Generated by PMG Tracker 360', PAGE.margin, 288);
-    doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
-  }
-}
-
-function renderPdf(data: PoPdfData, logoDataUri: string | null) {
+function renderPdf(data: PoPdfData) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  drawHeader(doc, data, logoDataUri);
+  drawStandardHeader(doc, {
+    org: data.org,
+    titleLabel: 'PURCHASE ORDER',
+    primaryLine: `#${data.poNumber}`,
+    secondaryLine: statusLabel(data.status),
+  });
   let y = drawMeta(doc, data);
-  y = drawLineItems(doc, data, y);
+  y = drawTable(doc, {
+    startY: y,
+    columns: LINE_ITEM_COLUMNS,
+    rows: data.lineItems.map((item) => ({
+      itemNumber: item.itemNumber,
+      description: item.description,
+      unit: item.unit,
+      quantity: String(item.quantity),
+      unitPrice: formatCurrency(item.unitPrice),
+      subtotal: formatCurrency(item.subtotal),
+    })),
+    emptyMessage: 'No line items.',
+  });
   y = drawTotals(doc, data, y);
-  drawFooter(doc);
+  drawStandardFooter(doc);
   return Buffer.from(doc.output('arraybuffer'));
 }
 
@@ -301,8 +209,17 @@ export async function generatePurchaseOrderPdf(organizationId: string, poId: str
   const subtotal = parseFloat(po.totalAmount) || 0;
   const vat = subtotal * VAT_RATE;
 
+  const orgMeta = parseOrganizationMetadata(po.organization.metadata);
+  const logoDataUri = await fetchLogoBase64(po.organization.logo);
+
   const data: PoPdfData = {
-    org: { name: po.organization.name, logoUrl: po.organization.logo },
+    org: {
+      name: po.organization.name,
+      logoDataUri,
+      phone: orgMeta.phone,
+      address: orgMeta.address,
+      website: orgMeta.website,
+    },
     poNumber: po.poNumber,
     status: po.status,
     description: po.description,
@@ -325,10 +242,8 @@ export async function generatePurchaseOrderPdf(organizationId: string, poId: str
     totals: { subtotal, vat, total: subtotal + vat },
   };
 
-  const logoDataUri = await fetchLogoBase64(data.org.logoUrl);
-
   return {
     fileName: `PO-${po.poNumber}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, '-'),
-    buffer: renderPdf(data, logoDataUri),
+    buffer: renderPdf(data),
   };
 }
