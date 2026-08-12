@@ -17,7 +17,7 @@ import {
 import type { TenderWinLossReportData } from '@/server/tender-reports';
 
 function drawSummary(doc: jsPDF, data: TenderWinLossReportData) {
-  let y = 52;
+  const y = 52;
 
   const cards: Array<[string, string]> = [
     ['Win Rate', `${data.summary.winRate}%`],
