@@ -250,7 +250,9 @@ export function TenderDetails({
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      // Defer revoking: some browsers haven't started reading the blob yet
+      // and will cancel the download if the URL is revoked synchronously.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       toast.success('PDF downloaded successfully', { id: toastId });
     } catch (error) {

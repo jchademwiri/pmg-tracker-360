@@ -113,8 +113,8 @@ export async function getTenderWinLossReport(organizationId: string) {
     };
 
     return { success: true as const, data };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error building tender win/loss report:', error);
-    return { success: false as const, error: error.message || 'Failed to build report' };
+    return { success: false as const, error: 'Failed to build report' };
   }
 }

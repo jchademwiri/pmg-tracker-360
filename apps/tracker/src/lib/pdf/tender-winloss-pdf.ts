@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from '@/lib/format';
 import { getTenderWinLossReport } from '@/server/tender-reports';
 import {
   PAGE,
+  splitText,
   ensurePage,
   fetchLogoBase64,
   parseOrganizationMetadata,
@@ -28,19 +29,27 @@ function drawSummary(doc: jsPDF, data: TenderWinLossReportData) {
   ];
 
   const colWidth = (PAGE.width - PAGE.margin * 2) / cards.length;
+  const valueWidth = colWidth - 4; // small gutter before the next card
+  let maxValueLines = 1;
+
   cards.forEach(([label, value], index) => {
     const x = PAGE.margin + index * colWidth;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(113, 113, 122);
     doc.text(label.toUpperCase(), x, y);
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(24, 24, 27);
-    doc.text(value, x, y + 8);
+    // Wrap within the card's width instead of overflowing into the next
+    // card — totals summed across many tenders can exceed a single line.
+    const valueLines = splitText(doc, value, valueWidth);
+    maxValueLines = Math.max(maxValueLines, valueLines.length);
+    doc.text(valueLines, x, y + 8);
   });
 
-  return y + 18;
+  return y + 8 + maxValueLines * 5 + 5;
 }
 
 const AWARDED_COLUMNS: TableColumn[] = [

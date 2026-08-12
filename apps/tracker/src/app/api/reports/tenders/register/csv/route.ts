@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
 import { auth } from '@/lib/auth';
-import { generateTenderWinLossPdf } from '@/lib/pdf/tender-winloss-pdf';
+import { getTendersExportCsv } from '@/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,16 +28,16 @@ export async function GET() {
     return NextResponse.json({ error: 'Insufficient permissions.' }, { status: 403 });
   }
 
-  const result = await generateTenderWinLossPdf(session.session.activeOrganizationId);
+  const result = await getTendersExportCsv(session.session.activeOrganizationId);
 
-  if (!result) {
-    return NextResponse.json({ error: 'Failed to generate report.' }, { status: 500 });
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  return new NextResponse(new Uint8Array(result.buffer), {
+  return new NextResponse(result.csv, {
     headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${result.fileName}"`,
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
       'Cache-Control': 'no-store',
     },
   });

@@ -12,7 +12,7 @@ export function escapeCsvCell(value: string | number | null | undefined): string
     str = `'${str}`;
   }
 
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+  if (/[",\r\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { jsPDF } from 'jspdf';
+import { StorageService } from '@/lib/storage';
 
 export const PAGE = { width: 210, height: 297, margin: 14, bottom: 280 };
 
@@ -17,13 +18,63 @@ export function ensurePage(doc: jsPDF, y: number, needed = 16) {
 const LOGO_FETCH_TIMEOUT_MS = 5000;
 const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2MB safety cap
 
-export async function fetchLogoBase64(logoUrl: string | null): Promise<string | null> {
-  if (!logoUrl) return null;
+function getAllowedLogoHost(): string | null {
   try {
-    const response = await fetch(logoUrl, {
+    const endpoint =
+      process.env.S3_API ||
+      (process.env.R2_ACCOUNT_ID
+        ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+        : null);
+    return endpoint ? new URL(endpoint).hostname : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedLogoUrl(url: URL): boolean {
+  if (url.protocol !== 'https:') return false;
+  const allowedHost = getAllowedLogoHost();
+  if (!allowedHost) return false;
+  return url.hostname === allowedHost || url.hostname.endsWith(`.${allowedHost}`);
+}
+
+/**
+ * `organization.logo` is either a stored object key (from the upload flow —
+ * resolve via a signed URL scoped to our own bucket) or, for legacy/manually
+ * entered values, an arbitrary URL. Since organization admins fully control
+ * this field, never fetch it directly: resolve keys through
+ * StorageService.getSignedUrl (never a raw attacker-supplied host) and
+ * reject anything that doesn't resolve to our configured storage host.
+ */
+async function resolveLogoUrl(logo: string | null): Promise<string | null> {
+  if (!logo) return null;
+  if (/^https?:\/\//i.test(logo)) return logo;
+  const signedUrl = await StorageService.getSignedUrl(logo);
+  return signedUrl.startsWith('http') ? signedUrl : null;
+}
+
+export async function fetchLogoBase64(logo: string | null): Promise<string | null> {
+  const logoUrl = await resolveLogoUrl(logo);
+  if (!logoUrl) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(logoUrl);
+  } catch {
+    return null;
+  }
+
+  // SSRF guard: organization logos are attacker-controlled input (any org
+  // owner/admin can set one), so only ever fetch from our own storage host
+  // over HTTPS, and never follow a redirect to an unvalidated host.
+  if (!isAllowedLogoUrl(parsed)) return null;
+
+  try {
+    const response = await fetch(parsed.toString(), {
       signal: AbortSignal.timeout(LOGO_FETCH_TIMEOUT_MS),
+      redirect: 'manual',
     });
-    if (!response.ok || !response.body) return null;
+    if (response.status !== 200 || !response.body) return null;
 
     const chunks: Uint8Array[] = [];
     let total = 0;

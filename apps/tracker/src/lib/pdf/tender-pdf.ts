@@ -58,7 +58,9 @@ function drawMeta(
   doc.setFontSize(8);
   doc.setTextColor(82, 82, 91);
   const contactLines = [data.contactName, data.contactEmail, data.contactPhone].filter(Boolean) as string[];
-  doc.text(contactLines.length ? contactLines.join(' · ') : 'Not specified', PAGE.margin, y + 20);
+  const contactText = contactLines.length ? contactLines.join(' · ') : 'Not specified';
+  const contactSplit = splitText(doc, contactText, 90);
+  doc.text(contactSplit, PAGE.margin, y + 20);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
@@ -98,7 +100,12 @@ function drawMeta(
     doc.text(formatCurrency(data.awardValue), PAGE.width - PAGE.margin, y + 21, { align: 'right' });
   }
 
-  y += 28;
+  // Advance past whichever column (contact block, now that it can wrap, or
+  // the date/value column) rendered taller, instead of a fixed offset that
+  // could overlap the Briefing section below it.
+  const leftColumnHeight = 20 + contactSplit.length * 3.5;
+  const rightColumnHeight = data.awardValue ? 24 : 17;
+  y += Math.max(leftColumnHeight, rightColumnHeight) + 4;
 
   if (data.briefingDate) {
     doc.setFont('helvetica', 'bold');
@@ -154,7 +161,10 @@ function renderPdf(data: {
   let y = drawMeta(doc, data);
 
   if (data.description) {
-    y = ensurePage(doc, y, 20);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const descLines = splitText(doc, data.description, PAGE.width - PAGE.margin * 2);
+    y = ensurePage(doc, y, descLines.length * 4 + 10);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(113, 113, 122);
@@ -162,13 +172,18 @@ function renderPdf(data: {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    const descLines = splitText(doc, data.description, PAGE.width - PAGE.margin * 2);
     doc.text(descLines, PAGE.margin, y + 5);
     y += descLines.length * 4 + 10;
   }
 
   if (data.status === 'lost' && (data.lossReason || data.lossDetails)) {
-    y = ensurePage(doc, y, 24);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const detailLines = data.lossDetails
+      ? splitText(doc, data.lossDetails, PAGE.width - PAGE.margin * 2)
+      : [];
+    const neededHeight = 10 + (data.lossDetails ? detailLines.length * 4 + 8 : 0);
+    y = ensurePage(doc, y, neededHeight);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(113, 113, 122);
@@ -187,7 +202,6 @@ function renderPdf(data: {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(82, 82, 91);
-      const detailLines = splitText(doc, data.lossDetails, PAGE.width - PAGE.margin * 2);
       doc.text(detailLines, PAGE.margin, y + 5);
       y += detailLines.length * 4 + 8;
     }

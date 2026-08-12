@@ -1,11 +1,12 @@
-import { FileSpreadsheet, Trophy, Download } from 'lucide-react';
+import { FileSpreadsheet, Trophy } from 'lucide-react';
 
-import { getCurrentUser, getTendersExportCsv } from '@/server';
+import { getCurrentUser } from '@/server';
 import { getReportStats } from '@/server/reports';
 import { ReportStatsCards } from '@/components/reports/stats-cards';
 import { TenderPerformanceChart } from '@/components/reports/tender-performance-chart';
 import { RevenueForecastChart } from '@/components/reports/revenue-forecast-chart';
 import { TenderWinLossPdfButton } from '@/components/reports/tender-winloss-pdf-button';
+import { TenderRegisterCsvButton } from '@/components/reports/tender-register-csv-button';
 import {
   Card,
   CardContent,
@@ -36,10 +37,6 @@ export default async function ReportsPage() {
 
   const result = await getReportStats(session.activeOrganizationId);
   const stats = result.stats;
-
-  const csvResult = await getTendersExportCsv(session.activeOrganizationId);
-  const csvData = csvResult.success ? csvResult.csv : null;
-  const csvFilename = csvResult.success ? csvResult.filename : 'tender-register.csv';
 
   return (
     <div className="space-y-6">
@@ -99,18 +96,7 @@ export default async function ReportsPage() {
                 Every tender with client, status, priority, dates, and value — as a CSV for
                 spreadsheet review or record-keeping.
               </CardDescription>
-              {csvData ? (
-                <a
-                  href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`}
-                  download={csvFilename}
-                  className="inline-flex w-full items-center justify-center gap-2 h-9 px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  <Download className="h-4 w-4" />
-                  Download CSV
-                </a>
-              ) : (
-                <p className="text-sm text-muted-foreground">Export unavailable right now.</p>
-              )}
+              <TenderRegisterCsvButton />
             </CardContent>
           </Card>
 

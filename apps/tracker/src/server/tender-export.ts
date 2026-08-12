@@ -65,8 +65,8 @@ export async function getTendersExportCsv(organizationId: string) {
       csv,
       filename: `tender-register-${new Date().toISOString().split('T')[0]}.csv`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error exporting tenders CSV:', error);
-    return { success: false as const, error: error.message || 'Failed to export tenders' };
+    return { success: false as const, error: 'Failed to export tenders' };
   }
 }
