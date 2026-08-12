@@ -13,7 +13,7 @@ import {
   Calendar,
   MoreHorizontal,
   Building,
-
+  FileDown,
   CheckCircle2,
   Plus,
   PhoneCall,
@@ -236,6 +236,29 @@ export function TenderDetails({
     router.push('/tenders');
   };
 
+  const handleExportPdf = async () => {
+    const toastId = toast.loading('Generating PDF...');
+    try {
+      const response = await fetch(`/api/tenders/${tender.id}/pdf`);
+      if (!response.ok) throw new Error('PDF generation failed');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Tender-${tender.tenderNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      toast.success('PDF downloaded successfully', { id: toastId });
+    } catch (error) {
+      console.error('Tender PDF export failed:', error);
+      toast.error('Failed to generate PDF. Please try again.', { id: toastId });
+    }
+  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return 'Not set';
     return formatDateTime(date, 'Not set');
@@ -288,6 +311,10 @@ export function TenderDetails({
               <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Tender
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer">
+                <FileDown className="h-4 w-4 mr-2" />
+                Export PDF
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDelete}
