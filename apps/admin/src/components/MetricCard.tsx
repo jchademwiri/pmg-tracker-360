@@ -37,6 +37,8 @@ type MetricCardProps = {
   icon: ReactNode;
   variant: Variant;
   secondaryNote?: string;
+  /** When set, the whole card links here (e.g. a filtered drill-down view). */
+  href?: string;
 };
 
 export default function MetricCard({
@@ -45,11 +47,12 @@ export default function MetricCard({
   icon,
   variant,
   secondaryNote,
+  href,
 }: MetricCardProps) {
   const { iconBg, iconBorder, countColor } = VARIANT_MAP[variant];
 
-  return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-start justify-between gap-4">
+  const content = (
+    <>
       <div className="flex flex-col gap-1 min-w-0">
         <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{label}</p>
         <p className={`text-2xl font-bold ${countColor}`}>{count}</p>
@@ -62,6 +65,23 @@ export default function MetricCard({
       >
         {icon}
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-start justify-between gap-4 hover:border-zinc-700 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-start justify-between gap-4">
+      {content}
     </div>
   );
 }

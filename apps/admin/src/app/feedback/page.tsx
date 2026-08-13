@@ -1,6 +1,4 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { requireAdminPage } from '@/lib/require-admin-page';
 import { getFeedback } from '@/lib/admin-queries';
 import FeedbackListClient from './FeedbackListClient';
 
@@ -10,8 +8,7 @@ export default async function FeedbackPage({
   searchParams?: Promise<{ type?: string; page?: string }>;
 }) {
   // 1. Auth guard
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') redirect('/login');
+  await requireAdminPage();
 
   // 2. Read type filter from URL
   const params = await searchParams;

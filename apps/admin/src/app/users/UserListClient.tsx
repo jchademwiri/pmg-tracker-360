@@ -57,13 +57,21 @@ type Props = {
    * ever contains one system role.
    */
   showRoleFilter?: boolean;
+  /** Pre-applies the verified filter, e.g. when linked from a dashboard drill-down. */
+  initialVerifiedFilter?: 'all' | 'verified' | 'unverified';
 };
 
-export default function UserListClient({ users, showRoleFilter = true }: Props) {
+export default function UserListClient({
+  users,
+  showRoleFilter = true,
+  initialVerifiedFilter = 'all',
+}: Props) {
   const router = useRouter();
   const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'starter' | 'pro'>('all');
   const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
-  const [verifiedFilter, setVerifiedFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const [verifiedFilter, setVerifiedFilter] = useState<'all' | 'verified' | 'unverified'>(
+    initialVerifiedFilter
+  );
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());

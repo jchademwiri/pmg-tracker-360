@@ -38,7 +38,7 @@ export async function sendAdminInvitationEmail(params: {
         <p style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0;">Hello ${params.name},</p>
         <p style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0;">You have been granted system administrator access to the Tender Track 360 admin console.</p>
         ${invitedByLine}
-        <p style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0;">On the sign-in page, choose the <strong>passwordless</strong> option and enter this email address — <strong>${params.to}</strong> — and we'll send you a one-time verification code. You do not have a password to set.</p>
+        <p style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 24px 0;">On the sign-in page, choose the <strong>passwordless</strong> option and enter this email address — <strong>${params.to}</strong> — and we'll send you a one-time verification code. You'll be asked to set your own password the first time you sign in.</p>
 
         <div style="text-align: center; margin: 24px 0;">
           <a href="${loginUrl}" style="background-color: #0f172a; color: #ffffff; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 14px;">Go to Admin Sign-In</a>

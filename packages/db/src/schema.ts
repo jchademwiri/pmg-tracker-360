@@ -35,6 +35,12 @@ export const user = pgTable('user', {
   plan: text('plan').default('free').notNull(),
   role: text('role').default('user').notNull(),
   lastActiveOrganizationId: text('last_active_organization_id'),
+  /**
+   * Set when an account is created with a system-generated placeholder
+   * password the user never chose (e.g. a system admin invite). Cleared once
+   * they set their own password. Used to force that prompt on first login.
+   */
+  mustSetPassword: boolean('must_set_password').default(false).notNull(),
 });
 
 export type User = typeof user.$inferSelect;
