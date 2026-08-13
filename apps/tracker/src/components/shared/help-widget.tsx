@@ -40,7 +40,7 @@ import { submitFeedback } from '@/server/feedback';
 import { createSupportTicket } from '@/server/support';
 import { usePathname } from 'next/navigation';
 import { CONTACT_INFO } from '@/lib/constants';
-import { authClient } from '@/lib/auth-client';
+import { useSessionUser } from '@/lib/client-session-store';
 
 type DialogMode = 'feedback' | 'support' | null;
 
@@ -50,8 +50,11 @@ export function HelpWidget() {
     'other'
   );
 
-  // Session State
-  const { data: session } = authClient.useSession();
+  // Read from a module-level store populated by SessionUserSync inside the
+  // dashboard layout (already has the session server-side) — avoids this
+  // globally-mounted widget making its own client-side
+  // /api/auth/get-session request.
+  const user = useSessionUser();
 
   // Feedback Form State
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -72,14 +75,14 @@ export function HelpWidget() {
     setIsMounted(true);
   }, []);
 
-  // Update form defaults when session loads
+  // Update form defaults when user data is available
   useEffect(() => {
-    if (session?.user) {
-      if (!feedbackEmail) setFeedbackEmail(session.user.email || '');
-      if (!supportEmail) setSupportEmail(session.user.email || '');
-      if (!supportName) setSupportName(session.user.name || '');
+    if (user) {
+      if (!feedbackEmail) setFeedbackEmail(user.email || '');
+      if (!supportEmail) setSupportEmail(user.email || '');
+      if (!supportName) setSupportName(user.name || '');
     }
-  }, [session]);
+  }, [user]);
 
   const handleFeedbackSubmit = () => {
     if (!feedbackMessage.trim()) {
@@ -93,8 +96,8 @@ export function HelpWidget() {
         type: feedbackType,
         url: pathname,
         email: feedbackEmail || undefined,
-        userId: session?.user?.id,
-        name: session?.user?.name || undefined,
+        userId: user?.id,
+        name: user?.name || undefined,
       });
 
       if (result.success) {
@@ -102,7 +105,7 @@ export function HelpWidget() {
         setDialogMode(null);
         setFeedbackMessage('');
         // Don't clear email if logged in
-        if (!session?.user) setFeedbackEmail('');
+        if (!user) setFeedbackEmail('');
         setFeedbackType('other');
       } else {
         toast.error(result.error || 'Something went wrong');
@@ -121,14 +124,14 @@ export function HelpWidget() {
         name: supportName,
         email: supportEmail,
         message: supportMessage,
-        userId: session?.user?.id,
+        userId: user?.id,
       });
 
       if (result.success) {
         toast.success('Support ticket created! We will contact you shortly.');
         setDialogMode(null);
         // Don't clear name/email if logged in
-        if (!session?.user) {
+        if (!user) {
           setSupportName('');
           setSupportEmail('');
         }

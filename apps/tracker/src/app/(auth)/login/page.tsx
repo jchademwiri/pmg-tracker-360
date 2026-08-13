@@ -1,7 +1,6 @@
 import { LoginForm } from '@/components/forms';
-import { auth } from '@/lib/auth';
+import { getServerSession } from '@/lib/auth';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
@@ -9,9 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   if (session) {
     redirect('/dashboard');

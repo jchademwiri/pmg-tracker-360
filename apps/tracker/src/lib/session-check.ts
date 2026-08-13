@@ -1,16 +1,13 @@
 'use server';
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
 import { db } from '@pmg/db';
 import { member, organization } from '@pmg/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 
 export async function checkUserSession() {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (!session) {
       return { hasSession: false, hasOrganization: false };

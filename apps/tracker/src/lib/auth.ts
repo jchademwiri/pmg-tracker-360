@@ -1,3 +1,5 @@
+import { cache } from 'react';
+import { headers } from 'next/headers';
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { organization, magicLink } from 'better-auth/plugins';
@@ -12,7 +14,6 @@ import ResetPasswordEmail from '@/emails/reset-password-email';
 import VerifyEmail from '@/emails/verify-email';
 import { getActiveOrganization } from '@/server';
 import OrganizationInvitation from '@/emails/organization-invitation';
-import { verifyBotProtection } from '@/lib/bot-protection';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -96,22 +97,6 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const botCheck = await verifyBotProtection({
-            name: user.name,
-            email: user.email,
-          });
-
-          if (botCheck.isBot) {
-            throw new Error(botCheck.reason || 'Account creation rejected by security rules.');
-          }
-
-          return { data: user };
-        },
-      },
-    },
     session: {
       create: {
         before: async (session) => {
@@ -329,4 +314,11 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
+});
+
+// Memoized per-request: many server functions independently need the
+// session, and each auth.api.getSession() call counts against better-auth's
+// rate limiter. cache() ensures a single request-scope fetch is reused.
+export const getServerSession = cache(async () => {
+  return auth.api.getSession({ headers: await headers() });
 });

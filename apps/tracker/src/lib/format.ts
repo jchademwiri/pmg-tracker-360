@@ -39,6 +39,14 @@ export function formatDateTime(
 /**
  * Formats a monetary value as South African Rand (ZAR).
  * Accepts number, numeric string, null, or undefined.
+ *
+ * Deliberately does NOT use Intl.NumberFormat's 'en-ZA' currency style: its
+ * digit-group separator (comma vs. narrow no-break space) depends on the
+ * runtime's ICU/CLDR data, which differs between Node (SSR) and the
+ * browser (CSR) — causing a React hydration mismatch on every rendered
+ * currency value. 'en-US' grouping is a plain comma everywhere, so we
+ * format the digits with it and prepend "R" ourselves for a
+ * deterministic result regardless of runtime.
  */
 export function formatCurrency(
   amount: number | string | null | undefined,
@@ -53,13 +61,16 @@ export function formatCurrency(
 
   if (isNaN(numericAmount)) return 'R 0';
 
-  return new Intl.NumberFormat('en-ZA', {
-    style: 'currency',
-    currency: 'ZAR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-    ...options,
-  }).format(numericAmount);
+  const minimumFractionDigits = options.minimumFractionDigits ?? 0;
+  const maximumFractionDigits = options.maximumFractionDigits ?? minimumFractionDigits;
+
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(Math.abs(numericAmount));
+
+  const sign = numericAmount < 0 ? '-' : '';
+  return `${sign}R ${formatted}`;
 }
 
 export function formatNumber(

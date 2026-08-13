@@ -2,8 +2,8 @@ import { db } from '@pmg/db';
 import { invitation, user } from '@pmg/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import AcceptInvitationClient from '@/components/invite/AcceptInvitationClient';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
+import { SessionUserSync } from '@/components/shared/session-user-sync';
 
 type Props = {
   params: Promise<{
@@ -38,12 +38,21 @@ export default async function InviteAcceptPage({ params }: Props) {
   });
 
   // Check if current user is logged in
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getServerSession();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
+      <SessionUserSync
+        user={
+          session?.user
+            ? {
+                id: session.user.id,
+                name: session.user.name,
+                email: session.user.email,
+              }
+            : null
+        }
+      />
       <div className="w-full max-w-2xl">
         {/* Server renders invite details and shows client component for actions */}
         <div className="mb-6">

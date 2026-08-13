@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
+import { auth, getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { db } from '@pmg/db';
@@ -65,9 +65,7 @@ export async function updateProfile(
 ): Promise<ActionResult> {
   try {
     // Get current session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (!session) {
       return {
@@ -160,9 +158,7 @@ const PASSWORD_CHANGE_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
 export async function resendVerificationEmail(): Promise<ActionResult> {
   try {
     // Get current session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (!session) {
       return {
@@ -267,9 +263,7 @@ export async function changePassword(
 ): Promise<ActionResult> {
   try {
     // Get current session
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (!session) {
       return {
@@ -427,9 +421,7 @@ function getLocationFromIP(ipAddress: string | null): string {
 export async function getUserSessions(): Promise<ActionResult> {
   try {
     // Get current session
-    const currentSession = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const currentSession = await getServerSession();
 
     if (!currentSession) {
       return {
@@ -479,9 +471,7 @@ export async function getUserSessions(): Promise<ActionResult> {
 export async function revokeSession(sessionId: string): Promise<ActionResult> {
   try {
     // Get current session
-    const currentSession = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const currentSession = await getServerSession();
 
     if (!currentSession) {
       return {
@@ -524,9 +514,7 @@ export async function revokeSession(sessionId: string): Promise<ActionResult> {
 export async function revokeAllOtherSessions(): Promise<ActionResult> {
   try {
     // Get current session
-    const currentSession = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const currentSession = await getServerSession();
 
     if (!currentSession) {
       return {

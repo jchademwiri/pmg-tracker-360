@@ -106,6 +106,32 @@ describe('formatCurrency', () => {
       expect(result).toContain('234');
     });
   });
+
+  describe('deterministic grouping (regression: SSR/CSR hydration mismatch)', () => {
+    // formatCurrency previously used Intl.NumberFormat('en-ZA', { style: 'currency', ... }),
+    // whose digit-group separator (comma vs. narrow no-break space) depends on the
+    // runtime's ICU/CLDR data. That made server-rendered and client-rendered output
+    // diverge for the same value, breaking React hydration on every currency display.
+    // These assertions pin the exact output so a regression to locale-dependent
+    // grouping fails the test instead of only showing up as a hydration warning.
+    it('formats thousands with a literal comma', () => {
+      expect(formatCurrency(75030)).toBe('R 75,030');
+    });
+
+    it('formats millions with literal commas', () => {
+      expect(formatCurrency(1000000)).toBe('R 1,000,000');
+    });
+
+    it('formats negative amounts with a leading minus before R', () => {
+      expect(formatCurrency(-500)).toBe('-R 500');
+    });
+
+    it('formats with fraction digit options and comma grouping', () => {
+      expect(formatCurrency(1234.56, { minimumFractionDigits: 2, maximumFractionDigits: 2 })).toBe(
+        'R 1,234.56'
+      );
+    });
+  });
 });
 
 describe('formatDate', () => {
