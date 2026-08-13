@@ -32,6 +32,7 @@
     "S3_API",
     "SENDER_NAME",
     "SENDER_EMAIL",
+    "REPLY_TO_EMAIL",
     "RESEND_DOMAIN"
   ],
   "tasks": {

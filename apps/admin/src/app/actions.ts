@@ -8,6 +8,7 @@ import { db } from '@pmg/db';
 import { user, verification } from '@pmg/db/schema';
 import { eq, sql, count } from 'drizzle-orm';
 import { getAdminBaseURL } from '@/lib/urls';
+import { sendAdminInvitationEmail } from '@/lib/admin-invite-email';
 
 /**
  * Sends a magic link and 6-digit OTP code to registered administrators.
@@ -102,28 +103,115 @@ export async function adminSignOut() {
   redirect('/login');
 }
 
+export type AdminActionResult =
+  | { success: true; message: string }
+  | { success: false; error: string };
+
 /**
- * Creates and registers a new system administrator.
+ * Requires an active system administrator, except during initial setup when no
+ * administrator exists yet.
  */
-export async function createSystemAdmin(name: string, email: string, password: string) {
+async function requireAdminSession() {
+  const adminCountResult = await db
+    .select({ count: count() })
+    .from(user)
+    .where(eq(user.role, 'admin'));
+
+  const adminCount = adminCountResult[0]?.count ?? 0;
+
+  if (adminCount === 0) {
+    return { ok: true as const, session: null };
+  }
+
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session || !session.user || (session.user as any).role !== 'admin') {
+    return { ok: false as const, error: 'Access Denied: Unauthorized.' };
+  }
+
+  return { ok: true as const, session };
+}
+
+/**
+ * Self-registration for the very first system administrator, from /setup.
+ *
+ * This is distinct from `inviteSystemAdmin`: the person is creating their own
+ * account and choosing their own password, so no invitation is sent.
+ */
+export async function createSystemAdmin(
+  name: string,
+  email: string,
+  password: string
+): Promise<AdminActionResult> {
   try {
-    // Check total admins in DB. If zero exist, allow initial setup without session.
-    const adminCountResult = await db
-      .select({ count: count() })
-      .from(user)
-      .where(eq(user.role, 'admin'));
-
-    const adminCount = adminCountResult[0]?.count ?? 0;
-
-    if (adminCount > 0) {
-      // Must be an active system administrator to create or promote another admin
-      const session = await auth.api.getSession({
-        headers: await headers(),
-      });
-      if (!session || !session.user || (session.user as any).role !== 'admin') {
-        return { success: false, error: 'Access Denied: Unauthorized.' };
-      }
+    const guard = await requireAdminSession();
+    if (!guard.ok) {
+      return { success: false, error: guard.error };
     }
+
+    const existing = await db
+      .select()
+      .from(user)
+      .where(eq(sql`lower(${user.email})`, email.toLowerCase()));
+
+    if (existing.length > 0) {
+      const existingUser = existing[0];
+      if (existingUser.role === 'admin') {
+        return { success: false, error: 'This user is already a system administrator.' };
+      }
+
+      await db
+        .update(user)
+        .set({ role: 'admin' })
+        .where(eq(sql`lower(${user.email})`, email.toLowerCase()));
+
+      revalidatePath('/users');
+      revalidatePath('/system-admins');
+
+      return {
+        success: true,
+        message: `Existing user ${existingUser.email} has been successfully promoted to system administrator!`,
+      };
+    }
+
+    await auth.api.signUpEmail({
+      body: { email, password, name },
+      headers: await headers(),
+    });
+
+    await db
+      .update(user)
+      .set({ role: 'admin' })
+      .where(eq(sql`lower(${user.email})`, email.toLowerCase()));
+
+    revalidatePath('/users');
+    revalidatePath('/system-admins');
+
+    return { success: true, message: `System administrator ${email} successfully created!` };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Error in createSystemAdmin:', e);
+    return { success: false, error: e.message || 'An error occurred during account creation' };
+  }
+}
+
+/**
+ * Invites someone to become a system administrator and emails them.
+ *
+ * The invitee is never given a password: they sign in through the existing
+ * passwordless flow. A random password is set only because `signUpEmail`
+ * requires one, and it is never shared or used.
+ */
+export async function inviteSystemAdmin(
+  name: string,
+  email: string
+): Promise<AdminActionResult> {
+  try {
+    const guard = await requireAdminSession();
+    if (!guard.ok) {
+      return { success: false, error: guard.error };
+    }
+    const invitedBy = guard.session?.user?.name ?? null;
 
     // 1. Check if user already exists (case-insensitive)
     const existing = await db
@@ -143,20 +231,25 @@ export async function createSystemAdmin(name: string, email: string, password: s
         .set({ role: 'admin' })
         .where(eq(sql`lower(${user.email})`, email.toLowerCase()));
 
-      // Revalidate cache
       revalidatePath('/users');
+      revalidatePath('/system-admins');
 
-      return {
-        success: true,
-        message: `Existing user ${existingUser.email} has been successfully promoted to system administrator!`,
-      };
+      // The promote branch previously notified nobody at all.
+      return notifyInvitee({
+        email: existingUser.email,
+        name: existingUser.name,
+        invitedBy,
+        successMessage: `${existingUser.email} has been promoted to system administrator and notified by email.`,
+        createdMessage: `${existingUser.email} has been promoted to system administrator`,
+      });
     }
 
-    // 2. Register via Better Auth
+    // 2. Register via Better Auth. The password is random and never shared —
+    // the invitee signs in with a magic link.
     await auth.api.signUpEmail({
       body: {
         email,
-        password,
+        password: crypto.randomUUID(),
         name,
       },
       headers: await headers(),
@@ -170,11 +263,92 @@ export async function createSystemAdmin(name: string, email: string, password: s
 
     // 4. Revalidate cache
     revalidatePath('/users');
+    revalidatePath('/system-admins');
 
-    return { success: true, message: `System administrator ${email} successfully created!` };
+    return notifyInvitee({
+      email,
+      name,
+      invitedBy,
+      successMessage: `System administrator ${email} created and invitation sent.`,
+      createdMessage: `System administrator ${email} was created`,
+    });
   } catch (error) {
     const e = error as Error;
+    console.error('Error in inviteSystemAdmin:', e);
     return { success: false, error: e.message || 'An error occurred during account creation' };
+  }
+}
+
+/**
+ * Sends the invitation and reports the outcome without overstating it.
+ *
+ * The account change has already been committed by the time this runs, so a
+ * failed send must not read as a plain failure — nor as a plain success, which
+ * is what previously let a silently-unsent invitation look like it worked.
+ */
+async function notifyInvitee(params: {
+  email: string;
+  name: string;
+  invitedBy: string | null;
+  successMessage: string;
+  createdMessage: string;
+}): Promise<AdminActionResult> {
+  try {
+    await sendAdminInvitationEmail({
+      to: params.email,
+      name: params.name,
+      invitedBy: params.invitedBy,
+    });
+    return { success: true, message: params.successMessage };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Admin invitation email failed:', e);
+    return {
+      success: false,
+      error: `${params.createdMessage}, but the invitation email could not be sent: ${
+        e.message || 'unknown error'
+      }. Use "Resend invite" once email delivery is working.`,
+    };
+  }
+}
+
+/**
+ * Re-sends the invitation email to an existing system administrator, for when
+ * the original never arrived.
+ */
+export async function resendAdminInvitation(
+  email: string
+): Promise<AdminActionResult> {
+  try {
+    const guard = await requireAdminSession();
+    if (!guard.ok) {
+      return { success: false, error: guard.error };
+    }
+
+    const formattedEmail = email.trim().toLowerCase();
+
+    const target = await db.query.user.findFirst({
+      where: eq(sql`lower(${user.email})`, formattedEmail),
+    });
+
+    if (!target || target.role !== 'admin') {
+      return {
+        success: false,
+        error: 'No system administrator found with that email address.',
+      };
+    }
+
+    await sendAdminInvitationEmail({
+      to: target.email,
+      name: target.name,
+      invitedBy: guard.session?.user?.name ?? null,
+    });
+
+    return { success: true, message: `Invitation re-sent to ${target.email}.` };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Error in resendAdminInvitation:', e);
+    return { success: false, error: e.message || 'Failed to resend the invitation.' };
   }
 }
 
