@@ -2,26 +2,33 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { signOut } from '@/lib/auth-client';
+import { sendVerificationEmail } from '@/server';
 
 export default function AcceptInvitationClient({
   invitationId,
   inviteEmail,
   userExists,
   currentUserEmail,
+  currentUserVerified,
 }: {
   invitationId: string;
   inviteEmail: string;
   userExists: boolean;
   currentUserEmail?: string | null;
+  currentUserVerified?: boolean;
 }) {
+  const router = useRouter();
   const [showSignUp, setShowSignUp] = useState(!userExists && !currentUserEmail);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const currentPath = `/invite/accept/${invitationId}`;
@@ -46,6 +53,29 @@ export default function AcceptInvitationClient({
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!currentUserEmail) return;
+    setIsResending(true);
+    try {
+      const { success, message } = await sendVerificationEmail(currentUserEmail);
+      if (success) {
+        toast.success('Verification email sent. Check your inbox.');
+      } else {
+        toast.error(message || 'Failed to send verification email.');
+      }
+    } catch {
+      toast.error('Failed to send verification email.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleCheckVerified = () => {
+    setIsRefreshing(true);
+    router.refresh();
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
   /* ── Case 1: Logged in ─────────────────────────────────────────────── */
   if (currentUserEmail) {
     const isCorrectUser =
@@ -63,10 +93,16 @@ export default function AcceptInvitationClient({
               out and log in as that account to accept it.
             </div>
           )}
+          {isCorrectUser && !currentUserVerified && (
+            <div className="p-3 bg-yellow-50 text-yellow-800 rounded text-sm border border-yellow-200">
+              Please verify your email address before accepting this
+              invitation. Check your inbox for the verification link.
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 pt-2 flex-wrap">
-          {isCorrectUser && (
+          {isCorrectUser && currentUserVerified && (
             <button
               onClick={acceptNow}
               disabled={isAccepting}
@@ -74,6 +110,24 @@ export default function AcceptInvitationClient({
             >
               {isAccepting ? 'Accepting…' : 'Accept Invitation'}
             </button>
+          )}
+          {isCorrectUser && !currentUserVerified && (
+            <>
+              <button
+                onClick={handleResendVerification}
+                disabled={isResending}
+                className="rounded bg-primary px-4 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isResending ? 'Sending…' : 'Resend Verification Email'}
+              </button>
+              <button
+                onClick={handleCheckVerified}
+                disabled={isRefreshing}
+                className="rounded border px-4 py-2 hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isRefreshing ? 'Checking…' : 'I verified — check again'}
+              </button>
+            </>
           )}
           <button
             onClick={handleSignOut}

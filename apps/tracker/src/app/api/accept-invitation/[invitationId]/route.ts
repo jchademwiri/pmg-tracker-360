@@ -23,6 +23,14 @@ export async function GET(
       );
     }
 
+    // 1b. An unverified account can't accept — send them back to the public
+    // page, which prompts them to verify before trying again.
+    if (!session.user.emailVerified) {
+      return NextResponse.redirect(
+        new URL(`/invite/accept/${invitationId}`, request.url)
+      );
+    }
+
     // 2. Fetch invitation to get organizationId
     const invite = await db.query.invitation.findFirst({
       where: eq(invitation.id, invitationId),
