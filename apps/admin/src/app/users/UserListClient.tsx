@@ -52,9 +52,14 @@ import { ShieldAlert, Trash2, User, Zap, CheckSquare, X, Crown } from 'lucide-re
 
 type Props = {
   users: UserWithMemberships[];
+  /**
+   * Hidden on /users, which is scoped to organisation members and so only
+   * ever contains one system role.
+   */
+  showRoleFilter?: boolean;
 };
 
-export default function UserListClient({ users }: Props) {
+export default function UserListClient({ users, showRoleFilter = true }: Props) {
   const router = useRouter();
   const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'starter' | 'pro'>('all');
   const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
@@ -328,6 +333,7 @@ export default function UserListClient({ users }: Props) {
         </div>
 
         {/* Role filter */}
+        {showRoleFilter && (
         <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
           {(['all', 'user', 'admin'] as const).map((v) => (
             <button
@@ -344,6 +350,7 @@ export default function UserListClient({ users }: Props) {
             </button>
           ))}
         </div>
+        )}
 
         {/* Verified filter */}
         <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
