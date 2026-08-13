@@ -67,6 +67,10 @@ export default async function AdminDashboardPage() {
     redirect('/login');
   }
 
+  if ((session.user as any).mustSetPassword) {
+    redirect('/set-password');
+  }
+
   // 2. Data fetching
   const [metrics, alertCounts, recentActivity, suspiciousSessions] =
     await Promise.all([
@@ -216,6 +220,7 @@ export default async function AdminDashboardPage() {
           icon={<ShieldCheck className="h-5 w-5 text-emerald-400" />}
           variant={metrics.unverifiedCount > 0 ? 'danger' : 'success'}
           secondaryNote={`${metrics.unverifiedCount} unverified`}
+          href="/users?verified=unverified"
         />
         <MetricCard
           label="Open Tickets"

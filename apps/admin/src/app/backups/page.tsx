@@ -23,5 +23,9 @@ export default async function BackupsPage() {
     redirect('/login');
   }
 
+  if ((session.user as any).mustSetPassword) {
+    redirect('/set-password');
+  }
+
   return <BackupsClient />;
 }

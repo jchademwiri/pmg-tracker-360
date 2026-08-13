@@ -1,19 +1,11 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { requireAdminPage } from '@/lib/require-admin-page';
 import { Building2 } from 'lucide-react';
 import { getOrganizationsWithCounts } from '@/lib/admin-queries';
 import OrgListClient from './OrgListClient';
 
 export default async function AdminOrganizationsPage() {
   // 1. Auth guard
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session || (session.user as any).role !== 'admin') {
-    redirect('/login');
-  }
+  await requireAdminPage();
 
   // 2. Fetch all organisations with aggregate counts
   const orgs = await getOrganizationsWithCounts();

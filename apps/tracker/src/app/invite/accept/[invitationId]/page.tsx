@@ -68,6 +68,7 @@ export default async function InviteAcceptPage({ params }: Props) {
           inviteEmail={invite.email}
           userExists={!!existingUser}
           currentUserEmail={session?.user?.email}
+          currentUserVerified={session?.user?.emailVerified ?? false}
         />
       </div>
     </div>

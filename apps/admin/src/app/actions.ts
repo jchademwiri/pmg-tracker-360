@@ -5,10 +5,13 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db } from '@pmg/db';
-import { user, verification } from '@pmg/db/schema';
-import { eq, sql, count } from 'drizzle-orm';
+import { user, verification, account } from '@pmg/db/schema';
+import { eq, and, sql, count } from 'drizzle-orm';
 import { getAdminBaseURL } from '@/lib/urls';
 import { sendAdminInvitationEmail } from '@/lib/admin-invite-email';
+import { hashPassword } from 'better-auth/crypto';
+
+const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Sends a magic link and 6-digit OTP code to registered administrators.
@@ -198,9 +201,11 @@ export async function createSystemAdmin(
 /**
  * Invites someone to become a system administrator and emails them.
  *
- * The invitee is never given a password: they sign in through the existing
- * passwordless flow. A random password is set only because `signUpEmail`
- * requires one, and it is never shared or used.
+ * `signUpEmail` requires a password, so a random one is generated and
+ * discarded — nobody ever knows it. The invitee signs in through the
+ * passwordless flow (magic link / OTP) for their first login, at which point
+ * `mustSetPassword` forces them to choose a real password of their own
+ * before they can use the console.
  */
 export async function inviteSystemAdmin(
   name: string,
@@ -255,10 +260,10 @@ export async function inviteSystemAdmin(
       headers: await headers(),
     });
 
-    // 3. Promote to Admin
+    // 3. Promote to Admin and flag that they still owe us a real password
     await db
       .update(user)
-      .set({ role: 'admin' })
+      .set({ role: 'admin', mustSetPassword: true })
       .where(eq(sql`lower(${user.email})`, email.toLowerCase()));
 
     // 4. Revalidate cache
@@ -349,6 +354,56 @@ export async function resendAdminInvitation(
     const e = error as Error;
     console.error('Error in resendAdminInvitation:', e);
     return { success: false, error: e.message || 'Failed to resend the invitation.' };
+  }
+}
+
+/**
+ * Lets a signed-in admin set their own password, replacing the random,
+ * never-shared one `inviteSystemAdmin` created on their behalf. The invitee
+ * doesn't know that placeholder, so this updates the credential account
+ * directly rather than going through Better Auth's `changePassword` (which
+ * needs the current password) or `setPassword` (which refuses to run when a
+ * credential account already exists).
+ */
+export async function setOwnPassword(newPassword: string): Promise<AdminActionResult> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user || (session.user as any).role !== 'admin') {
+      return { success: false, error: 'Access Denied: Unauthorized.' };
+    }
+
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      return {
+        success: false,
+        error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+      };
+    }
+
+    const credentialAccount = await db.query.account.findFirst({
+      where: and(eq(account.userId, session.user.id), eq(account.providerId, 'credential')),
+    });
+
+    if (!credentialAccount) {
+      return { success: false, error: 'No credential account found for this user.' };
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+
+    await db
+      .update(account)
+      .set({ password: passwordHash, updatedAt: new Date() })
+      .where(eq(account.id, credentialAccount.id));
+
+    await db
+      .update(user)
+      .set({ mustSetPassword: false })
+      .where(eq(user.id, session.user.id));
+
+    return { success: true, message: 'Password set. You can now sign in with it.' };
+  } catch (error) {
+    const e = error as Error;
+    console.error('Error in setOwnPassword:', e);
+    return { success: false, error: e.message || 'Failed to set password.' };
   }
 }
 
