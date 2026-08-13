@@ -14,7 +14,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-// Select components removed since role selection is no longer needed
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -71,9 +77,10 @@ interface InvitationsTabProps {
 
 // Using PendingInvitation interface from server
 
-// Form schema for new invitation - role is hardcoded to 'member'
+// Form schema for new invitation
 const invitationSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
+  role: z.enum(['member', 'admin', 'owner']),
 });
 
 type InvitationFormData = z.infer<typeof invitationSchema>;
@@ -178,6 +185,7 @@ export function InvitationsTab({
     resolver: zodResolver(invitationSchema),
     defaultValues: {
       email: '',
+      role: 'member',
     },
   });
 
@@ -207,7 +215,7 @@ export function InvitationsTab({
 
     setIsSending(true);
     try {
-      const result = await inviteMember(organization.id, data.email, 'member');
+      const result = await inviteMember(organization.id, data.email, data.role);
 
       if (result.success) {
         // Refresh the invitations list
@@ -352,16 +360,34 @@ export function InvitationsTab({
                     )}
                   />
 
-                  {/* Role is automatically set to 'member' - no selection needed */}
-                  <div className="text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>
-                        New members will be invited with <strong>Member</strong>{' '}
-                        role by default
-                      </span>
-                    </div>
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="member">Member</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="owner">Owner</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The role this member will have once they accept.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <Button type="submit" disabled={isSending}>
