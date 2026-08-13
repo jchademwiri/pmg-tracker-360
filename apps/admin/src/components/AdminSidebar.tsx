@@ -10,6 +10,7 @@ import {
   LifeBuoy,
   MessageSquare,
   ShieldAlert,
+  ShieldCheck,
   Shield,
   Database,
   LogOut,
@@ -56,6 +57,12 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/organizations', label: 'Organizations', icon: Building2 },
       { href: '/users', label: 'Users', icon: Users },
+    ],
+  },
+  {
+    label: 'Platform',
+    items: [
+      { href: '/system-admins', label: 'System Admins', icon: ShieldCheck },
     ],
   },
   {
