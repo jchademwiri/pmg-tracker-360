@@ -1,13 +1,13 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Users } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { getUsersWithMemberships } from '@/lib/admin-queries';
-import { selectOrganisationUsers } from '@/lib/user-scopes';
-import { InviteAdminModal } from './components/invite-admin-modal';
-import UserListClient from './UserListClient';
+import { selectSystemAdmins } from '@/lib/user-scopes';
+import { InviteAdminModal } from '../users/components/invite-admin-modal';
+import SystemAdminListClient from './SystemAdminListClient';
 
-export default async function AdminUsersPage() {
+export default async function SystemAdminsPage() {
   // 1. Auth guard
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -17,8 +17,8 @@ export default async function AdminUsersPage() {
     redirect('/login');
   }
 
-  // 2. Organisation members only — platform staff live on /system-admins
-  const users = selectOrganisationUsers(await getUsersWithMemberships());
+  // 2. Platform staff only — organisation members live on /users
+  const admins = selectSystemAdmins(await getUsersWithMemberships());
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-sans">
@@ -26,12 +26,12 @@ export default async function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-            <Users className="h-8 w-8 text-(--primary)" />
-            Organisation Users
+            <ShieldCheck className="h-8 w-8 text-(--primary)" />
+            System Admins
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Tenant accounts and their per-organisation roles. Platform staff are
-            listed under System Admins.
+            Platform staff with access to this console. Organisation members and
+            their roles are listed under Users.
           </p>
         </div>
         <div className="flex items-center">
@@ -40,7 +40,7 @@ export default async function AdminUsersPage() {
       </div>
 
       {/* 3. Client-side filter + table */}
-      <UserListClient users={users} showRoleFilter={false} />
+      <SystemAdminListClient admins={admins} currentUserId={session.user.id} />
     </div>
   );
 }
