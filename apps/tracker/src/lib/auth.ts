@@ -14,6 +14,8 @@ import ResetPasswordEmail from '@/emails/reset-password-email';
 import VerifyEmail from '@/emails/verify-email';
 import { getActiveOrganization } from '@/server';
 import OrganizationInvitation from '@/emails/organization-invitation';
+import { createAuthMiddleware, APIError } from 'better-auth/api';
+import { checkDirectSignUp } from '@/lib/auth/signup-guard';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -95,6 +97,19 @@ export const auth = betterAuth({
           ? 'tendertrack360.co.za'
           : undefined,
     },
+  },
+  hooks: {
+    // Bot-protects the directly-reachable sign-up endpoint. This deliberately
+    // does NOT live in `databaseHooks.user.create.before`: that fires for
+    // internal `auth.api.signUpEmail()` calls too, which carry no Turnstile
+    // token and so were rejected outright in production.
+    before: createAuthMiddleware(async (ctx) => {
+      const rejection = await checkDirectSignUp(ctx);
+
+      if (rejection) {
+        throw new APIError('BAD_REQUEST', { message: rejection });
+      }
+    }),
   },
   databaseHooks: {
     session: {
