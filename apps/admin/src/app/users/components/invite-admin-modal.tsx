@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { createSystemAdmin } from '../../actions';
-import { Shield, Plus, X, Loader, ShieldCheck, Mail, Lock, User } from 'lucide-react';
+import { inviteSystemAdmin } from '../../actions';
+import { Shield, Plus, X, Loader, ShieldCheck, Mail, User } from 'lucide-react';
 
 export function InviteAdminModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,7 +15,6 @@ export function InviteAdminModal() {
   const handleOpen = () => {
     setName('');
     setEmail('');
-    setPassword('');
     setError(null);
     setSuccess(null);
     setIsOpen(true);
@@ -33,15 +31,15 @@ export function InviteAdminModal() {
     setLoading(true);
 
     try {
-      const res = await createSystemAdmin(name, email, password);
+      const res = await inviteSystemAdmin(name, email);
       if (res.success) {
-        setSuccess(res.message ?? 'System admin created successfully!');
+        setSuccess(res.message);
         // Close modal after delay to let user see success
         setTimeout(() => {
           setIsOpen(false);
         }, 2000);
       } else {
-        setError(res.error ?? 'Failed to create system administrator');
+        setError(res.error);
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');
@@ -144,24 +142,11 @@ export function InviteAdminModal() {
                 </div>
               </div>
 
-              {/* Password */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                  Initial Passphrase
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-500" />
-                  <input
-                    type="password"
-                    required
-                    disabled={loading || !!success}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min 8 characters"
-                    className="w-full pl-10 pr-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
-                  />
-                </div>
-              </div>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                They&apos;ll receive an email inviting them to sign in with this
+                address. No password is set here — administrators sign in with a
+                one-time code.
+              </p>
 
               {/* Action Buttons */}
               <div className="pt-2 flex gap-3">
