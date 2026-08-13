@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -111,10 +112,28 @@ export function OrganizationManagementTabs({
   userRole,
   currentUser,
 }: OrganizationManagementTabsProps) {
-  const [activeTab, setActiveTab] = useState('general');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const roleDisplay = getRoleDisplay(userRole);
   const RoleIcon = roleDisplay.icon;
   const accessibleTabs = getAccessibleTabs(userRole);
+
+  const tabFromUrl = searchParams.get('tab');
+  const activeTab = useMemo(
+    () =>
+      tabFromUrl && accessibleTabs.includes(tabFromUrl) ? tabFromUrl : 'general',
+    [tabFromUrl, accessibleTabs]
+  );
+
+  const setActiveTab = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', value);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   return (
     <div className="space-y-6">
