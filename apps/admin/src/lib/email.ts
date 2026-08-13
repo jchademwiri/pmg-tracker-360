@@ -1,8 +1,13 @@
-import { Resend } from 'resend';
+import { resend, SENDER, REPLY_TO } from '@/lib/email-config';
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
-
-const FROM_EMAIL = process.env.EMAIL_FROM || 'Tender Track 360 <notifications@tendertrack360.co.za>';
+/**
+ * These sends previously used their own Resend client with a `re_mock_key`
+ * fallback, and returned `{ success: true, mocked: true }` whenever
+ * RESEND_API_KEY was absent — so a misconfigured deployment looked identical to
+ * a working one. They now share the validated client in `email-config`, whose
+ * sender sits on the verified `contact.` subdomain rather than the apex.
+ */
+const FROM_EMAIL = SENDER;
 
 export async function sendAccountSuspendedEmail(
   to: string,
@@ -11,14 +16,10 @@ export async function sendAccountSuspendedEmail(
   reason?: string
 ) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log(`[Email Mock] Account Suspended Email to ${to} for org "${orgName}"`);
-      return { success: true, mocked: true };
-    }
-
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
+      replyTo: REPLY_TO,
       subject: `Account Suspended - ${orgName}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #18181b;">
@@ -45,14 +46,10 @@ export async function sendPurgeScheduledEmail(
   daysRemaining = 30
 ) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log(`[Email Mock] Purge Scheduled Email to ${to} for org "${orgName}" (${daysRemaining} days)`);
-      return { success: true, mocked: true };
-    }
-
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
+      replyTo: REPLY_TO,
       subject: `[ACTION REQUIRED] Deletion Scheduled in ${daysRemaining} Days - ${orgName}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #18181b;">
@@ -77,14 +74,10 @@ export async function sendDeletionCancelledEmail(
   orgName: string
 ) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log(`[Email Mock] Deletion Cancelled Email to ${to} for org "${orgName}"`);
-      return { success: true, mocked: true };
-    }
-
     await resend.emails.send({
       from: FROM_EMAIL,
       to,
+      replyTo: REPLY_TO,
       subject: `Pending Deletion Cancelled - ${orgName}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #18181b;">

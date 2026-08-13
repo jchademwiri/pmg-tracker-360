@@ -20,13 +20,13 @@ export default function SetupForm() {
     try {
       const response = await createSystemAdmin(name, email, password);
       if (response.success) {
-        setSuccess(response.message ?? 'Super Admin successfully registered!');
+        setSuccess(response.message);
         // After 2.5 seconds, redirect to the login screen
         setTimeout(() => {
           window.location.replace('/login');
         }, 2500);
       } else {
-        setError(response.error ?? 'Setup failed');
+        setError(response.error);
       }
     } catch {
       setError('An unexpected error occurred during setup. Please try again.');

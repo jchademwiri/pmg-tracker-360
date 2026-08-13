@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldOff, X, CheckSquare } from 'lucide-react';
+import { ShieldOff, X, CheckSquare, Send, Loader } from 'lucide-react';
 import type { UserWithMemberships } from '@/lib/admin-queries';
 import { organisationRoles } from '@/lib/user-scopes';
 import DataTable, { type Column } from '@/components/DataTable';
@@ -10,6 +10,7 @@ import StatusBadge from '@/components/StatusBadge';
 import UserDrawer from '@/components/UserDrawer';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { bulkUpdateUserRole } from '../users/actions';
+import { resendAdminInvitation } from '../actions';
 
 /**
  * Pure search filter — exported for unit testing.
@@ -39,6 +40,11 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [resendResult, setResendResult] = useState<{
+    ok: boolean;
+    message: string;
+  } | null>(null);
 
   const filtered = applyAdminSearch(admins, search);
 
@@ -126,7 +132,42 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
         </span>
       ),
     },
+    {
+      key: 'actions',
+      header: '',
+      render: (u) => (
+        <button
+          type="button"
+          disabled={resendingId !== null}
+          // The row itself opens the detail drawer.
+          onClick={(e) => {
+            e.stopPropagation();
+            handleResendInvite(u);
+          }}
+          title={`Resend the invitation email to ${u.email}`}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-[11px] font-semibold text-zinc-200 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+        >
+          {resendingId === u.id ? (
+            <Loader className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Send className="h-3.5 w-3.5" />
+          )}
+          Resend invite
+        </button>
+      ),
+    },
   ];
+
+  async function handleResendInvite(u: UserWithMemberships) {
+    setResendingId(u.id);
+    setResendResult(null);
+    const res = await resendAdminInvitation(u.email);
+    setResendingId(null);
+    setResendResult({
+      ok: res.success,
+      message: res.success ? res.message : res.error,
+    });
+  }
 
   async function handleRevokeAdmin() {
     setActionLoading(true);
@@ -139,6 +180,25 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
 
   return (
     <div className="space-y-4">
+      {resendResult && (
+        <div
+          className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-3 animate-in fade-in duration-200 ${
+            resendResult.ok
+              ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-200'
+              : 'bg-red-950/40 border-red-900/60 text-red-200'
+          }`}
+        >
+          <span>{resendResult.message}</span>
+          <button
+            type="button"
+            onClick={() => setResendResult(null)}
+            className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Selection Action Toolbar */}
       {selectedUserIds.size > 0 && (
         <div className="p-3 bg-indigo-950/40 border border-indigo-800/80 rounded-xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200">

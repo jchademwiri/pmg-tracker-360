@@ -4,15 +4,9 @@ import { db } from '@pmg/db';
 import { schema } from '@pmg/db/schema';
 import { nextCookies } from 'better-auth/next-js';
 import { magicLink } from 'better-auth/plugins';
-import { Resend } from 'resend';
 import { getAdminBaseURL } from '@/lib/urls';
+import { resend, SENDER, REPLY_TO } from '@/lib/email-config';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const senderName = process.env.SENDER_NAME || 'Tender Track 360';
-const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
-const SENDER = `${senderName} <${senderEmail}>`;
-const REPLY_TO = process.env.REPLY_TO_EMAIL || 'info@contact.tendertrack360.co.za';
 const LOCAL_AUTH_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
 
 function getAdminMagicLinkUrl(token: string) {
