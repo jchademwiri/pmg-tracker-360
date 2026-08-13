@@ -144,8 +144,8 @@ export function InviteAdminModal() {
 
               <p className="text-[11px] text-zinc-500 leading-relaxed">
                 They&apos;ll receive an email inviting them to sign in with this
-                address. No password is set here — administrators sign in with a
-                one-time code.
+                address using a one-time code. On first sign-in, they&apos;ll be
+                prompted to set their own password.
               </p>
 
               {/* Action Buttons */}

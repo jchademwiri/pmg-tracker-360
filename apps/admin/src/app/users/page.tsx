@@ -1,24 +1,23 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { requireAdminPage } from '@/lib/require-admin-page';
 import { Users } from 'lucide-react';
 import { getUsersWithMemberships } from '@/lib/admin-queries';
 import { selectOrganisationUsers } from '@/lib/user-scopes';
 import { InviteAdminModal } from './components/invite-admin-modal';
 import UserListClient from './UserListClient';
 
-export default async function AdminUsersPage() {
-  // 1. Auth guard
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+type AdminUsersPageProps = {
+  searchParams: Promise<{ verified?: string }>;
+};
 
-  if (!session || (session.user as any).role !== 'admin') {
-    redirect('/login');
-  }
+export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
+  // 1. Auth guard
+  await requireAdminPage();
 
   // 2. Organisation members only — platform staff live on /system-admins
   const users = selectOrganisationUsers(await getUsersWithMemberships());
+
+  const { verified } = await searchParams;
+  const initialVerifiedFilter = verified === 'verified' || verified === 'unverified' ? verified : 'all';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-sans">
@@ -40,7 +39,11 @@ export default async function AdminUsersPage() {
       </div>
 
       {/* 3. Client-side filter + table */}
-      <UserListClient users={users} showRoleFilter={false} />
+      <UserListClient
+        users={users}
+        showRoleFilter={false}
+        initialVerifiedFilter={initialVerifiedFilter}
+      />
     </div>
   );
 }

@@ -47,7 +47,8 @@ export default async function RootLayout({
   });
 
   const user = session?.user;
-  const isAdmin = user && (user as any).role === 'admin';
+  const isAdmin =
+    user && (user as any).role === 'admin' && !(user as any).mustSetPassword;
 
   return (
     <html

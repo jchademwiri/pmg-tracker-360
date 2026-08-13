@@ -1,18 +1,10 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { requireAdminPage } from '@/lib/require-admin-page';
 import { getOpenTickets } from '@/lib/admin-queries';
 import TicketsListClient from './TicketsListClient';
 
 export default async function SupportTicketsPage() {
   // 1. Auth guard
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session || (session.user as any).role !== 'admin') {
-    redirect('/login');
-  }
+  await requireAdminPage();
 
   // 2. Data fetching — getOpenTickets returns all tickets ordered by createdAt DESC
   const tickets = await getOpenTickets();

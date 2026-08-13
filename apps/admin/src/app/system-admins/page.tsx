@@ -1,6 +1,4 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { requireAdminPage } from '@/lib/require-admin-page';
 import { ShieldCheck } from 'lucide-react';
 import { getUsersWithMemberships } from '@/lib/admin-queries';
 import { selectSystemAdmins } from '@/lib/user-scopes';
@@ -9,13 +7,7 @@ import SystemAdminListClient from './SystemAdminListClient';
 
 export default async function SystemAdminsPage() {
   // 1. Auth guard
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session || (session.user as any).role !== 'admin') {
-    redirect('/login');
-  }
+  const session = await requireAdminPage();
 
   // 2. Platform staff only — organisation members live on /users
   const admins = selectSystemAdmins(await getUsersWithMemberships());
