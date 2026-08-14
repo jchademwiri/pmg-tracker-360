@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Users, Trophy } from 'lucide-react';
+import { FileSpreadsheet, FileText, Users, Trophy } from 'lucide-react';
 
 import { getCurrentUser, getClientsList } from '@/server';
 import { getReportStats } from '@/server/reports';
@@ -6,7 +6,11 @@ import { ReportStatsCards } from '@/components/reports/stats-cards';
 import { TenderPerformanceChart } from '@/components/reports/tender-performance-chart';
 import { RevenueForecastChart } from '@/components/reports/revenue-forecast-chart';
 import { TenderWinLossPdfButton } from '@/components/reports/tender-winloss-pdf-button';
-import { TenderRegisterExcelButton, ClientTenderExcelButton } from '@/components/reports/tender-register-excel-buttons';
+import {
+  TenderRegisterExcelButton,
+  TenderRegisterPdfButton,
+  ClientTenderReportButtons,
+} from '@/components/reports/tender-register-excel-buttons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
@@ -49,19 +53,20 @@ export default async function ReportsPage() {
       <div className="space-y-4">
         <div>
           <h2 className="text-xl font-semibold tracking-tight">Downloadable Reports</h2>
-          <p className="text-sm text-muted-foreground">Export polished Excel workbooks for management, record-keeping, and client-level reporting.</p>
+          <p className="text-sm text-muted-foreground">Export polished Excel and PDF tender reports for management, record-keeping, and client-level reporting.</p>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Card className="transition-shadow hover:shadow-md">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/20"><FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div>
-                <CardTitle className="text-lg">Tender Register Workbook</CardTitle>
+                <CardTitle className="text-lg">Tender Register</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <CardDescription>Full tender register with Contents, Summary, live submission timing, data-quality checks, and a dedicated sheet for every client.</CardDescription>
+            <CardContent className="space-y-2">
+              <CardDescription>Full portfolio register with Contents, Summary, submission timing, data-quality checks, and a dedicated client sheet for every client.</CardDescription>
               <TenderRegisterExcelButton />
+              <TenderRegisterPdfButton />
             </CardContent>
           </Card>
 
@@ -73,8 +78,8 @@ export default async function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <CardDescription>Select a client and download a focused Excel report containing that client’s tenders, dates, contacts, submission timing, and estimated values.</CardDescription>
-              <ClientTenderExcelButton clients={clients} />
+              <CardDescription>Select a client and download the same tender report as Excel or PDF, including tenders, dates, contacts, submission timing, and estimated values.</CardDescription>
+              <ClientTenderReportButtons clients={clients} />
             </CardContent>
           </Card>
 
