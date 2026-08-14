@@ -14,7 +14,6 @@ async function downloadReport(url: string, fallbackFilename: string) {
     const body = await response.json().catch(() => null);
     throw new Error(body?.error || 'Report export failed');
   }
-
   const blob = await response.blob();
   const disposition = response.headers.get('content-disposition');
   const match = disposition?.match(/filename="([^"]+)"/i);
@@ -30,88 +29,66 @@ async function downloadReport(url: string, fallbackFilename: string) {
 }
 
 export function TenderRegisterExcelButton() {
-  const [isExporting, setIsExporting] = useState(false);
-
-  const handleExport = async () => {
-    setIsExporting(true);
-    const toastId = toast.loading('Preparing Excel tender register...');
-    try {
-      await downloadReport('/api/reports/tenders/register/xlsx', `tender-register-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      toast.success('Excel tender register downloaded', { id: toastId });
-    } catch (error) {
-      console.error('Tender register Excel export failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to export Excel report.', { id: toastId });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  return (
-    <Button type="button" className="w-full" onClick={handleExport} disabled={isExporting}>
-      {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-      {isExporting ? 'Preparing...' : 'Download Excel Workbook'}
-    </Button>
-  );
+  return <TenderRegisterDownloadButton format="xlsx" />;
 }
 
 export function TenderRegisterPdfButton() {
+  return <TenderRegisterDownloadButton format="pdf" />;
+}
+
+function TenderRegisterDownloadButton({ format }: { format: 'xlsx' | 'pdf' }) {
   const [isExporting, setIsExporting] = useState(false);
+  const isPdf = format === 'pdf';
 
   const handleExport = async () => {
     setIsExporting(true);
-    const toastId = toast.loading('Preparing PDF tender register...');
+    const toastId = toast.loading(`Preparing ${isPdf ? 'PDF' : 'Excel'} tender register...`);
     try {
-      await downloadReport('/api/reports/tenders/register/pdf', `tender-register-${new Date().toISOString().slice(0, 10)}.pdf`);
-      toast.success('PDF tender register downloaded', { id: toastId });
+      await downloadReport(
+        `/api/reports/tenders/register/${format}`,
+        `tender-register-${new Date().toISOString().slice(0, 10)}.${format}`
+      );
+      toast.success(`${isPdf ? 'PDF' : 'Excel'} tender register downloaded`, { id: toastId });
     } catch (error) {
-      console.error('Tender register PDF export failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to export PDF report.', { id: toastId });
+      console.error(`Tender register ${format} export failed:`, error);
+      toast.error(error instanceof Error ? error.message : `Failed to export ${isPdf ? 'PDF' : 'Excel'} report.`, { id: toastId });
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <Button type="button" variant="outline" className="w-full" onClick={handleExport} disabled={isExporting}>
-      {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-      {isExporting ? 'Preparing...' : 'Download PDF Report'}
+    <Button type="button" variant={isPdf ? 'outline' : 'default'} className="w-full" onClick={handleExport} disabled={isExporting}>
+      {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isPdf ? <FileText className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
+      {isExporting ? 'Preparing...' : `Download ${isPdf ? 'PDF Report' : 'Excel Workbook'}`}
     </Button>
   );
 }
 
-export function ClientTenderExcelButton({ clients }: { clients: ClientOption[] }) {
-  return <ClientTenderReportButton clients={clients} format="xlsx" />;
-}
-
-export function ClientTenderPdfButton({ clients }: { clients: ClientOption[] }) {
-  return <ClientTenderReportButton clients={clients} format="pdf" />;
-}
-
-function ClientTenderReportButton({ clients, format }: { clients: ClientOption[]; format: 'xlsx' | 'pdf' }) {
+export function ClientTenderReportButtons({ clients }: { clients: ClientOption[] }) {
   const [clientId, setClientId] = useState('');
-  const [isExporting, setIsExporting] = useState(false);
+  const [format, setFormat] = useState<'xlsx' | 'pdf' | null>(null);
 
-  const handleExport = async () => {
+  const handleExport = async (requestedFormat: 'xlsx' | 'pdf') => {
     if (!clientId) {
       toast.error('Select a client first.');
       return;
     }
-
     const client = clients.find((item) => item.id === clientId);
-    setIsExporting(true);
-    const label = format === 'pdf' ? 'PDF' : 'Excel';
+    setFormat(requestedFormat);
+    const label = requestedFormat === 'pdf' ? 'PDF' : 'Excel';
     const toastId = toast.loading(`Preparing ${client?.name || 'client'} ${label} report...`);
     try {
       await downloadReport(
-        `/api/reports/tenders/register/${format}?clientId=${encodeURIComponent(clientId)}`,
-        `${client?.name || 'client'}-tenders.${format}`
+        `/api/reports/tenders/register/${requestedFormat}?clientId=${encodeURIComponent(clientId)}`,
+        `${client?.name || 'client'}-tenders.${requestedFormat}`
       );
       toast.success(`${client?.name || 'Client'} ${label} report downloaded`, { id: toastId });
     } catch (error) {
       console.error(`Client tender ${label} export failed:`, error);
       toast.error(error instanceof Error ? error.message : `Failed to export client ${label} report.`, { id: toastId });
     } finally {
-      setIsExporting(false);
+      setFormat(null);
     }
   };
 
@@ -120,19 +97,21 @@ function ClientTenderReportButton({ clients, format }: { clients: ClientOption[]
       <select
         value={clientId}
         onChange={(event) => setClientId(event.target.value)}
-        disabled={isExporting || clients.length === 0}
+        disabled={format !== null || clients.length === 0}
         className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-        aria-label={`Select client for ${format.toUpperCase()} tender report`}
+        aria-label="Select client for tender report"
       >
         <option value="">Select client...</option>
-        {clients.map((client) => (
-          <option key={client.id} value={client.id}>{client.name}</option>
-        ))}
+        {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
       </select>
       <div className="grid grid-cols-2 gap-2">
-        <Button type="button" onClick={handleExport} disabled={isExporting || clients.length === 0}>
-          {format === 'pdf' ? <FileText className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
-          {isExporting ? 'Preparing...' : `Download ${format === 'pdf' ? 'PDF' : 'Excel'}`}
+        <Button type="button" onClick={() => handleExport('xlsx')} disabled={format !== null || clients.length === 0}>
+          {format === 'xlsx' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+          {format === 'xlsx' ? 'Preparing...' : 'Excel'}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => handleExport('pdf')} disabled={format !== null || clients.length === 0}>
+          {format === 'pdf' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+          {format === 'pdf' ? 'Preparing...' : 'PDF'}
         </Button>
       </div>
     </div>
