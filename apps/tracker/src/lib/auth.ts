@@ -77,12 +77,35 @@ function getPublicAuthEmailUrl(url: string) {
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: [
-    'http://localhost:3000',
-    'https://tender-track-360.vercel.app',
-    'https://admin.tendertrack360.co.za',
-    ...(env.NEXT_PUBLIC_URL ? [new URL(env.NEXT_PUBLIC_URL).origin] : []),
-  ],
+  // Better Auth validates the Origin header of state-changing requests
+  // (e.g. `/api/auth/organization/set-active`) against trustedOrigins and
+  // rejects unknown hosts — which broke organization switching on the
+  // `dev.tendertrack360.co.za` deployment with 403 INVALID_ORIGIN.
+  //
+  // As a function, this keeps the static list and additionally trusts the
+  // origin the request was actually sent to, so legitimate same-origin calls
+  // work from every deployment (production, dev subdomain, preview) without
+  // per-host configuration. Cross-origin CSRF attempts are still rejected
+  // because their Origin header never matches the request's own host.
+  trustedOrigins: (request) => {
+    const staticOrigins: (string | undefined | null)[] = [
+      'http://localhost:3000',
+      'https://tender-track-360.vercel.app',
+      'https://admin.tendertrack360.co.za',
+      ...(env.NEXT_PUBLIC_URL ? [new URL(env.NEXT_PUBLIC_URL).origin] : []),
+    ];
+
+    try {
+      const requestOrigin = new URL(request?.url || '').origin;
+      return requestOrigin && requestOrigin !== 'null'
+        ? [...staticOrigins, requestOrigin]
+        : staticOrigins;
+    } catch {
+      // No request (internal auth.api call) or non-absolute URL —
+      // fall back to the static list.
+      return staticOrigins;
+    }
+  },
   rateLimit: {
     enabled: true,
     window: 60, // 1 minute
@@ -302,22 +325,11 @@ export const auth = betterAuth({
       },
       // organizationLimit: 2, // Removed in favor of dynamic check above
 
-      // Hook to update session when organization is switched
-      hooks: {
-        organization: {
-          setActive: {
-            after: async ({
-              user,
-              organizationId,
-            }: {
-              user: { id: string };
-              organizationId: string;
-            }) => {
-              // This ensures the session gets updated with the new active organization
-            },
-          },
-        },
-      },
+      // Note: `hooks.organization.setActive.after` is not a hook that
+      // better-auth v1.6 actually runs (it is silently ignored). The session
+      // is updated by the set-active endpoint itself; the per-user
+      // `lastActiveOrganizationId` preference is persisted by
+      // rememberActiveOrganization() after a successful switch.
 
       ac,
       roles: {
