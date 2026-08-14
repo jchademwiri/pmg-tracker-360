@@ -1,4 +1,4 @@
-import { FileSpreadsheet, FileText, Users, Trophy } from 'lucide-react';
+import { FileSpreadsheet, Users, Trophy } from 'lucide-react';
 
 import { getCurrentUser, getClientsList } from '@/server';
 import { getReportStats } from '@/server/reports';
