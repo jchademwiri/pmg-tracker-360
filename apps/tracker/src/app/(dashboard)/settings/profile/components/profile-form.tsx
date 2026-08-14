@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Edit, Save, X, Loader2 } from 'lucide-react';
 import { AvatarUpload } from './avatar-upload';
-import { updateUserImage } from '@/server/users';
+import { updateUserImage, removeUserImage } from '@/server/users';
 
 // Validation schema for profile form
 const profileFormSchema = z.object({
@@ -121,9 +121,19 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
     });
   };
 
-  const handleImageRemove = () => {
-    updateOptimisticUser({ image: null });
-    // In a real app, you would also remove the image from the server here
+  const handleImageRemove = async () => {
+    try {
+      const result = await removeUserImage();
+      if (result.success) {
+        updateOptimisticUser({ image: null });
+        toast.success('Profile picture removed');
+      } else {
+        toast.error(result.error || 'Failed to remove profile picture');
+      }
+    } catch (error) {
+      console.error('Failed to remove profile picture:', error);
+      toast.error('Failed to remove profile picture');
+    }
   };
 
   const handleCancel = () => {

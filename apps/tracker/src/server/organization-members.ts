@@ -6,6 +6,7 @@ import type { Role } from '@pmg/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from './users';
 import { getUserOrganizationMembership } from './organizations';
+import { StorageService } from '@/lib/storage';
 import { revalidatePath } from 'next/cache';
 
 export interface ServerActionResult<T = unknown> {
@@ -353,7 +354,16 @@ export async function updateOrganizationDetails(
       metadata: string;
     }> = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.logo !== undefined) updateData.logo = data.logo;
+    // Never persist a transient signed URL from our own storage (they expire
+    // after 1h and are display-only representations of a storage key that is
+    // already saved by the upload action). Only keys, external URLs, or an
+    // empty string (remove) are stored.
+    if (
+      data.logo !== undefined &&
+      !StorageService.isOwnSignedUrl(data.logo)
+    ) {
+      updateData.logo = data.logo;
+    }
 
     // Handle metadata fields
     if (
