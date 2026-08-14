@@ -7,5 +7,6 @@ export * from '@/server/clients';
 export * from '@/server/client-export';
 export * from '@/server/tenders';
 export * from '@/server/tender-export';
+export * from '@/server/tender-excel-export';
 export * from '@/server/calendar';
 export * from '@/server/documents';

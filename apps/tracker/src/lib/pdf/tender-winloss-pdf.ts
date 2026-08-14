@@ -142,7 +142,7 @@ function renderPdf(data: TenderWinLossReportData, logoDataUri: string | null) {
     emptyMessage: 'No loss reasons recorded.',
   });
 
-  drawStandardFooter(doc);
+  drawStandardFooter(doc, data.org.name);
   return Buffer.from(doc.output('arraybuffer'));
 }
 
