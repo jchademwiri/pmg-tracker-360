@@ -22,8 +22,12 @@ import {
   Building2,
   Construction,
   FileArchive,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import type { BackupMeta } from '@/lib/backup';
+
+const PAGE_SIZE = 5;
 
 type OrgOption = {
   id: string;
@@ -36,6 +40,7 @@ export default function BackupsClient() {
   const [orgs, setOrgs] = useState<OrgOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
   const [restoreOrg, setRestoreOrg] = useState<{ key: string; orgId: string } | null>(null);
@@ -323,61 +328,123 @@ export default function BackupsClient() {
                     </tr>
                   </thead>
                   <tbody>
-                    {backups.map((backup, idx) => (
-                      <tr
-                        key={backup.key}
-                        className={`border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors ${
-                          idx === 0 ? 'bg-amber-950/10' : ''
-                        }`}
-                      >
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-lg bg-zinc-800 flex items-center justify-center">
-                              <FileArchive className={`h-4 w-4 ${idx === 0 ? 'text-amber-400' : 'text-zinc-500'}`} />
-                            </div>
-                            <div>
-                              <span className="text-white font-medium text-xs font-mono select-all">
-                                {backup.filename}
-                              </span>
-                              {idx === 0 && (
-                                <span className="ml-2 px-1.5 py-0.5 bg-amber-600/20 text-amber-400 rounded text-[10px] font-bold uppercase tracking-wider">
-                                  Latest
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-zinc-400 text-xs">
-                          {formatDate(backup.createdAt)}
-                        </td>
-                        <td className="px-5 py-4 text-right text-zinc-400 text-xs font-mono">
-                          {formatBytes(backup.sizeBytes)}
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => setConfirmRestore(backup.key)}
-                              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[11px] font-semibold cursor-pointer transition-all flex items-center gap-1.5"
-                              title="Full restore"
-                            >
-                              <RotateCcw className="h-3 w-3" />
-                              Full Restore
-                            </button>
-                            <button
-                              onClick={() => setRestoreOrg({ key: backup.key, orgId: '' })}
-                              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[11px] font-semibold cursor-pointer transition-all flex items-center gap-1.5"
-                              title="Restore specific organization"
-                            >
-                              <Building2 className="h-3 w-3" />
-                              Org Restore
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {(() => {
+                      const totalPages = Math.max(1, Math.ceil(backups.length / PAGE_SIZE));
+                      const safePage = Math.min(currentPage, totalPages);
+                      const paginatedBackups = backups.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+                      return paginatedBackups.map((backup, idx) => {
+                        const isOverallLatest = safePage === 1 && idx === 0;
+                        return (
+                          <tr
+                            key={backup.key}
+                            className={`border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors ${
+                              isOverallLatest ? 'bg-amber-950/10' : ''
+                            }`}
+                          >
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-zinc-800 flex items-center justify-center">
+                                  <FileArchive className={`h-4 w-4 ${isOverallLatest ? 'text-amber-400' : 'text-zinc-500'}`} />
+                                </div>
+                                <div>
+                                  <span className="text-white font-medium text-xs font-mono select-all">
+                                    {backup.filename}
+                                  </span>
+                                  {isOverallLatest && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-amber-600/20 text-amber-400 rounded text-[10px] font-bold uppercase tracking-wider">
+                                      Latest
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 text-zinc-400 text-xs">
+                              {formatDate(backup.createdAt)}
+                            </td>
+                            <td className="px-5 py-4 text-right text-zinc-400 text-xs font-mono">
+                              {formatBytes(backup.sizeBytes)}
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => setConfirmRestore(backup.key)}
+                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[11px] font-semibold cursor-pointer transition-all flex items-center gap-1.5"
+                                  title="Full restore"
+                                >
+                                  <RotateCcw className="h-3 w-3" />
+                                  Full Restore
+                                </button>
+                                <button
+                                  onClick={() => setRestoreOrg({ key: backup.key, orgId: '' })}
+                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-[11px] font-semibold cursor-pointer transition-all flex items-center gap-1.5"
+                                  title="Restore specific organization"
+                                >
+                                  <Building2 className="h-3 w-3" />
+                                  Org Restore
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Bar */}
+              {backups.length > 0 && (() => {
+                const totalPages = Math.max(1, Math.ceil(backups.length / PAGE_SIZE));
+                const safePage = Math.min(currentPage, totalPages);
+                const startIndex = (safePage - 1) * PAGE_SIZE + 1;
+                const endIndex = Math.min(safePage * PAGE_SIZE, backups.length);
+
+                return (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-zinc-800 bg-zinc-950/40 text-xs text-zinc-400">
+                    <div>
+                      Showing <span className="font-semibold text-white">{startIndex}</span> to{' '}
+                      <span className="font-semibold text-white">{endIndex}</span> of{' '}
+                      <span className="font-semibold text-white">{backups.length}</span> backups
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={safePage <= 1}
+                        className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:hover:bg-zinc-800 text-zinc-200 rounded-lg font-medium cursor-pointer transition-all flex items-center gap-1"
+                        aria-label="Previous Page"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <span>Prev</span>
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
+                            pageNum === safePage
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={safePage >= totalPages}
+                        className="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:hover:bg-zinc-800 text-zinc-200 rounded-lg font-medium cursor-pointer transition-all flex items-center gap-1"
+                        aria-label="Next Page"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

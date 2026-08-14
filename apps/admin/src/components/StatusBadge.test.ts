@@ -6,7 +6,7 @@ import { getStatusClasses } from './StatusBadge';
 
 const KNOWN_STATUSES = [
   'open', 'in_progress', 'closed', 'active', 'verified', 'unverified', 'deleted',
-  'suspicious', 'bug', 'feature', 'other',
+  'suspicious', 'bug', 'feature', 'free', 'starter', 'pro', 'other',
 ];
 
 const NEUTRAL_ZINC = { bg: 'bg-zinc-800/60', text: 'text-zinc-400', border: 'border-zinc-700/40' };

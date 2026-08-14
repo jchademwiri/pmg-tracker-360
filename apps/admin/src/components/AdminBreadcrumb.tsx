@@ -7,6 +7,7 @@ import { ChevronRight, Home } from 'lucide-react';
 import { useBreadcrumb } from '@/lib/breadcrumb-context';
 
 const SEGMENT_LABELS: Record<string, string> = {
+  reports: 'Reports & Analytics',
   organizations: 'Organizations',
   users: 'Users',
   sessions: 'Sessions',

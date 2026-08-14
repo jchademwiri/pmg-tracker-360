@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import {
   LayoutDashboard,
+  BarChart3,
   Building2,
   Users,
   LifeBuoy,
@@ -50,7 +51,10 @@ type NavGroup = {
 const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ href: '/', label: 'Dashboard', icon: LayoutDashboard }],
+    items: [
+      { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/reports', label: 'Reports & Analytics', icon: BarChart3 },
+    ],
   },
   {
     label: 'Tenants',
