@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const result = await getTendersExportExcel(session.session.activeOrganizationId, clientId);
   if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
 
-  return new NextResponse(result.buffer as BodyInit, {
+  return new NextResponse(new Uint8Array(result.buffer), {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename="${result.filename}"`,
