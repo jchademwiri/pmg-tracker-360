@@ -128,6 +128,26 @@ export type OrgBranding = {
   website?: string | null;
 };
 
+/**
+ * Truncates `text` with a trailing ellipsis so it fits within `maxWidth`
+ * (mm) at the doc's currently-set font/size. No-op if it already fits.
+ */
+function fitText(doc: jsPDF, text: string, maxWidth: number): string {
+  if (doc.getTextWidth(text) <= maxWidth) return text;
+  const ellipsis = '…';
+  let low = 0;
+  let high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (doc.getTextWidth(text.slice(0, mid) + ellipsis) <= maxWidth) {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return text.slice(0, low) + ellipsis;
+}
+
 /** Draws the shared header chrome and returns the y-coordinate where body content should start. */
 export function drawStandardHeader(
   doc: jsPDF,
@@ -152,11 +172,30 @@ export function drawStandardHeader(
   }
 
   const textX = org.logoDataUri ? PAGE.margin + 26 : PAGE.margin;
+  const rightX = PAGE.width - PAGE.margin;
+
+  // Measure the right-hand title block first so the left-hand org identity
+  // block can be constrained to never run into it, regardless of how long
+  // the organization name or title text is.
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  const titleWidth = doc.getTextWidth(titleLabel);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  const primaryWidth = doc.getTextWidth(primaryLine);
+  let secondaryWidth = 0;
+  if (secondaryLine) {
+    doc.setFontSize(8);
+    secondaryWidth = doc.getTextWidth(secondaryLine);
+  }
+  const rightBlockWidth = Math.max(titleWidth, primaryWidth, secondaryWidth);
+  const gap = 8;
+  const leftMaxWidth = rightX - rightBlockWidth - gap - textX;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(24, 24, 27);
-  doc.text(org.name, textX, 18);
+  doc.text(fitText(doc, org.name, leftMaxWidth), textX, 18);
 
   const detailLines = [org.phone, org.address, org.website].filter(
     (line): line is string => Boolean(line)
@@ -167,23 +206,25 @@ export function drawStandardHeader(
     doc.setTextColor(82, 82, 91);
     detailLines
       .slice(0, 3)
-      .forEach((line, index) => doc.text(line, textX, 24 + index * 4.5));
+      .forEach((line, index) =>
+        doc.text(fitText(doc, line, leftMaxWidth), textX, 24 + index * 4.5)
+      );
   }
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.setTextColor(161, 161, 170);
-  doc.text(titleLabel, PAGE.width - PAGE.margin, 18, { align: 'right' });
-
-  doc.setFontSize(10);
+  doc.setFontSize(14);
   doc.setTextColor(63, 63, 70);
-  doc.text(primaryLine, PAGE.width - PAGE.margin, 25, { align: 'right' });
+  doc.text(titleLabel, rightX, 17, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(39, 39, 42);
+  doc.text(primaryLine, rightX, 23, { align: 'right' });
 
   if (secondaryLine) {
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    doc.text(secondaryLine, PAGE.width - PAGE.margin, 31, { align: 'right' });
+    doc.text(secondaryLine, rightX, 28, { align: 'right' });
   }
 
   doc.setDrawColor(229, 231, 235);
