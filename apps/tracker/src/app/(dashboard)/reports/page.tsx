@@ -1,14 +1,13 @@
 import { FileSpreadsheet, Users, Trophy } from 'lucide-react';
 
 import { getCurrentUser, getClientsList } from '@/server';
-import { getReportStats } from '@/server/reports';
+import { getReportStats, getTenderSubmissionTrend } from '@/server/reports';
 import { ReportStatsCards } from '@/components/reports/stats-cards';
 import { TenderPerformanceChart } from '@/components/reports/tender-performance-chart';
-import { RevenueForecastChart } from '@/components/reports/revenue-forecast-chart';
+import { TenderSubmissionTrendChart } from '@/components/reports/tender-submission-trend-chart';
 import { TenderWinLossPdfButton } from '@/components/reports/tender-winloss-pdf-button';
 import {
-  TenderRegisterExcelButton,
-  TenderRegisterPdfButton,
+  TenderRegisterButtons,
   ClientTenderReportButtons,
 } from '@/components/reports/tender-register-excel-buttons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,12 +28,14 @@ export default async function ReportsPage() {
     );
   }
 
-  const [result, clientsResult] = await Promise.all([
+  const [result, clientsResult, trendResult] = await Promise.all([
     getReportStats(session.activeOrganizationId),
     getClientsList(session.activeOrganizationId),
+    getTenderSubmissionTrend(session.activeOrganizationId),
   ]);
   const stats = result.stats;
   const clients = clientsResult.clients;
+  const trendData = trendResult.success ? trendResult.data : [];
 
   return (
     <div className="space-y-6">
@@ -47,7 +48,7 @@ export default async function ReportsPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <TenderPerformanceChart stats={{ wonTenders: stats.wonTenders, lostTenders: stats.lostTenders, pendingTenders: stats.pendingTenders, winRate: stats.winRate, totalTenders: stats.totalTenders }} />
-        <RevenueForecastChart stats={{ pipelineValue: stats.pipelineValue, totalWonValue: stats.totalWonValue, poRevenue: stats.poRevenue, pendingTenders: stats.pendingTenders }} />
+        <TenderSubmissionTrendChart data={trendData} />
       </div>
 
       <div className="space-y-4">
@@ -65,8 +66,7 @@ export default async function ReportsPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <CardDescription>Full portfolio register with Contents, Summary, submission timing, data-quality checks, and a dedicated client sheet for every client.</CardDescription>
-              <TenderRegisterExcelButton />
-              <TenderRegisterPdfButton />
+              <TenderRegisterButtons />
             </CardContent>
           </Card>
 

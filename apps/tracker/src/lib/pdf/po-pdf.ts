@@ -186,7 +186,7 @@ function renderPdf(data: PoPdfData) {
     emptyMessage: 'No line items.',
   });
   y = drawTotals(doc, data, y);
-  drawStandardFooter(doc);
+  drawStandardFooter(doc, data.org.name);
   return Buffer.from(doc.output('arraybuffer'));
 }
 

@@ -2,7 +2,7 @@
 
 import ExcelJS from 'exceljs';
 import { db } from '@pmg/db';
-import { client, tender } from '@pmg/db/schema';
+import { client, organization, tender } from '@pmg/db/schema';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 
 import { validateSessionAndOrg } from './utils';
@@ -121,6 +121,10 @@ const dateValue = (date: Date | null) => (date ? date : undefined);
 export async function getTendersExportExcel(organizationId: string, clientId?: string) {
   try {
     await validateSessionAndOrg(organizationId);
+    const org = await db.query.organization.findFirst({
+      where: eq(organization.id, organizationId),
+    });
+    const orgName = org?.name || '';
     const rawRows = await db
       .select({
         tenderNumber: tender.tenderNumber,
@@ -151,21 +155,21 @@ export async function getTendersExportExcel(organizationId: string, clientId?: s
     if (clientId && rows.length === 0) return { success: false as const, error: 'Client not found or has no tenders.' };
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'PMG Tracker 360';
+    workbook.creator = 'Tender Tracker 360';
     workbook.created = new Date();
     workbook.modified = new Date();
 
     const clients = [...new Map(rows.filter((r) => r.clientId && r.clientName).map((r) => [r.clientId!, r.clientName!])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
     if (clientId) {
-      buildClientReport(workbook, rows[0].clientName || 'Client', rows);
+      buildClientReport(workbook, rows[0].clientName || 'Client', rows, orgName);
     } else {
       const usedSheetNames = new Set<string>(['Contents', 'Summary', 'Tender Register']);
       const clientSheetNames = new Map<string, string>();
       clients.forEach(([id, name]) => clientSheetNames.set(id, safeSheetName(name, usedSheetNames)));
-      buildContents(workbook, clients, clientSheetNames);
-      buildSummary(workbook, rows);
-      buildTenderRegister(workbook, rows);
-      for (const [id, name] of clients) buildClientSheet(workbook, name, rows.filter((r) => r.clientId === id), clientSheetNames.get(id)!);
+      buildContents(workbook, clients, clientSheetNames, orgName);
+      buildSummary(workbook, rows, orgName);
+      buildTenderRegister(workbook, rows, orgName);
+      for (const [id, name] of clients) buildClientSheet(workbook, name, rows.filter((r) => r.clientId === id), clientSheetNames.get(id)!, orgName);
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -178,9 +182,9 @@ export async function getTendersExportExcel(organizationId: string, clientId?: s
   }
 }
 
-function buildTenderRegister(workbook: ExcelJS.Workbook, rows: TenderExportRow[]) {
+function buildTenderRegister(workbook: ExcelJS.Workbook, rows: TenderExportRow[], orgName: string) {
   const sheet = workbook.addWorksheet('Tender Register');
-  addTitle(sheet, 'A1:L1', 'TENDER REGISTER', 'Master tender register — submission timing and data-quality checks update when the workbook is opened.');
+  addTitle(sheet, 'A1:L1', 'TENDER REGISTER', `${orgName} · Master tender register — submission timing and data-quality checks update when the workbook is opened.`);
   const headers = ['Tender Number', 'Client', 'Description', 'Status', 'Priority', 'Submission Date', 'Briefing Date', 'Estimated Value', 'Award Value', 'Contact Details', 'Submission Timing', 'Data Quality'];
   const headerRow = 4;
   sheet.getRow(headerRow).values = headers;
@@ -207,9 +211,9 @@ function buildTenderRegister(workbook: ExcelJS.Workbook, rows: TenderExportRow[]
   sheet.views = [{ showGridLines: false }];
 }
 
-function buildContents(workbook: ExcelJS.Workbook, clients: [string, string][], clientSheetNames: Map<string, string>) {
+function buildContents(workbook: ExcelJS.Workbook, clients: [string, string][], clientSheetNames: Map<string, string>, orgName: string) {
   const sheet = workbook.addWorksheet('Contents');
-  addTitle(sheet, 'A1:E1', 'TENDER SUBMISSION SUMMARY', 'Workbook navigation and live client-level tender totals.');
+  addTitle(sheet, 'A1:E1', 'TENDER SUBMISSION SUMMARY', `${orgName} · Workbook navigation and live client-level tender totals.`);
   [24, 34, 16, 16, 16].forEach((width, i) => (sheet.getColumn(i + 1).width = width));
   addKpi(sheet, 'A4', 'A5', 'Total Registered', 'COUNTA(TenderRegister[Tender Number])');
   addKpi(sheet, 'B4', 'B5', 'Total Submitted', 'COUNTIF(TenderRegister[Submission Timing],"Submitted")');
@@ -243,9 +247,9 @@ function buildContents(workbook: ExcelJS.Workbook, clients: [string, string][], 
   sheet.views = [{ showGridLines: false }];
 }
 
-function buildSummary(workbook: ExcelJS.Workbook, rows: TenderExportRow[]) {
+function buildSummary(workbook: ExcelJS.Workbook, rows: TenderExportRow[], orgName: string) {
   const sheet = workbook.addWorksheet('Summary');
-  addTitle(sheet, 'A1:F1', 'TENDER PORTFOLIO SUMMARY', 'Live portfolio KPIs, status mix, estimated pipeline, and data-quality indicators.');
+  addTitle(sheet, 'A1:F1', 'TENDER PORTFOLIO SUMMARY', `${orgName} · Live portfolio KPIs, status mix, estimated pipeline, and data-quality indicators.`);
   [24, 20, 20, 22, 18, 18].forEach((width, i) => (sheet.getColumn(i + 1).width = width));
   addKpi(sheet, 'A4', 'A5', 'Total Tenders', 'COUNTA(TenderRegister[Tender Number])');
   addKpi(sheet, 'B4', 'B5', 'Total Submitted', 'COUNTIF(TenderRegister[Submission Timing],"Submitted")');
@@ -294,9 +298,9 @@ function buildSummary(workbook: ExcelJS.Workbook, rows: TenderExportRow[]) {
   sheet.views = [{ showGridLines: false }];
 }
 
-function buildClientSheet(workbook: ExcelJS.Workbook, clientName: string, rows: TenderExportRow[], sheetName: string) {
+function buildClientSheet(workbook: ExcelJS.Workbook, clientName: string, rows: TenderExportRow[], sheetName: string, orgName: string) {
   const sheet = workbook.addWorksheet(sheetName);
-  addTitle(sheet, 'A1:D1', 'CLIENT TENDER REPORT', cleanText(clientName));
+  addTitle(sheet, 'A1:D1', 'CLIENT TENDER REPORT', orgName);
   sheet.getCell('A2').value = cleanText(clientName);
   sheet.getCell('A2').font = { bold: true, color: { argb: NAVY } };
   sheet.getCell('A3').value = 'Total Tenders';
@@ -320,9 +324,9 @@ function buildClientSheet(workbook: ExcelJS.Workbook, clientName: string, rows: 
   sheet.views = [{ showGridLines: false }];
 }
 
-function buildClientReport(workbook: ExcelJS.Workbook, clientName: string, rows: TenderExportRow[]) {
+function buildClientReport(workbook: ExcelJS.Workbook, clientName: string, rows: TenderExportRow[], orgName: string) {
   const sheet = workbook.addWorksheet('Client Report');
-  addTitle(sheet, 'A1:F1', 'CLIENT TENDER REPORT', cleanText(clientName));
+  addTitle(sheet, 'A1:F1', 'CLIENT TENDER REPORT', `${orgName} · ${cleanText(clientName)}`);
   [24, 68, 24, 44, 18, 18].forEach((width, i) => (sheet.getColumn(i + 1).width = width));
   addKpi(sheet, 'A4', 'A5', 'Total Tenders', 'COUNTA(A9:A1000)');
   addKpi(sheet, 'B4', 'B5', 'Submitted', 'COUNTIF(E9:E1000,"Submitted")');
