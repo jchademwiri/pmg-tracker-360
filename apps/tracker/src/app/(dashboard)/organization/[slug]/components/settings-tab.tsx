@@ -29,12 +29,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Save, Bell, Users, Globe, Clock, Building2 } from 'lucide-react';
+import { Save, Bell, Users, Globe, Clock, Settings } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import type { Role } from '@pmg/db/schema';
 import { updateOrganizationSettings } from '@/server/organization-members';
-import { updateOrganizationLogo } from '@/server/organizations';
-import { AvatarUpload } from '../../../settings/profile/components/avatar-upload';
 
 interface SettingsTabProps {
   organization: {
@@ -82,25 +81,8 @@ export function SettingsTab({
   currentUser: _currentUser,
 }: SettingsTabProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(
-    organization.logo || null
-  );
   const canEdit = canEditSettings(userRole);
   const canEditOwner = canEditOwnerSettings(userRole);
-
-  const handleLogoUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return await updateOrganizationLogo(organization.id, formData);
-  };
-
-  const handleLogoRemove = () => {
-    // Implement removal logic if needed, for now just UI update or separate action
-    // We could add updateOrganizationLogo(id, emptyFormData?) or dedicated remove
-    // For now, let's just toast
-    setLogoUrl(null);
-    toast.info('Logo removed (UI only for now)');
-  };
 
   // Parse metadata if it exists
   const metadata = organization.metadata
@@ -156,46 +138,26 @@ export function SettingsTab({
 
   return (
     <div className="space-y-6">
-      {/* Organization Identity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Organization Identity
-          </CardTitle>
-          <CardDescription>
-            Update your organization's logo and branding
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex justify-center py-4">
-            <AvatarUpload
-              currentImage={logoUrl}
-              userName={organization.name}
-              onImageChange={setLogoUrl}
-              onImageRemove={handleLogoRemove}
-              disabled={!canEdit}
-              uploadAction={handleLogoUpload}
-              entityName="Organization Logo"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Member Management Settings */}
+          {/* Organization Settings (member, notification, and regional preferences) */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Member Management
+                <Settings className="h-5 w-5" />
+                Organization Settings
               </CardTitle>
               <CardDescription>
-                Configure how members are managed in your organization
+                Configure member, notification, and regional preferences
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
+              {/* Member Management */}
+              <section className="space-y-6">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  Member Management
+                </h3>
               <FormField
                 control={form.control}
                 name="defaultMemberRole"
@@ -276,21 +238,15 @@ export function SettingsTab({
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+              </section>
+              <Separator />
 
-          {/* Notification Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notifications
-              </CardTitle>
-              <CardDescription>
-                Configure notification preferences for organization activities
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+              {/* Notifications */}
+              <section className="space-y-6">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Bell className="h-4 w-4 text-muted-foreground" />
+                  Notifications
+                </h3>
               <FormField
                 control={form.control}
                 name="enableNotifications"
@@ -364,21 +320,15 @@ export function SettingsTab({
                   </FormItem>
                 )}
               />
-            </CardContent>
-          </Card>
+              </section>
+              <Separator />
 
-          {/* Regional Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Regional Settings
-              </CardTitle>
-              <CardDescription>
-                Configure timezone, date format, and language preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+              {/* Regional Settings */}
+              <section className="space-y-6">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  Regional Settings
+                </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -495,6 +445,7 @@ export function SettingsTab({
                   </FormItem>
                 )}
               />
+              </section>
             </CardContent>
           </Card>
 
