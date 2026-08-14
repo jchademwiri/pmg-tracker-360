@@ -56,43 +56,49 @@ export default async function ReportsPage() {
           <h2 className="text-xl font-semibold tracking-tight">Downloadable Reports</h2>
           <p className="text-sm text-muted-foreground">Export polished Excel and PDF tender reports for management, record-keeping, and client-level reporting.</p>
         </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="transition-shadow hover:shadow-md">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+          <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/20"><FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" /></div>
                 <CardTitle className="text-lg">Tender Register</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="flex flex-1 flex-col">
               <CardDescription>Full portfolio register with Contents, Summary, submission timing, data-quality checks, and a dedicated client sheet for every client.</CardDescription>
-              <TenderRegisterButtons />
+              <div className="mt-auto pt-4">
+                <TenderRegisterButtons />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="transition-shadow hover:shadow-md">
+          <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/20"><Users className="h-5 w-5 text-blue-600 dark:text-blue-400" /></div>
                 <CardTitle className="text-lg">Client Tender Report</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-1 flex-col">
               <CardDescription>Select a client and download the same tender report as Excel or PDF, including tenders, dates, contacts, submission timing, and estimated values.</CardDescription>
-              <ClientTenderReportButtons clients={clients} />
+              <div className="mt-auto pt-4">
+                <ClientTenderReportButtons clients={clients} />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="transition-shadow hover:shadow-md">
+          <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/20"><Trophy className="h-5 w-5 text-amber-600 dark:text-amber-400" /></div>
                 <CardTitle className="text-lg">Win/Loss Summary</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-1 flex-col">
               <CardDescription>Win rate, awarded and lost tenders, and loss reasons — a formal PDF for performance review.</CardDescription>
-              <TenderWinLossPdfButton />
+              <div className="mt-auto pt-4">
+                <TenderWinLossPdfButton />
+              </div>
             </CardContent>
           </Card>
         </div>
