@@ -63,8 +63,50 @@ export class StorageService {
       // Let's return the key so we can store it.
       return key;
     } catch (error) {
-      console.error('Error uploading file to storage:', error);
-      throw new Error('Failed to upload file');
+      // Surface the real AWS error (status code + code + message) so callers
+      // can tell 403 (token permissions) from 404 (wrong bucket) from a
+      // network failure instead of guessing from a generic message.
+      const e = error as {
+        name?: string;
+        message?: string;
+        $metadata?: { httpStatusCode?: number };
+      };
+      const detail = [
+        e?.$metadata?.httpStatusCode
+          ? `status ${e.$metadata.httpStatusCode}`
+          : null,
+        e?.name,
+        e?.message,
+      ]
+        .filter(Boolean)
+        .join(' - ');
+      console.error('Error uploading file to storage:', detail || error);
+      throw new Error(
+        `Failed to upload file${detail ? ` (${detail})` : ''}`
+      );
+    }
+  }
+
+  /**
+   * True when `url` is a transient signed URL pointing at our own storage
+   * endpoint (R2 or the custom S3 endpoint). Signed URLs expire (1h) and
+   * must never be persisted — they are display-only representations of a
+   * storage key.
+   */
+  static isOwnSignedUrl(url: string): boolean {
+    if (!/^https?:\/\//i.test(url)) return false;
+    try {
+      const host = new URL(url).hostname;
+      const endpoint =
+        S3_API ||
+        (R2_ACCOUNT_ID
+          ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+          : null);
+      if (!endpoint) return false;
+      const allowedHost = new URL(endpoint).hostname;
+      return host === allowedHost || host.endsWith(`.${allowedHost}`);
+    } catch {
+      return false;
     }
   }
 

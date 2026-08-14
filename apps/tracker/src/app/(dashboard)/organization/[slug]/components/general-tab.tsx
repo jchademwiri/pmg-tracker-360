@@ -23,8 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building2, Save, Upload, Trash2, Camera } from 'lucide-react';
+import { Building2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Role } from '@pmg/db/schema';
 import { updateOrganizationDetails } from '@/server/organization-members';
@@ -81,6 +80,10 @@ export function GeneralTab({
   currentUser: _currentUser,
 }: GeneralTabProps) {
   const [isLoading, setIsLoading] = useState(false);
+  // Preview URL for the logo avatar. The form itself stores the durable
+  // storage key (or external URL) so saving details never persists a
+  // short-lived signed URL.
+  const [logoPreview, setLogoPreview] = useState<string | null>(organization.logo || null);
   const canEdit = canEditOrganization(userRole);
 
   // Parse metadata if it exists
@@ -108,8 +111,17 @@ export function GeneralTab({
     return await updateOrganizationLogo(organization.id, formData);
   };
 
+  const handleLogoChange = (imageUrl: string | null, storageKey?: string | null) => {
+    // Persist the durable key (or an external URL) in the form; the signed
+    // URL is only used for immediate display.
+    const value = storageKey || imageUrl || '';
+    form.setValue('logo', value);
+    setLogoPreview(imageUrl || value);
+  };
+
   const handleLogoRemove = () => {
     form.setValue('logo', '');
+    setLogoPreview(null);
   };
 
   const onSubmit = async (data: OrganizationFormData) => {
@@ -148,33 +160,7 @@ export function GeneralTab({
 
   return (
     <div className="space-y-6">
-      {/* Organization Logo Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            Organization Logo
-          </CardTitle>
-          <CardDescription>
-            Update your organization&#x27;s logo and visual identity
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-center py-4">
-            <AvatarUpload
-              currentImage={form.watch('logo')}
-              userName={organization.name}
-              onImageChange={(url) => form.setValue('logo', url || '')}
-              onImageRemove={handleLogoRemove}
-              disabled={!canEdit}
-              uploadAction={handleLogoUpload}
-              entityName="Organization Logo"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Organization Details Form */}
+      {/* Organization Details (logo + information) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -183,11 +169,22 @@ export function GeneralTab({
           </CardTitle>
           <CardDescription>
             {canEdit
-              ? 'Update your organization information and contact details'
+              ? 'Update your organization logo, information, and contact details'
               : 'View organization information and contact details'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <div className="flex justify-center py-2 border-b">
+            <AvatarUpload
+              currentImage={logoPreview}
+              userName={organization.name}
+              onImageChange={handleLogoChange}
+              onImageRemove={handleLogoRemove}
+              disabled={!canEdit}
+              uploadAction={handleLogoUpload}
+              entityName="Organization Logo"
+            />
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

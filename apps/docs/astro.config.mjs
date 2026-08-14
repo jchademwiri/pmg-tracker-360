@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://docs.tendertrack360.co.za',
 	integrations: [
 		starlight({
 			title: 'PMG Tracker 360 User Guide',

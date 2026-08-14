@@ -168,6 +168,26 @@
     min-width: 44px;
   }
 
+  /* Pointer cursor on all interactive elements */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a,
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  select:not(:disabled),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"]:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+
   /* Improve focus visibility for keyboard navigation */
   :focus-visible {
     outline: 2px solid var(--ring);

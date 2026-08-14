@@ -1,46 +1,54 @@
 ---
-title: Glossary & Terms Reference
-description: Essential procurement, tendering, and platform terminology definitions for PMG Tracker 360.
+title: Glossary — Plain-English Terms
+description: Simple, everyday definitions of the words and phrases used in PMG Tracker 360.
 ---
 
-This reference page defines common procurement terminology, platform workflow terms, and status descriptions used throughout **PMG Tracker 360**.
+Don't know what a word means? This page explains the terms used in PMG Tracker 360 in plain, everyday language. Need something explained differently? Just ask us via the **Contact** page.
 
 ---
 
-## Key Terms & Definitions
+## Everyday definitions
 
-### Tender (RFP / RFQ)
-A formal invitation or request for proposal issued by a procuring entity (client) inviting suppliers or sub-contractors to submit competitive bids for goods, services, or construction works.
+### Workspace
+Your company's private area in PMG Tracker 360. It holds your clients, tenders, projects, purchase orders, and team members. No one outside your workspace can see its data.
 
-### Procuring Entity (Client)
-The buyer, municipality, government department, state-owned entity (SOE), or commercial enterprise advertising the tender opportunity.
+### Client
+The buyer or organization that publishes tenders or buys from you — for example, a municipality, government department, state-owned company, or private business.
 
-### Awarded Bid (Won Tender)
-A tender proposal that has been formally selected and awarded by the procuring entity to your organization.
+### Tender (bid, RFP, RFQ)
+An opportunity where a buyer asks suppliers to submit a proposal. You record it in PMG Tracker 360 with its closing date, value, and documents.
+
+### Closing date
+The deadline for submitting your bid. PMG Tracker 360 can remind you 48 and 24 hours before it.
+
+### Awarded bid (won tender)
+A tender that the buyer has formally given to your company. An awarded tender can be converted into a project.
 
 ### Project
-An operational contract container initialized upon winning a tender to track delivery milestones, execution phases, and purchase order balances.
+The delivery phase that starts when you win a tender. It tracks milestones, documents, and purchase orders against the contract value.
 
-### Purchase Order (PO)
-A legally binding commercial document issued by your organization to a sub-contractor or supplier, specifying agreed quantities, line items, and financial values.
+### Purchase order (PO)
+The document you send to a supplier or sub-contractor to order goods or services. Every PO is tracked against a project's budget.
 
-### Organization Workspace (Tenant)
-An isolated workspace environment in PMG Tracker 360 housing an organization's clients, tenders, projects, purchase orders, and team memberships.
+### Milestone
+A stage of a project (for example, *Site survey*, *Equipment delivery*, *Final sign-off*) with a target date and progress.
 
-### Returnable Documents
-Mandatory compliance documents (e.g. Tax Clearance Pin, B-BBEE Certificate, CSD Registration) required by buyers during tender submission evaluation.
+### Returnable documents
+The compliance paperwork a buyer requires with your bid — for example, a **Tax Clearance Pin**, **B-BBEE certificate**, **COIDA certificate**, or **CSD registration**.
+
+### Plan
+Your subscription tier (Free, Starter, or Pro). It sets limits such as how many workspaces you can own, team seats, and storage.
 
 ---
 
-## Workflow Status Reference Table
+## Status reference
 
-| Status | Applicable Entity | Description |
+| Status | Applies to | What it means |
 | :--- | :--- | :--- |
-| **Open** | Tender | Record created; submission open and documentation being compiled. |
-| **Evaluation** | Tender | Paperwork submitted to buyer; awaiting evaluation decision. |
-| **Closed** | Tender | Tender closing date passed or opportunity cancelled. |
-| **Awarded** | Tender | Bid awarded; eligible for conversion to an active project. |
-| **Lost** | Tender | Bid declined or awarded to a competitor. |
-| **Active** | Project | Operational delivery underway. |
-| **Sent** | Purchase Order | Transmitted to supplier/sub-contractor. |
-| **Delivered** | Purchase Order | Goods/services received and signed off. |
+| **Open** | Tender | Bid is being prepared; documents and pricing are being compiled. |
+| **Evaluation** | Tender | Bid submitted; the buyer is reviewing it. |
+| **Closed** | Tender | Closing date passed or the opportunity was cancelled. |
+| **Awarded** | Tender | Bid won; ready to become a project. |
+| **Lost** | Tender | Bid was not awarded to your company. |
+| **Active** | Project | Delivery is underway. |
+| **Draft / Sent / Delivered** | Purchase Order | Not yet sent / sent to the supplier / received and signed off. |
