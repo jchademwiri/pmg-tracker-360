@@ -6,7 +6,6 @@ import {
   getUserOrganizationMembership,
 } from '@/server/organizations';
 import { OrganizationManagementTabs } from './components/organization-management-tabs';
-import { Building2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrganizationSettingsWrapper } from '@/components/organization/organization-settings-wrapper';
@@ -107,26 +106,10 @@ export default async function OrganizationManagementPage({
 }: OrganizationManagementPageProps) {
   const { slug } = await params;
 
+  // The organization identity header (name, logo, role, member count) is
+  // rendered by OrganizationManagementTabs — no separate page header needed.
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-7xl">
-      {/* Header Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Building2 className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Organization Management
-            </h1>
-            <p className="text-muted-foreground">
-              Manage organization details, members, and settings.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content with Suspense */}
+    <div className="container mx-auto py-6 max-w-7xl">
       <Suspense fallback={<OrganizationManagementSkeleton />}>
         <OrganizationManagementContent slug={slug} />
       </Suspense>

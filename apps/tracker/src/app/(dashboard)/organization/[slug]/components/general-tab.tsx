@@ -23,8 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building2, Save, Upload, Trash2, Camera } from 'lucide-react';
+import { Building2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Role } from '@pmg/db/schema';
 import { updateOrganizationDetails } from '@/server/organization-members';
@@ -148,19 +147,21 @@ export function GeneralTab({
 
   return (
     <div className="space-y-6">
-      {/* Organization Logo Section */}
+      {/* Organization Details (logo + information) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            Organization Logo
+            <Building2 className="h-5 w-5" />
+            Organization Details
           </CardTitle>
           <CardDescription>
-            Update your organization&#x27;s logo and visual identity
+            {canEdit
+              ? 'Update your organization logo, information, and contact details'
+              : 'View organization information and contact details'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-center py-4">
+        <CardContent className="space-y-6">
+          <div className="flex justify-center py-2 border-b">
             <AvatarUpload
               currentImage={form.watch('logo')}
               userName={organization.name}
@@ -171,23 +172,6 @@ export function GeneralTab({
               entityName="Organization Logo"
             />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Organization Details Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Organization Details
-          </CardTitle>
-          <CardDescription>
-            {canEdit
-              ? 'Update your organization information and contact details'
-              : 'View organization information and contact details'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
