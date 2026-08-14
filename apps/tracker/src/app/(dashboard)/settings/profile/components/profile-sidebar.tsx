@@ -37,7 +37,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { AvatarUpload } from './avatar-upload';
-import { updateUserImage } from '@/server/users';
+import { updateUserImage, removeUserImage } from '@/server/users';
 import type { UpdateProfileData, ActionResult } from '../actions';
 
 // Validation schema
@@ -142,9 +142,19 @@ export function ProfileSidebar({
     });
   };
 
-  const handleImageRemove = () => {
-    updateOptimisticUser({ image: null });
-    // Note: In a real implementation, you'd call a server action to remove the image here
+  const handleImageRemove = async () => {
+    try {
+      const result = await removeUserImage();
+      if (result.success) {
+        updateOptimisticUser({ image: null });
+        toast.success('Profile picture removed');
+      } else {
+        toast.error(result.error || 'Failed to remove profile picture');
+      }
+    } catch (error) {
+      console.error('Failed to remove profile picture:', error);
+      toast.error('Failed to remove profile picture');
+    }
   };
 
   const handleUpload = async (file: File) => {

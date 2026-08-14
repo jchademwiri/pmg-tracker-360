@@ -250,12 +250,53 @@ export const updateUserImage = async (formData: FormData) => {
 
     revalidatePath('/settings/profile');
 
-    // Return signed URL for immediate display
+    // Return signed URL for immediate display plus the durable storage key.
+    // Only the key is persisted in the DB — the signed URL expires after 1h.
     const signedUrl = await StorageService.getSignedUrl(storageKey);
 
-    return { success: true, imageUrl: signedUrl };
+    return { success: true, imageUrl: signedUrl, key: storageKey };
   } catch (error) {
     console.error('Error updating user image:', error);
     return { success: false, error: 'Failed to update profile picture' };
+  }
+};
+
+/**
+ * Removes the current user's profile picture (deletes the stored object and
+ * clears the image column).
+ */
+export const removeUserImage = async () => {
+  try {
+    const session = await getServerSession();
+
+    if (!session) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const currentUser = await db.query.user.findFirst({
+      where: eq(user.id, session.user.id),
+      columns: { image: true },
+    });
+
+    // Delete the stored object (only if it's a storage key, not a legacy URL)
+    if (currentUser?.image && !currentUser.image.startsWith('http')) {
+      try {
+        await StorageService.deleteFile(currentUser.image);
+      } catch (e) {
+        console.error('Failed to delete old user image:', e);
+      }
+    }
+
+    await db
+      .update(user)
+      .set({ image: null })
+      .where(eq(user.id, session.user.id));
+
+    revalidatePath('/settings/profile');
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing user image:', error);
+    return { success: false, error: 'Failed to remove profile picture' };
   }
 };

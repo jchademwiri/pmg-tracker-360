@@ -81,6 +81,10 @@ export function GeneralTab({
   currentUser: _currentUser,
 }: GeneralTabProps) {
   const [isLoading, setIsLoading] = useState(false);
+  // Preview URL for the logo avatar. The form itself stores the durable
+  // storage key (or external URL) so saving details never persists a
+  // short-lived signed URL.
+  const [logoPreview, setLogoPreview] = useState<string | null>(organization.logo || null);
   const canEdit = canEditOrganization(userRole);
 
   // Parse metadata if it exists
@@ -108,8 +112,17 @@ export function GeneralTab({
     return await updateOrganizationLogo(organization.id, formData);
   };
 
+  const handleLogoChange = (imageUrl: string | null, storageKey?: string | null) => {
+    // Persist the durable key (or an external URL) in the form; the signed
+    // URL is only used for immediate display.
+    const value = storageKey || imageUrl || '';
+    form.setValue('logo', value);
+    setLogoPreview(imageUrl || value);
+  };
+
   const handleLogoRemove = () => {
     form.setValue('logo', '');
+    setLogoPreview(null);
   };
 
   const onSubmit = async (data: OrganizationFormData) => {
@@ -162,9 +175,9 @@ export function GeneralTab({
         <CardContent className="space-y-4">
           <div className="flex justify-center py-4">
             <AvatarUpload
-              currentImage={form.watch('logo')}
+              currentImage={logoPreview}
               userName={organization.name}
-              onImageChange={(url) => form.setValue('logo', url || '')}
+              onImageChange={handleLogoChange}
               onImageRemove={handleLogoRemove}
               disabled={!canEdit}
               uploadAction={handleLogoUpload}

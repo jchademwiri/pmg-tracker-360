@@ -721,10 +721,11 @@ export async function updateOrganizationLogo(
     revalidatePath('/organization'); // Revalidate list
     revalidatePath('/dashboard'); // Revalidate sidebar potentially
 
-    // Return signed URL for immediate display
+    // Return signed URL for immediate display plus the durable storage key.
+    // Only the key is persisted in the DB — the signed URL expires after 1h.
     const signedUrl = await StorageService.getSignedUrl(storageKey);
 
-    return { success: true, imageUrl: signedUrl };
+    return { success: true, imageUrl: signedUrl, key: storageKey };
   } catch (error) {
     console.error('Error updating organization logo:', error);
     if (error instanceof Error) {

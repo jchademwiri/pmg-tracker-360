@@ -27,12 +27,12 @@ import { toast } from 'sonner';
 interface AvatarUploadProps {
   currentImage?: string | null;
   userName: string;
-  onImageChange: (imageUrl: string | null) => void;
+  onImageChange: (imageUrl: string | null, storageKey?: string | null) => void;
   onImageRemove: () => void;
   disabled?: boolean;
   uploadAction: (
     file: File
-  ) => Promise<{ success: boolean; imageUrl?: string; error?: string }>;
+  ) => Promise<{ success: boolean; imageUrl?: string; key?: string; error?: string }>;
   entityName?: string; // e.g. "Profile picture" or "Organization logo"
 }
 
@@ -45,8 +45,6 @@ export function AvatarUpload({
   uploadAction,
   entityName = 'Profile picture',
 }: AvatarUploadProps) {
-  const isUploadDisabled = entityName.toLowerCase() === 'organization logo' ? false : true;
-
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -119,14 +117,6 @@ export function AvatarUpload({
     }
   };
 
-  // NOTE: Removed simulated upload delay/progress. Wire to real API when ready.
-  const simulateUpload = async (file: File): Promise<string> => {
-    setIsUploading(true);
-    setUploadProgress(100);
-    setIsUploading(false);
-    return URL.createObjectURL(file);
-  };
-
   const handleConfirmUpload = async () => {
     if (!previewImage) return;
 
@@ -143,7 +133,7 @@ export function AvatarUpload({
       setIsUploading(false);
 
       if (result.success && result.imageUrl) {
-        onImageChange(result.imageUrl);
+        onImageChange(result.imageUrl, result.key);
         setShowUploadDialog(false);
         setPreviewImage(null);
         toast.success(`${entityName} updated successfully`);
@@ -190,16 +180,10 @@ export function AvatarUpload({
         {/* Upload Overlay */}
         <div
           className={`absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 ${
-            disabled || isUploadDisabled
-              ? 'cursor-not-allowed'
-              : 'cursor-pointer'
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
           }`}
           onClick={(e) => {
             e.stopPropagation(); // Prevent bubbling issues
-            if (isUploadDisabled) {
-              toast.info('Photo upload is currently unavailable. Coming soon!');
-              return;
-            }
             if (!disabled) fileInputRef.current?.click();
           }}
         >
@@ -212,13 +196,7 @@ export function AvatarUpload({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            if (isUploadDisabled) {
-              toast.info('Photo upload is currently unavailable. Coming soon!');
-              return;
-            }
-            fileInputRef.current?.click();
-          }}
+          onClick={() => fileInputRef.current?.click()}
           disabled={disabled}
           className="flex items-center space-x-2"
         >

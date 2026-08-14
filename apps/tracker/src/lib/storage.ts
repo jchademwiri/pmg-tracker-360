@@ -69,6 +69,29 @@ export class StorageService {
   }
 
   /**
+   * True when `url` is a transient signed URL pointing at our own storage
+   * endpoint (R2 or the custom S3 endpoint). Signed URLs expire (1h) and
+   * must never be persisted — they are display-only representations of a
+   * storage key.
+   */
+  static isOwnSignedUrl(url: string): boolean {
+    if (!/^https?:\/\//i.test(url)) return false;
+    try {
+      const host = new URL(url).hostname;
+      const endpoint =
+        S3_API ||
+        (R2_ACCOUNT_ID
+          ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+          : null);
+      if (!endpoint) return false;
+      const allowedHost = new URL(endpoint).hostname;
+      return host === allowedHost || host.endsWith(`.${allowedHost}`);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Deletes a file from R2 storage
    * @param key The path/key of the file to delete
    */
