@@ -1,46 +1,40 @@
 ---
-title: Members & Roles Management
-description: Learn how to invite team members, manage pending invitations, and assign role permissions in PMG Tracker 360.
+title: Team Members & Roles
+description: How to invite teammates, understand each role, and manage who can do what — in plain language.
 ---
 
-Collaboration is at the heart of **PMG Tracker 360**. Organization Owners and Admins can invite team members, assign role permissions, and control user access across all procurement workflows.
-
----
-
-## 1. Inviting Team Members
-
-To invite a colleague or employee to your workspace:
-1. Navigate to `/organization` and select the **Members** tab.
-2. Click **Invite Member**.
-3. Enter the recipient's email address.
-4. Select the initial role (`Admin`, `Manager`, or `Member`).
-5. Click **Send Invitation**.
-
-An automated invitation link will be dispatched to the user's email address. You can view, resend, or revoke pending invitations under the **Pending Invitations** section.
+PMG Tracker 360 lets you work as a team. This guide explains how to invite people into your workspace and what each role can and can't do.
 
 ---
 
-## 2. Organization Roles & Permission Matrix
+## 1. Invite a teammate
 
-PMG Tracker 360 defines four distinct tenant roles:
+The workspace **Owner** or an **Admin** can invite people:
 
-```mermaid
-graph TD
-    Owner[Owner] --> Admin[Admin]
-    Admin --> Manager[Manager]
-    Manager --> Member[Member]
-```
+1. Click **Organization** in the left menu.
+2. Open the **Members** tab.
+3. Click **Invite Member**.
+4. Enter the person's **email address**.
+5. Choose their **role** (see below) and click **Send Invitation**.
 
-### Role Capabilities Summary
-
-* **Owner**: Primary owner of the workspace tenant. Has total control including subscription management, workspace deletion, ownership transfer, and member role modification.
-* **Admin**: Administrative team lead. Can invite/remove members, manage workspace settings, create/edit clients, tenders, projects, and POs. Cannot delete the organization workspace or transfer ownership.
-* **Manager**: Procurement manager. Can create, edit, and manage clients, tenders, projects, and purchase orders. Cannot manage team invitations, workspace settings, or billing.
-* **Member**: Standard team member or reviewer. Can view clients, tenders, projects, and purchase orders, update assigned task notes, and view reports. Cannot modify organization settings or delete records.
+Your teammate receives an invitation email. Once they accept, the workspace appears in their account and they can start working. You can see, resend, or cancel pending invitations in the same **Members** tab.
 
 ---
 
-## 3. Changing Roles & Removing Members
+## 2. What each role can do
 
-* **Role Updates**: An Owner or Admin can change any member's role at any time from the **Members List** dropdown menu.
-* **Removing Members**: Removing a member immediately revokes their access to the organization's tenders, projects, and financial records. Their user account remains intact, but they can no longer view or select that workspace.
+Think of roles as levels of responsibility. Choose the lowest level that fits the person's job.
+
+| Role | What they can do |
+| :--- | :--- |
+| **Owner** | Everything — including billing, closing the workspace, transferring ownership, and managing roles. There is one Owner per workspace. |
+| **Admin** | Everything except closing the workspace or transferring ownership. They can invite and remove members, and manage workspace settings. |
+| **Manager** | Day-to-day work — create and manage clients, tenders, projects, and purchase orders. They cannot invite members or change settings. |
+| **Member** | View clients, tenders, projects, and purchase orders, and use reports. They cannot create or edit records or manage the workspace. |
+
+---
+
+## 3. Change a role or remove a member
+
+- **Change a role:** The Owner or an Admin can change anyone's role from the **Members** list — open the menu next to the person's name and pick a new role.
+- **Remove a member:** Removing someone immediately stops their access to the workspace. Their account stays active, but they can no longer see or open this workspace.

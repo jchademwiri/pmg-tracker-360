@@ -1,35 +1,38 @@
 ---
-title: Clients Directory Management
-description: How to add, organize, and manage client records, buyer profiles, and contact details in PMG Tracker 360.
+title: Clients Directory
+description: Add and manage the buyers your company works with — municipalities, government departments, and companies — in plain language.
 ---
 
-The **Clients Directory** (`/clients`) is the central repository for all buyer entities, government bodies, municipalities, and private enterprises with whom your organization conducts business or submits bids.
-
----
-
-## 1. Creating a New Client Profile
-
-1. Navigate to `/clients` and click **New Client**.
-2. Complete the buyer registration form:
-   * **Company / Department Name**: Official buyer name (e.g. *Eskom Holdings SOC Ltd*, *City of Johannesburg*).
-   * **Client Category**: Select *Public Sector*, *Private Commercial*, *State-Owned Entity (SOE)*, or *Municipal*.
-   * **Tax / Registration Number**: VAT or registration number for invoice matching.
-   * **Primary Contact Person**: Name, title, direct phone line, and email address of the procurement officer.
-   * **Physical & Postal Address**: Head office address.
+The **Clients Directory** is your company's address book of buyers — the organizations that publish tenders or buy from you, such as municipalities, government departments, state-owned companies, and private businesses.
 
 ---
 
-## 2. Managing Client Portfolios & History
+## 1. Add a new client
 
-Inside any client details page:
-* **Tender History**: View all historical tender submissions linked to this buyer, including total won bid values and lost proposals.
-* **Active Projects**: Track all current active projects being executed for this buyer.
-* **Contact Directory**: Store secondary contact persons (e.g., Accounts Payable officers, Site Engineers).
-* **Notes & Documents**: Attach compliance documents, client-specific RFP templates, or framework agreement notes.
+1. Click **Clients** in the left menu.
+2. Click **New Client**.
+3. Fill in the details:
+   - **Company / department name** — for example, *Eskom Holdings*, *City of Johannesburg*.
+   - **Client category** — choose from *Public Sector*, *Municipal*, *State-Owned Entity*, or *Private Commercial*.
+   - **Tax / registration number** — VAT or company registration number (used to match invoices).
+   - **Primary contact** — the person who handles tenders or procurement: name, phone, and email.
+   - **Address** — the client's head office address.
+4. Click **Save**.
 
 ---
 
-## 3. Searching & Filtering Clients
+## 2. What you can see on a client's page
 
-* Use the search bar on `/clients` to quickly filter clients by name, contact officer, or registration number.
-* Filter by sector or active status to analyze client portfolio distribution.
+Open any client to see everything you've recorded about them:
+
+- **Tender history** — every tender you've submitted to this client, including won and lost bids.
+- **Active projects** — projects you're currently delivering for this client.
+- **Contact details** — additional contacts, such as accounts-payable or site engineers.
+- **Notes & documents** — agreements, templates, and other files you've attached.
+
+---
+
+## 3. Find a client quickly
+
+- Use the **search bar** at the top of the **Clients** page to search by name, contact person, or registration number.
+- Use the **filters** to narrow the list by sector or status.

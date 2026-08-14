@@ -1,6 +1,6 @@
-import { Twitter, Linkedin, Github } from 'lucide-react';
+import { Twitter, Linkedin, Github, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { CONTACT_INFO } from '@/lib/constants';
+import { CONTACT_INFO, DOCS_URL } from '@/lib/constants';
 
 export function FooterSection() {
   return (
@@ -89,11 +89,12 @@ export function FooterSection() {
             <ul className="space-y-2 text-muted-foreground">
               <li>
                 <Link
-                  href="https://docs.tendertrack360.co.za"
+                  href={DOCS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-foreground transition-colors"
+                  className="hover:text-foreground transition-colors inline-flex items-center gap-1.5"
                 >
+                  <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
                   Documentation
                 </Link>
               </li>

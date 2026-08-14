@@ -4,3 +4,5 @@ export const CONTACT_INFO = {
   email: 'info@tendertrack360.co.za',
   supportEmail: 'support@tendertrack360.co.za', // For internal support notifications
 };
+
+export const DOCS_URL = 'https://docs.tendertrack360.co.za';

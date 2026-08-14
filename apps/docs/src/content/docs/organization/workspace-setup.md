@@ -1,41 +1,45 @@
 ---
-title: Workspace Setup & Settings
-description: Detailed guide to managing tenant organization settings, workspace slugs, and profile branding in PMG Tracker 360.
+title: Workspace Settings
+description: Manage your company's name, logo, web address, and workspace limits — explained in plain language.
 ---
 
-Organizations in **PMG Tracker 360** act as isolated operational environments. This guide explains how to manage workspace metadata, configure company branding, and manage organization limits.
-
----
-
-## 1. Managing Workspace Profile & Details
-
-Organization Owners and Admins can manage organization settings via `/organization`:
-
-* **Organization Name**: Update the official display name of your business entity.
-* **Workspace Slug**: Unique URL slug used for workspace routing. Modifying the slug updates workspace URLs for all team members.
-* **Company Logo & Icon**: Upload brand logos used in exported reports and purchase order headers.
-* **Tax & Registration Numbers**: Store VAT numbers, CIPC registration numbers, and official business address details for billing.
+Your workspace is your company's private area in PMG Tracker 360. This guide shows you how to update its details and understand its limits.
 
 ---
 
-## 2. Organization Limits & Subscription Caps
+## 1. Change your company details
 
-Your organization capability and resource allowances depend on your active plan tier:
+The workspace **Owner** (and **Admins**) can update company details at any time:
 
-| Feature Limit | Free Plan | Starter Plan | Pro Plan |
+1. Click **Organization** in the left menu.
+2. Choose the **Settings** or **General** tab.
+
+From here you can change:
+
+- **Company name** — the official name shown across the app.
+- **Workspace web address** — the unique address used for your workspace. (Changes to this update the address for everyone in the workspace.)
+- **Company logo** — used on exported reports and documents.
+- **Tax and registration numbers** — your VAT, company registration, and business address details used for billing.
+
+---
+
+## 2. Workspace limits
+
+What your workspace can hold depends on your **plan** (see **Billing** in the left menu for your current plan):
+
+| Limit | Free Plan | Starter Plan | Pro Plan |
 | :--- | :--- | :--- | :--- |
-| **Owned Organizations** | 1 Workspace | 1 Workspace | Up to 2 Workspaces |
-| **Active Projects** | Unlimited | Unlimited | Unlimited |
-| **Team Members** | Up to 3 Users | Up to 10 Users | Unlimited Users |
-| **Storage Allocation** | 100 MB | 5 GB | 20 GB |
+| **Workspaces you own** | 1 | 1 | Up to 2 |
+| **Team members** | Up to 3 | Up to 10 | Unlimited |
+| **File storage** | 100 MB | 5 GB | 20 GB |
 
 > [!TIP]
-> If your company requires managing multiple subsidiary entities or separate bidding divisions, upgrade to the **Pro Plan** under `/billing` to create additional tenant workspaces under a single user account.
+> If your company needs a second workspace (for example, a separate bidding division), upgrade to the **Pro** plan under **Billing** and you'll be able to create it.
 
 ---
 
-## 3. Deleting or Deactivating a Workspace
+## 3. Close or remove a workspace
 
-* Only the **Organization Owner** can initiate workspace deletion or deactivation.
-* Deleting a workspace permanently archives all associated tenders, projects, purchase orders, and team memberships.
-* A mandatory confirmation modal requiring the workspace slug name must be completed before deletion is executed.
+- Only the workspace **Owner** can close a workspace.
+- Closing a workspace permanently archives everything inside it — clients, tenders, projects, purchase orders, and team memberships.
+- To prevent accidents, you'll be asked to type the workspace's web address to confirm before it can be closed.

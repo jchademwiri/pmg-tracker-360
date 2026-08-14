@@ -1,34 +1,34 @@
 ---
 title: Calendar & Deadlines
-description: Master the interactive calendar view to track tender closing dates, project milestones, and delivery deadlines.
+description: See every tender closing date, project milestone, and delivery date in one calendar — in plain language.
 ---
 
-Never miss a tender submission deadline or project delivery milestone again. **PMG Tracker 360** includes an integrated **Interactive Calendar** (`/calendar`) powered by FullCalendar.
-
----
-
-## 1. Calendar View Modes
-
-Navigate to `/calendar` to access visual timeline modes:
-* **Month View**: Overview of all tender closing dates, site inspection dates, and project milestones across the month.
-* **Week View**: Detailed hourly breakdown of scheduled briefings and deadline cutoffs.
-* **Day View**: Focused daily agenda for execution teams.
+The **Calendar** shows all your important dates in one place, so you never miss a tender deadline or delivery.
 
 ---
 
-## 2. Event Types & Color Codes
+## 1. Open the calendar
 
-Calendar entries are automatically color-coded for quick visual recognition:
+Click **Calendar** in the left menu. You can switch between:
 
-* 🔴 **Tender Submission Deadlines**: Urgent bid closing dates.
-* 🔵 **Project Delivery Milestones**: Key operational contract milestones.
-* 🟢 **Purchase Order Deliveries**: Expected supplier delivery dates.
-* 🟡 **Site Inspections & Briefings**: Mandatory tender site visits and pre-bid meetings.
+- **Month view** — everything happening this month at a glance.
+- **Week view** — a detailed breakdown of each day.
+- **Day view** — a focused look at a single day.
 
 ---
 
-## 3. Filtering & Direct Navigation
+## 2. What the colours mean
 
-* **Filter by Organization**: Filter events for specific workspace tenants.
-* **Filter by Category**: Toggle tender deadlines vs project delivery dates.
-* **Click to Inspect**: Click on any calendar event card to immediately navigate directly to the target Tender, Project, or Purchase Order detail page.
+Events are colour-coded so you can tell them apart instantly:
+
+- 🔴 **Red — Tender closing dates:** submission deadlines that need urgent attention.
+- 🔵 **Blue — Project milestones:** key delivery dates for your projects.
+- 🟢 **Green — Purchase order deliveries:** when supplier deliveries are expected.
+- 🟡 **Yellow — Site inspections & briefings:** tender site visits and pre-bid meetings.
+
+---
+
+## 3. Work with events
+
+- **Filter** the calendar by category (tenders, projects, or purchase orders) to reduce clutter.
+- **Click any event** to jump straight to that tender, project, or purchase order — no need to go looking for it.
