@@ -207,7 +207,7 @@ function renderPdf(data: {
     }
   }
 
-  drawStandardFooter(doc);
+  drawStandardFooter(doc, data.org.name);
   return Buffer.from(doc.output('arraybuffer'));
 }
 
