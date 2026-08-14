@@ -20,6 +20,8 @@ const MARGIN = 12;
 const ROW_HEIGHT = 8;
 const DATE = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
+type Column = [string, number];
+
 export type TenderPdfRow = {
   tenderNumber: string | null;
   clientId: string | null;
@@ -103,7 +105,7 @@ function kpi(doc: jsPDF, x: number, y: number, width: number, label: string, val
 
 function drawTable(doc: jsPDF, rows: TenderPdfRow[], startY: number, includeClient: boolean) {
   const width = doc.internal.pageSize.getWidth();
-  const columns = includeClient
+  const columns: Column[] = includeClient
     ? [
         ['Tender Number', 31], ['Client', 42], ['Description', 74], ['Status', 29],
         ['Submission Date', 29], ['Estimated Value', 32], ['Timing', 28],
@@ -112,9 +114,9 @@ function drawTable(doc: jsPDF, rows: TenderPdfRow[], startY: number, includeClie
         ['Tender Number', 34], ['Description', 82], ['Submission Date', 32],
         ['Contact Details', 66], ['Timing', 30], ['Estimated Value', 34],
       ];
-  const total = columns.reduce((sum, [, w]) => sum + w, 0);
+  const total = columns.reduce((sum, [, columnWidth]) => sum + columnWidth, 0);
   const scale = (width - MARGIN * 2) / total;
-  const scaled = columns.map(([label, w]) => [label, (w as number) * scale] as [string, number]);
+  const scaled: Column[] = columns.map(([label, columnWidth]) => [label, columnWidth * scale]);
   let y = startY;
 
   const drawHeader = () => {
@@ -123,10 +125,10 @@ function drawTable(doc: jsPDF, rows: TenderPdfRow[], startY: number, includeClie
     doc.setTextColor(...WHITE);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
-    for (const [label, w] of scaled) {
-      doc.rect(x, y, w, ROW_HEIGHT, 'F');
-      doc.text(label, x + 2, y + 5.2, { maxWidth: w - 4 });
-      x += w;
+    for (const [label, columnWidth] of scaled) {
+      doc.rect(x, y, columnWidth, ROW_HEIGHT, 'F');
+      doc.text(label, x + 2, y + 5.2, { maxWidth: columnWidth - 4 });
+      x += columnWidth;
     }
     y += ROW_HEIGHT;
   };
