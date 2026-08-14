@@ -1,62 +1,55 @@
 ---
-title: Onboarding & Workspace Setup
-description: Learn how user registration, workspace creation, and organization onboarding function in PMG Tracker 360.
+title: Getting Started — Your First Login
+description: A plain-language walkthrough of creating an account, setting up your workspace, joining a team, and switching between workspaces.
 ---
 
-When you log into **PMG Tracker 360** for the first time, you enter the **Onboarding Flow**. This guide walks through registering your account, establishing workspace tenants, and configuring initial organization preferences.
-
----
-
-## 1. Account Registration
-
-Users register via the PMG Tracker auth portal using email credentials or SSO:
-1. Navigate to `/sign-up`.
-2. Enter your **Full Name**, **Email Address**, and **Password**.
-3. Upon registration, an authentication session cookie is established across all PMG Tracker 360 subdomains.
+When you sign in to **PMG Tracker 360** for the first time, we'll walk you through setting up your workspace. This guide explains each step in plain language.
 
 ---
 
-## 2. Organization Onboarding Flow
+## 1. Create your account
 
-PMG Tracker 360 is built around multi-tenant isolation. Every tender, project, client, and purchase order belongs to an **Organization Workspace**.
+1. Go to the PMG Tracker 360 website and click **Sign Up** (top right).
+2. Enter your **full name**, **email address**, and a **password**.
+3. Click **Create Account**.
 
-```mermaid
-graph TD
-    A[New User Sign Up] --> B{Has Organization Invitation?}
-    B -->|Yes| C[Accept Invitation & Join Tenant]
-    B -->|No| D[Create New Organization Workspace]
-    D --> E[Assign Owner Role]
-    C --> F[Assign Invited Role: Admin / Manager / Member]
-    E --> G[Redirect to Organization Dashboard]
-    F --> G
-```
+We'll send a **verification email** to the address you provided. Click the link inside it — your account is only active once your email is verified. (No email? Check your spam folder, or use the **Continue with Google** button instead — no password or verification needed.)
 
-### Creating Your First Organization
+---
 
-If you are setting up a workspace for your company:
-1. Enter your **Company Name** (e.g. *Solar Tech Solutions*).
-2. The platform automatically generates an **Organization Slug** (e.g., `solar-tech-solutions`).
-3. Select your primary industry sector (e.g., *Renewable Energy, Construction, IT Infrastructure*).
-4. Click **Create Organization Workspace**.
+## 2. Set up your workspace (your company's private area)
+
+After your first sign-in, you'll be asked to set up your workspace. A **workspace** is your company's private area inside PMG Tracker 360 — it holds your clients, tenders, projects, purchase orders, and team members. Nobody outside your workspace can see your data.
+
+**Create a workspace:**
+
+1. Enter your **company name** (for example, *Solar Tech Solutions*).
+2. Choose a **workspace web address** (we'll suggest one automatically — you can change it later).
+3. Pick your **industry** (for example, *Renewable Energy, Construction, IT Infrastructure*).
+4. Click **Create Workspace**.
 
 > [!NOTE]
-> As the creator of the organization, you are automatically assigned the **Owner** role with full administrative controls over billing, team member management, and workspace settings.
+> As the person who creates the workspace, you are its **Owner**. You'll have full control over settings, billing, and team members.
 
 ---
 
-## 3. Joining an Existing Organization
+## 3. Join an existing workspace (if your team invited you)
 
-If your team already uses PMG Tracker 360:
-1. Ask an organization Owner or Admin to send an invitation to your email.
-2. Open the email invitation link or navigate to `/invite/accept/[invitationId]`.
-3. If you do not have an account, complete the sign-up step. Your account will automatically join the organization upon account creation.
-4. If you already have an account, click **Accept Invitation** to add the workspace to your organization dropdown menu.
+If a colleague already uses PMG Tracker 360 and has invited you:
+
+1. Open the **invitation email** they sent you.
+2. Click the **Accept Invitation** link in the email.
+3. If you already have an account, you'll be signed in and the workspace will be added to your account.
+4. If you don't have an account yet, create one first — you'll be added to the workspace automatically.
 
 ---
 
-## 4. Switching Between Workspaces
+## 4. Switch between workspaces
 
-If your user account belongs to multiple organizations:
-* Click the **Workspace Switcher** in the top-left header of the dashboard.
-* Select the active workspace you want to view.
-* All dashboard metrics, tenders, projects, and clients will instantly refresh to reflect the active tenant data.
+If your account belongs to more than one workspace (for example, you work with two companies):
+
+1. Look at the **top of the left menu** — you'll see your current workspace's name.
+2. Click it to open the **Workspace Switcher**.
+3. Pick the workspace you want to view.
+
+Everything on screen — dashboard, tenders, projects, clients — instantly switches to show that workspace's data. Don't worry, nothing is ever mixed up between workspaces.

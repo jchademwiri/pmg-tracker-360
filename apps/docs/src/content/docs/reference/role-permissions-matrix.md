@@ -1,28 +1,28 @@
 ---
-title: Role Permissions Matrix Reference
-description: Detailed comparison matrix of permissions across Owner, Admin, Manager, and Member roles in PMG Tracker 360.
+title: Who Can Do What — Role Permissions
+description: A simple table showing what each role (Owner, Admin, Manager, Member) can do in your workspace.
 ---
 
-This matrix details the permissions assigned to each tenant role inside **PMG Tracker 360** workspace environments.
+This table shows exactly what each role can do in your workspace. When in doubt, give people the **lowest** role that covers their job — you can always change it later. For a fuller explanation, see [Team Members & Roles](/organization/members-and-roles/).
 
 ---
 
-## Comprehensive Role Permission Matrix
+## Permission table
 
-| Feature / Action Scope | Owner | Admin | Manager | Member |
+| Task | Owner | Admin | Manager | Member |
 | :--- | :---: | :---: | :---: | :---: |
-| **Workspace Setup & Branding** | ✅ | ✅ | ❌ | ❌ |
-| **Delete Workspace Tenant** | ✅ | ❌ | ❌ | ❌ |
-| **Transfer Workspace Ownership** | ✅ | ❌ | ❌ | ❌ |
-| **Subscription & Billing Management** | ✅ | ❌ | ❌ | ❌ |
-| **Invite & Remove Team Members** | ✅ | ✅ | ❌ | ❌ |
-| **Modify Team Member Roles** | ✅ | ✅ | ❌ | ❌ |
-| **Create & Edit Clients** | ✅ | ✅ | ✅ | ❌ |
-| **Create & Edit Tenders** | ✅ | ✅ | ✅ | ❌ |
-| **Update Tender Status (Won/Lost)** | ✅ | ✅ | ✅ | ❌ |
-| **Initialize Projects from Tenders** | ✅ | ✅ | ✅ | ❌ |
-| **Issue Purchase Orders** | ✅ | ✅ | ✅ | ❌ |
-| **Mark PO as Delivered** | ✅ | ✅ | ✅ | ❌ |
-| **View Dashboard & Calendar** | ✅ | ✅ | ✅ | ✅ |
-| **View Reports & Analytics** | ✅ | ✅ | ✅ | ✅ |
-| **Export Reports (PDF/CSV)** | ✅ | ✅ | ✅ | ❌ |
+| **Workspace settings & branding** | ✅ | ✅ | ❌ | ❌ |
+| **Close the workspace** | ✅ | ❌ | ❌ | ❌ |
+| **Transfer workspace ownership** | ✅ | ❌ | ❌ | ❌ |
+| **Manage billing & plan** | ✅ | ❌ | ❌ | ❌ |
+| **Invite & remove team members** | ✅ | ✅ | ❌ | ❌ |
+| **Change team member roles** | ✅ | ✅ | ❌ | ❌ |
+| **Create & edit clients** | ✅ | ✅ | ✅ | ❌ |
+| **Create & edit tenders** | ✅ | ✅ | ✅ | ❌ |
+| **Update tender status (won/lost)** | ✅ | ✅ | ✅ | ❌ |
+| **Create projects from tenders** | ✅ | ✅ | ✅ | ❌ |
+| **Issue purchase orders** | ✅ | ✅ | ✅ | ❌ |
+| **Mark purchase orders as delivered** | ✅ | ✅ | ✅ | ❌ |
+| **View dashboard & calendar** | ✅ | ✅ | ✅ | ✅ |
+| **View reports & analytics** | ✅ | ✅ | ✅ | ✅ |
+| **Export reports (PDF/Excel)** | ✅ | ✅ | ✅ | ❌ |
