@@ -51,6 +51,11 @@ export function TeamSwitcher({
     string | null
   >(null);
 
+  // Guards against double-clicks / rapid switching while a switch is in
+  // flight. Without this, a second click can race the in-progress reload
+  // and leave the UI showing the wrong organization.
+  const [isSwitching, setIsSwitching] = React.useState(false);
+
   // Find the active organization from the list or use the first one as fallback
   const activeOrg = React.useMemo(() => {
     // Priority:
@@ -79,18 +84,27 @@ export function TeamSwitcher({
   const handleOrganizationSwitch = async (
     organization: OrganizationWithStats
   ) => {
+    if (isSwitching) {
+      return;
+    }
+    setIsSwitching(true);
+
     // Optimistically update the sidebar immediately so the user sees
     // the new org name without waiting for the server round-trip.
     setOptimisticOrgId(organization.id);
 
-    const result = await switchOrganization({
-      organizationId: organization.id,
-      organizationName: organization.name,
-    });
+    try {
+      const result = await switchOrganization({
+        organizationId: organization.id,
+        organizationName: organization.name,
+      });
 
-    // If the switch failed, revert the optimistic update
-    if (!result.success) {
-      setOptimisticOrgId(null);
+      // If the switch failed, revert the optimistic update
+      if (!result.success) {
+        setOptimisticOrgId(null);
+      }
+    } finally {
+      setIsSwitching(false);
     }
   };
 
@@ -105,13 +119,16 @@ export function TeamSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
+              disabled={isSwitching}
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 <Building2 className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-medium">{activeOrg.name}</span>
+                <span className="truncate font-medium">
+                  {isSwitching ? 'Switching…' : activeOrg.name}
+                </span>
                 <span className="truncate text-xs">
                   {activeOrg.memberCount}{' '}
                   {activeOrg.memberCount === 1 ? 'member' : 'members'}

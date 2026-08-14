@@ -61,30 +61,36 @@ function OrganizationSwitcherClient({
     });
   };
 
-  // Function to determine the new URL based on current path and organization slug
-  const getUpdatedUrl = (currentPath: string, orgSlug: string): string => {
-    // If we're on an organization-specific page, update the slug
-    if (currentPath.includes('/dashboard/')) {
-      return `/organization/${orgSlug}/dashboard`;
+  // Function to determine the new URL based on current path and organization slug.
+  // Note: `/organization/[slug]/dashboard` does NOT exist in the app — the org
+  // management page lives at `/organization/[slug]` and the dashboard at
+  // `/dashboard` (which renders for the session's active organization). Landing
+  // on the dashboard is the correct post-switch destination.
+  const getUpdatedUrl = (currentPath: string, _orgSlug: string): string => {
+    // Organization management pages show the org passed via the slug, so
+    // switch the slug in the URL to keep the page in context.
+    const orgPageMatch = currentPath.match(/^\/organization\/([^/]+)(\/.*)?$/);
+    if (orgPageMatch) {
+      return `/organization/${_orgSlug}${orgPageMatch[2] || ''}`;
     }
 
-    // For dashboard and other pages that should show organization context
-    if (currentPath === '/dashboard' || currentPath.endsWith('/dashboard')) {
-      return `/organization/${orgSlug}/dashboard`;
-    }
-
-    // For profile and other non-org specific pages, stay on the same page
-    // but the organization context will still be updated
+    // Dashboard and everything else renders for the active organization
+    // from the session, so just return there.
     if (
-      currentPath.startsWith('/profile') ||
-      currentPath.startsWith('/settings') ||
-      currentPath === '/'
+      currentPath.startsWith('/dashboard') ||
+      currentPath === '/' ||
+      currentPath === '/organization'
     ) {
+      return '/dashboard';
+    }
+
+    // Profile/settings pages are not organization-scoped: stay put, the
+    // session context is updated by the switch.
+    if (currentPath.startsWith('/profile') || currentPath.startsWith('/settings')) {
       return currentPath;
     }
 
-    // Default: navigate to organization page
-    return `/organization`;
+    return '/dashboard';
   };
 
   return (
