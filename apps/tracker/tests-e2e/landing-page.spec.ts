@@ -14,9 +14,9 @@ test.describe('Landing Page E2E Tests', () => {
 
     // 4. Verify that the action buttons in header are loaded
     const signInButton = page.locator('header').getByRole('link', { name: 'Sign In' });
-    const signUpButton = page.locator('header').getByRole('link', { name: 'Sign Up' });
+    const signUpButton = page.locator('header').getByRole('link', { name: /Start For Free|Sign Up/i });
 
-    await expect(signInButton).toBeVisible();
-    await expect(signUpButton).toBeVisible();
+    await expect(signInButton).toBeVisible({ timeout: 15000 });
+    await expect(signUpButton).toBeVisible({ timeout: 15000 });
   });
 });

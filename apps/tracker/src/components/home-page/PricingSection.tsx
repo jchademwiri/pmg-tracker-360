@@ -1,165 +1,157 @@
-'use client';
-
-import { Check, CreditCard, Crown, Star } from 'lucide-react';
 import Link from 'next/link';
+import { Check, Crown, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/format';
-
-interface PricingTier {
-  id: string;
-  name: string;
-  price: string | number;
-  period: string;
-  description: string;
-  features: string[];
-  popular?: boolean;
-  ctaText: string;
-  href: string;
-}
 
 export function PricingSection() {
-  const pricingTiers: PricingTier[] = [
+  const tiers = [
     {
       id: 'free',
-      name: 'Free',
-      price: 0,
-      period: '/month',
-      description: 'Perfect for getting started',
+      name: 'Free Plan',
+      description: 'Perfect for getting started with basic tender tracking.',
+      price: '0',
+      period: '/ month',
       features: [
-        '1 organization',
-        'Basic tender management',
-        '10 tenders / month',
+        '1 Organization Ownership',
+        '10 Tenders / Month',
         '0 Active Projects',
-        '100MB storage',
-        'Community support',
+        '100 MB Document Storage',
+        'Briefing & Closing Reminders',
+        '90-Day Validity Expiry Alarms',
+        'Standard Returnable Checklist',
+        'Community Support',
       ],
-      ctaText: 'Get Started Free',
-      href: '/dashboard',
+      popular: false,
+      ctaText: 'Start For Free',
     },
     {
       id: 'starter',
-      name: 'Starter',
-      price: 249,
-      period: '/month',
-      description: 'For freelancers & consultants',
+      name: 'Starter Plan',
+      description: 'For active contractors bidding regularly and tracking initial POs.',
+      price: '249',
+      period: '/ month (Free during Beta)',
       features: [
-        '1 organization',
-        '20 tenders / month',
-        '2 Active Projects',
-        '1GB storage',
-        'Email support',
-        'Tender Export',
+        '1 Organization Ownership',
+        '20 Tenders / Month',
+        '2 Active Awarded Projects',
+        '1 GB Secure Storage',
+        'Itemized Purchase Order Ledger',
+        'SBD 4 & 6.1 Compliance Matrix',
+        'CSV & PDF Tender Register Export',
+        'Standard Email Support',
       ],
-      ctaText: 'Start Free Trial',
-      popular: true,
-      href: '/dashboard',
+      popular: false,
+      ctaText: 'Start For Free',
     },
     {
       id: 'pro',
-      name: 'Pro',
-      price: 499,
-      period: '/month',
-      description: 'For growing teams',
+      name: 'Pro Plan',
+      description: 'For growing bid teams managing multiple government & commercial contracts.',
+      price: '499',
+      period: '/ month (Free during Beta)',
       features: [
-        '2 organizations',
-        'Unlimited tenders',
-        '5 Active Projects',
-        '10GB storage',
-        'Priority support',
-        'Advanced analytics',
+        '2 Organization Ownerships',
+        'Unlimited Tenders Tracked',
+        '5 Active Awarded Projects',
+        '10 GB Secure Storage',
+        'Automated 11:00 AM Closing Sirens',
+        'Full CSD, CIDB & Tax Pin Matrix',
+        '30, 60 & 90-Day Cashflow Forecasting',
+        'Boardroom PDF & Excel (.xlsx) Reports',
+        'Multi-Tenant Roles (Admin, Manager, Member)',
+        'In-App Concierge Support Desk (#TICK-1001)',
       ],
-      ctaText: 'Start Pro Trial',
-      href: '/dashboard',
+      popular: true,
+      ctaText: 'Claim Free Pro Access',
     },
   ];
 
   return (
-    <section className="py-24 bg-linear-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-4 mb-16">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/30 dark:via-orange-900/30 dark:to-yellow-900/30 mb-6">
-            <Crown className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+    <section id="pricing" className="py-20 md:py-24 border-t border-border/40 bg-background scroll-mt-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            <Crown className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Simple, Transparent Pricing</span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-            Simple, Transparent Pricing
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground text-balance">
+            Zero Risk. Free Upgrades During Beta.
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Choose the perfect plan for your needs. No hidden fees. Cancel
-            anytime.
+          <p className="text-sm sm:text-base text-muted-foreground text-pretty">
+            Choose the plan that fits your bidding volume. All paid features are 100% unlocked for free during our public beta without a credit card.
           </p>
+
+          {/* Beta Guarantee Banner */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 text-xs font-bold shadow-xs">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            <span>🎉 Public Beta Special: All plans unlocked for free testing. No credit card required!</span>
+          </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto">
-          {pricingTiers.map((tier) => (
+        {/* 3-Column Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          {tiers.map((tier) => (
             <div
               key={tier.id}
-              className={`relative rounded-2xl border-2 p-8 transition-all duration-300 hover:shadow-xl ${
+              className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 text-left ${
                 tier.popular
-                  ? 'border-blue-500 bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 scale-105 z-10'
-                  : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700'
+                  ? 'border-2 border-primary bg-linear-to-b from-primary/10 via-card/85 to-card shadow-2xl shadow-primary/15 md:scale-105 z-10'
+                  : 'border border-border/80 bg-card/60 hover:border-border/90'
               }`}
             >
               {tier.popular && (
-                <Badge className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-linear-to-r from-blue-600 to-indigo-600 px-4 py-1 text-white border-0">
-                  <Star className="h-3 w-3 mr-1 fill-current" />
-                  Most Popular
-                </Badge>
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-extrabold tracking-wider uppercase shadow-sm flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" aria-hidden="true" />
+                  <span>Most Popular</span>
+                </div>
               )}
 
-              <div className="space-y-6">
-                <div className="text-center space-y-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {tier.name}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {tier.description}
-                    </p>
-                  </div>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">{tier.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1 min-h-[32px]">{tier.description}</p>
+                </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-4xl font-bold text-gray-900 dark:text-white">
-                        {typeof tier.price === 'number'
-                          ? formatCurrency(tier.price)
-                          : tier.price}
-                      </span>
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {tier.period}
-                      </span>
-                    </div>
+                <div className="pt-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm font-semibold text-muted-foreground">R</span>
+                    <span className="text-4xl font-extrabold text-foreground font-mono tabular-nums">
+                      {tier.price}
+                    </span>
+                  </div>
+                  <div className="text-xs text-amber-400 font-medium mt-1">
+                    {tier.period}
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                  {tier.features.map((feature, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <div className="shrink-0 mt-1">
-                        <Check className="h-4 w-4 text-green-500" />
-                      </div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {feature}
-                      </span>
+                <div className="pt-4 border-t border-border/50 space-y-2.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Included Capabilities:
+                  </div>
+                  {tier.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-2 text-xs text-foreground/90 font-medium">
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5 font-bold" aria-hidden="true" />
+                      <span>{feature}</span>
                     </div>
                   ))}
                 </div>
+              </div>
 
-                <div className="pt-4">
-                  <Button
-                    asChild
-                    className={`w-full h-12 text-base font-medium ${
-                      tier.popular
-                        ? 'bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg shadow-blue-500/20'
-                        : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100'
-                    }`}
-                  >
-                    <Link href={tier.href}>
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      {tier.ctaText}
-                    </Link>
-                  </Button>
-                </div>
+              <div className="pt-6 mt-6 border-t border-border/40">
+                <Button
+                  size="default"
+                  asChild
+                  className={`w-full h-11 font-bold gap-1.5 cursor-pointer shadow-sm ${
+                    tier.popular
+                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                      : 'bg-muted/80 hover:bg-muted text-foreground border border-border/80'
+                  }`}
+                >
+                  <Link href={`/sign-up?plan=${tier.id}`}>
+                    <span>{tier.ctaText}</span>
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Link>
+                </Button>
               </div>
             </div>
           ))}

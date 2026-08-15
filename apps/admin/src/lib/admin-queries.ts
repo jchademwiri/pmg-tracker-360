@@ -15,6 +15,7 @@ import {
   securityAuditLog,
   ownershipTransfer,
   supportTickets,
+  supportTicketMessages,
   feedback,
   waitlist,
 } from '@pmg/db/schema';
@@ -119,13 +120,33 @@ export type SuspiciousSession = {
 
 export type TicketWithUser = {
   id: string;
+  ticketNumber?: number | null;
+  ticketCode: string;
   name: string;
   email: string;
+  subject: string;
   message: string;
   status: string;
+  priority: string;
   createdAt: Date;
+  updatedAt?: Date;
   userId: string | null;
   userName: string | null;
+  messageCount?: number;
+  unreadCount?: number;
+};
+
+export type TicketMessageItem = {
+  id: string;
+  ticketId: string;
+  senderId: string | null;
+  senderType: 'user' | 'admin' | 'system';
+  senderName: string;
+  senderEmail: string;
+  message: string;
+  isInternal: boolean;
+  readAt: Date | null;
+  createdAt: Date;
 };
 
 export type FeedbackWithUser = {
@@ -582,33 +603,83 @@ export async function getAllActiveSessions(): Promise<SuspiciousSession[]> {
 }
 
 /**
- * getOpenTickets — supportTickets left joined with user, ordered by createdAt DESC
+ * getOpenTickets — supportTickets left joined with user and message count, ordered by createdAt DESC
  */
 export async function getOpenTickets(): Promise<TicketWithUser[]> {
   const rows = await db
     .select({
       id: supportTickets.id,
+      ticketNumber: supportTickets.ticketNumber,
       name: supportTickets.name,
       email: supportTickets.email,
+      subject: supportTickets.subject,
       message: supportTickets.message,
       status: supportTickets.status,
+      priority: supportTickets.priority,
       createdAt: supportTickets.createdAt,
+      updatedAt: supportTickets.updatedAt,
       userId: supportTickets.userId,
       userName: user.name,
+      messageCount: count(supportTicketMessages.id),
+      unreadCount: sql<number>`count(*) filter (where ${supportTicketMessages.senderType} = 'user' and ${supportTicketMessages.readAt} is null)`,
     })
     .from(supportTickets)
     .leftJoin(user, eq(supportTickets.userId, user.id))
+    .leftJoin(supportTicketMessages, eq(supportTickets.id, supportTicketMessages.ticketId))
+    .groupBy(supportTickets.id, user.name)
     .orderBy(desc(supportTickets.createdAt));
 
   return rows.map((row) => ({
     id: row.id,
+    ticketNumber: row.ticketNumber,
+    ticketCode: row.ticketNumber ? `TICK-${row.ticketNumber}` : `TICK-${row.id.slice(0, 8).toUpperCase()}`,
     name: row.name,
     email: row.email,
+    subject: row.subject || 'Support Request',
     message: row.message,
     status: row.status,
+    priority: row.priority ?? 'medium',
     createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
     userId: row.userId,
     userName: row.userName ?? null,
+    messageCount: Number(row.messageCount) || 1,
+    unreadCount: Number(row.unreadCount) || 0,
+  }));
+}
+
+/**
+ * getTicketMessages — messages for a ticket, ordered by createdAt ASC
+ */
+export async function getTicketMessages(ticketId: string): Promise<TicketMessageItem[]> {
+  const rows = await db
+    .select({
+      id: supportTicketMessages.id,
+      ticketId: supportTicketMessages.ticketId,
+      senderId: supportTicketMessages.senderId,
+      senderType: supportTicketMessages.senderType,
+      senderName: supportTicketMessages.senderName,
+      senderEmail: supportTicketMessages.senderEmail,
+      message: supportTicketMessages.message,
+      isInternal: supportTicketMessages.isInternal,
+      readAt: supportTicketMessages.readAt,
+      createdAt: supportTicketMessages.createdAt,
+    })
+    .from(supportTicketMessages)
+    .where(eq(supportTicketMessages.ticketId, ticketId))
+    .orderBy(asc(supportTicketMessages.createdAt));
+
+  return rows.map((r) => ({
+    id: r.id,
+    ticketId: r.ticketId,
+    senderId: r.senderId,
+    senderType: r.senderType as 'user' | 'admin' | 'system',
+    senderName: r.senderName,
+    senderEmail: r.senderEmail,
+    message: r.message,
+    isInternal: r.isInternal,
+    readAt: r.readAt,
+    createdAt: r.createdAt,
   }));
 }
 

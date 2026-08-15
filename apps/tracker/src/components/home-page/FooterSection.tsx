@@ -155,74 +155,44 @@ export function FooterSection() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-semibold mb-4 text-foreground">Contact</h4>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>
-                <a
-                  href={`mailto:${CONTACT_INFO.email}`}
-                  className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                >
-                  <span aria-hidden="true">📧</span>
-                  <span className="sr-only">Email:</span>
-                  {CONTACT_INFO.email}
-                </a>
-              </li>
-              <li>
-                <a
-                  href={`tel:${CONTACT_INFO.phone.replace(/\s/g, '')}`}
-                  className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                >
-                  <span aria-hidden="true">📞</span>
-                  <span className="sr-only">Phone:</span>
-                  {CONTACT_INFO.phone}
-                </a>
-              </li>
-              {/* <div>📍 123 Business Ave, Suite 100</div> */}
-              <li>
-                <a
-                  href={`https://wa.me/${CONTACT_INFO.whatsapp
-                    .replace(/\s/g, '')
-                    .replace('+', '')}`}
-                  className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span aria-hidden="true">💬</span>
-                  <span className="sr-only">WhatsApp:</span>
-                  {CONTACT_INFO.whatsapp}
-                </a>
-              </li>
-            </ul>
+          {/* Quick Nav Links */}
+          <div className="flex items-center gap-6">
+            <Link href="#how-it-works" className="hover:text-foreground transition-colors">
+              How It Works
+            </Link>
+            <Link href="#pricing" className="hover:text-foreground transition-colors">
+              Pricing
+            </Link>
+            <Link href="#faq" className="hover:text-foreground transition-colors">
+              FAQ
+            </Link>
+            <Link
+              href={DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground transition-colors inline-flex items-center gap-1"
+            >
+              <BookOpen className="h-3 w-3" aria-hidden="true" />
+              <span>Docs</span>
+            </Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">
+              Privacy
+            </Link>
           </div>
         </div>
 
-        <div className="border-t border-border pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-muted-foreground text-sm mb-4 md:mb-0">
-              © {new Date().getFullYear()} Tender Track 360. All rights
-              reserved.
+        {/* Bottom Status & Copyright */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
+          <p className="text-muted-foreground">
+            &copy; {new Date().getFullYear()} Tender Track 360. All rights reserved. Built in South Africa.
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
+              <span className="text-foreground font-medium">All Systems Operational</span>
             </div>
-            <div className="flex space-x-6 text-sm text-muted-foreground">
-              <Link
-                href="/privacy"
-                className="hover:text-foreground transition-colors"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                href="/terms"
-                className="hover:text-foreground transition-colors"
-              >
-                Terms of Service
-              </Link>
-              <Link
-                href="#cookies"
-                className="hover:text-foreground transition-colors"
-              >
-                Cookie Policy
-              </Link>
-            </div>
+            <span className="text-muted-foreground/60">&bull;</span>
+            <span className="text-muted-foreground">POPIA Compliant</span>
           </div>
         </div>
       </div>

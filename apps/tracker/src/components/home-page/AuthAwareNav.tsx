@@ -5,6 +5,7 @@ import { authClient } from '@/lib/auth-client';
 import { DOCS_URL } from '@/lib/constants';
 import Link from 'next/link';
 import Logout from '../ui/logout';
+import { LayoutDashboard, ArrowRight } from 'lucide-react';
 
 export default function AuthAwareNav() {
   const { data: session, isPending } = authClient.useSession();
@@ -31,16 +32,10 @@ export default function AuthAwareNav() {
 
   if (isPending) {
     return (
-      <>
-        <div className="hidden md:flex gap-2">
-          <Button variant="ghost" size="sm" disabled>
-            Sign In
-          </Button>
-          <Button size="sm" disabled>
-            Sign Up
-          </Button>
-        </div>
-      </>
+      <div className="flex items-center gap-2">
+        <div className="h-8 w-16 rounded-md bg-muted/40 animate-pulse hidden sm:block" />
+        <div className="h-8 w-24 rounded-md bg-primary/20 animate-pulse" />
+      </div>
     );
   }
 
@@ -54,8 +49,15 @@ export default function AuthAwareNav() {
       <Button variant="ghost" asChild size="sm">
         <Link href="/login">Sign In</Link>
       </Button>
-      <Button size="sm" asChild>
-        <Link href="/sign-up">Sign Up</Link>
+      <Button
+        size="sm"
+        asChild
+        className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
+      >
+        <Link href="/sign-up">
+          <span>Start For Free</span>
+          <ArrowRight className="h-3.5 w-3.5 ml-1 hidden sm:inline" aria-hidden="true" />
+        </Link>
       </Button>
     </div>
   );

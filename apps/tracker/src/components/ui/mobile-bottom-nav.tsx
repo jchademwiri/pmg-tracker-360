@@ -13,6 +13,9 @@ import {
   Calendar,
   BarChart3,
   Settings,
+  Building2,
+  LifeBuoy,
+  Truck,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,12 +35,12 @@ const primaryItems: NavItem[] = [
 ];
 
 const secondaryItems: NavItem[] = [
+  { label: 'Purchase Orders', href: '/projects/purchase-orders', icon: Truck },
   { label: 'Calendar', href: '/calendar', icon: Calendar },
   { label: 'Reports', href: '/reports', icon: BarChart3 },
-  { label: 'Tender Overview', href: '/tenders/overview', icon: ClipboardList },
-  { label: 'Project Overview', href: '/projects/overview', icon: FolderKanban },
-  { label: 'Purchase Orders', href: '/projects/purchase-orders', icon: FolderKanban },
+  { label: 'Organizations', href: '/organization', icon: Building2 },
   { label: 'Settings', href: '/settings', icon: Settings },
+  { label: 'Support', href: '/support', icon: LifeBuoy },
 ];
 
 export function MobileBottomNav() {

@@ -57,11 +57,11 @@ export function HomeAuthenticatedUserDashboard({
             <Button>
               <Link href="/dashboard">View Dashboard</Link>
             </Button>
-            <Button variant={'outline'}>
-              <Link href="/tenders/overview">View Tenders</Link>
+            <Button variant={'outline'} asChild>
+              <Link href="/tenders">View Tenders</Link>
             </Button>
-            <Button variant={'outline'}>
-              <Link href="/projects/overview">
+            <Button variant={'outline'} asChild>
+              <Link href="/projects/purchase-orders">
                 View Purchase Orders
               </Link>
             </Button>

@@ -3,7 +3,7 @@
 import { db } from '@pmg/db';
 import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
 import { tender, client, project, tenderExtension, tenderFollowUp, tenderActivity } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, isNotNull } from 'drizzle-orm';
+import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, notInArray, isNotNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { URGENCY_WINDOWS, daysAgo, daysFromNow } from '@/lib/urgency-windows';
@@ -1108,17 +1108,46 @@ function mapTenderStatusToStatsKey(status: string): 'open' | 'closed' | 'evaluat
 export async function getTenderStats(organizationId: string) {
   try {
     await validateSessionAndOrg(organizationId);
-    const stats = await db
-      .select({
-        status: tender.status,
-        value: tender.value,
-        submissionDate: tender.submissionDate,
-        createdAt: tender.createdAt,
-      })
-      .from(tender)
-      .where(
-        and(eq(tender.organizationId, organizationId), isNull(tender.deletedAt))
-      );
+    const [stats, orgFollowUps, orgExtensions] = await Promise.all([
+      db
+        .select({
+          id: tender.id,
+          status: tender.status,
+          value: tender.value,
+          submissionDate: tender.submissionDate,
+          evaluationDate: tender.evaluationDate,
+          validityDays: tender.validityDays,
+          validityDate: tender.validityDate,
+          createdAt: tender.createdAt,
+        })
+        .from(tender)
+        .where(
+          and(eq(tender.organizationId, organizationId), isNull(tender.deletedAt))
+        ),
+      db
+        .select({ tenderId: tenderFollowUp.tenderId })
+        .from(tenderFollowUp)
+        .where(eq(tenderFollowUp.organizationId, organizationId)),
+      db
+        .select({
+          tenderId: tenderExtension.tenderId,
+          newEvaluationDate: tenderExtension.newEvaluationDate,
+        })
+        .from(tenderExtension)
+        .where(
+          and(
+            eq(tenderExtension.organizationId, organizationId),
+            isNull(tenderExtension.deletedAt)
+          )
+        ),
+    ]);
+
+    const now = nowInSAST();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    const followUpTenderIds = new Set(orgFollowUps.map((f) => f.tenderId));
+    const extensionTenderIds = new Set(orgExtensions.map((e) => e.tenderId));
 
     const totalTenders = stats.length;
     const statusCounts = stats.reduce(
@@ -1129,6 +1158,51 @@ export async function getTenderStats(organizationId: string) {
       },
       { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 } as Record<string, number>
     );
+
+    // 1. Tenders submitted this month (MTD)
+    const submittedThisMonth = stats.filter((t) => {
+      if (!t.submissionDate) return false;
+      const subDate = new Date(t.submissionDate);
+      return subDate >= startOfMonth && subDate <= now;
+    }).length;
+
+    // 2. Tenders submitted this year (YTD)
+    const submittedThisYear = stats.filter((t) => {
+      if (!t.submissionDate) return false;
+      const subDate = new Date(t.submissionDate);
+      return subDate >= startOfYear && subDate <= now;
+    }).length;
+
+    // 3. Expired Validity with No Follow-up & No Extension
+    const expiredValidityUncontactedCount = stats.filter((t) => {
+      // Must not already be awarded or lost
+      if (t.status === 'awarded' || t.status === 'lost') return false;
+
+      // Calculate effective validity expiration date
+      let effectiveExpiry: Date | null = null;
+      if (t.validityDate) {
+        effectiveExpiry = new Date(t.validityDate);
+      } else if (t.submissionDate && t.validityDays) {
+        const d = new Date(t.submissionDate);
+        d.setDate(d.getDate() + t.validityDays);
+        effectiveExpiry = d;
+      } else if (t.evaluationDate) {
+        effectiveExpiry = new Date(t.evaluationDate);
+      }
+
+      if (!effectiveExpiry || effectiveExpiry >= now) return false;
+
+      // Must have NO follow-up and NO extension
+      const hasFollowUp = followUpTenderIds.has(t.id);
+      const hasExtension = extensionTenderIds.has(t.id);
+
+      return !hasFollowUp && !hasExtension;
+    }).length;
+
+    // 4. Active Under Evaluation
+    const underEvaluationCount = stats.filter(
+      (t) => t.status === 'evaluation' || t.status === 'submitted'
+    ).length;
 
     // Calculate total value (only for tenders with numeric values)
     const totalValue = stats.reduce((sum, tender) => {
@@ -1144,7 +1218,6 @@ export async function getTenderStats(organizationId: string) {
     const averageValue = totalTenders > 0 ? totalValue / totalTenders : 0;
 
     // Count upcoming deadlines
-    const now = nowInSAST();
     const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
     const upcomingDeadlines = stats.filter(
       (tender) =>
@@ -1205,6 +1278,10 @@ export async function getTenderStats(organizationId: string) {
       success: true,
       stats: {
         totalTenders,
+        submittedThisMonth,
+        submittedThisYear,
+        expiredValidityUncontactedCount,
+        underEvaluationCount,
         statusCounts: {
           open: statusCounts.open || 0,
           closed: statusCounts.closed || 0,
@@ -1453,6 +1530,8 @@ export async function getTendersOverview(
     search?: string;
     sortBy?: 'tenderNumber' | 'createdAt' | 'submissionDate' | 'status';
     sortOrder?: 'asc' | 'desc';
+    submitted?: string;
+    filter?: string;
   },
   page: number = 1,
   limit: number = 10
@@ -1461,13 +1540,73 @@ export async function getTendersOverview(
     await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
+    const now = nowInSAST();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
       isNull(tender.deletedAt)
     );
 
-    // Add filters
-    if (filters.status && filters.status !== 'all') {
+    // MTD / YTD Submission Date Filtering
+    if (filters.submitted === 'this-month' || filters.submitted === 'month') {
+      whereCondition = and(
+        whereCondition,
+        isNotNull(tender.submissionDate),
+        gte(tender.submissionDate, startOfMonth),
+        lte(tender.submissionDate, now)
+      );
+    } else if (filters.submitted === 'this-year' || filters.submitted === 'year') {
+      whereCondition = and(
+        whereCondition,
+        isNotNull(tender.submissionDate),
+        gte(tender.submissionDate, startOfYear),
+        lte(tender.submissionDate, now)
+      );
+    }
+
+    // Special Filter: Expired Validity with No Follow-up & No Extension
+    if (
+      filters.status === 'validity_expired_uncontacted' ||
+      filters.filter === 'validity-expired-uncontacted'
+    ) {
+      const [orgFollowUps, orgExtensions] = await Promise.all([
+        db
+          .select({ tenderId: tenderFollowUp.tenderId })
+          .from(tenderFollowUp)
+          .where(eq(tenderFollowUp.organizationId, organizationId)),
+        db
+          .select({ tenderId: tenderExtension.tenderId })
+          .from(tenderExtension)
+          .where(
+            and(
+              eq(tenderExtension.organizationId, organizationId),
+              isNull(tenderExtension.deletedAt)
+            )
+          ),
+      ]);
+
+      const contactedIds = Array.from(
+        new Set([
+          ...orgFollowUps.map((f) => f.tenderId),
+          ...orgExtensions.map((e) => e.tenderId),
+        ])
+      );
+
+      whereCondition = and(
+        whereCondition,
+        ne(tender.status, 'awarded'),
+        ne(tender.status, 'lost'),
+        or(
+          and(isNotNull(tender.validityDate), lt(tender.validityDate, now)),
+          and(isNotNull(tender.evaluationDate), lt(tender.evaluationDate, now))
+        ),
+        contactedIds.length > 0
+          ? notInArray(tender.id, contactedIds)
+          : undefined
+      );
+    } else if (filters.status && filters.status !== 'all') {
       if (filters.status === 'open') {
         whereCondition = and(
           whereCondition,
@@ -1484,7 +1623,7 @@ export async function getTendersOverview(
           whereCondition,
           inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const),
           isNotNull(tender.submissionDate),
-          gte(tender.submissionDate, new Date())
+          gte(tender.submissionDate, now)
         );
       } else if (filters.status === 'awaiting_results') {
         whereCondition = and(
@@ -1545,17 +1684,38 @@ export async function getTendersOverview(
         : sortOrder === 'desc'
           ? desc(sortColumn)
           : sortColumn;
+
+    const isExpiredValidityView =
+      filters.filter === 'validity-expired-uncontacted' ||
+      filters.status === 'validity_expired_uncontacted';
+
     const isRegisterDefaultSort =
       (!filters.status || filters.status === 'all') &&
+      !filters.filter &&
       sortBy === 'submissionDate' &&
       sortOrder === 'asc';
-    const orderByExpressions = isRegisterDefaultSort
-      ? [
-          sql`case when ${tender.status} = 'open' then 0 else 1 end`,
-          sql`${tender.submissionDate} asc nulls last`,
-          desc(tender.createdAt),
-        ]
-      : [orderByExpression];
+
+    let orderByExpressions;
+    if (
+      isExpiredValidityView &&
+      (!filters.sortBy ||
+        filters.sortBy === 'submissionDate' ||
+        filters.sortBy === 'createdAt')
+    ) {
+      // Most overdue first (earliest lapsed validity date to most recent)
+      orderByExpressions = [
+        sql`coalesce(${tender.validityDate}, ${tender.evaluationDate}, ${tender.submissionDate}) asc nulls last`,
+        desc(tender.createdAt),
+      ];
+    } else if (isRegisterDefaultSort) {
+      orderByExpressions = [
+        sql`case when ${tender.status} = 'open' then 0 else 1 end`,
+        sql`${tender.submissionDate} asc nulls last`,
+        desc(tender.createdAt),
+      ];
+    } else {
+      orderByExpressions = [orderByExpression];
+    }
 
     const tenders = await db
       .select({
@@ -1568,11 +1728,17 @@ export async function getTendersOverview(
         evaluationDate: tender.evaluationDate,
         validityDays: tender.validityDays,
         validityDate: tender.validityDate,
+        contactName: tender.contactName,
+        contactEmail: tender.contactEmail,
+        contactPhone: tender.contactPhone,
         createdAt: tender.createdAt,
         updatedAt: tender.updatedAt,
         client: {
           id: client.id,
           name: client.name,
+          contactName: client.contactName,
+          contactEmail: client.contactEmail,
+          contactPhone: client.contactPhone,
         },
         hasProject: sql<boolean>`case when ${project.id} is not null then true else false end`,
       })

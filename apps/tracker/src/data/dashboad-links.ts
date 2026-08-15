@@ -7,15 +7,40 @@ import {
   BarChart3,
   Settings,
   Building2,
+  LifeBuoy,
+  Truck,
 } from 'lucide-react';
 
 export const dashboadLinks = {
-  mainHub: [
+  operations: [
     {
       title: 'Dashboard',
       url: '/dashboard',
       icon: LayoutDashboard,
     },
+    {
+      title: 'Tenders',
+      url: '/tenders',
+      icon: ClipboardList,
+    },
+    {
+      title: 'Projects',
+      url: '/projects',
+      icon: FolderKanban,
+    },
+    {
+      title: 'Purchase Orders',
+      url: '/projects/purchase-orders',
+      icon: Truck,
+      minRole: 'manager', // Hide for standard 'member' role
+    },
+    {
+      title: 'Clients',
+      url: '/clients',
+      icon: Users,
+    },
+  ],
+  insights: [
     {
       title: 'Calendar',
       url: '/calendar',
@@ -27,57 +52,22 @@ export const dashboadLinks = {
       icon: BarChart3,
     },
   ],
-  procurement: [
-    {
-      title: 'Tender Management',
-      url: '#',
-      icon: ClipboardList,
-      items: [
-        {
-          title: 'Overview',
-          url: '/tenders/overview',
-        },
-        {
-          title: 'Tender Register',
-          url: '/tenders',
-        },
-      ],
-    },
-    {
-      title: 'Project Delivery',
-      url: '#',
-      icon: FolderKanban,
-      items: [
-        {
-          title: 'Overview',
-          url: '/projects/overview',
-        },
-        {
-          title: 'Active Projects',
-          url: '/projects',
-        },
-        {
-          title: 'Purchase Orders', // Hidden for standard 'member' role
-          url: '/projects/purchase-orders',
-        },
-      ],
-    },
-    {
-      title: 'Clients Directory',
-      url: '/clients',
-      icon: Users,
-    },
-  ],
   settings: [
+    {
+      title: 'Organizations',
+      url: '/organization',
+      icon: Building2,
+    },
     {
       title: 'Settings',
       url: '/settings',
       icon: Settings,
     },
     {
-      title: 'Organizations',
-      url: '/organization',
-      icon: Building2,
+      title: 'Support Desk',
+      url: '/support',
+      icon: LifeBuoy,
     },
   ],
 };
+

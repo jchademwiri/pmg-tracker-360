@@ -19,11 +19,20 @@ interface Tender {
   submissionDate: Date | null;
   value: string | null;
   status: string;
+  evaluationDate?: Date | null;
+  validityDays?: number | null;
+  validityDate?: Date | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
   createdAt: Date;
   updatedAt: Date;
   client: {
     id: string;
     name: string;
+    contactName?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
   } | null;
 }
 
@@ -46,7 +55,7 @@ export function TendersOverviewClient({
   initialFilters,
   clients,
   organizationId,
-  basePath = '/tenders/overview',
+  basePath = '/tenders',
 }: TendersOverviewClientProps) {
   const router = useRouter();
   const [tenders, setTenders] = useState(initialTenders);

@@ -169,3 +169,68 @@ body {
     background-color: var(--background);
     color: var(--foreground);
 }
+
+/* Pointer cursor on all buttons, links, and interactive elements */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+a,
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+select:not(:disabled),
+label[for],
+summary {
+    cursor: pointer;
+}
+
+button:disabled,
+[role="button"]:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+select:disabled {
+    cursor: not-allowed;
+}
+
+/* =============================================
+   CUSTOM LUXURY THEME SCROLLBAR / SCRUBBER
+   ============================================= */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, 0.28) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.25);
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.55);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+:root[class~="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.28);
+    border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+:root[class~="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.6);
+}
+
+.dark * {
+    scrollbar-color: rgba(212, 175, 55, 0.3) transparent;
+}

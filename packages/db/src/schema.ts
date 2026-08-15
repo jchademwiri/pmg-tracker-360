@@ -317,11 +317,30 @@ export const feedback = pgTable('feedback', {
 
 export const supportTickets = pgTable('support_tickets', {
   id: text('id').primaryKey(),
+  ticketNumber: integer('ticket_number'),
   userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
   name: text('name').notNull(),
   email: text('email').notNull(),
+  subject: text('subject').default('Support Request').notNull(),
   message: text('message').notNull(),
-  status: text('status').default('open').notNull(), // open, closed, in_progress
+  status: text('status').default('open').notNull(), // open, closed, in_progress, resolved
+  priority: text('priority').default('medium').notNull(), // low, medium, high, urgent
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const supportTicketMessages = pgTable('support_ticket_messages', {
+  id: text('id').primaryKey(),
+  ticketId: text('ticket_id')
+    .notNull()
+    .references(() => supportTickets.id, { onDelete: 'cascade' }),
+  senderId: text('sender_id').references(() => user.id, { onDelete: 'set null' }),
+  senderType: text('sender_type').notNull(), // 'user' | 'admin' | 'system'
+  senderName: text('sender_name').notNull(),
+  senderEmail: text('sender_email').notNull(),
+  message: text('message').notNull(),
+  isInternal: boolean('is_internal').default(false).notNull(),
+  readAt: timestamp('read_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

@@ -70,24 +70,26 @@ export default async function RootLayout({
                 />
                 <SidebarInset className="flex-1 flex flex-col">
                   {/* Header Bar */}
-                  <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4 w-full">
-                      <SidebarTrigger className="-ml-1">
+                  <header className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--sidebar-border)] bg-background/95 backdrop-blur transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                    <div className="flex items-center gap-3 px-4 w-full min-w-0">
+                      <SidebarTrigger className="-ml-1 shrink-0">
                         <Menu className="size-4" />
                         <span className="sr-only">Toggle Sidebar</span>
                       </SidebarTrigger>
                       <Separator
                         orientation="vertical"
-                        className="mr-2 data-[orientation=vertical]:h-4"
+                        className="mr-1 data-[orientation=vertical]:h-4 shrink-0"
                       />
-                      <AdminBreadcrumb />
-                      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest ml-auto">
-                        <Database className="h-4 w-4 text-emerald-500" />
-                        Live Cluster Nominal
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <AdminBreadcrumb />
                       </div>
-                      <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
+                      <div className="flex items-center gap-2.5 shrink-0 ml-auto">
+                        <div className="hidden lg:flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-widest bg-zinc-900/60 px-2.5 py-1 rounded-md border border-zinc-800">
+                          <Database className="h-3.5 w-3.5 text-emerald-500" />
+                          <span>Live Cluster Nominal</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-zinc-900/60 px-2.5 py-1 rounded-md border border-zinc-800">
+                          <Activity className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
                           <span>Beta v1.0</span>
                         </div>
                       </div>
