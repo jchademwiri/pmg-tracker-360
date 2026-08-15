@@ -32,6 +32,7 @@ import {
 } from '@/server/support';
 import { toast } from 'sonner';
 import { useSessionUser } from '@/lib/client-session-store';
+import { authClient } from '@/lib/auth-client';
 import { FormattedMessage } from './formatted-message';
 import { PrioritySelect } from './priority-select';
 
@@ -83,7 +84,9 @@ export function TicketChatModal({ open, onOpenChange, initialTicketId }: Props) 
   const [sending, setSending] = useState(false);
   const [sendingTranscript, setSendingTranscript] = useState(false);
 
-  const user = useSessionUser();
+  const storeUser = useSessionUser();
+  const { data: session } = authClient.useSession();
+  const user = storeUser || session?.user;
 
   // Create form state
   const [createName, setCreateName] = useState('');
@@ -101,7 +104,7 @@ export function TicketChatModal({ open, onOpenChange, initialTicketId }: Props) 
       if (user.name && !createName) setCreateName(user.name);
       if (user.email && !createEmail) setCreateEmail(user.email);
     }
-  }, [user]);
+  }, [user, open]);
 
   // Load ticket list on open
   useEffect(() => {
@@ -251,7 +254,7 @@ export function TicketChatModal({ open, onOpenChange, initialTicketId }: Props) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] h-[720px] p-0 flex flex-col overflow-hidden bg-background border rounded-2xl">
         {/* Header Bar */}
-        <div className="p-4 border-b flex items-center justify-between bg-muted/30 gap-3">
+        <div className="p-4 pr-14 border-b flex items-center justify-between bg-muted/30 gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {view !== 'list' && tickets.length > 0 && (
               <button
@@ -287,7 +290,7 @@ export function TicketChatModal({ open, onOpenChange, initialTicketId }: Props) 
           </div>
 
           {view === 'thread' && (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 mr-4">
               <Button
                 variant="outline"
                 size="sm"
@@ -310,7 +313,7 @@ export function TicketChatModal({ open, onOpenChange, initialTicketId }: Props) 
             <Button
               size="sm"
               onClick={() => setView('create')}
-              className="h-8 text-xs gap-1.5 cursor-pointer shrink-0"
+              className="h-8 text-xs gap-1.5 cursor-pointer shrink-0 mr-4"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>New Request</span>

@@ -1,11 +1,17 @@
-import { Badge } from '@/components/ui/badge';
+import { Sparkles } from 'lucide-react';
 
 export function BetaLabel() {
   return (
-    <div className="fixed top-0 left-1/2 -translate-x-1/2 z-50 pt-2 pointer-events-none">
-      <Badge className="bg-blue-600/90 hover:bg-blue-600 text-white shadow-lg backdrop-blur-sm pointer-events-auto cursor-default">
-        Free during Beta
-      </Badge>
-    </div>
+    <aside
+      aria-label="Beta platform notice"
+      className="fixed bottom-4 left-4 z-40 pointer-events-none hidden md:block"
+    >
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-card/85 backdrop-blur-md border border-border/80 text-foreground shadow-lg shadow-black/20 pointer-events-auto transition-opacity hover:opacity-100 opacity-80">
+        <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" aria-hidden="true" />
+        <span className="font-bold text-amber-300">Public Beta</span>
+        <span className="text-muted-foreground/60">&bull;</span>
+        <span className="text-emerald-400 font-semibold">Free Full Access</span>
+      </div>
+    </aside>
   );
 }

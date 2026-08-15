@@ -1,9 +1,8 @@
-export { HomePage } from './HomePage';
 export { Header } from './Header';
 export { HeroSection } from './HeroSection';
-export { FeaturesSection } from './FeaturesSection';
-export { BenefitsSection } from './BenefitsSection';
-export { TestimonialsSection } from './TestimonialsSection';
-export { HomeAuthenticatedUserDashboard } from './HomeAuthenticatedUserDashboard';
-
+export { TrustedBy } from './TrustedBy';
+export { WorkflowEngineSection } from './WorkflowEngineSection';
+export { PricingSection } from './PricingSection';
+export { FaqSection } from './FaqSection';
+export { ClosingCtaSection } from './ClosingCtaSection';
 export { FooterSection } from './FooterSection';
