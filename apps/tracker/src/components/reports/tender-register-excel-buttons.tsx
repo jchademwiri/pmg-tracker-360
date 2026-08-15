@@ -5,7 +5,7 @@ import { Download, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { toTitleCase } from '@/lib/format';
+import { formatClientName } from '@/lib/format';
 
 type ClientOption = { id: string; name: string };
 
@@ -103,7 +103,7 @@ export function ClientTenderReportButtons({ clients }: { clients: ClientOption[]
         <option value="">Select client...</option>
         {clients.map((client) => (
           <option key={client.id} value={client.id}>
-            {toTitleCase(client.name)}
+            {formatClientName(client.name)}
           </option>
         ))}
       </select>

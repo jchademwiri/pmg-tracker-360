@@ -30,11 +30,11 @@ export default async function ProjectsPage() {
   const clients = clientsResult.success ? clientsResult.clients : [];
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage and track all your construction projects.
           </p>
         </div>
@@ -49,9 +49,9 @@ export default async function ProjectsPage() {
               },
             })
           ).success && (
-            <Button asChild size="default" className="flex-1 sm:flex-none">
+            <Button asChild size="sm" className="h-9 font-medium shadow-xs">
               <Link href="/projects/create">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-1.5" />
                 Add Project
               </Link>
             </Button>
@@ -67,9 +67,9 @@ export default async function ProjectsPage() {
               },
             })
           ).success && (
-            <Button asChild size="default" className="flex-1 sm:flex-none">
+            <Button asChild variant="outline" size="sm" className="h-9 font-medium shadow-xs">
               <Link href="/projects/purchase-orders/create">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-1.5" />
                 Add Purchase Order
               </Link>
             </Button>

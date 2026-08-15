@@ -186,8 +186,8 @@ export default async function SettingsPage() {
               <div>• Manage email preferences</div>
             </div>
             <Button asChild className="w-full">
-              <Link href="/settings/profile">
-                Manage Profile
+              <Link href="/settings/profile" className="inline-flex items-center justify-center">
+                <span>Manage Profile</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
@@ -215,8 +215,8 @@ export default async function SettingsPage() {
               <div>• Configure organization settings</div>
             </div>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/organization">
-                Manage Organizations
+              <Link href="/organization" className="inline-flex items-center justify-center">
+                <span>Manage Organizations</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
@@ -242,12 +242,12 @@ export default async function SettingsPage() {
               <div>• Upgrade or change seats</div>
               <div>• Payment history & invoices</div>
             </div>
-            <Link href="/billing">
-              <Button type="button" variant="outline" className="w-full">
-                Manage Billing
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/billing" className="inline-flex items-center justify-center">
+                <span>Manage Billing</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -270,9 +270,9 @@ export default async function SettingsPage() {
               <div>• Track ticket resolutions</div>
               <div>• Access user documentation</div>
             </div>
-            <Link href="/support">
-              <Button type="button" variant="outline" className="w-full">
-                Get Support
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/support" className="inline-flex items-center justify-center">
+                <span>Get Support</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>

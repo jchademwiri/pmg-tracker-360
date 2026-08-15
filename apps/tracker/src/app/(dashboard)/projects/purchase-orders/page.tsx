@@ -82,19 +82,18 @@ export default async function PurchaseOrdersPage({
   );
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
-          <p className="text-muted-foreground">
-            Track and manage all purchase orders to prevent duplicate orders and
-            ensure proper fulfillment.
+          <h1 className="text-2xl font-bold tracking-tight">Purchase Orders</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Track and manage all purchase orders to prevent duplicate orders and ensure proper fulfillment.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild size="default">
+          <Button asChild size="sm" className="h-9 font-medium shadow-xs">
             <Link href="/projects/purchase-orders/create">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-1.5" />
               Add Purchase Order
             </Link>
           </Button>

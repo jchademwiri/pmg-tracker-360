@@ -48,28 +48,28 @@ export default async function ClientsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Clients</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage your client relationships and contact information.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {csvData && (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="h-9 font-medium shadow-xs">
               <a
                 href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`}
                 download={csvFilename}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 mr-1.5" />
                 Export CSV
               </a>
             </Button>
           )}
-          <Button asChild size="default">
+          <Button asChild size="sm" className="h-9 font-medium shadow-xs">
             <Link href="/clients/create">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-1.5" />
               Add Client
             </Link>
           </Button>

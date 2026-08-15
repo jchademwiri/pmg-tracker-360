@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Search,
   Plus,
   MoreHorizontalIcon,
   Building2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { StatusBadge } from '@/components/ui/status-badge';
 import {
@@ -21,10 +19,6 @@ import {
   MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
-import {
-  MobileFilterDrawer,
-  MobileFilterField,
-} from '@/components/ui/mobile-filter-drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,17 +44,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
+import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
 
 import { getProjects, deleteProject } from '@/server/projects';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatClientName } from '@/lib/format';
 
 interface ProjectWithRelations {
   id: string;
@@ -91,11 +79,11 @@ interface ProjectListProps {
   clients?: { id: string; name: string }[];
 }
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
+const PROJECT_TABS = [
+  { id: 'all', label: 'All Projects' },
+  { id: 'active', label: 'Active' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'cancelled', label: 'Cancelled' },
 ];
 
 export function ProjectList({
@@ -109,9 +97,7 @@ export function ProjectList({
   const [projects, setProjects] = useState<ProjectWithRelations[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
   const [clientFilter, setClientFilter] = useState<string>('all');
-  const [draftClientFilter, setDraftClientFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -142,9 +128,7 @@ export function ProjectList({
   useEffect(() => {
     setSearchQuery('');
     setStatusFilter('all');
-    setDraftStatusFilter('all');
     setClientFilter('all');
-    setDraftClientFilter('all');
     setCurrentPage(1);
     if (organizationId) {
       fetchProjects('', 1);
@@ -161,7 +145,6 @@ export function ProjectList({
   // Handle status filter
   const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
-    setDraftStatusFilter(status);
     setCurrentPage(1);
     fetchProjects(searchQuery, 1, status, clientFilter);
   };
@@ -169,7 +152,6 @@ export function ProjectList({
   // Handle client filter
   const handleClientFilter = (clientId: string) => {
     setClientFilter(clientId);
-    setDraftClientFilter(clientId);
     setCurrentPage(1);
     fetchProjects(searchQuery, 1, statusFilter, clientId);
   };
@@ -198,103 +180,140 @@ export function ProjectList({
     });
   };
 
-  const activeFilterChips = [
-    ...(statusFilter !== 'all' ? [{ key: 'status', label: 'Status', value: STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter }] : []),
-    ...(clientFilter !== 'all' ? [{ key: 'client', label: 'Client', value: initialClients?.find(c => c.id === clientFilter)?.name || clientFilter }] : []),
-    ...(searchQuery ? [{ key: 'search', label: 'Search', value: searchQuery }] : []),
-  ];
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{ key: string; label: string; value: string; onRemove: () => void }> = [];
+    if (statusFilter !== 'all') {
+      const tab = PROJECT_TABS.find(t => t.id === statusFilter);
+      chips.push({
+        key: 'status',
+        label: 'Status',
+        value: tab?.label || statusFilter,
+        onRemove: () => handleStatusFilter('all'),
+      });
+    }
+    if (clientFilter !== 'all') {
+      const client = initialClients.find(c => c.id === clientFilter);
+      chips.push({
+        key: 'client',
+        label: 'Client',
+        value: client ? formatClientName(client.name) : clientFilter,
+        onRemove: () => handleClientFilter('all'),
+      });
+    }
+    if (searchQuery) {
+      chips.push({
+        key: 'search',
+        label: 'Search',
+        value: `"${searchQuery}"`,
+        onRemove: () => {
+          setSearchQuery('');
+          fetchProjects('', 1, statusFilter, clientFilter);
+        },
+      });
+    }
+    return chips;
+  }, [statusFilter, clientFilter, searchQuery, initialClients, fetchProjects]);
+
+  const clientOptions = useMemo(() => {
+    return [
+      { value: 'all', label: 'All Clients' },
+      ...initialClients.map((c) => ({
+        value: c.id,
+        label: formatClientName(c.name),
+      })),
+    ];
+  }, [initialClients]);
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Universal Compact DataTableToolbar */}
+      <DataTableToolbar
+        tabs={PROJECT_TABS}
+        activeTab={statusFilter}
+        onTabChange={handleStatusFilter}
+        searchValue={searchQuery}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search projects by number or description..."
+        facetedFilters={[
+          {
+            id: 'client',
+            placeholder: 'All Clients',
+            icon: Building2,
+            options: clientOptions,
+            value: clientFilter,
+            onChange: handleClientFilter,
+            width: 'w-[190px]',
+          },
+        ]}
+        activeFilters={activeFilterChips}
+        onClearAllFilters={() => {
+          setSearchQuery('');
+          setStatusFilter('all');
+          setClientFilter('all');
+          fetchProjects('', 1, 'all', 'all');
+        }}
+        mobileDrawerTitle="Filter Projects"
+      />
+
       <DataTableShell
-        title="Projects"
         entityLabel="projects"
         totalCount={totalCount}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         dataLength={projects.length}
-        searchPlaceholder="Search by project number or description..."
-        searchValue={searchQuery}
-        onSearchChange={handleSearch}
         isLoading={isLoading}
-        activeFilters={activeFilterChips}
-        onRemoveFilter={(key) => {
-          if (key === 'status') handleStatusFilter('all');
-          if (key === 'client') handleClientFilter('all');
-          if (key === 'search') { setSearchQuery(''); fetchProjects('', 1, statusFilter, clientFilter); }
-        }}
-        onClearFilters={() => { setSearchQuery(''); handleStatusFilter('all'); handleClientFilter('all'); }}
         emptyState={{
-          type: searchQuery || statusFilter !== 'all' ? 'no-results' : 'empty',
+          type: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? 'no-results' : 'empty',
           icon: 'file',
-          title: searchQuery || statusFilter !== 'all' ? 'No projects found' : 'No projects yet',
-          description: searchQuery || statusFilter !== 'all'
-            ? 'No projects match your search criteria.'
+          title: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? 'No projects found' : 'No projects yet',
+          description: searchQuery || statusFilter !== 'all' || clientFilter !== 'all'
+            ? 'No projects match your filter criteria.'
             : 'Get started by creating your first project.',
-          actionLabel: searchQuery || statusFilter !== 'all' ? undefined : 'Add Project',
-          actionHref: searchQuery || statusFilter !== 'all' ? undefined : '/projects/create',
+          actionLabel: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? undefined : 'Add Project',
+          actionHref: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? undefined : '/projects/create',
         }}
-        actionLabel={projects.length > 0 ? 'Add Project' : undefined}
-        actionHref="/projects/create"
-        desktopFilterBar={
-          <div className="flex items-center gap-2">
-            <Select value={statusFilter} onValueChange={handleStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={clientFilter} onValueChange={handleClientFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {(initialClients || []).map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        }
-        mobileFilterBar={
-          <MobileFilterDrawer
-            activeFilterCount={(statusFilter !== 'all' ? 1 : 0) + (clientFilter !== 'all' ? 1 : 0)}
-            onApply={() => { handleStatusFilter(draftStatusFilter); handleClientFilter(draftClientFilter); }}
-            onClear={() => { handleStatusFilter('all'); handleClientFilter('all'); }}
-            title="Filter Projects"
-          >
-            <MobileFilterField label="Status">
-              <Select value={draftStatusFilter} onValueChange={setDraftStatusFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </MobileFilterField>
-            <MobileFilterField label="Client">
-              <Select value={draftClientFilter} onValueChange={setDraftClientFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Clients" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Clients</SelectItem>
-                  {(initialClients || []).map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </MobileFilterField>
-          </MobileFilterDrawer>
+        mobileContent={
+          <MobileCardList>
+            {projects.map((project) => {
+              const actions = [
+                { label: 'View Details' as const, onClick: () => router.push(`/projects/${project.id}`) },
+                { label: 'Edit Project' as const, onClick: () => router.push(`/projects/${project.id}/edit`) },
+                { label: 'Delete Project' as const, onClick: () => setDeleteProjectId(project.id), variant: 'destructive' as const },
+              ];
+
+              return (
+                <MobileCard key={project.id} onClick={() => router.push(`/projects/${project.id}`)}>
+                  <MobileCardHeader
+                    identifier={project.projectNumber.toUpperCase()}
+                    badge={<StatusBadge status={project.status} domain="project" />}
+                    actions={actions}
+                  />
+                  <MobileCardBody>
+                    <h3 className="font-semibold text-foreground text-sm">
+                      {formatClientName(project.client?.name) || 'No Client'}
+                    </h3>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Delivery Progress</span>
+                        <span className="font-semibold text-foreground">{project.completionPercentage || 0}%</span>
+                      </div>
+                      <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                        <div className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" style={{ width: `${project.completionPercentage || 0}%` }} />
+                      </div>
+                    </div>
+                    {project.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{project.description}</p>
+                    )}
+                    <MobileCardGrid>
+                      <MobileCardField label="Tender">{project.tender?.tenderNumber.toUpperCase() || 'None'}</MobileCardField>
+                      <MobileCardField label="Created">{formatDate(project.createdAt)}</MobileCardField>
+                    </MobileCardGrid>
+                  </MobileCardBody>
+                </MobileCard>
+              );
+            })}
+          </MobileCardList>
         }
       >
         {/* Desktop Table */}
@@ -325,7 +344,7 @@ export function ProjectList({
                         {project.projectNumber.toUpperCase()}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {project.client?.name || 'No Client'}
+                        {formatClientName(project.client?.name) || 'No Client'}
                       </div>
                     </div>
                   </div>
@@ -385,47 +404,6 @@ export function ProjectList({
             ))}
           </TableBody>
         </Table>
-
-        mobileContent={
-          <MobileCardList>
-            {projects.map((project) => {
-              const actions = [
-                { label: 'View Details' as const, onClick: () => router.push(`/projects/${project.id}`) },
-                { label: 'Edit Project' as const, onClick: () => router.push(`/projects/${project.id}/edit`) },
-                { label: 'Delete Project' as const, onClick: () => setDeleteProjectId(project.id), variant: 'destructive' as const },
-              ];
-
-              return (
-                <MobileCard key={project.id} onClick={() => router.push(`/projects/${project.id}`)}>
-                  <MobileCardHeader
-                    identifier={project.projectNumber.toUpperCase()}
-                    badge={<StatusBadge status={project.status} domain="project" />}
-                    actions={actions}
-                  />
-                  <MobileCardBody>
-                    <h3 className="font-semibold text-foreground text-sm">{project.client?.name || 'No Client'}</h3>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Delivery Progress</span>
-                        <span className="font-semibold text-foreground">{project.completionPercentage || 0}%</span>
-                      </div>
-                      <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
-                        <div className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" style={{ width: `${project.completionPercentage || 0}%` }} />
-                      </div>
-                    </div>
-                    {project.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{project.description}</p>
-                    )}
-                    <MobileCardGrid>
-                      <MobileCardField label="Tender">{project.tender?.tenderNumber.toUpperCase() || 'None'}</MobileCardField>
-                      <MobileCardField label="Created">{formatDate(project.createdAt)}</MobileCardField>
-                    </MobileCardGrid>
-                  </MobileCardBody>
-                </MobileCard>
-              );
-            })}
-          </MobileCardList>
-        }
       </DataTableShell>
 
       {/* Delete Confirmation Dialog */}
@@ -445,6 +423,6 @@ export function ProjectList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

@@ -1,5 +1,66 @@
 import { SAST_TIMEZONE } from './timezone';
 
+const KNOWN_UPPERCASE_ACRONYMS = new Set([
+  'SOC',
+  'LTD',
+  'PTY',
+  'NPC',
+  'JV',
+  'CC',
+  'CO',
+  'RF',
+  'SOE',
+  'DWS',
+  'PRASA',
+  'SANRAL',
+  'SARS',
+  'SABC',
+  'PMG',
+  'CSIR',
+  'SITA',
+  'SAPO',
+  'SAPS',
+]);
+
+const LOWERCASE_ARTICLES = new Set([
+  'of',
+  'and',
+  'the',
+  'in',
+  'on',
+  'at',
+  'to',
+  'for',
+  'by',
+  'with',
+  'a',
+  'an',
+]);
+
+/**
+ * Formats a client/organization name with proper title casing while preserving
+ * standard South African business acronyms (SOC, LTD, PTY, JV, etc.).
+ * e.g. "ESKOM HOLDINGS SOC LTD" -> "Eskom Holdings SOC LTD"
+ * e.g. "CITY OF TSHWANE" -> "City of Tshwane"
+ */
+export function formatClientName(value: string | null | undefined): string {
+  if (!value) return '';
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  return words
+    .map((word, index) => {
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      if (KNOWN_UPPERCASE_ACRONYMS.has(cleanWord)) {
+        return word.toUpperCase();
+      }
+      const lower = word.toLowerCase();
+      if (index > 0 && LOWERCASE_ARTICLES.has(lower)) {
+        return lower;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+}
+
 /**
  * Capitalizes the first letter of every word ("Title Case").
  * "CITY OF TSHWANE" -> "City Of Tshwane", "City of Ekurhuleni" -> "City Of Ekurhuleni".
@@ -12,6 +73,7 @@ export function toTitleCase(value: string | null | undefined): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 }
+
 
 /**
  * Formats a date as "24 Feb 2026" in SAST timezone.

@@ -41,7 +41,7 @@ const EMPTY_ICONS = {
 
 interface DataTableShellProps {
   /* ── Header ── */
-  title: string;
+  title?: string;
   /** Optional action button in header */
   actionLabel?: string;
   actionHref?: string;

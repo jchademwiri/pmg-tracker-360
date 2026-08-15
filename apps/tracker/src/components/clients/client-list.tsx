@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, MoreHorizontalIcon, Mail, Phone, User } from 'lucide-react';
+import { MoreHorizontalIcon, Mail, Phone, User, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -40,9 +39,10 @@ import {
   MobileCardList,
 } from '@/components/ui/mobile-card';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
+import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
 
 import { getClients, deleteClient } from '@/server';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatClientName } from '@/lib/format';
 import type { Client } from '@pmg/db/schema';
 import Link from 'next/link';
 
@@ -132,19 +132,38 @@ export function ClientList({
     });
   };
 
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{ key: string; label: string; value: string; onRemove: () => void }> = [];
+    if (searchQuery) {
+      chips.push({
+        key: 'search',
+        label: 'Search',
+        value: `"${searchQuery}"`,
+        onRemove: () => handleSearch(''),
+      });
+    }
+    return chips;
+  }, [searchQuery]);
+
   return (
-    <>
+    <div className="space-y-4">
+      {/* Universal Compact DataTableToolbar */}
+      <DataTableToolbar
+        searchValue={searchQuery}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search clients by company name, contact, or email..."
+        activeFilters={activeFilterChips}
+        onClearAllFilters={() => handleSearch('')}
+        mobileDrawerTitle="Filter Clients"
+      />
+
       <DataTableShell
-        title="Clients"
         entityLabel="clients"
         totalCount={totalCount}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         dataLength={clients.length}
-        searchPlaceholder="Search clients by name, contact name, or email..."
-        searchValue={searchQuery}
-        onSearchChange={handleSearch}
         isLoading={isLoading}
         emptyState={{
           type: searchQuery ? 'no-results' : 'empty',
@@ -156,8 +175,52 @@ export function ClientList({
           actionLabel: searchQuery ? undefined : 'Add Client',
           actionHref: searchQuery ? undefined : '/clients/create',
         }}
-        actionLabel={clients.length > 0 ? 'Add Client' : undefined}
-        actionHref="/clients/create"
+        mobileContent={
+          <MobileCardList>
+            {clients.map((client) => {
+              const actions = [
+                { label: 'View Details' as const, onClick: () => router.push(`/clients/${client.id}`) },
+                { label: 'Edit Client' as const, onClick: () => router.push(`/clients/${client.id}/edit`) },
+                { label: 'Delete Client' as const, onClick: () => setDeleteClientId(client.id), variant: 'destructive' as const },
+              ];
+
+              return (
+                <MobileCard key={client.id} onClick={() => router.push(`/clients/${client.id}`)}>
+                  <MobileCardHeader
+                    identifier={formatClientName(client.name)}
+                    actions={actions}
+                  />
+                  <MobileCardBody>
+                    {client.contactName && (
+                      <div className="text-sm font-medium text-foreground">
+                        {client.contactName}
+                      </div>
+                    )}
+                    {(client.contactEmail || client.contactPhone) && (
+                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                        {client.contactEmail && (
+                          <div className="flex items-center gap-1.5">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>{client.contactEmail}</span>
+                          </div>
+                        )}
+                        {client.contactPhone && (
+                          <div className="flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>{client.contactPhone}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <MobileCardGrid>
+                      <MobileCardField label="Created">{formatDate(client.createdAt)}</MobileCardField>
+                    </MobileCardGrid>
+                  </MobileCardBody>
+                </MobileCard>
+              );
+            })}
+          </MobileCardList>
+        }
       >
         {/* Desktop table */}
         <Table className="w-full table-fixed">
@@ -179,10 +242,10 @@ export function ClientList({
                 <TableCell className="py-3">
                   <div className="flex items-center gap-3">
                     <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                      <User className="h-4.5 w-4.5 text-muted-foreground" />
+                      <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
                     </div>
                     <div className="font-semibold text-foreground text-sm truncate">
-                      {client.name}
+                      {formatClientName(client.name)}
                     </div>
                   </div>
                 </TableCell>
@@ -232,41 +295,6 @@ export function ClientList({
             ))}
           </TableBody>
         </Table>
-
-        mobileContent={
-          <MobileCardList>
-            {clients.map((client) => {
-              const actions = [
-                { label: 'View Details' as const, onClick: () => router.push(`/clients/${client.id}`) },
-                { label: 'Edit Client' as const, onClick: () => router.push(`/clients/${client.id}/edit`) },
-                { label: 'Delete Client' as const, onClick: () => setDeleteClientId(client.id), variant: 'destructive' as const },
-              ];
-
-              return (
-                <MobileCard key={client.id} onClick={() => router.push(`/clients/${client.id}`)}>
-                  <MobileCardHeader identifier={client.name} actions={actions} />
-                  <MobileCardBody>
-                    {client.notes && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{client.notes}</p>
-                    )}
-                    <MobileCardGrid>
-                      {client.contactName && (
-                        <MobileCardField label="Contact">{client.contactName}</MobileCardField>
-                      )}
-                      {client.contactEmail && (
-                        <MobileCardField label="Email">{client.contactEmail}</MobileCardField>
-                      )}
-                      {client.contactPhone && (
-                        <MobileCardField label="Phone">{client.contactPhone}</MobileCardField>
-                      )}
-                      <MobileCardField label="Created">{formatDate(client.createdAt)}</MobileCardField>
-                    </MobileCardGrid>
-                  </MobileCardBody>
-                </MobileCard>
-              );
-            })}
-          </MobileCardList>
-        }
       </DataTableShell>
 
       {/* Delete Confirmation Dialog */}
@@ -275,21 +303,17 @@ export function ClientList({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Client</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this client? This action cannot be undone.
+              Are you sure you want to delete this client? This action cannot be undone and may affect associated tenders and projects.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteClient}
-              disabled={isPending}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={confirmDeleteClient} disabled={isPending} className="bg-red-600 hover:bg-red-700">
               {isPending ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

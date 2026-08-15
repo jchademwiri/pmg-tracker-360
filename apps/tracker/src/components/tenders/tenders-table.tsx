@@ -29,7 +29,11 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+<<<<<<< Updated upstream
 import { formatDate } from '@/lib/format';
+=======
+import { formatDate, formatCurrency, formatClientName } from '@/lib/format';
+>>>>>>> Stashed changes
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 export interface Tender {
@@ -113,7 +117,11 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
   const contactEmail = tender.contactEmail || tender.client?.contactEmail;
   const contactPhone = tender.contactPhone || tender.client?.contactPhone;
 
+<<<<<<< Updated upstream
   const handleCopy = (e: React.MouseEvent, text: string, type: string) => {
+=======
+  const handleCopyContact = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
+>>>>>>> Stashed changes
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedField(type);
@@ -158,7 +166,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopy(e, contactPhone, 'phone')}
+              onClick={(e) => handleCopyContact(e, contactPhone, 'phone')}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Phone Number"
             >
@@ -183,7 +191,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopy(e, contactEmail, 'email')}
+              onClick={(e) => handleCopyContact(e, contactEmail, 'email')}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Email Address"
             >
@@ -280,6 +288,46 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
   return <span className="text-muted-foreground text-xs">—</span>;
 }
 
+function DescriptionCell({ description }: { description: string | null }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!description) {
+    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
+  }
+
+  const handleCopyDescription = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(description);
+    setCopied(true);
+    toast.success('Description copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group relative flex items-start gap-1.5 pr-2">
+      <p
+        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed capitalize break-words flex-1"
+        title={description}
+      >
+        {description}
+      </p>
+      <button
+        type="button"
+        onClick={handleCopyDescription}
+        className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 opacity-80 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 cursor-pointer"
+        title="Copy full description"
+        aria-label="Copy description"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-emerald-400" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function TendersTable({
   tenders,
   totalCount,
@@ -291,7 +339,6 @@ export function TendersTable({
 }: TendersTableProps) {
   return (
     <DataTableShell
-      title="Tenders"
       entityLabel="tenders"
       totalCount={totalCount}
       currentPage={currentPage}
@@ -316,8 +363,8 @@ export function TendersTable({
                 status={tender.status}
               />
               <MobileCardBody>
-                <h3 className="font-semibold text-foreground text-sm uppercase tracking-wide">
-                  {tender.client?.name ? tender.client.name.toUpperCase() : 'UNKNOWN CLIENT'}
+                <h3 className="font-semibold text-foreground text-sm tracking-wide">
+                  {formatClientName(tender.client?.name) || 'Unknown Client'}
                 </h3>
 
                 {/* Mobile Contact Quick Row */}
@@ -355,18 +402,26 @@ export function TendersTable({
               }`}
               onClick={() => onRowClick?.(tender.id)}
             >
+<<<<<<< Updated upstream
               {/* 1. Tender & Client */}
               <TableCell className="py-3.5">
                 <div className="flex items-center gap-3">
                   <div className="size-9 rounded-xl bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
                     <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+=======
+              {/* 1. Tender & Client (15% Width, Properly Cased Client) */}
+              <TableCell className="py-3.5 whitespace-normal">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+>>>>>>> Stashed changes
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <div
-                      className="font-bold text-foreground text-xs uppercase truncate tracking-tight"
-                      title={tender.client?.name ? tender.client.name.toUpperCase() : 'UNKNOWN CLIENT'}
+                      className="font-bold text-foreground text-xs truncate tracking-tight"
+                      title={tender.client?.name ? formatClientName(tender.client.name) : 'Unknown Client'}
                     >
-                      {tender.client?.name ? tender.client.name.toUpperCase() : 'UNKNOWN CLIENT'}
+                      {tender.client?.name ? formatClientName(tender.client.name) : 'Unknown Client'}
                     </div>
                     <Link
                       href={`/tenders/${tender.id}`}

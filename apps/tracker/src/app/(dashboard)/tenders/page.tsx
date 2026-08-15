@@ -25,10 +25,14 @@ const validSortBy = ['tenderNumber', 'createdAt', 'submissionDate', 'status'] as
 const validSortOrder = ['asc', 'desc'] as const;
 
 function parseTenderFilters(searchParams: SearchParams) {
-  const status = searchParams.status || 'all';
+  const isExpiredValidity =
+    searchParams.filter === 'validity-expired-uncontacted' ||
+    searchParams.status === 'validity_expired_uncontacted';
+  const status = isExpiredValidity
+    ? 'validity_expired_uncontacted'
+    : searchParams.status || 'all';
   const submitted = searchParams.submitted;
   const filter = searchParams.filter;
-  const isExpiredValidity = filter === 'validity-expired-uncontacted' || status === 'validity_expired_uncontacted';
   const sortBy = validSortBy.includes(searchParams.sortBy as any)
     ? (searchParams.sortBy as (typeof validSortBy)[number])
     : isExpiredValidity || status === 'open' || status === 'all'
@@ -56,10 +60,14 @@ function parseTenderFilters(searchParams: SearchParams) {
 }
 
 function getRegisterCopy(filters: { status: string; submitted?: string; filter?: string }) {
-  if (filters.filter === 'validity-expired-uncontacted' || filters.status === 'validity_expired_uncontacted') {
+  if (
+    filters.filter === 'validity-expired-uncontacted' ||
+    filters.status === 'validity_expired_uncontacted'
+  ) {
     return {
-      title: 'Expired Validity (No Follow-up)',
-      description: 'Tenders whose validity period has expired without any recorded follow-up inquiries or extensions.',
+      title: 'Needs Follow-up (Expired Validity)',
+      description:
+        'Tenders whose validity period has expired without any recorded follow-up inquiries or extensions.',
     };
   }
   if (filters.submitted === 'this-month' || filters.submitted === 'month') {
@@ -158,19 +166,19 @@ export default async function TendersRegisterPage({
   }));
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             {registerCopy.title}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {registerCopy.description}
           </p>
         </div>
-        <Button asChild size="lg">
+        <Button asChild size="sm" className="h-9 font-medium shadow-xs shrink-0 self-start sm:self-auto">
           <Link href="/tenders/create">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-1.5" />
             Add Tender
           </Link>
         </Button>
