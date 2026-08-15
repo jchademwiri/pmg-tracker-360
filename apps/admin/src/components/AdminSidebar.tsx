@@ -1,8 +1,8 @@
 'use client';
 
+import { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTransition } from 'react';
 import {
   LayoutDashboard,
   BarChart3,
@@ -26,12 +26,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { adminSignOut } from '@/app/actions';
+import { getUnreadTicketsCountForAdminAction } from '@/app/support-tickets/actions';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation data                                                    */
@@ -103,7 +105,32 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [unreadTicketCount, setUnreadTicketCount] = useState(0);
   const initial = userName?.[0]?.toUpperCase() ?? 'A';
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchCount = () => {
+      getUnreadTicketsCountForAdminAction().then((res) => {
+        if (mounted && res.success) {
+          setUnreadTicketCount(res.count);
+        }
+      });
+    };
+
+    fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('admin-support-count-updated', handleUpdate);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('admin-support-count-updated', handleUpdate);
+    };
+  }, [pathname]);
 
   function handleSignOut() {
     startTransition(async () => {
@@ -135,6 +162,8 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = pathname === item.href;
+                  const showBadge = item.href === '/support-tickets' && unreadTicketCount > 0;
+
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
@@ -147,6 +176,13 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
+                      {showBadge && (
+                        <SidebarMenuBadge>
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
+                            {unreadTicketCount}
+                          </span>
+                        </SidebarMenuBadge>
+                      )}
                     </SidebarMenuItem>
                   );
                 })}

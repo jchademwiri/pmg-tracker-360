@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { requireAdminPage } from '@/lib/require-admin-page';
 import { getOpenTickets } from '@/lib/admin-queries';
 import TicketsListClient from './TicketsListClient';
@@ -10,18 +11,10 @@ export default async function SupportTicketsPage() {
   const tickets = await getOpenTickets();
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 font-sans">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">
-          Support Tickets
-        </h1>
-        <p className="text-sm text-zinc-400">
-          Manage and progress open support requests from platform users.
-        </p>
-      </div>
-
-      {/* Client component owns all column definitions and DataTable rendering */}
-      <TicketsListClient tickets={tickets} />
+    <div className="w-full h-full animate-in fade-in duration-300 font-sans">
+      <Suspense fallback={<div className="h-[calc(100vh-8.5rem)] flex items-center justify-center text-zinc-400 text-sm">Loading Operations Center...</div>}>
+        <TicketsListClient tickets={tickets} />
+      </Suspense>
     </div>
   );
 }

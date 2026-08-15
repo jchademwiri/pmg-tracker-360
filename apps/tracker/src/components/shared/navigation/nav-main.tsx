@@ -16,12 +16,14 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+import { getUnreadTicketCount } from '@/server/support';
 
 type NavItem = {
   title: string;
@@ -36,6 +38,36 @@ type NavItem = {
 export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  useEffect(() => {
+    const hasSupport = items.some(
+      (item) => item.url === '/support' || item.items?.some((s) => s.url === '/support')
+    );
+    if (!hasSupport) return;
+
+    let mounted = true;
+    const fetchCount = () => {
+      getUnreadTicketCount().then((res) => {
+        if (mounted && res.success) {
+          setUnreadSupportCount(res.count);
+        }
+      });
+    };
+
+    fetchCount();
+
+    const handleUpdate = () => {
+      fetchCount();
+    };
+
+    window.addEventListener('support-count-updated', handleUpdate);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('support-count-updated', handleUpdate);
+    };
+  }, [pathname, items]);
 
   const isNavUrlActive = (url: string) =>
     isNavActive(pathname, searchParams, url);
@@ -130,6 +162,13 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
                   )}
                 </SidebarMenuButton>
               </CollapsibleTrigger>
+              {item.url === '/support' && unreadSupportCount > 0 && (
+                <SidebarMenuBadge>
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
+                    {unreadSupportCount}
+                  </span>
+                </SidebarMenuBadge>
+              )}
               {item.items && item.items.length > 0 && (
                 <CollapsibleContent>
                   <SidebarMenuSub>

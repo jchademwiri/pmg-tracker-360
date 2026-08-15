@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Building2,
+  LifeBuoy,
 } from 'lucide-react';
 
 export const dashboadLinks = {
@@ -69,6 +70,11 @@ export const dashboadLinks = {
     },
   ],
   settings: [
+    {
+      title: 'Support Desk',
+      url: '/support',
+      icon: LifeBuoy,
+    },
     {
       title: 'Settings',
       url: '/settings',

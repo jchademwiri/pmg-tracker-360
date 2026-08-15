@@ -30,6 +30,11 @@ vi.mock('drizzle-orm', () => ({
 vi.mock('next/headers', () => ({ headers: vi.fn().mockResolvedValue({}) }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/constants', () => ({ PLATFORM_ORG_ID: 'org_platform_admin' }));
+vi.mock('@/lib/email-config', () => ({
+  resend: { emails: { send: vi.fn().mockResolvedValue({ data: { id: 'msg_123' }, error: null }) } },
+  SENDER: 'test <test@example.com>',
+  REPLY_TO: 'reply@example.com',
+}));
 
 // Import AFTER mocks are registered
 import { updateTicketStatus } from '../actions';

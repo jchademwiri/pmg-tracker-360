@@ -192,3 +192,45 @@ input:disabled,
 select:disabled {
     cursor: not-allowed;
 }
+
+/* =============================================
+   CUSTOM LUXURY THEME SCROLLBAR / SCRUBBER
+   ============================================= */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, 0.28) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.25);
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.55);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+:root[class~="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.28);
+    border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+:root[class~="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.6);
+}
+
+.dark * {
+    scrollbar-color: rgba(212, 175, 55, 0.3) transparent;
+}
