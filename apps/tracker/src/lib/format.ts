@@ -1,6 +1,19 @@
 import { SAST_TIMEZONE } from './timezone';
 
 /**
+ * Capitalizes the first letter of every word ("Title Case").
+ * "CITY OF TSHWANE" -> "City Of Tshwane", "City of Ekurhuleni" -> "City Of Ekurhuleni".
+ */
+export function toTitleCase(value: string | null | undefined): string {
+  if (!value) return '';
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/**
  * Formats a date as "24 Feb 2026" in SAST timezone.
  * Pass a fallback string as the second argument (default '-').
  */
