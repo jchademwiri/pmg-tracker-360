@@ -29,7 +29,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatCurrency } from '@/lib/format';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 export interface Tender {
@@ -101,19 +101,19 @@ function resolveValidityExpiry(tender: Tender): {
 function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   if (!submissionDate) return null;
   const now = new Date();
-  const diffTime = new Date(submissionDate).getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+  const sub = new Date(submissionDate);
+  const diffTime = sub.getTime() - now.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 function ContactDetailsCell({ tender }: { tender: Tender }) {
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<'phone' | 'email' | null>(null);
 
   const contactName = tender.contactName || tender.client?.contactName;
   const contactEmail = tender.contactEmail || tender.client?.contactEmail;
   const contactPhone = tender.contactPhone || tender.client?.contactPhone;
 
-  const handleCopy = (e: React.MouseEvent, text: string, type: string) => {
+  const handleCopy = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedField(type);
@@ -312,6 +312,20 @@ export function TendersTable({
                   {tender.client?.name || 'Unknown Client'}
                 </h3>
 
+                {/* Description (Multi-line up to 3 lines, Capitalized words) */}
+                {tender.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-3 pt-1 capitalize leading-relaxed">
+                    {tender.description}
+                  </p>
+                )}
+
+                {/* Value */}
+                {tender.value && (
+                  <div className="text-xs font-mono font-semibold text-foreground pt-1">
+                    Estimated: {formatCurrency(tender.value)}
+                  </div>
+                )}
+
                 {/* Mobile Contact Quick Row */}
                 <div className="pt-1">
                   <ContactDetailsCell tender={tender} />
@@ -327,15 +341,15 @@ export function TendersTable({
         </MobileCardList>
       }
     >
-      {/* Desktop table with 4 clean, focused columns */}
+      {/* Desktop table with 5 clean, focused columns (No Actions Column, Sticky Header) */}
       <Table className="w-full table-fixed">
-        <TableHeader className="bg-primary">
+        <TableHeader className="sticky top-0 z-10 bg-primary shadow-xs">
           <TableRow className="hover:bg-transparent border-b border-primary">
-            <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
-            <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Status</TableHead>
-            <TableHead className="w-[17%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Value</TableHead>
-            <TableHead className="w-[18%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Deadline</TableHead>
-            <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-primary-foreground">Actions</TableHead>
+            <TableHead className="w-[24%] sticky top-0 z-10 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
+            <TableHead className="w-[28%] sticky top-0 z-10 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Description</TableHead>
+            <TableHead className="w-[20%] sticky top-0 z-10 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Contact Details</TableHead>
+            <TableHead className="w-[14%] sticky top-0 z-10 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Status & Value</TableHead>
+            <TableHead className="w-[14%] sticky top-0 z-10 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Deadline & Validity</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -368,17 +382,38 @@ export function TendersTable({
                 </div>
               </TableCell>
 
-              {/* 2. Contact Details (Phone / Email) */}
+              {/* 2. Description (Multi-line up to 3 lines, Capitalized words) */}
+              <TableCell className="py-3.5">
+                <p
+                  className="text-xs text-muted-foreground line-clamp-3 leading-relaxed capitalize"
+                  title={tender.description || ''}
+                >
+                  {tender.description ? (
+                    tender.description
+                  ) : (
+                    <span className="italic text-muted-foreground/50 normal-case">No description provided</span>
+                  )}
+                </p>
+              </TableCell>
+
+              {/* 3. Contact Details (Phone / Email) */}
               <TableCell className="py-3.5">
                 <ContactDetailsCell tender={tender} />
               </TableCell>
 
-              {/* 3. Status */}
+              {/* 4. Status & Value */}
               <TableCell className="py-3.5">
-                <StatusBadge domain="tender" status={tender.status} />
+                <div className="flex flex-col gap-1 text-left">
+                  <StatusBadge domain="tender" status={tender.status} />
+                  {tender.value ? (
+                    <span className="text-xs font-mono font-semibold text-foreground">
+                      {formatCurrency(tender.value)}
+                    </span>
+                  ) : null}
+                </div>
               </TableCell>
 
-              {/* 4. Validity & Deadlines (High-Visibility POP Badge) */}
+              {/* 5. Validity & Deadlines */}
               <TableCell className="py-3.5">
                 <ValidityDeadlineCell tender={tender} />
               </TableCell>
