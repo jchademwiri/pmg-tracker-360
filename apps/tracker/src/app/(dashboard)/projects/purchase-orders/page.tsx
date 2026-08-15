@@ -91,14 +91,8 @@ export default async function PurchaseOrdersPage({
             ensure proper fulfillment.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild size={'lg'}>
-            <Link href="/projects/create">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Project
-            </Link>
-          </Button>
-          <Button asChild size={'lg'}>
+        <div className="flex items-center gap-2">
+          <Button asChild size="default">
             <Link href="/projects/purchase-orders/create">
               <Plus className="h-4 w-4 mr-2" />
               Add Purchase Order

@@ -69,10 +69,11 @@ export function OrganizationCard({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden transition-all duration-300 ease-out',
-        // allow clicks through the decorative pseudo element
+        'group relative overflow-hidden transition-all duration-300 ease-out border',
         'before:absolute before:inset-0 before:bg-linear-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none',
-        isActive && 'ring-2 ring-primary ring-offset-2 shadow-lg',
+        isActive
+          ? 'border-primary/60 bg-primary/[0.03] ring-2 ring-primary/20 ring-offset-1 shadow-md'
+          : 'hover:border-border/80',
         className
       )}
     >
@@ -96,13 +97,13 @@ export function OrganizationCard({
               <div className="flex items-center gap-2 mt-1">
                 <Badge
                   variant={isActive ? 'default' : 'secondary'}
-                  className="text-xs"
+                  className="text-xs uppercase tracking-wider font-semibold"
                 >
                   {actualUserRole}
                 </Badge>
                 {isActive && (
-                  <Badge variant="outline" className="text-xs">
-                    Active
+                  <Badge variant="outline" className="text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                    Active Workspace
                   </Badge>
                 )}
               </div>
@@ -115,23 +116,23 @@ export function OrganizationCard({
         <div className="space-y-4">
           {/* Stats */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Users className="size-4" />
+            <div className="flex items-center gap-1.5">
+              <Users className="size-4 text-muted-foreground" />
               <span>
                 {actualMemberCount} member{actualMemberCount !== 1 ? 's' : ''}
               </span>
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="size-4" />
+            <div className="flex items-center gap-1.5">
+              <Calendar className="size-4 text-muted-foreground" />
               <span>Created {formatDate(organization.createdAt)}</span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="flex gap-2 opacity-90 group-hover:opacity-100 transition-opacity duration-300">
             <Button
               type="button"
-              className="flex-1 transition-all duration-200 hover:scale-105"
+              className="flex-1 transition-all duration-200"
               size="sm"
               disabled={isSwitching}
               onClick={handleOpenDashboard}
@@ -139,9 +140,9 @@ export function OrganizationCard({
               {isSwitching ? (
                 <Loader2 className="size-4 mr-2 animate-spin" />
               ) : (
-                <ExternalLink className="size-4 mr-2 py-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                <ExternalLink className="size-4 mr-2 transition-transform duration-200 group-hover:translate-x-0.5" />
               )}
-              Go to Dashboard
+              {isActive ? 'Current Dashboard' : 'Switch Workspace'}
             </Button>
             {(actualUserRole === 'owner' || actualUserRole === 'admin') && (
               <Button
@@ -149,7 +150,7 @@ export function OrganizationCard({
                 variant="outline"
                 size="sm"
                 aria-label="Organization settings"
-                className="transition-all duration-200 hover:scale-105 hover:rotate-12 p-1 hover:bg-muted rounded"
+                className="transition-all duration-200 hover:bg-muted"
               >
                 <Link href={`/organization/${organization.slug}`}>
                   <Settings className="size-4 transition-transform duration-200" />

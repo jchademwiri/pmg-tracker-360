@@ -1,7 +1,9 @@
 import { getCurrentUser, getClients, getClientStats, getClientsExportCsv } from '@/server';
 import { ClientList } from '@/components/clients/client-list';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, UserCheck, UserPlus, TrendingUp, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Users, UserCheck, UserPlus, TrendingUp, Download, Plus } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,18 +55,25 @@ export default async function ClientsPage() {
             Manage your client relationships and contact information.
           </p>
         </div>
-        {csvData && (
-          <div className="flex-shrink-0">
-            <a
-              href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`}
-              download={csvFilename}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
-            </a>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {csvData && (
+            <Button asChild variant="outline" size="sm">
+              <a
+                href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`}
+                download={csvFilename}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </a>
+            </Button>
+          )}
+          <Button asChild size="default">
+            <Link href="/clients/create">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Client
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
