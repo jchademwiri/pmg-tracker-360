@@ -104,8 +104,7 @@ function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   if (!submissionDate) return null;
   const now = new Date();
   const diffTime = new Date(submissionDate).getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 function ContactDetailsCell({ tender }: { tender: Tender }) {
@@ -147,7 +146,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-emerald-400 font-medium transition-colors"
               title={`Call ${contactPhone}`}
             >
-              <Phone className="h-3 w-3 text-emerald-400" aria-hidden="true" />
+              <Phone className="h-3 w-3 text-emerald-400 shrink-0" aria-hidden="true" />
               <span>{contactPhone}</span>
             </a>
             <button
@@ -172,7 +171,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-sky-400 font-medium transition-colors truncate max-w-[170px]"
               title={`Email ${contactEmail}`}
             >
-              <Mail className="h-3 w-3 text-sky-400" aria-hidden="true" />
+              <Mail className="h-3 w-3 text-sky-400 shrink-0" aria-hidden="true" />
               <span className="truncate">{contactEmail}</span>
             </a>
             <button
@@ -212,7 +211,7 @@ function DescriptionCell({ description }: { description: string | null }) {
   return (
     <div className="group relative flex items-start gap-1.5 pr-2">
       <p
-        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed capitalize break-words flex-1"
+        className="text-xs text-muted-foreground line-clamp-2 leading-relaxed capitalize break-words flex-1"
         title={description}
       >
         {description}
@@ -239,7 +238,7 @@ function StatusValueCell({ tender }: { tender: Tender }) {
     <div className="flex flex-col gap-1 text-left">
       <StatusBadge domain="tender" status={tender.status} />
       {tender.value && Number(tender.value) > 0 ? (
-        <span className="font-mono font-bold text-xs text-emerald-400">
+        <span className="font-mono font-bold text-xs tabular-nums text-emerald-400 dark:text-emerald-300">
           {formatCurrency(Number(tender.value))}
         </span>
       ) : null}
@@ -251,12 +250,12 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
   const { expiryDate, isExpired, daysDiff } = resolveValidityExpiry(tender);
   const daysLeftToSubmit = getDaysUntilDeadline(tender.submissionDate);
 
-  // If Validity is EXPIRED (High Urgency)
+  // If Validity is EXPIRED (High Urgency Alert)
   if (isExpired && expiryDate) {
     const daysAgo = Math.abs(daysDiff ?? 0);
     return (
       <div className="flex flex-col gap-1 text-left">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-500/20 border border-rose-500/50 text-rose-300 shadow-sm animate-pulse w-fit">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300 shadow-xs animate-pulse w-fit">
           <AlertTriangle className="h-3.5 w-3.5 text-rose-400 shrink-0" aria-hidden="true" />
           <span>Expired {daysAgo} {daysAgo === 1 ? 'day' : 'days'} ago</span>
         </div>
@@ -271,7 +270,7 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
   if (expiryDate && daysDiff !== null && daysDiff >= 0 && daysDiff <= 14) {
     return (
       <div className="flex flex-col gap-1 text-left">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 border border-amber-500/50 text-amber-300 shadow-sm w-fit">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 shadow-xs w-fit">
           <Hourglass className="h-3.5 w-3.5 text-amber-400 shrink-0" aria-hidden="true" />
           <span>Expires in {daysDiff} {daysDiff === 1 ? 'day' : 'days'}</span>
         </div>
@@ -395,21 +394,21 @@ export function TendersTable({
     >
       {/* Desktop table with 5 balanced columns */}
       <Table className="w-full table-fixed">
-        <TableHeader className="bg-primary">
-          <TableRow className="hover:bg-transparent border-b border-primary">
-            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[18%]">
               Tender & Client
             </TableHead>
-            <TableHead className="w-[37%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+            <TableHead className="w-[34%]">
               Description
             </TableHead>
-            <TableHead className="w-[18%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+            <TableHead className="w-[18%]">
               Contact Details
             </TableHead>
-            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+            <TableHead className="w-[15%]">
               Status & Value
             </TableHead>
-            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+            <TableHead className="w-[15%]">
               Deadline & Validity
             </TableHead>
           </TableRow>
@@ -418,13 +417,11 @@ export function TendersTable({
           {tenders.map((tender) => (
             <TableRow
               key={tender.id}
-              className={`transition-colors duration-150 border-b border-border/40 ${
-                onRowClick ? 'cursor-pointer hover:bg-accent/40' : ''
-              }`}
+              className={onRowClick ? 'cursor-pointer' : ''}
               onClick={() => onRowClick?.(tender.id)}
             >
               {/* 1. Tender & Client */}
-              <TableCell className="py-3.5 whitespace-normal">
+              <TableCell className="whitespace-normal">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -448,22 +445,22 @@ export function TendersTable({
               </TableCell>
 
               {/* 2. Description (with Copy button) */}
-              <TableCell className="py-3.5">
+              <TableCell>
                 <DescriptionCell description={tender.description} />
               </TableCell>
 
               {/* 3. Contact Details (Phone / Email) */}
-              <TableCell className="py-3.5">
+              <TableCell>
                 <ContactDetailsCell tender={tender} />
               </TableCell>
 
               {/* 4. Status & Value */}
-              <TableCell className="py-3.5">
+              <TableCell>
                 <StatusValueCell tender={tender} />
               </TableCell>
 
               {/* 5. Deadline & Validity */}
-              <TableCell className="py-3.5">
+              <TableCell>
                 <ValidityDeadlineCell tender={tender} />
               </TableCell>
             </TableRow>
