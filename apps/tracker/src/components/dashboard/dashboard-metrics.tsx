@@ -1,13 +1,17 @@
+import Link from 'next/link';
 import {
-  formatCurrency,
-  formatPercentage,
-  formatNumber,
-} from '@/lib/dashboard-data';
-import { MetricCard } from '@/components/ui/metric-card';
-import { Banknote, Target, TrendingUp, Calendar } from 'lucide-react';
+  CalendarDays,
+  CalendarRange,
+  Hourglass,
+  Clock,
+  ArrowRight,
+  Sparkles,
+  AlertCircle,
+  FileCheck2,
+  ChevronRight,
+} from 'lucide-react';
 import { getTenderStats } from '@/server/tenders';
-import { getClientStats } from '@/server/clients';
-import { getProjectStats } from '@/server/projects';
+import { formatNumber } from '@/lib/dashboard-data';
 
 interface DashboardMetricsProps {
   organizationId: string;
@@ -16,122 +20,149 @@ interface DashboardMetricsProps {
 export async function DashboardMetrics({
   organizationId,
 }: DashboardMetricsProps) {
-  let tenderStats = null;
-  let clientStats = null;
-  let projectStats = null;
+  let tenderStats: {
+    submittedThisMonth: number;
+    submittedThisYear: number;
+    expiredValidityUncontactedCount: number;
+    underEvaluationCount: number;
+    totalTenders: number;
+    upcomingDeadlines: number;
+  } = {
+    submittedThisMonth: 0,
+    submittedThisYear: 0,
+    expiredValidityUncontactedCount: 0,
+    underEvaluationCount: 0,
+    totalTenders: 0,
+    upcomingDeadlines: 0,
+  };
 
   try {
-    const [tenderStatsResult, clientStatsResult, projectStatsResult] =
-      await Promise.all([
-        getTenderStats(organizationId),
-        getClientStats(organizationId),
-        getProjectStats(organizationId),
-      ]);
-
-    if (tenderStatsResult?.success) tenderStats = tenderStatsResult.stats;
-    if (clientStatsResult?.success) clientStats = clientStatsResult.stats;
-    if (projectStatsResult?.success) projectStats = projectStatsResult.stats;
+    const res = await getTenderStats(organizationId);
+    if (res?.success && res.stats) {
+      tenderStats = {
+        submittedThisMonth: res.stats.submittedThisMonth ?? 0,
+        submittedThisYear: res.stats.submittedThisYear ?? 0,
+        expiredValidityUncontactedCount:
+          res.stats.expiredValidityUncontactedCount ?? 0,
+        underEvaluationCount:
+          res.stats.underEvaluationCount ??
+          res.stats.statusCounts?.evaluation ??
+          0,
+        totalTenders: res.stats.totalTenders ?? 0,
+        upcomingDeadlines: res.stats.upcomingDeadlines ?? 0,
+      };
+    }
   } catch (error) {
-    console.error('Failed to fetch dashboard metrics:', error);
+    console.error('Failed to fetch tender mission metrics:', error);
   }
 
-  // Use fallback values if stats are missing
-  if (!tenderStats)
-    tenderStats = {
-      totalValue: 0,
-      winRate: 0,
-      trends: { value: 0, winRate: 0 },
-      upcomingDeadlines: 0,
-      totalTenders: 0,
-      statusCounts: { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 },
-      overdueCount: 0,
-    };
-  if (!clientStats)
-    clientStats = {
-      clientsWithContact: 0,
-      totalClients: 0,
-    };
-  if (!projectStats)
-    projectStats = {
-      totalProjects: 0,
-      growth: 0,
-      deliveryStats: { totalPOs: 0, pendingDeliveries: 0, partialDeliveries: 0, fullyDelivered: 0 },
-      financialStats: { totalAwardValue: 0, totalPOValue: 0, totalDeliveredValue: 0, remainingValue: 0 },
-    };
+  const currentMonthName = new Intl.DateTimeFormat('en-ZA', { month: 'short' }).format(new Date());
+  const currentYear = new Date().getFullYear();
+
+  const cards = [
+    {
+      id: 'mtd',
+      title: 'Submitted This Month',
+      value: tenderStats.submittedThisMonth,
+      subtext: `${currentMonthName} 1st to today`,
+      href: '/tenders?submitted=this-month',
+      icon: CalendarDays,
+      iconColor: 'text-sky-400',
+      iconBg: 'bg-sky-500/10 border-sky-500/20',
+      cardBg: 'bg-card/75 hover:bg-card/95 hover:border-sky-500/40',
+      ctaText: 'View Month Submissions',
+      isUrgent: false,
+    },
+    {
+      id: 'ytd',
+      title: 'Submitted This Year',
+      value: tenderStats.submittedThisYear,
+      subtext: `${currentYear} cumulative YTD`,
+      href: '/tenders?submitted=this-year',
+      icon: CalendarRange,
+      iconColor: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/10 border-emerald-500/20',
+      cardBg: 'bg-card/75 hover:bg-card/95 hover:border-emerald-500/40',
+      ctaText: 'View 2026 Submissions',
+      isUrgent: false,
+    },
+    {
+      id: 'validity-expired',
+      title: 'Expired Validity (No Follow-up)',
+      value: tenderStats.expiredValidityUncontactedCount,
+      subtext: 'Lapsed period with no communication',
+      href: '/tenders?filter=validity-expired-uncontacted',
+      icon: Hourglass,
+      iconColor: tenderStats.expiredValidityUncontactedCount > 0 ? 'text-amber-400' : 'text-muted-foreground',
+      iconBg: tenderStats.expiredValidityUncontactedCount > 0 ? 'bg-amber-500/15 border-amber-500/30' : 'bg-muted/20 border-border/50',
+      cardBg:
+        tenderStats.expiredValidityUncontactedCount > 0
+          ? 'bg-amber-950/15 border-amber-500/40 hover:bg-amber-950/25 hover:border-amber-400 shadow-md shadow-amber-950/20'
+          : 'bg-card/75 hover:bg-card/95 hover:border-border/80',
+      ctaText: tenderStats.expiredValidityUncontactedCount > 0 ? 'Take Action Now' : 'All Validities Followed Up',
+      isUrgent: tenderStats.expiredValidityUncontactedCount > 0,
+    },
+    {
+      id: 'evaluation',
+      title: 'Under Evaluation',
+      value: tenderStats.underEvaluationCount,
+      subtext: 'Awaiting client / SCM outcome',
+      href: '/tenders?status=evaluation',
+      icon: FileCheck2,
+      iconColor: 'text-primary',
+      iconBg: 'bg-primary/10 border-primary/20',
+      cardBg: 'bg-card/75 hover:bg-card/95 hover:border-primary/40',
+      ctaText: 'View Active Pipeline',
+      isUrgent: false,
+    },
+  ];
 
   return (
-    <>
-      {/* Primary KPI Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Total Pipeline Value"
-          value={formatCurrency(tenderStats.totalValue)}
-          description="Combined value of all tenders"
-          icon={<Banknote className="h-4 w-4" />}
-          variant="primary"
-          trend={{
-            value: tenderStats.trends?.value || 0,
-            isPositive: (tenderStats.trends?.value || 0) >= 0,
-          }}
-        />
-        <MetricCard
-          title="Win Rate"
-          value={formatPercentage(tenderStats.winRate)}
-          description="Percentage of won tenders"
-          icon={<Target className="h-4 w-4" />}
-          variant="success"
-          trend={{
-            value: tenderStats.trends?.winRate || 0,
-            isPositive: (tenderStats.trends?.winRate || 0) >= 0,
-          }}
-        />
-        <MetricCard
-          title="Active Projects"
-          value={formatNumber(projectStats.totalProjects)}
-          description="Currently active projects"
-          icon={<TrendingUp className="h-4 w-4" />}
-          variant="info"
-          trend={{
-            value: projectStats.growth,
-            isPositive: projectStats.growth >= 0,
-          }}
-        />
-        <MetricCard
-          title="Upcoming Deadlines"
-          value={formatNumber(tenderStats.upcomingDeadlines)}
-          description="Due in next 30 days"
-          icon={<Calendar className="h-4 w-4" />}
-          variant="warning"
-        />
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {cards.map((card) => {
+        const Icon = card.icon;
+        return (
+          <Link
+            key={card.id}
+            href={card.href}
+            className={`group relative rounded-3xl border p-5 sm:p-6 backdrop-blur-xl transition-all duration-200 flex flex-col justify-between space-y-4 cursor-pointer shadow-xs hover:scale-[1.01] hover:shadow-lg ${card.cardBg}`}
+          >
+            {card.isUrgent && (
+              <div className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full bg-amber-500 text-amber-950 text-[10px] font-extrabold tracking-wider uppercase shadow-xs flex items-center gap-1 animate-pulse">
+                <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                <span>Action Required</span>
+              </div>
+            )}
 
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Total Tenders"
-          value={formatNumber(tenderStats.totalTenders)}
-          description={`${tenderStats.statusCounts.open} open, ${tenderStats.statusCounts.evaluation} in evaluation`}
-          variant="default"
-        />
-        <MetricCard
-          title="Client Engagement"
-          value={`${clientStats.clientsWithContact}/${clientStats.totalClients}`}
-          description="Clients with complete contact info"
-          variant="info"
-        />
-        <MetricCard
-          title="Purchase Orders"
-          value={formatNumber(projectStats.deliveryStats.pendingDeliveries + projectStats.deliveryStats.partialDeliveries)}
-          description={`Total: ${formatCurrency(projectStats.financialStats.totalPOValue)}`}
-          variant="primary"
-        />
-        <MetricCard
-          title="Under Evaluation"
-          value={formatNumber(tenderStats.statusCounts.evaluation)}
-          description="Tenders currently under evaluation"
-          variant="warning"
-        />
-      </div>
-    </>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {card.title}
+                </span>
+                <div className={`p-2 rounded-xl border ${card.iconBg} ${card.iconColor} transition-transform group-hover:scale-110`}>
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-3xl sm:text-4xl font-extrabold text-foreground font-mono tracking-tight tabular-nums">
+                  {formatNumber(card.value)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {card.subtext}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-border/40 flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+              <span className={card.isUrgent ? 'text-amber-400 font-bold' : ''}>
+                {card.ctaText}
+              </span>
+              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </div>
+          </Link>
+        );
+      })}
+    </div>
   );
 }

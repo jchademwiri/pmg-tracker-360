@@ -17,6 +17,8 @@ type SearchParams = {
   sortBy?: string;
   sortOrder?: string;
   page?: string;
+  submitted?: string;
+  filter?: string;
 };
 
 const validSortBy = ['tenderNumber', 'createdAt', 'submissionDate', 'status'] as const;
@@ -24,6 +26,8 @@ const validSortOrder = ['asc', 'desc'] as const;
 
 function parseTenderFilters(searchParams: SearchParams) {
   const status = searchParams.status || 'all';
+  const submitted = searchParams.submitted;
+  const filter = searchParams.filter;
   const sortBy = validSortBy.includes(searchParams.sortBy as any)
     ? (searchParams.sortBy as (typeof validSortBy)[number])
     : status === 'open' || status === 'all'
@@ -43,13 +47,34 @@ function parseTenderFilters(searchParams: SearchParams) {
       clientId: searchParams.clientId || 'all',
       sortBy,
       sortOrder,
+      submitted,
+      filter,
     },
     page,
   };
 }
 
-function getRegisterCopy(status: string) {
-  switch (status) {
+function getRegisterCopy(filters: { status: string; submitted?: string; filter?: string }) {
+  if (filters.filter === 'validity-expired-uncontacted' || filters.status === 'validity_expired_uncontacted') {
+    return {
+      title: 'Expired Validity (No Follow-up)',
+      description: 'Tenders whose validity period has expired without any recorded follow-up inquiries or extensions.',
+    };
+  }
+  if (filters.submitted === 'this-month' || filters.submitted === 'month') {
+    return {
+      title: 'Tenders Submitted This Month (MTD)',
+      description: 'Tenders submitted from the 1st of the current month up to today.',
+    };
+  }
+  if (filters.submitted === 'this-year' || filters.submitted === 'year') {
+    return {
+      title: 'Tenders Submitted This Year (YTD)',
+      description: 'All tenders submitted in the current calendar year to date.',
+    };
+  }
+
+  switch (filters.status) {
     case 'closing_soon':
       return {
         title: 'Closing Soon',
@@ -105,7 +130,7 @@ export default async function TendersRegisterPage({
 }) {
   const { session } = await getCurrentUser();
   const { filters, page } = parseTenderFilters(await searchParams);
-  const registerCopy = getRegisterCopy(filters.status);
+  const registerCopy = getRegisterCopy(filters);
 
   if (!session.activeOrganizationId) {
     return <NoOrganizationState />;

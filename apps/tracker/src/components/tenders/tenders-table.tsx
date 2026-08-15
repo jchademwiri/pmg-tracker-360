@@ -9,43 +9,50 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   MobileCard,
   MobileCardHeader,
   MobileCardBody,
-  MobileCardField,
-  MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
 import {
-  MoreHorizontalIcon,
   Building2,
   Calendar,
+  Phone,
+  Mail,
+  Copy,
+  Check,
+  AlertTriangle,
+  Clock,
+  Hourglass,
 } from 'lucide-react';
 import Link from 'next/link';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { formatDate } from '@/lib/format';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
-interface Tender {
+export interface Tender {
   id: string;
   tenderNumber: string;
   description: string | null;
   submissionDate: Date | null;
   value: string | null;
   status: string;
+  evaluationDate?: Date | null;
+  validityDays?: number | null;
+  validityDate?: Date | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
   createdAt: Date;
   updatedAt: Date;
   client: {
     id: string;
     name: string;
+    contactName?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
   } | null;
 }
 
@@ -62,49 +69,207 @@ interface TendersTableProps {
   className?: string;
 }
 
+function resolveValidityExpiry(tender: Tender): {
+  expiryDate: Date | null;
+  isExpired: boolean;
+  daysDiff: number | null;
+} {
+  let expiryDate: Date | null = null;
+
+  if (tender.validityDate) {
+    expiryDate = new Date(tender.validityDate);
+  } else if (tender.submissionDate && tender.validityDays) {
+    const d = new Date(tender.submissionDate);
+    d.setDate(d.getDate() + tender.validityDays);
+    expiryDate = d;
+  } else if (tender.evaluationDate) {
+    expiryDate = new Date(tender.evaluationDate);
+  }
+
+  if (!expiryDate) {
+    return { expiryDate: null, isExpired: false, daysDiff: null };
+  }
+
+  const now = new Date();
+  const diffTime = expiryDate.getTime() - now.getTime();
+  const daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const isExpired = daysDiff < 0 && tender.status !== 'awarded' && tender.status !== 'lost';
+
+  return { expiryDate, isExpired, daysDiff };
+}
+
 function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   if (!submissionDate) return null;
   const now = new Date();
-  const diffTime = submissionDate.getTime() - now.getTime();
+  const diffTime = new Date(submissionDate).getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
 }
 
-function DeadlineCell({ submissionDate, status, updatedAt }: { submissionDate: Date | null; status: string; updatedAt: Date }) {
-  if (status === 'evaluation') {
+function ContactDetailsCell({ tender }: { tender: Tender }) {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const contactName = tender.contactName || tender.client?.contactName;
+  const contactEmail = tender.contactEmail || tender.client?.contactEmail;
+  const contactPhone = tender.contactPhone || tender.client?.contactPhone;
+
+  const handleCopy = (e: React.MouseEvent, text: string, type: string) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopiedField(type);
+    toast.success(`Copied ${type}: ${text}`);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  if (!contactPhone && !contactEmail && !contactName) {
     return (
-      <div className="flex flex-col text-xs gap-0.5">
-        <div className="font-semibold text-foreground flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          {submissionDate ? formatDate(submissionDate) : '—'}
-        </div>
-        <div className="text-muted-foreground text-[11px] pl-5">Submitted {formatDate(updatedAt)}</div>
+      <div className="text-xs text-muted-foreground/60 italic">
+        No contact logged
       </div>
     );
   }
-  if (!submissionDate) return <span className="text-muted-foreground text-xs">-</span>;
-  const daysLeft = getDaysUntilDeadline(submissionDate);
-
-  let badge = null;
-  if (daysLeft !== null) {
-    if (daysLeft < 0) {
-      badge = <span className="text-red-500 dark:text-red-400 font-semibold">{Math.abs(daysLeft)}d overdue</span>;
-    } else if (daysLeft === 0) {
-      badge = <span className="text-amber-500 font-semibold">Due today</span>;
-    } else {
-      badge = <span className={daysLeft <= 3 ? 'text-amber-500 font-semibold' : 'text-muted-foreground'}>{daysLeft}d left</span>;
-    }
-  }
 
   return (
-    <div className="flex flex-col text-xs gap-0.5">
-      <div className="font-semibold text-foreground flex items-center gap-1.5">
-        <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        {formatDate(submissionDate)}
+    <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
+      {contactName && (
+        <div className="font-semibold text-foreground truncate flex items-center gap-1.5">
+          <span className="truncate">{contactName}</span>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {contactPhone && (
+          <div className="inline-flex items-center gap-1">
+            <a
+              href={`tel:${contactPhone}`}
+              className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-emerald-400 font-medium transition-colors"
+              title={`Call ${contactPhone}`}
+            >
+              <Phone className="h-3 w-3 text-emerald-400" aria-hidden="true" />
+              <span>{contactPhone}</span>
+            </a>
+            <button
+              type="button"
+              onClick={(e) => handleCopy(e, contactPhone, 'phone')}
+              className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
+              title="Copy Phone Number"
+            >
+              {copiedField === 'phone' ? (
+                <Check className="h-2.5 w-2.5 text-emerald-400" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+            </button>
+          </div>
+        )}
+
+        {contactEmail && (
+          <div className="inline-flex items-center gap-1">
+            <a
+              href={`mailto:${contactEmail}?subject=Follow-up%20re%20Tender%20${encodeURIComponent(tender.tenderNumber)}`}
+              className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-sky-400 font-medium transition-colors truncate max-w-[170px]"
+              title={`Email ${contactEmail}`}
+            >
+              <Mail className="h-3 w-3 text-sky-400" aria-hidden="true" />
+              <span className="truncate">{contactEmail}</span>
+            </a>
+            <button
+              type="button"
+              onClick={(e) => handleCopy(e, contactEmail, 'email')}
+              className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
+              title="Copy Email Address"
+            >
+              {copiedField === 'email' ? (
+                <Check className="h-2.5 w-2.5 text-sky-400" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
-      {badge && <div className="text-[11px] pl-5">{badge}</div>}
     </div>
   );
+}
+
+function ValidityDeadlineCell({ tender }: { tender: Tender }) {
+  const { expiryDate, isExpired, daysDiff } = resolveValidityExpiry(tender);
+  const daysLeftToSubmit = getDaysUntilDeadline(tender.submissionDate);
+
+  // If Validity is EXPIRED (High Urgency)
+  if (isExpired && expiryDate) {
+    const daysAgo = Math.abs(daysDiff ?? 0);
+    return (
+      <div className="flex flex-col gap-1 text-left">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-500/20 border border-rose-500/50 text-rose-300 shadow-sm animate-pulse w-fit">
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-400 shrink-0" aria-hidden="true" />
+          <span>Expired {daysAgo} {daysAgo === 1 ? 'day' : 'days'} ago</span>
+        </div>
+        <div className="text-[11px] text-muted-foreground pl-1">
+          Lapsed: <strong className="text-foreground">{formatDate(expiryDate)}</strong>
+        </div>
+      </div>
+    );
+  }
+
+  // If Validity is Expiring Soon (Within 14 Days)
+  if (expiryDate && daysDiff !== null && daysDiff >= 0 && daysDiff <= 14) {
+    return (
+      <div className="flex flex-col gap-1 text-left">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 border border-amber-500/50 text-amber-300 shadow-sm w-fit">
+          <Hourglass className="h-3.5 w-3.5 text-amber-400 shrink-0" aria-hidden="true" />
+          <span>Expires in {daysDiff} {daysDiff === 1 ? 'day' : 'days'}</span>
+        </div>
+        <div className="text-[11px] text-muted-foreground pl-1">
+          Valid to: <strong className="text-foreground">{formatDate(expiryDate)}</strong>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard Validity & Closing Info
+  if (expiryDate) {
+    return (
+      <div className="flex flex-col gap-0.5 text-xs text-left">
+        <div className="font-semibold text-foreground flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span>Valid until {formatDate(expiryDate)}</span>
+        </div>
+        {tender.submissionDate && (
+          <div className="text-muted-foreground text-[11px] pl-5">
+            Submitted: {formatDate(tender.submissionDate)}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Open Tender closing countdown
+  if (tender.submissionDate) {
+    return (
+      <div className="flex flex-col gap-0.5 text-xs text-left">
+        <div className="font-semibold text-foreground flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span>{formatDate(tender.submissionDate)}</span>
+        </div>
+        {daysLeftToSubmit !== null && (
+          <div className="text-[11px] pl-5">
+            {daysLeftToSubmit < 0 ? (
+              <span className="text-rose-400 font-bold">{Math.abs(daysLeftToSubmit)}d overdue</span>
+            ) : daysLeftToSubmit === 0 ? (
+              <span className="text-amber-400 font-bold">Closing Today (11:00 AM)</span>
+            ) : (
+              <span className={daysLeftToSubmit <= 3 ? 'text-amber-400 font-bold' : 'text-muted-foreground'}>
+                {daysLeftToSubmit} days left
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return <span className="text-muted-foreground text-xs">—</span>;
 }
 
 export function TendersTable({
@@ -113,9 +278,6 @@ export function TendersTable({
   currentPage,
   totalPages,
   onPageChange,
-  onViewTender,
-  onEditTender,
-  onDeleteTender,
   onRowClick,
   className = '',
 }: TendersTableProps) {
@@ -132,68 +294,55 @@ export function TendersTable({
         type: 'empty',
         icon: 'file',
         title: 'No tenders found',
-        description: 'Get started by creating your first tender.',
+        description: 'No tender records match this filter.',
         actionLabel: 'Add Tender',
         actionHref: '/tenders/create',
       }}
       className={className}
       mobileContent={
         <MobileCardList>
-        {tenders.map((tender) => {
-          const daysLeft = getDaysUntilDeadline(tender.submissionDate);
-          const actions = [
-            ...(onViewTender ? [{ label: 'View' as const, onClick: () => onViewTender(tender.id) }] : []),
-            ...(onEditTender ? [{ label: 'Edit' as const, onClick: () => onEditTender(tender.id) }] : []),
-            ...(onDeleteTender ? [{ label: 'Delete' as const, onClick: () => onDeleteTender(tender.id), variant: 'destructive' as const }] : []),
-          ];
-
-          const daysLeftContent = tender.status === 'evaluation'
-            ? `Closing ${tender.submissionDate ? formatDate(tender.submissionDate) : '—'} · Submitted ${formatDate(tender.updatedAt)}`
-            : daysLeft === null
-              ? '-'
-              : daysLeft < 0
-                ? `${Math.abs(daysLeft)} days overdue`
-                : daysLeft === 0
-                  ? 'Due today'
-                  : `${daysLeft} days left`;
-
-          return (
+          {tenders.map((tender) => (
             <MobileCard key={tender.id} onClick={() => onRowClick?.(tender.id)}>
               <MobileCardHeader
                 identifier={tender.tenderNumber.toUpperCase()}
                 status={tender.status}
-                actions={actions}
               />
               <MobileCardBody>
                 <h3 className="font-semibold text-foreground text-sm">
                   {tender.client?.name || 'Unknown Client'}
                 </h3>
-                {tender.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{tender.description}</p>
-                )}
-                <MobileCardGrid>
-                  <MobileCardField label="Value">{formatCurrency(Number(tender.value || 0))}</MobileCardField>
-                  <MobileCardField label="Closing Date">{formatDate(tender.submissionDate)}</MobileCardField>
-                  <MobileCardField label="Time Left" className="col-span-2">
-                    {daysLeftContent}
-                  </MobileCardField>
-                </MobileCardGrid>
+
+                {/* Mobile Contact Quick Row */}
+                <div className="pt-1">
+                  <ContactDetailsCell tender={tender} />
+                </div>
+
+                {/* Validity Status */}
+                <div className="pt-2">
+                  <ValidityDeadlineCell tender={tender} />
+                </div>
               </MobileCardBody>
             </MobileCard>
-          );
-        })}
+          ))}
         </MobileCardList>
       }
     >
-      {/* Desktop table with explicit table-fixed column widths */}
+      {/* Desktop table with 4 clean, focused columns */}
       <Table className="w-full table-fixed">
-        <TableHeader className="bg-primary">
+        <TableHeader className="bg-primary/95 text-primary-foreground">
           <TableRow className="hover:bg-transparent border-b border-primary">
-            <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
-            <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Status</TableHead>
-            <TableHead className="w-[17%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Value</TableHead>
-            <TableHead className="w-[18%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Deadline</TableHead>
-            <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-primary-foreground">Actions</TableHead>
+            <TableHead className="w-[32%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
+              Tender & Client
+            </TableHead>
+            <TableHead className="w-[36%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
+              Contact Details (Phone / Email)
+            </TableHead>
+            <TableHead className="w-[14%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
+              Status
+            </TableHead>
+            <TableHead className="w-[18%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
+              Validity & Deadlines
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -205,9 +354,10 @@ export function TendersTable({
               }`}
               onClick={() => onRowClick?.(tender.id)}
             >
-              <TableCell className="py-3">
+              {/* 1. Tender & Client */}
+              <TableCell className="py-3.5">
                 <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                  <div className="size-9 rounded-xl bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
                     <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
@@ -216,7 +366,7 @@ export function TendersTable({
                     </div>
                     <Link
                       href={`/tenders/${tender.id}`}
-                      className="text-xs font-mono text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 hover:underline transition-colors truncate w-fit"
+                      className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors truncate w-fit"
                       onClick={(event) => event.stopPropagation()}
                     >
                       {tender.tenderNumber.toUpperCase()}
@@ -224,42 +374,20 @@ export function TendersTable({
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="py-3">
+
+              {/* 2. Contact Details (Phone / Email) */}
+              <TableCell className="py-3.5">
+                <ContactDetailsCell tender={tender} />
+              </TableCell>
+
+              {/* 3. Status */}
+              <TableCell className="py-3.5">
                 <StatusBadge domain="tender" status={tender.status} />
               </TableCell>
-              <TableCell className="py-3">
-                <span className="font-mono font-semibold text-sm text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(Number(tender.value || 0))}
-                </span>
-              </TableCell>
-              <TableCell className="py-3">
-                <DeadlineCell submissionDate={tender.submissionDate} status={tender.status} updatedAt={tender.updatedAt} />
-              </TableCell>
-              <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8 cursor-pointer hover:bg-accent">
-                      <MoreHorizontalIcon className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onViewTender && (
-                      <DropdownMenuItem onClick={() => onViewTender(tender.id)}>View Details</DropdownMenuItem>
-                    )}
-                    {onEditTender && (
-                      <DropdownMenuItem onClick={() => onEditTender(tender.id)}>Edit Tender</DropdownMenuItem>
-                    )}
-                    {onDeleteTender && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onDeleteTender(tender.id)} variant="destructive">
-                          Delete Tender
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+
+              {/* 4. Validity & Deadlines (High-Visibility POP Badge) */}
+              <TableCell className="py-3.5">
+                <ValidityDeadlineCell tender={tender} />
               </TableCell>
             </TableRow>
           ))}
