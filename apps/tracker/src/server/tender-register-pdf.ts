@@ -147,8 +147,8 @@ function drawTable(doc: jsPDF, rows: TenderPdfRow[], startY: number, includeClie
 
   const drawRow = (row: TenderPdfRow, index: number) => {
     const values = includeClient
-      ? [text(row.tenderNumber) || '—', text(row.clientName) || '—', text(row.description) || '—', status(row.status), date(row.submissionDate), date(row.validityDate), timing(row.submissionDate)]
-      : [text(row.tenderNumber) || '—', text(row.description) || '—', date(row.submissionDate), contact(row), timing(row.submissionDate), date(row.validityDate)];
+      ? [text(row.tenderNumber).toUpperCase() || '—', text(row.clientName) || '—', text(row.description) || '—', status(row.status), date(row.submissionDate), date(row.validityDate), timing(row.submissionDate)]
+      : [text(row.tenderNumber).toUpperCase() || '—', text(row.description) || '—', date(row.submissionDate), contact(row), timing(row.submissionDate), date(row.validityDate)];
     const wrapped = values.map((value, i) => {
       doc.setFont('helvetica', i === 0 ? 'bold' : 'normal');
       doc.setFontSize(6.5);

@@ -192,9 +192,11 @@ function buildTenderRegister(workbook: ExcelJS.Workbook, rows: TenderExportRow[]
 
   const tableRows = rows.map((row) => {
     const contact = [row.tenderContactName, row.clientEmail, row.clientPhone].filter(Boolean).map(cleanText).join(' ');
-    return [cleanText(row.tenderNumber), cleanText(row.clientName), cleanText(row.description), statusLabel(row.status), row.priority, dateValue(row.submissionDate), dateValue(row.briefingDate), row.value == null ? null : Number(row.value), row.awardValue == null ? null : Number(row.awardValue), contact, { formula: 'IF([@[Submission Date]]="","Not Yet Due",IF([@[Submission Date]]<=TODAY(),"Submitted","Not Yet Due"))' }, { formula: 'IF([@[Contact Details]]="","Missing contact; ","")&IF([@[Estimated Value]]="","Missing estimate; ","")&IF(AND(ISNUMBER([@[Estimated Value]]),[@[Estimated Value]]<=1),"Questionable estimate","")' }];
+    return [cleanText(row.tenderNumber).toUpperCase(), cleanText(row.clientName), cleanText(row.description), statusLabel(row.status), row.priority, dateValue(row.submissionDate), dateValue(row.briefingDate), row.value == null ? null : Number(row.value), row.awardValue == null ? null : Number(row.awardValue), contact, { formula: 'IF([@[Submission Date]]="","Not Yet Due",IF([@[Submission Date]]<=TODAY(),"Submitted","Not Yet Due"))' }, { formula: 'IF([@[Contact Details]]="","Missing contact; ","")&IF([@[Estimated Value]]="","Missing estimate; ","")&IF(AND(ISNUMBER([@[Estimated Value]]),[@[Estimated Value]]<=1),"Questionable estimate","")' }];
   });
   sheet.addTable({ name: 'TenderRegister', ref: `A${headerRow}:L${Math.max(headerRow + rows.length, headerRow + 1)}`, headerRow: true, style: { theme: 'TableStyleMedium2', showRowStripes: true }, columns: headers.map((name) => ({ name })), rows: tableRows });
+  // Re-apply the blue header background so every header cell matches the Tender Number cell
+  styleHeader(sheet.getRow(headerRow));
 
   [22, 30, 58, 18, 13, 18, 18, 18, 18, 42, 18, 34].forEach((width, i) => (sheet.getColumn(i + 1).width = width));
   for (let r = headerRow + 1; r <= headerRow + rows.length; r++) {
@@ -337,9 +339,11 @@ function buildClientReport(workbook: ExcelJS.Workbook, clientName: string, rows:
   const tableRows = rows.map((row, index) => {
     const r = 9 + index;
     const contact = [row.tenderContactName, row.clientEmail, row.clientPhone].filter(Boolean).map(cleanText).join(' | ') || 'Not provided';
-    return [cleanText(row.tenderNumber), cleanText(row.description), dateValue(row.submissionDate), contact, { formula: `IF(C${r}="","Not Yet Due",IF(C${r}<=TODAY(),"Submitted","Not Yet Due"))` }, row.value == null ? null : Number(row.value)];
+    return [cleanText(row.tenderNumber).toUpperCase(), cleanText(row.description), dateValue(row.submissionDate), contact, { formula: `IF(C${r}="","Not Yet Due",IF(C${r}<=TODAY(),"Submitted","Not Yet Due"))` }, row.value == null ? null : Number(row.value)];
   });
   sheet.addTable({ name: 'ClientTenderReport', ref: `A8:F${Math.max(8 + rows.length, 9)}`, headerRow: true, style: { theme: 'TableStyleMedium2', showRowStripes: true }, columns: ['Tender Number', 'Description', 'Closing / Submission Date', 'Contact Details', 'Submission Timing', 'Estimated Value'].map((name) => ({ name })), rows: tableRows });
+  // Re-apply the blue header background so every header cell matches the Tender Number cell
+  styleHeader(sheet.getRow(8));
   for (let r = 9; r <= 8 + rows.length; r++) {
     sheet.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'top' };
     sheet.getCell(`D${r}`).alignment = { wrapText: true, vertical: 'top' };
