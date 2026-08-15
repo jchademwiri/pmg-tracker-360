@@ -55,7 +55,7 @@ export function TendersOverviewClient({
   initialFilters,
   clients,
   organizationId,
-  basePath = '/tenders/overview',
+  basePath = '/tenders',
 }: TendersOverviewClientProps) {
   const router = useRouter();
   const [tenders, setTenders] = useState(initialTenders);

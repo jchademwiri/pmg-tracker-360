@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useMemo } from 'react';
 
 import {
   Sidebar,
@@ -12,14 +13,11 @@ import {
 import type { OrganizationWithStats } from '@/server/organizations';
 import type { User } from '@pmg/db/schema';
 import { dashboadLinks } from '@/data/dashboad-links';
-import { useMemo } from 'react';
 
 import { NavUser } from './nav-user';
 import { TeamSwitcher } from './team-switcher';
 import { NavMain } from './nav-main';
 import { WorkflowShortcuts } from './workflow-shortcuts';
-
-// This is sample data.
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   organizations: OrganizationWithStats[];
@@ -35,36 +33,23 @@ export function AppSidebar({
   activeOrganizationId,
   ...props
 }: AppSidebarProps) {
-  // Filter and process main hub links
-  const mainHubItems = useMemo(() => {
-    return dashboadLinks.mainHub;
+  // Filter operations links based on role permissions
+  const operationsItems = useMemo(() => {
+    return dashboadLinks.operations.filter((item) => {
+      if (item.minRole === 'manager' && userRole === 'member') {
+        return false;
+      }
+      return true;
+    });
+  }, [userRole]);
+
+  const insightsItems = useMemo(() => {
+    return dashboadLinks.insights;
   }, []);
 
   const settingsItems = useMemo(() => {
     return dashboadLinks.settings;
   }, []);
-
-  // Filter and process procurement workflow links based on role permissions
-  const procurementItems = useMemo(() => {
-    return dashboadLinks.procurement.map((item) => {
-      // If item has sub-items, filter them
-      if (item.items) {
-        const filteredSubItems = item.items.filter((subItem) => {
-          // HIDE Purchase Orders for 'member' role
-          if (subItem.title === 'Purchase Orders' && userRole === 'member') {
-            return false;
-          }
-          return true;
-        });
-
-        return {
-          ...item,
-          items: filteredSubItems,
-        };
-      }
-      return item;
-    });
-  }, [userRole]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -75,10 +60,10 @@ export function AppSidebar({
         />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={mainHubItems} label="Overview" />
-        <NavMain items={procurementItems} label="Operations" />
+        <NavMain items={operationsItems} label="Operations" />
         <WorkflowShortcuts organizationId={activeOrganizationId} />
-        <NavMain items={settingsItems} label="Settings" />
+        <NavMain items={insightsItems} label="Planning & Insights" />
+        <NavMain items={settingsItems} label="Management" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
@@ -87,3 +72,4 @@ export function AppSidebar({
     </Sidebar>
   );
 }
+

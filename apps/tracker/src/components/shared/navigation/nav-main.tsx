@@ -29,20 +29,28 @@ type NavItem = {
   title: string;
   url: string;
   icon?: LucideIcon;
+  minRole?: string;
   items?: {
     title: string;
     url: string;
   }[];
 };
 
-export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label?: string }) {
+export function NavMain({
+  items,
+  label = 'Platform',
+}: {
+  items: NavItem[];
+  label?: string;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
   useEffect(() => {
     const hasSupport = items.some(
-      (item) => item.url === '/support' || item.items?.some((s) => s.url === '/support')
+      (item) =>
+        item.url === '/support' || item.items?.some((s) => s.url === '/support')
     );
     if (!hasSupport) return;
 
@@ -72,30 +80,28 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
   const isNavUrlActive = (url: string) =>
     isNavActive(pathname, searchParams, url);
 
-  const isPathMatching = (url: string) =>
-    isPathInSection(pathname, url);
+  const isPathMatching = (url: string) => isPathInSection(pathname, url);
 
-  // Initialize collapsible state from pathname — consistent on server and client
-  // to prevent the flash of collapsed-then-expanded on navigation.
-  // Accordion: at most one group open at a time.
+  // Initialize collapsible state only for items that actually have sub-items
+  const hasCollapsibleItems = items.some(
+    (item) => item.items && item.items.length > 0
+  );
+
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(() => {
+    if (!hasCollapsibleItems) return {};
     const initialState: Record<string, boolean> = {};
-    let found = false;
     items.forEach((item) => {
       if (item.items && item.items.length > 0) {
-        if (!found && item.items.some((sub) => isPathMatching(sub.url))) {
-          initialState[item.title] = true;
-          found = true;
-        } else {
-          initialState[item.title] = false;
-        }
+        initialState[item.title] = item.items.some((sub) =>
+          isPathMatching(sub.url)
+        );
       }
     });
     return initialState;
   });
 
-  // Accordion: on pathname change, open the matching group and close all others.
   useEffect(() => {
+    if (!hasCollapsibleItems) return;
     setOpenItems((prev) => {
       const next: Record<string, boolean> = {};
       let changed = false;
@@ -108,71 +114,84 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
       });
       return changed ? next : prev;
     });
-  }, [pathname, items]);
+  }, [pathname, items, hasCollapsibleItems]);
 
-  // Accordion toggle: clicking a group closes all others and opens the clicked one.
   const toggleItem = (itemTitle: string) => {
-    setOpenItems((prev) => {
-      const wasOpen = prev[itemTitle] ?? false;
-      const next: Record<string, boolean> = {};
-      items.forEach((item) => {
-        if (item.items && item.items.length > 0) {
-          next[item.title] = false;
-        }
-      });
-      if (!wasOpen) next[itemTitle] = true;
-      return next;
-    });
+    setOpenItems((prev) => ({
+      ...prev,
+      [itemTitle]: !prev[itemTitle],
+    }));
   };
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupLabel className="text-xs font-semibold tracking-wider text-muted-foreground/80 uppercase">
+        {label}
+      </SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            open={openItems[item.title] ?? false}
-            onOpenChange={() => toggleItem(item.title)}
-            asChild
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
+        {items.map((item) => {
+          const hasSubItems = item.items && item.items.length > 0;
+          const active = isNavUrlActive(item.url);
+
+          if (!hasSubItems) {
+            return (
+              <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   tooltip={item.title}
-                  isActive={isNavUrlActive(item.url)}
-                  asChild={!item.items || item.items.length === 0}
+                  isActive={active}
+                  asChild
+                  className="transition-colors duration-150"
                 >
-                  {!item.items || item.items.length === 0 ? (
-                    <Link href={item.url as Route}>
-                      {item.icon && <item.icon />}
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {item.title}
-                      </span>
-                    </Link>
-                  ) : (
-                    <>
-                      {item.icon && <item.icon />}
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {item.title}
-                      </span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
-                    </>
-                  )}
+                  <Link href={item.url as Route}>
+                    {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
+                    <span className="group-data-[collapsible=icon]:hidden font-medium text-sm">
+                      {item.title}
+                    </span>
+                  </Link>
                 </SidebarMenuButton>
-              </CollapsibleTrigger>
-              {item.url === '/support' && unreadSupportCount > 0 && (
-                <SidebarMenuBadge>
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
-                    {unreadSupportCount}
-                  </span>
-                </SidebarMenuBadge>
-              )}
-              {item.items && item.items.length > 0 && (
+                {item.url === '/support' && unreadSupportCount > 0 && (
+                  <SidebarMenuBadge>
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
+                      {unreadSupportCount}
+                    </span>
+                  </SidebarMenuBadge>
+                )}
+              </SidebarMenuItem>
+            );
+          }
+
+          return (
+            <Collapsible
+              key={item.title}
+              open={openItems[item.title] ?? false}
+              onOpenChange={() => toggleItem(item.title)}
+              asChild
+              className="group/collapsible"
+            >
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={active}
+                    className="transition-colors duration-150"
+                  >
+                    {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
+                    <span className="group-data-[collapsible=icon]:hidden font-medium text-sm">
+                      {item.title}
+                    </span>
+                    <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                {item.url === '/support' && unreadSupportCount > 0 && (
+                  <SidebarMenuBadge>
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
+                      {unreadSupportCount}
+                    </span>
+                  </SidebarMenuBadge>
+                )}
                 <CollapsibleContent>
                   <SidebarMenuSub>
-                    {item.items.map((subItem) => (
+                    {item.items!.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton
                           asChild
@@ -188,11 +207,12 @@ export function NavMain({ items, label = "Platform" }: { items: NavItem[]; label
                     ))}
                   </SidebarMenuSub>
                 </CollapsibleContent>
-              )}
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
+              </SidebarMenuItem>
+            </Collapsible>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );
 }
+

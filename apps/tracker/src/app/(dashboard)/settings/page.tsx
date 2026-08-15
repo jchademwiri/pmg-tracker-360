@@ -7,6 +7,8 @@ import {
   Settings,
   ChevronRight,
   Building2,
+  CreditCard,
+  LifeBuoy,
 } from 'lucide-react';
 
 import {
@@ -221,29 +223,56 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Notification Settings Card */}
+        {/* Billing & Subscription Card */}
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-                <Bell className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                <CreditCard className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
-              <CardTitle className="text-lg">Notifications</CardTitle>
+              <CardTitle className="text-lg">Billing & Plans</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <CardDescription>
-              Configure how and when you receive notifications about your
-              business activities.
+              Manage subscription plans, invoices, and organization payment methods.
             </CardDescription>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <div>• Email notification preferences</div>
-              <div>• Tender deadline alerts</div>
-              <div>• System notifications</div>
+              <div>• View current active plan</div>
+              <div>• Upgrade or change seats</div>
+              <div>• Payment history & invoices</div>
             </div>
-            <Link href="/settings/notifications">
-              <Button type="button" className="w-full">
-                Configure Notifications
+            <Link href="/billing">
+              <Button type="button" variant="outline" className="w-full">
+                Manage Billing
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Support & Help Card */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/20 rounded-lg">
+                <LifeBuoy className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <CardTitle className="text-lg">Support & Help Desk</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <CardDescription>
+              Need assistance? Submit tickets or review guidance from the support team.
+            </CardDescription>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div>• Submit a support ticket</div>
+              <div>• Track ticket resolutions</div>
+              <div>• Access user documentation</div>
+            </div>
+            <Link href="/support">
+              <Button type="button" variant="outline" className="w-full">
+                Get Support
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
