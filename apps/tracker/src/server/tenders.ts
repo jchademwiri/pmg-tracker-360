@@ -1684,17 +1684,38 @@ export async function getTendersOverview(
         : sortOrder === 'desc'
           ? desc(sortColumn)
           : sortColumn;
+
+    const isExpiredValidityView =
+      filters.filter === 'validity-expired-uncontacted' ||
+      filters.status === 'validity_expired_uncontacted';
+
     const isRegisterDefaultSort =
       (!filters.status || filters.status === 'all') &&
+      !filters.filter &&
       sortBy === 'submissionDate' &&
       sortOrder === 'asc';
-    const orderByExpressions = isRegisterDefaultSort
-      ? [
-          sql`case when ${tender.status} = 'open' then 0 else 1 end`,
-          sql`${tender.submissionDate} asc nulls last`,
-          desc(tender.createdAt),
-        ]
-      : [orderByExpression];
+
+    let orderByExpressions;
+    if (
+      isExpiredValidityView &&
+      (!filters.sortBy ||
+        filters.sortBy === 'submissionDate' ||
+        filters.sortBy === 'createdAt')
+    ) {
+      // Most overdue first (earliest lapsed validity date to most recent)
+      orderByExpressions = [
+        sql`coalesce(${tender.validityDate}, ${tender.evaluationDate}, ${tender.submissionDate}) asc nulls last`,
+        desc(tender.createdAt),
+      ];
+    } else if (isRegisterDefaultSort) {
+      orderByExpressions = [
+        sql`case when ${tender.status} = 'open' then 0 else 1 end`,
+        sql`${tender.submissionDate} asc nulls last`,
+        desc(tender.createdAt),
+      ];
+    } else {
+      orderByExpressions = [orderByExpression];
+    }
 
     const tenders = await db
       .select({
