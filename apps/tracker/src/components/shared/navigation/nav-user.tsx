@@ -1,14 +1,11 @@
 'use client';
 
 import {
-  BadgeCheck,
+  User as UserIcon,
   Bell,
   ChevronsUpDown,
   CreditCard,
   LogOut,
-  Sparkles,
-  Settings2,
-  Building2,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -52,10 +49,6 @@ export function NavUser({ user }: { user: User }) {
     router.push('/');
   };
 
-  const handleProfileClick = () => {
-    router.push('/settings/profile');
-  };
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -74,19 +67,21 @@ export function NavUser({ user }: { user: User }) {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {user.email}
+                </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
+              <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden text-muted-foreground" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg shadow-lg border border-border/80"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.image || ''} alt={user.name} />
                   <AvatarFallback className="rounded-lg">
@@ -94,54 +89,40 @@ export function NavUser({ user }: { user: User }) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/settings/notifications"
-                  className="cursor-pointer"
-                >
-                  <Bell />
-                  Notifications
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/settings/profile">
+                  <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                  My Profile & Security
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/billing">
+                  <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Billing & Subscription
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/settings/notifications">
+                  <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Notification Preferences
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                onClick={handleProfileClick}
-                className="cursor-pointer"
-              >
-                <BadgeCheck />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings" className="cursor-pointer">
-                  <Settings2 />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/organization" className="cursor-pointer">
-                  <Building2 />
-                  Organizations
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/billing" className="cursor-pointer">
-                  <CreditCard />
-                  Billing & Plans
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-              <LogOut />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -150,3 +131,4 @@ export function NavUser({ user }: { user: User }) {
     </SidebarMenu>
   );
 }
+
