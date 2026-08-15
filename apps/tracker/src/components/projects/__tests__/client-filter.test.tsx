@@ -154,10 +154,10 @@ describe('ProjectList - Client Filter', () => {
 
     await waitForDataToRender();
 
-    // Open the desktop client filter select (second combobox - status filter is the first)
+    // Open the desktop client filter select
     await waitFor(async () => {
       const triggers = screen.getAllByRole('combobox');
-      const clientFilterTrigger = triggers[1]; // second combobox = client filter
+      const clientFilterTrigger = triggers[0]; // client filter is the combobox
       await user.click(clientFilterTrigger);
     }, { timeout: 5000 });
 

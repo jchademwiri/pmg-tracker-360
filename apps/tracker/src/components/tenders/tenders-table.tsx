@@ -13,6 +13,8 @@ import {
   MobileCard,
   MobileCardHeader,
   MobileCardBody,
+  MobileCardField,
+  MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
 import {
@@ -29,11 +31,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-<<<<<<< Updated upstream
-import { formatDate } from '@/lib/format';
-=======
 import { formatDate, formatCurrency, formatClientName } from '@/lib/format';
->>>>>>> Stashed changes
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 export interface Tender {
@@ -117,11 +115,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
   const contactEmail = tender.contactEmail || tender.client?.contactEmail;
   const contactPhone = tender.contactPhone || tender.client?.contactPhone;
 
-<<<<<<< Updated upstream
-  const handleCopy = (e: React.MouseEvent, text: string, type: string) => {
-=======
   const handleCopyContact = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
->>>>>>> Stashed changes
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedField(type);
@@ -136,14 +130,6 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
       </div>
     );
   }
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(description);
-    setCopied(true);
-    toast.success('Description copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
@@ -204,6 +190,59 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function DescriptionCell({ description }: { description: string | null }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!description) {
+    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
+  }
+
+  const handleCopyDescription = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(description);
+    setCopied(true);
+    toast.success('Description copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group relative flex items-start gap-1.5 pr-2">
+      <p
+        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed capitalize break-words flex-1"
+        title={description}
+      >
+        {description}
+      </p>
+      <button
+        type="button"
+        onClick={handleCopyDescription}
+        className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 opacity-80 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 cursor-pointer"
+        title="Copy full description"
+        aria-label="Copy description"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-emerald-400" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </div>
+  );
+}
+
+function StatusValueCell({ tender }: { tender: Tender }) {
+  return (
+    <div className="flex flex-col gap-1 text-left">
+      <StatusBadge domain="tender" status={tender.status} />
+      {tender.value && Number(tender.value) > 0 ? (
+        <span className="font-mono font-bold text-xs text-emerald-400">
+          {formatCurrency(Number(tender.value))}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -288,46 +327,6 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
   return <span className="text-muted-foreground text-xs">—</span>;
 }
 
-function DescriptionCell({ description }: { description: string | null }) {
-  const [copied, setCopied] = useState(false);
-
-  if (!description) {
-    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
-  }
-
-  const handleCopyDescription = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(description);
-    setCopied(true);
-    toast.success('Description copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="group relative flex items-start gap-1.5 pr-2">
-      <p
-        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed capitalize break-words flex-1"
-        title={description}
-      >
-        {description}
-      </p>
-      <button
-        type="button"
-        onClick={handleCopyDescription}
-        className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 opacity-80 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 cursor-pointer"
-        title="Copy full description"
-        aria-label="Copy description"
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-emerald-400" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
-      </button>
-    </div>
-  );
-}
-
 export function TendersTable({
   tenders,
   totalCount,
@@ -367,30 +366,52 @@ export function TendersTable({
                   {formatClientName(tender.client?.name) || 'Unknown Client'}
                 </h3>
 
+                {tender.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                    {tender.description}
+                  </p>
+                )}
+
                 {/* Mobile Contact Quick Row */}
                 <div className="pt-1">
                   <ContactDetailsCell tender={tender} />
                 </div>
 
-                {/* Validity Status */}
-                <div className="pt-2">
-                  <ValidityDeadlineCell tender={tender} />
-                </div>
+                <MobileCardGrid>
+                  {tender.value && Number(tender.value) > 0 && (
+                    <MobileCardField label="Value">
+                      {formatCurrency(Number(tender.value))}
+                    </MobileCardField>
+                  )}
+                  <MobileCardField label="Validity Status" className="col-span-2">
+                    <ValidityDeadlineCell tender={tender} />
+                  </MobileCardField>
+                </MobileCardGrid>
               </MobileCardBody>
             </MobileCard>
           ))}
         </MobileCardList>
       }
     >
-      {/* Desktop table with 4 clean, focused columns */}
+      {/* Desktop table with 5 balanced columns */}
       <Table className="w-full table-fixed">
         <TableHeader className="bg-primary">
           <TableRow className="hover:bg-transparent border-b border-primary">
-            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
-            <TableHead className="w-[37%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Description</TableHead>
-            <TableHead className="w-[18%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Contact Details</TableHead>
-            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Status & Value</TableHead>
-            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Deadline & Validity</TableHead>
+            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+              Tender & Client
+            </TableHead>
+            <TableHead className="w-[37%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+              Description
+            </TableHead>
+            <TableHead className="w-[18%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+              Contact Details
+            </TableHead>
+            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+              Status & Value
+            </TableHead>
+            <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">
+              Deadline & Validity
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -402,19 +423,11 @@ export function TendersTable({
               }`}
               onClick={() => onRowClick?.(tender.id)}
             >
-<<<<<<< Updated upstream
               {/* 1. Tender & Client */}
-              <TableCell className="py-3.5">
-                <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-xl bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                    <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
-=======
-              {/* 1. Tender & Client (15% Width, Properly Cased Client) */}
               <TableCell className="py-3.5 whitespace-normal">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
->>>>>>> Stashed changes
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <div
@@ -434,17 +447,22 @@ export function TendersTable({
                 </div>
               </TableCell>
 
-              {/* 2. Contact Details (Phone / Email) */}
+              {/* 2. Description (with Copy button) */}
+              <TableCell className="py-3.5">
+                <DescriptionCell description={tender.description} />
+              </TableCell>
+
+              {/* 3. Contact Details (Phone / Email) */}
               <TableCell className="py-3.5">
                 <ContactDetailsCell tender={tender} />
               </TableCell>
 
-              {/* 3. Status */}
+              {/* 4. Status & Value */}
               <TableCell className="py-3.5">
-                <StatusBadge domain="tender" status={tender.status} />
+                <StatusValueCell tender={tender} />
               </TableCell>
 
-              {/* 4. Validity & Deadlines (High-Visibility POP Badge) */}
+              {/* 5. Deadline & Validity */}
               <TableCell className="py-3.5">
                 <ValidityDeadlineCell tender={tender} />
               </TableCell>
