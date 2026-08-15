@@ -329,20 +329,13 @@ export function TendersTable({
     >
       {/* Desktop table with 4 clean, focused columns */}
       <Table className="w-full table-fixed">
-        <TableHeader className="bg-primary/95 text-primary-foreground">
+        <TableHeader className="bg-primary">
           <TableRow className="hover:bg-transparent border-b border-primary">
-            <TableHead className="w-[32%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
-              Tender & Client
-            </TableHead>
-            <TableHead className="w-[36%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
-              Contact Details (Phone / Email)
-            </TableHead>
-            <TableHead className="w-[14%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
-              Status
-            </TableHead>
-            <TableHead className="w-[18%] font-bold text-xs uppercase tracking-wider text-primary-foreground">
-              Validity & Deadlines
-            </TableHead>
+            <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
+            <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Status</TableHead>
+            <TableHead className="w-[17%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Value</TableHead>
+            <TableHead className="w-[18%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Deadline</TableHead>
+            <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-primary-foreground">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
