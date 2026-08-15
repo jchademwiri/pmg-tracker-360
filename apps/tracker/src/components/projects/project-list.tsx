@@ -4,9 +4,11 @@ import { useState, useTransition, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Plus,
   MoreHorizontalIcon,
   Building2,
+  Copy,
+  Check,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -48,7 +50,7 @@ import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
 
 import { getProjects, deleteProject } from '@/server/projects';
-import { formatDate, formatClientName } from '@/lib/format';
+import { formatDate, formatClientName, toTitleCase } from '@/lib/format';
 
 interface ProjectWithRelations {
   id: string;
@@ -76,6 +78,7 @@ interface ProjectListProps {
   organizationId: string;
   initialProjects?: ProjectWithRelations[];
   initialTotalCount?: number;
+  initialClients?: { id: string; name: string }[];
   clients?: { id: string; name: string }[];
 }
 
@@ -86,18 +89,62 @@ const PROJECT_TABS = [
   { id: 'cancelled', label: 'Cancelled' },
 ];
 
+function ProjectDescriptionCell({ description }: { description: string | null }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!description) {
+    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
+  }
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(description);
+    setCopied(true);
+    toast.success('Description copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group relative flex items-start gap-1.5 pr-2">
+      <p
+        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed break-words flex-1"
+        title={description}
+      >
+        {toTitleCase(description)}
+      </p>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 opacity-80 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 cursor-pointer"
+        title="Copy full description"
+        aria-label="Copy description"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-emerald-400" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function ProjectList({
   organizationId,
   initialProjects = [],
   initialTotalCount = 0,
-  clients: initialClients = [],
+  initialClients: initialClientsProp,
+  clients: clientsProp,
 }: ProjectListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  const initialClients = initialClientsProp || clientsProp || [];
+
   const [projects, setProjects] = useState<ProjectWithRelations[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [clientFilter, setClientFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -105,13 +152,24 @@ export function ProjectList({
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // Fetch projects with search, pagination, and client filter
   const fetchProjects = useCallback(
-    async (search?: string, page: number = 1, status?: string, clientId?: string) => {
+    async (
+      search?: string,
+      page: number = 1,
+      status?: string,
+      clientId?: string
+    ) => {
       setIsLoading(true);
       try {
-        const result = await getProjects(organizationId, search, page, itemsPerPage, status, clientId);
-        setProjects(result.projects);
+        const result = await getProjects(
+          organizationId,
+          search,
+          page,
+          itemsPerPage,
+          status === 'all' ? undefined : status,
+          clientId === 'all' ? undefined : clientId
+        );
+        setProjects(result.projects as ProjectWithRelations[]);
         setTotalCount(result.totalCount);
         setCurrentPage(result.currentPage);
       } catch (error) {
@@ -124,45 +182,39 @@ export function ProjectList({
     [organizationId]
   );
 
-  // Reset and refetch data when organizationId changes
   useEffect(() => {
     setSearchQuery('');
     setStatusFilter('all');
     setClientFilter('all');
     setCurrentPage(1);
     if (organizationId) {
-      fetchProjects('', 1);
+      fetchProjects('', 1, 'all', 'all');
     }
   }, [organizationId, fetchProjects]);
 
-  // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
     setCurrentPage(1);
-    fetchProjects(query, 1, statusFilter, clientFilter);
+    fetchProjects(value, 1, statusFilter, clientFilter);
   };
 
-  // Handle status filter
   const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
     setCurrentPage(1);
     fetchProjects(searchQuery, 1, status, clientFilter);
   };
 
-  // Handle client filter
   const handleClientFilter = (clientId: string) => {
     setClientFilter(clientId);
     setCurrentPage(1);
     fetchProjects(searchQuery, 1, statusFilter, clientId);
   };
 
-  // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchProjects(searchQuery, page, statusFilter, clientFilter);
   };
 
-  // Handle delete project
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
 
   const confirmDeleteProject = async () => {
@@ -290,20 +342,20 @@ export function ProjectList({
                     actions={actions}
                   />
                   <MobileCardBody>
-                    <h3 className="font-semibold text-foreground text-sm">
+                    <h3 className="font-semibold text-foreground text-sm tracking-wide">
                       {formatClientName(project.client?.name) || 'No Client'}
                     </h3>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>Delivery Progress</span>
-                        <span className="font-semibold text-foreground">{project.completionPercentage || 0}%</span>
+                        <span className="font-semibold font-mono tabular-nums text-foreground">{project.completionPercentage || 0}%</span>
                       </div>
                       <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
                         <div className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" style={{ width: `${project.completionPercentage || 0}%` }} />
                       </div>
                     </div>
                     {project.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{project.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mt-1">{toTitleCase(project.description)}</p>
                     )}
                     <MobileCardGrid>
                       <MobileCardField label="Tender">{project.tender?.tenderNumber.toUpperCase() || 'None'}</MobileCardField>
@@ -316,89 +368,84 @@ export function ProjectList({
           </MobileCardList>
         }
       >
-        {/* Desktop Table */}
+        {/* Desktop Table with 5 balanced columns */}
         <Table className="w-full table-fixed">
-          <TableHeader className="bg-muted/30">
-            <TableRow className="hover:bg-transparent border-b border-border/60">
-              <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Project & Client</TableHead>
-              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
-              <TableHead className="w-[20%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Delivery Progress</TableHead>
-              <TableHead className="w-[15%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Tender</TableHead>
-              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[22%]">Project & Client</TableHead>
+              <TableHead className="w-[32%]">Description</TableHead>
+              <TableHead className="w-[14%]">Status</TableHead>
+              <TableHead className="w-[17%]">Delivery Progress</TableHead>
+              <TableHead className="w-[15%]">Linked Tender</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {projects.map((project) => (
               <TableRow
                 key={project.id}
-                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
+                className="cursor-pointer"
                 onClick={() => router.push(`/projects/${project.id}`)}
               >
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                      <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+                {/* 1. Project & Client */}
+                <TableCell className="whitespace-normal">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <div className="font-semibold text-foreground text-sm font-mono text-sky-500 dark:text-sky-400 truncate">
-                        {project.projectNumber.toUpperCase()}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="font-bold text-foreground text-xs truncate tracking-tight">
                         {formatClientName(project.client?.name) || 'No Client'}
                       </div>
+                      <Link
+                        href={`/projects/${project.id}`}
+                        className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors truncate w-fit"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {project.projectNumber.toUpperCase()}
+                      </Link>
                     </div>
                   </div>
                 </TableCell>
+
+                {/* 2. Description */}
+                <TableCell>
+                  <ProjectDescriptionCell description={project.description} />
+                </TableCell>
+
+                {/* 3. Status */}
                 <TableCell>
                   <StatusBadge status={project.status} domain="project" />
                 </TableCell>
+
+                {/* 4. Delivery Progress */}
                 <TableCell>
-                  <div className="flex items-center space-x-2 min-w-[120px]">
-                    <div className="relative w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                  <div className="flex items-center space-x-2.5 min-w-[120px]">
+                    <div className="relative w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5 shrink-0">
                       <div
                         className="absolute left-0 top-0 h-full bg-blue-500 rounded-full"
                         style={{ width: `${project.completionPercentage || 0}%` }}
                       />
                     </div>
-                    <span className="text-xs font-semibold text-muted-foreground">{project.completionPercentage || 0}%</span>
+                    <span className="text-xs font-mono font-bold tabular-nums text-foreground">{project.completionPercentage || 0}%</span>
                   </div>
                 </TableCell>
+
+                {/* 5. Linked Tender */}
                 <TableCell>
                   <div className="text-xs">
                     {project.tender ? (
                       <Link
                         href={`/tenders/${project.tender.id}`}
-                        className="text-blue-600 dark:text-blue-400 font-mono hover:underline transition-colors"
+                        className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 hover:underline font-mono font-bold transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {project.tender.tenderNumber.toUpperCase()}
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span>{project.tender.tenderNumber.toUpperCase()}</span>
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">-</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
-                        <MoreHorizontalIcon className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}`)}>View Details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/projects/${project.id}/edit`)}>Edit Project</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setDeleteProjectId(project.id)}
-                        variant="destructive"
-                        disabled={isPending}
-                      >
-                        Delete Project
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}

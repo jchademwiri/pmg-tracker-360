@@ -6,6 +6,8 @@ import {
   MoreHorizontalIcon,
   Building2,
   Package,
+  Calendar,
+  FolderKanban,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -49,7 +51,7 @@ import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
 import {
   deletePurchaseOrder,
 } from '@/server/purchase-orders';
-import { formatCurrency, formatDate, formatClientName } from '@/lib/format';
+import { formatCurrency, formatDate, formatClientName, toTitleCase } from '@/lib/format';
 import Link from 'next/link';
 
 interface PurchaseOrderWithProject {
@@ -133,7 +135,6 @@ export function POList({
         params.set(key, value);
       }
     });
-    // Reset to page 1 on filter changes unless page was explicitly updated
     if (!('page' in updates)) {
       params.set('page', '1');
     }
@@ -325,14 +326,14 @@ export function POList({
                     actions={actions}
                   />
                   <MobileCardBody>
-                    <h3 className="font-semibold text-foreground text-sm">
+                    <h3 className="font-semibold text-foreground text-sm tracking-wide">
                       {formatClientName(po.supplierName) || 'No Supplier'}
                     </h3>
-                    <div className="text-sm font-semibold text-foreground">
+                    <div className="text-sm font-mono font-bold tabular-nums text-foreground">
                       {formatCurrency(po.totalAmount)}
                     </div>
                     {po.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{po.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mt-1">{toTitleCase(po.description)}</p>
                     )}
                     <MobileCardGrid>
                       <MobileCardField label="Project">{po.project?.projectNumber.toUpperCase() || 'None'}</MobileCardField>
@@ -345,68 +346,85 @@ export function POList({
           </MobileCardList>
         }
       >
-        {/* Desktop Table */}
+        {/* Desktop Table with 6 balanced columns */}
         <Table className="w-full table-fixed">
-          <TableHeader className="bg-muted/30">
-            <TableRow className="hover:bg-transparent border-b border-border/60">
-              <TableHead className="w-[30%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">PO & Supplier</TableHead>
-              <TableHead className="w-[18%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Project</TableHead>
-              <TableHead className="w-[14%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
-              <TableHead className="w-[14%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Amount</TableHead>
-              <TableHead className="w-[17%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">PO Date</TableHead>
-              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[28%]">PO & Supplier</TableHead>
+              <TableHead className="w-[18%]">Project</TableHead>
+              <TableHead className="w-[14%]">Status</TableHead>
+              <TableHead className="w-[17%]">Total Amount</TableHead>
+              <TableHead className="w-[16%]">PO Date</TableHead>
+              <TableHead className="w-[7%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pos.map((po) => (
               <TableRow
                 key={po.id}
-                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
+                className="cursor-pointer"
                 onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}
               >
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                      <Package className="h-4.5 w-4.5 text-muted-foreground" />
+                {/* 1. PO & Supplier */}
+                <TableCell className="whitespace-normal">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <Package className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <div className="font-semibold text-foreground text-sm font-mono text-sky-500 dark:text-sky-400 truncate">
-                        {po.poNumber.toUpperCase()}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="font-bold text-foreground text-xs truncate tracking-tight">
                         {formatClientName(po.supplierName) || 'No Supplier'}
+                      </div>
+                      <div className="font-mono font-bold text-xs text-sky-400 truncate">
+                        {po.poNumber.toUpperCase()}
                       </div>
                     </div>
                   </div>
                 </TableCell>
+
+                {/* 2. Project Link */}
                 <TableCell>
                   <div className="text-xs">
                     {po.project ? (
                       <Link
                         href={`/projects/${po.project.id}`}
-                        className="text-blue-600 dark:text-blue-400 font-mono hover:underline transition-colors"
+                        className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 hover:underline font-mono font-bold transition-colors truncate"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {po.project.projectNumber.toUpperCase()}
+                        <FolderKanban className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{po.project.projectNumber.toUpperCase()}</span>
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">-</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </div>
                 </TableCell>
+
+                {/* 3. Status */}
                 <TableCell>
                   <StatusBadge status={po.status} domain="purchaseOrder" />
                 </TableCell>
+
+                {/* 4. Total Amount */}
                 <TableCell>
-                  <span className="text-xs font-mono font-semibold text-foreground">
+                  <span className="text-xs font-mono font-bold tabular-nums text-foreground">
                     {formatCurrency(po.totalAmount)}
                   </span>
                 </TableCell>
+
+                {/* 5. PO Date */}
                 <TableCell>
-                  <span className="text-xs text-muted-foreground">
-                    {po.poDate ? formatDate(po.poDate) : '-'}
-                  </span>
+                  {po.poDate ? (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span>{formatDate(po.poDate)}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
                 </TableCell>
+
+                {/* 6. Actions */}
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

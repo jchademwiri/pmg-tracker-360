@@ -1,8 +1,16 @@
 'use client';
 
 import { useState, useTransition, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { MoreHorizontalIcon, Mail, Phone, User, Building2 } from 'lucide-react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import {
+  MoreHorizontalIcon,
+  Building2,
+  Phone,
+  Mail,
+  Calendar,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
@@ -42,7 +50,7 @@ import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
 
 import { getClients, deleteClient } from '@/server';
-import { formatDate, formatClientName } from '@/lib/format';
+import { formatDate, formatClientName, toTitleCase, formatPhoneNumber } from '@/lib/format';
 import type { Client } from '@pmg/db/schema';
 import Link from 'next/link';
 
@@ -52,33 +60,113 @@ interface ClientListProps {
   initialTotalCount?: number;
 }
 
+function ClientContactCell({ client }: { client: Client }) {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const displayPhone = client.contactPhone ? formatPhoneNumber(client.contactPhone) : null;
+  const displayEmail = client.contactEmail ? client.contactEmail.trim().toLowerCase() : null;
+  const displayName = client.contactName ? toTitleCase(client.contactName) : null;
+
+  const handleCopy = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopiedField(type);
+    toast.success(`Copied ${type}: ${text}`);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  if (!displayPhone && !displayEmail && !displayName) {
+    return <span className="text-xs text-muted-foreground/60 italic">No contact logged</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
+      {displayName && (
+        <div className="font-semibold text-foreground truncate flex items-center gap-1.5">
+          <span className="truncate">{displayName}</span>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {displayPhone && (
+          <div className="inline-flex items-center gap-1">
+            <a
+              href={`tel:${displayPhone.replace(/\s+/g, '')}`}
+              className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-emerald-400 font-medium transition-colors"
+              title={`Call ${displayPhone}`}
+            >
+              <Phone className="h-3 w-3 text-emerald-400 shrink-0" aria-hidden="true" />
+              <span>{displayPhone}</span>
+            </a>
+            <button
+              type="button"
+              onClick={(e) => handleCopy(e, displayPhone, 'phone')}
+              className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
+              title="Copy Phone Number"
+            >
+              {copiedField === 'phone' ? (
+                <Check className="h-2.5 w-2.5 text-emerald-400" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+            </button>
+          </div>
+        )}
+
+        {displayEmail && (
+          <div className="inline-flex items-center gap-1">
+            <a
+              href={`mailto:${displayEmail}`}
+              className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-sky-400 font-medium transition-colors truncate max-w-[190px]"
+              title={`Email ${displayEmail}`}
+            >
+              <Mail className="h-3 w-3 text-sky-400 shrink-0" aria-hidden="true" />
+              <span className="truncate">{displayEmail}</span>
+            </a>
+            <button
+              type="button"
+              onClick={(e) => handleCopy(e, displayEmail, 'email')}
+              className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
+              title="Copy Email Address"
+            >
+              {copiedField === 'email' ? (
+                <Check className="h-2.5 w-2.5 text-sky-400" />
+              ) : (
+                <Copy className="h-2.5 w-2.5" />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ClientList({
   organizationId,
   initialClients = [],
   initialTotalCount = 0,
 }: ClientListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+
   const [clients, setClients] = useState<Client[]>(initialClients);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // Fetch clients with search and pagination
-  const fetchClients = useCallback(
+  const fetchClientsData = useCallback(
     async (search?: string, page: number = 1) => {
       setIsLoading(true);
       try {
-        const result = await getClients(
-          organizationId,
-          search,
-          page,
-          itemsPerPage
-        );
+        const result = await getClients(organizationId, search, page, itemsPerPage);
         setClients(result.clients);
         setTotalCount(result.totalCount);
         setCurrentPage(result.currentPage);
@@ -92,30 +180,24 @@ export function ClientList({
     [organizationId]
   );
 
-  // Reset and refetch data when organizationId changes
   useEffect(() => {
     setSearchQuery('');
     setCurrentPage(1);
     if (organizationId) {
-      fetchClients('', 1);
+      fetchClientsData('', 1);
     }
-  }, [organizationId, fetchClients]);
+  }, [organizationId, fetchClientsData]);
 
-  // Handle search
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
-    fetchClients(value, 1);
+    fetchClientsData(value, 1);
   };
 
-  // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchClients(searchQuery, page);
+    fetchClientsData(searchQuery, page);
   };
-
-  // Handle delete client
-  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
 
   const confirmDeleteClient = async () => {
     if (!deleteClientId) return;
@@ -123,8 +205,8 @@ export function ClientList({
     startTransition(async () => {
       const result = await deleteClient(organizationId, deleteClientId);
       if (result.success) {
-        fetchClients(searchQuery, currentPage);
         toast.success('Client deleted successfully');
+        fetchClientsData(searchQuery, currentPage);
       } else {
         toast.error(result.error || 'Failed to delete client');
       }
@@ -139,11 +221,14 @@ export function ClientList({
         key: 'search',
         label: 'Search',
         value: `"${searchQuery}"`,
-        onRemove: () => handleSearch(''),
+        onRemove: () => {
+          setSearchQuery('');
+          fetchClientsData('', 1);
+        },
       });
     }
     return chips;
-  }, [searchQuery]);
+  }, [searchQuery, fetchClientsData]);
 
   return (
     <div className="space-y-4">
@@ -151,9 +236,12 @@ export function ClientList({
       <DataTableToolbar
         searchValue={searchQuery}
         onSearchChange={handleSearch}
-        searchPlaceholder="Search clients by company name, contact, or email..."
+        searchPlaceholder="Search clients by name, contact, or email..."
         activeFilters={activeFilterChips}
-        onClearAllFilters={() => handleSearch('')}
+        onClearAllFilters={() => {
+          setSearchQuery('');
+          fetchClientsData('', 1);
+        }}
         mobileDrawerTitle="Filter Clients"
       />
 
@@ -191,27 +279,7 @@ export function ClientList({
                     actions={actions}
                   />
                   <MobileCardBody>
-                    {client.contactName && (
-                      <div className="text-sm font-medium text-foreground">
-                        {client.contactName}
-                      </div>
-                    )}
-                    {(client.contactEmail || client.contactPhone) && (
-                      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                        {client.contactEmail && (
-                          <div className="flex items-center gap-1.5">
-                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>{client.contactEmail}</span>
-                          </div>
-                        )}
-                        {client.contactPhone && (
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>{client.contactPhone}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <ClientContactCell client={client} />
                     <MobileCardGrid>
                       <MobileCardField label="Created">{formatDate(client.createdAt)}</MobileCardField>
                     </MobileCardGrid>
@@ -222,49 +290,53 @@ export function ClientList({
           </MobileCardList>
         }
       >
-        {/* Desktop table */}
+        {/* Desktop table with 4 balanced columns */}
         <Table className="w-full table-fixed">
-          <TableHeader className="bg-muted/30">
-            <TableRow className="hover:bg-transparent border-b border-border/60">
-              <TableHead className="w-[45%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Client Name</TableHead>
-              <TableHead className="w-[32%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Primary Contact</TableHead>
-              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Created</TableHead>
-              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[36%]">Client Name</TableHead>
+              <TableHead className="w-[38%]">Primary Contact</TableHead>
+              <TableHead className="w-[18%]">Created Date</TableHead>
+              <TableHead className="w-[8%] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {clients.map((client) => (
               <TableRow
                 key={client.id}
-                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
+                className="cursor-pointer"
                 onClick={() => router.push(`/clients/${client.id}`)}
               >
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                      <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+                {/* 1. Client Name */}
+                <TableCell className="whitespace-normal">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <div className="font-semibold text-foreground text-sm truncate">
+                    <Link
+                      href={`/clients/${client.id}`}
+                      className="font-bold text-foreground text-xs hover:text-sky-400 transition-colors truncate"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {formatClientName(client.name)}
-                    </div>
+                    </Link>
                   </div>
                 </TableCell>
+
+                {/* 2. Primary Contact */}
                 <TableCell>
-                  <div className="flex flex-col gap-0.5 text-xs">
-                    {client.contactName ? (
-                      <div className="font-medium text-foreground">{client.contactName}</div>
-                    ) : (
-                      <span className="text-muted-foreground">No contact name</span>
-                    )}
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      {client.contactEmail && <span>{client.contactEmail}</span>}
-                      {client.contactPhone && <span>{client.contactPhone}</span>}
-                    </div>
+                  <ClientContactCell client={client} />
+                </TableCell>
+
+                {/* 3. Created Date */}
+                <TableCell>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span>{formatDate(client.createdAt)}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <span className="text-xs text-muted-foreground">{formatDate(client.createdAt)}</span>
-                </TableCell>
+
+                {/* 4. Actions */}
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -303,7 +375,7 @@ export function ClientList({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Client</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this client? This action cannot be undone and may affect associated tenders and projects.
+              Are you sure you want to delete this client? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

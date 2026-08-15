@@ -31,7 +31,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { formatDate, formatCurrency, formatClientName } from '@/lib/format';
+import { formatDate, formatCurrency, formatClientName, toTitleCase, formatPhoneNumber } from '@/lib/format';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 export interface Tender {
@@ -111,8 +111,12 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const contactName = tender.contactName || tender.client?.contactName;
-  const contactEmail = tender.contactEmail || tender.client?.contactEmail;
-  const contactPhone = tender.contactPhone || tender.client?.contactPhone;
+  const rawPhone = tender.contactPhone || tender.client?.contactPhone;
+  const rawEmail = tender.contactEmail || tender.client?.contactEmail;
+
+  const displayPhone = rawPhone ? formatPhoneNumber(rawPhone) : null;
+  const displayEmail = rawEmail ? rawEmail.trim().toLowerCase() : null;
+  const displayName = contactName ? toTitleCase(contactName) : null;
 
   const handleCopyContact = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
     e.stopPropagation();
@@ -122,7 +126,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  if (!contactPhone && !contactEmail && !contactName) {
+  if (!displayPhone && !displayEmail && !displayName) {
     return (
       <div className="text-xs text-muted-foreground/60 italic">
         No contact logged
@@ -132,26 +136,26 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
 
   return (
     <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
-      {contactName && (
+      {displayName && (
         <div className="font-semibold text-foreground truncate flex items-center gap-1.5">
-          <span className="truncate">{contactName}</span>
+          <span className="truncate">{displayName}</span>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {contactPhone && (
+        {displayPhone && (
           <div className="inline-flex items-center gap-1">
             <a
-              href={`tel:${contactPhone}`}
+              href={`tel:${displayPhone.replace(/\s+/g, '')}`}
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-emerald-400 font-medium transition-colors"
-              title={`Call ${contactPhone}`}
+              title={`Call ${displayPhone}`}
             >
               <Phone className="h-3 w-3 text-emerald-400 shrink-0" aria-hidden="true" />
-              <span>{contactPhone}</span>
+              <span>{displayPhone}</span>
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopyContact(e, contactPhone, 'phone')}
+              onClick={(e) => handleCopyContact(e, displayPhone, 'phone')}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Phone Number"
             >
@@ -164,19 +168,19 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
           </div>
         )}
 
-        {contactEmail && (
+        {displayEmail && (
           <div className="inline-flex items-center gap-1">
             <a
-              href={`mailto:${contactEmail}?subject=Follow-up%20re%20Tender%20${encodeURIComponent(tender.tenderNumber)}`}
+              href={`mailto:${displayEmail}?subject=Follow-up%20re%20Tender%20${encodeURIComponent(tender.tenderNumber)}`}
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-sky-400 font-medium transition-colors truncate max-w-[170px]"
-              title={`Email ${contactEmail}`}
+              title={`Email ${displayEmail}`}
             >
               <Mail className="h-3 w-3 text-sky-400 shrink-0" aria-hidden="true" />
-              <span className="truncate">{contactEmail}</span>
+              <span className="truncate">{displayEmail}</span>
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopyContact(e, contactEmail, 'email')}
+              onClick={(e) => handleCopyContact(e, displayEmail, 'email')}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Email Address"
             >
@@ -211,10 +215,10 @@ function DescriptionCell({ description }: { description: string | null }) {
   return (
     <div className="group relative flex items-start gap-1.5 pr-2">
       <p
-        className="text-xs text-muted-foreground line-clamp-2 leading-relaxed capitalize break-words flex-1"
+        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed break-words flex-1"
         title={description}
       >
-        {description}
+        {toTitleCase(description)}
       </p>
       <button
         type="button"
@@ -246,9 +250,66 @@ function StatusValueCell({ tender }: { tender: Tender }) {
   );
 }
 
+const OPEN_PRE_SUBMISSION_STATUSES = new Set([
+  'open',
+  'draft',
+  'new',
+  'review',
+  'approved_to_prepare',
+  'preparation',
+  'pricing',
+  'ready',
+]);
+
 function ValidityDeadlineCell({ tender }: { tender: Tender }) {
-  const { expiryDate, isExpired, daysDiff } = resolveValidityExpiry(tender);
+  const isOpenPreSubmission =
+    OPEN_PRE_SUBMISSION_STATUSES.has(tender.status) ||
+    (!['submitted', 'evaluation', 'closed', 'awarded', 'lost', 'cancelled'].includes(tender.status));
+
   const daysLeftToSubmit = getDaysUntilDeadline(tender.submissionDate);
+
+  // 1. If Tender is OPEN / PRE-SUBMISSION -> Show Closing Date prominently
+  if (isOpenPreSubmission) {
+    if (!tender.submissionDate) {
+      return <span className="text-muted-foreground text-xs italic">No closing date</span>;
+    }
+
+    return (
+      <div className="flex flex-col gap-1 text-left">
+        <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+          <span>Closes: <strong className="text-foreground">{formatDate(tender.submissionDate)}</strong></span>
+        </div>
+        <div>
+          {daysLeftToSubmit !== null && (
+            daysLeftToSubmit < 0 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300">
+                <AlertTriangle className="h-3 w-3 text-rose-400" />
+                {Math.abs(daysLeftToSubmit)}d overdue
+              </span>
+            ) : daysLeftToSubmit === 0 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 animate-pulse">
+                <Hourglass className="h-3 w-3 text-amber-400" />
+                Closing Today (11:00 AM)
+              </span>
+            ) : daysLeftToSubmit <= 3 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300">
+                <Hourglass className="h-3 w-3 text-amber-400" />
+                {daysLeftToSubmit} days left
+              </span>
+            ) : (
+              <span className="text-[11px] text-muted-foreground font-medium pl-5">
+                {daysLeftToSubmit} days left
+              </span>
+            )
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 2. For Submitted / Under Evaluation Tenders -> Check Validity Expiry
+  const { expiryDate, isExpired, daysDiff } = resolveValidityExpiry(tender);
 
   // If Validity is EXPIRED (High Urgency Alert)
   if (isExpired && expiryDate) {
@@ -281,7 +342,7 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
     );
   }
 
-  // Standard Validity & Closing Info
+  // Standard Validity & Submitted Date Info
   if (expiryDate) {
     return (
       <div className="flex flex-col gap-0.5 text-xs text-left">
@@ -298,27 +359,14 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
     );
   }
 
-  // Open Tender closing countdown
+  // Fallback if only submissionDate exists (post-submission)
   if (tender.submissionDate) {
     return (
       <div className="flex flex-col gap-0.5 text-xs text-left">
         <div className="font-semibold text-foreground flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span>{formatDate(tender.submissionDate)}</span>
+          <span>Submitted: <strong className="text-foreground">{formatDate(tender.submissionDate)}</strong></span>
         </div>
-        {daysLeftToSubmit !== null && (
-          <div className="text-[11px] pl-5">
-            {daysLeftToSubmit < 0 ? (
-              <span className="text-rose-400 font-bold">{Math.abs(daysLeftToSubmit)}d overdue</span>
-            ) : daysLeftToSubmit === 0 ? (
-              <span className="text-amber-400 font-bold">Closing Today (11:00 AM)</span>
-            ) : (
-              <span className={daysLeftToSubmit <= 3 ? 'text-amber-400 font-bold' : 'text-muted-foreground'}>
-                {daysLeftToSubmit} days left
-              </span>
-            )}
-          </div>
-        )}
       </div>
     );
   }
@@ -366,8 +414,8 @@ export function TendersTable({
                 </h3>
 
                 {tender.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                    {tender.description}
+                  <p className="text-xs text-muted-foreground line-clamp-3 mt-1">
+                    {toTitleCase(tender.description)}
                   </p>
                 )}
 

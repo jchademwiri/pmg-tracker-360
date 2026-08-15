@@ -25,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { formatCurrency, formatDate, formatClientName, toTitleCase } from '@/lib/format';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { updateTender, updateTenderStatus } from '@/server/tenders';
@@ -303,189 +303,187 @@ export function TenderActionQueue({ organizationId, initialQueues }: TenderActio
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <Table className="w-full table-fixed">
-                  <TableHeader className="bg-muted/30">
-                    <TableRow className="hover:bg-transparent border-b border-border/60">
-                      <TableHead className="w-[36%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Tender & Client</TableHead>
-                      <TableHead className="w-[20%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Description</TableHead>
-                      <TableHead className="w-[14%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                      <TableHead className="w-[14%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Value</TableHead>
-                      <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                        {selectedQueue === 'overdue' && 'Passed Deadline'}
-                        {selectedQueue === 'closingSoon' && 'Closing Date'}
-                        {selectedQueue === 'briefingPending' && 'Briefing Info'}
-                        {selectedQueue === 'awaitingResults' && 'Submitted Date'}
-                        {selectedQueue === 'awardedToConvert' && 'Award Status'}
-                      </TableHead>
-                      <TableHead className="w-[10%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginationData.paginatedItems.map((t) => {
-                      const daysLeft = getDaysUntil(t.submissionDate);
-                      const isTenderPending = isPending && pendingTenderId === t.id;
-                      
-                      return (
-                        <TableRow
-                          key={t.id}
-                          className="transition-colors duration-150 border-b border-border/40 hover:bg-accent/40 cursor-pointer"
-                          onClick={() => router.push(`/tenders/${t.id}`)}
-                        >
-                          {/* Tender & Client */}
-                          <TableCell className="py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                                <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+              <Table className="w-full table-fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[34%]">Tender & Client</TableHead>
+                    <TableHead className="w-[22%]">Description</TableHead>
+                    <TableHead className="w-[14%]">Status</TableHead>
+                    <TableHead className="w-[14%]">Estimated Value</TableHead>
+                    <TableHead className="w-[16%]">
+                      {selectedQueue === 'overdue' && 'Passed Deadline'}
+                      {selectedQueue === 'closingSoon' && 'Closing Date'}
+                      {selectedQueue === 'briefingPending' && 'Briefing Info'}
+                      {selectedQueue === 'awaitingResults' && 'Submitted Date'}
+                      {selectedQueue === 'awardedToConvert' && 'Award Status'}
+                    </TableHead>
+                    <TableHead className="w-[10%] text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginationData.paginatedItems.map((t) => {
+                    const daysLeft = getDaysUntil(t.submissionDate);
+                    const isTenderPending = isPending && pendingTenderId === t.id;
+                    
+                    return (
+                      <TableRow
+                        key={t.id}
+                        className="cursor-pointer"
+                        onClick={() => router.push(`/tenders/${t.id}`)}
+                      >
+                        {/* Tender & Client */}
+                        <TableCell className="whitespace-normal">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <div className="font-bold text-foreground text-xs truncate tracking-tight">
+                                {formatClientName(t.client?.name) || 'Unknown Client'}
                               </div>
-                              <div className="flex flex-col gap-0.5 min-w-0">
-                                <div className="font-semibold text-foreground text-sm truncate">
-                                  {t.client?.name || 'Unknown Client'}
+                              <Link
+                                href={`/tenders/${t.id}`}
+                                className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors truncate w-fit"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                {t.tenderNumber.toUpperCase()}
+                              </Link>
+                            </div>
+                          </div>
+                        </TableCell>
+                        
+                        {/* Description */}
+                        <TableCell>
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed" title={t.description || ''}>
+                            {t.description ? toTitleCase(t.description) : '—'}
+                          </p>
+                        </TableCell>
+                        
+                        {/* Status */}
+                        <TableCell>
+                          <StatusBadge domain="tender" status={t.status} />
+                        </TableCell>
+                        
+                        {/* Value */}
+                        <TableCell>
+                          <span className="font-mono font-bold text-xs tabular-nums text-emerald-400">
+                            {t.value ? formatCurrency(Number(t.value)) : '—'}
+                          </span>
+                        </TableCell>
+
+                        {/* Date / Context Cell */}
+                        <TableCell>
+                          {selectedQueue === 'overdue' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-rose-400 flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                                {t.submissionDate ? formatDate(t.submissionDate) : '—'}
+                              </div>
+                              {daysLeft !== null && (
+                                <div className="text-[11px] text-rose-400 font-bold pl-5">
+                                  {Math.abs(daysLeft)}d overdue
                                 </div>
-                                <Link
-                                  href={`/tenders/${t.id}`}
-                                  className="text-xs font-mono text-sky-500 dark:text-sky-400 hover:text-sky-600 dark:hover:text-sky-300 hover:underline transition-colors truncate w-fit"
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  {t.tenderNumber.toUpperCase()}
-                                </Link>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedQueue === 'closingSoon' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {t.submissionDate ? formatDate(t.submissionDate) : '—'}
+                              </div>
+                              {daysLeft !== null && (
+                                <div className="text-[11px] pl-5 font-bold text-amber-400">
+                                  {daysLeft === 0 ? 'Due today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft}d left`}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedQueue === 'briefingPending' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {t.briefingDate ? formatDate(t.briefingDate) : '—'}
+                              </div>
+                              {t.briefingLocation && (
+                                <div className="text-[11px] text-muted-foreground pl-5 truncate max-w-[140px]" title={t.briefingLocation}>
+                                  {t.briefingLocation}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {selectedQueue === 'awaitingResults' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {t.submissionDate ? formatDate(t.submissionDate) : '—'}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground pl-5">Submitted</div>
+                            </div>
+                          )}
+
+                          {selectedQueue === 'awardedToConvert' && (
+                            <div className="flex flex-col text-xs gap-0.5">
+                              <div className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                                <Trophy className="h-3.5 w-3.5 shrink-0" />
+                                Awarded
                               </div>
                             </div>
-                          </TableCell>
-                          
-                          {/* Description */}
-                          <TableCell className="py-3">
-                            <p className="text-xs text-muted-foreground line-clamp-2" title={t.description || ''}>
-                              {t.description || '—'}
-                            </p>
-                          </TableCell>
-                          
-                          {/* Status */}
-                          <TableCell className="py-3">
-                            <StatusBadge domain="tender" status={t.status} />
-                          </TableCell>
-                          
-                          {/* Value */}
-                          <TableCell className="py-3">
-                            <span className="font-mono font-semibold text-sm text-emerald-600 dark:text-emerald-400">
-                              {t.value ? formatCurrency(Number(t.value)) : '—'}
-                            </span>
-                          </TableCell>
+                          )}
+                        </TableCell>
 
-                          {/* Date / Context Cell */}
-                          <TableCell className="py-3">
-                            {selectedQueue === 'overdue' && (
-                              <div className="flex flex-col text-xs gap-0.5">
-                                <div className="font-semibold text-red-500 flex items-center gap-1.5">
-                                  <Calendar className="h-3.5 w-3.5 text-red-500 shrink-0" />
-                                  {t.submissionDate ? formatDate(t.submissionDate) : '—'}
-                                </div>
-                                {daysLeft !== null && (
-                                  <div className="text-[11px] text-red-500 font-semibold pl-5">
-                                    {Math.abs(daysLeft)}d overdue
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {selectedQueue === 'closingSoon' && (
-                              <div className="flex flex-col text-xs gap-0.5">
-                                <div className="font-semibold text-foreground flex items-center gap-1.5">
-                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                  {t.submissionDate ? formatDate(t.submissionDate) : '—'}
-                                </div>
-                                {daysLeft !== null && (
-                                  <div className="text-[11px] pl-5 font-semibold text-amber-500">
-                                    {daysLeft === 0 ? 'Due today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft}d left`}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
+                        {/* Actions */}
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1.5">
                             {selectedQueue === 'briefingPending' && (
-                              <div className="flex flex-col text-xs gap-0.5">
-                                <div className="font-semibold text-foreground flex items-center gap-1.5">
-                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                  {t.briefingDate ? formatDate(t.briefingDate) : '—'}
-                                </div>
-                                {t.briefingLocation && (
-                                  <div className="text-[11px] text-muted-foreground pl-5 truncate max-w-[140px]" title={t.briefingLocation}>
-                                    {t.briefingLocation}
-                                  </div>
-                                )}
-                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleMarkBriefingAttended(t.id)}
+                                disabled={isTenderPending}
+                                className="cursor-pointer text-xs h-7 px-2 hover:bg-blue-500 hover:text-white"
+                              >
+                                {isTenderPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attended'}
+                              </Button>
                             )}
-
-                            {selectedQueue === 'awaitingResults' && (
-                              <div className="flex flex-col text-xs gap-0.5">
-                                <div className="font-semibold text-foreground flex items-center gap-1.5">
-                                  <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                  {t.submissionDate ? formatDate(t.submissionDate) : '—'}
-                                </div>
-                                <div className="text-[11px] text-muted-foreground pl-5">Submitted</div>
-                              </div>
-                            )}
-
                             {selectedQueue === 'awardedToConvert' && (
-                              <div className="flex flex-col text-xs gap-0.5">
-                                <div className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                                  <Trophy className="h-3.5 w-3.5 shrink-0" />
-                                  Awarded
-                                </div>
-                              </div>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleConvertToProjectClick(t)}
+                                disabled={isTenderPending}
+                                className="cursor-pointer text-xs h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              >
+                                Convert
+                              </Button>
                             )}
-                          </TableCell>
 
-                          {/* Actions */}
-                          <TableCell className="py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1.5">
-                              {selectedQueue === 'briefingPending' && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleMarkBriefingAttended(t.id)}
-                                  disabled={isTenderPending}
-                                  className="cursor-pointer text-xs h-7 px-2 hover:bg-blue-500 hover:text-white"
-                                >
-                                  {isTenderPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attended'}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="size-8 cursor-pointer hover:bg-accent">
+                                  <MoreHorizontalIcon className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
                                 </Button>
-                              )}
-                              {selectedQueue === 'awardedToConvert' && (
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => handleConvertToProjectClick(t)}
-                                  disabled={isTenderPending}
-                                  className="cursor-pointer text-xs h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                >
-                                  Convert
-                                </Button>
-                              )}
-
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="size-8 cursor-pointer hover:bg-accent">
-                                    <MoreHorizontalIcon className="h-4 w-4" />
-                                    <span className="sr-only">Open menu</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => router.push(`/tenders/${t.id}`)}>
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => router.push(`/tenders/${t.id}/edit`)}>
-                                    Edit Tender
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.push(`/tenders/${t.id}`)}>
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => router.push(`/tenders/${t.id}/edit`)}>
+                                  Edit Tender
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
 
               {paginationData.totalItems > 0 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">

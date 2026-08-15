@@ -27,7 +27,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { archiveProjectLineItem } from '@/server/purchase-orders';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, toTitleCase } from '@/lib/format';
 import { StatusBadge } from '@/components/ui/status-badge';
 
 interface ProjectLineItem {
@@ -133,83 +133,85 @@ export function ProjectLineItemsList({
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-6">Item Number</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>SAP</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead className="text-right">Ordered Qty</TableHead>
+                <TableHead className="text-right">Delivered Qty</TableHead>
+                <TableHead>Delivery Status</TableHead>
+                <TableHead className="text-right">Used On PO</TableHead>
+                <TableHead className="pr-6 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredItems.length === 0 ? (
                 <TableRow>
-                  <TableHead className="pl-6">Item Number</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>SAP</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead className="text-right">Unit Price</TableHead>
-                  <TableHead className="text-right">Ordered Qty</TableHead>
-                  <TableHead className="text-right">Delivered Qty</TableHead>
-                  <TableHead>Delivery Status</TableHead>
-                  <TableHead className="text-right">Used On PO Lines</TableHead>
-                  <TableHead className="pr-6 text-right">Actions</TableHead>
+                  <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
+                    {lineItems.length === 0
+                      ? 'No saved project items yet.'
+                      : 'No project items match your search.'}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
-                      {lineItems.length === 0
-                        ? 'No saved project items yet.'
-                        : 'No project items match your search.'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredItems.map((item) => {
-                    const badgeStatus = (item.status ?? 'Not Ordered').toLowerCase().replace(' ', '_');
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="pl-6 font-semibold text-blue-600">{item.itemNumber}</TableCell>
-                        <TableCell className="font-medium">{item.description}</TableCell>
-                        <TableCell className="text-muted-foreground">{item.sapReference || '-'}</TableCell>
-                        <TableCell>{item.unit}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {formatCurrency(item.unitPrice)}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {item.totalOrdered ?? 0}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {item.totalDelivered ?? 0}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={badgeStatus} domain="project" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant={item.usageCount > 0 ? 'default' : 'outline'}>
-                            {item.usageCount}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="pr-6 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" asChild>
-                              <Link href={`/projects/${project.id}/items/${item.id}/edit`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-amber-600 hover:text-amber-700"
-                              onClick={() => setArchiveItem(item)}
-                            >
-                              <Archive className="mr-2 h-4 w-4" />
-                              Archive
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+              ) : (
+                filteredItems.map((item) => {
+                  const badgeStatus = (item.status ?? 'Not Ordered').toLowerCase().replace(' ', '_');
+                  return (
+                    <TableRow key={item.id} className="cursor-default">
+                      <TableCell className="pl-6 font-mono font-bold text-xs text-sky-400">
+                        {item.itemNumber.toUpperCase()}
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground text-xs">
+                        {toTitleCase(item.description)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{item.sapReference || '—'}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{item.unit}</TableCell>
+                      <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">
+                        {formatCurrency(item.unitPrice)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-muted-foreground">
+                        {item.totalOrdered ?? 0}
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-muted-foreground">
+                        {item.totalDelivered ?? 0}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={badgeStatus} domain="project" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={item.usageCount > 0 ? 'secondary' : 'outline'} className="font-mono text-xs">
+                          {item.usageCount}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="pr-6 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" className="h-8 text-xs cursor-pointer" asChild>
+                            <Link href={`/projects/${project.id}/items/${item.id}/edit`}>
+                              <Edit className="mr-1.5 h-3.5 w-3.5" />
+                              Edit
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
+                            onClick={() => setArchiveItem(item)}
+                          >
+                            <Archive className="mr-1.5 h-3.5 w-3.5" />
+                            Archive
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

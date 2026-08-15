@@ -22,19 +22,41 @@ const KNOWN_UPPERCASE_ACRONYMS = new Set([
   'SAPS',
 ]);
 
-const LOWERCASE_ARTICLES = new Set([
-  'of',
-  'and',
+const LOWERCASE_WORDS = new Set([
+  // Articles
+  'a',
+  'an',
   'the',
+  // Conjunctions
+  'and',
+  'but',
+  'for',
+  'nor',
+  'or',
+  'so',
+  'yet',
+  // Short Prepositions & Particles
+  'of',
+  'off',
   'in',
   'on',
   'at',
   'to',
-  'for',
   'by',
   'with',
-  'a',
-  'an',
+  'from',
+  'into',
+  'onto',
+  'per',
+  'via',
+  'as',
+  'up',
+  'out',
+  're',
+  'vs',
+  // Pronouns / Small connecting words
+  'it',
+  'its',
 ]);
 
 /**
@@ -53,7 +75,7 @@ export function formatClientName(value: string | null | undefined): string {
         return word.toUpperCase();
       }
       const lower = word.toLowerCase();
-      if (index > 0 && LOWERCASE_ARTICLES.has(lower)) {
+      if (index > 0 && LOWERCASE_WORDS.has(lower)) {
         return lower;
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
@@ -62,18 +84,29 @@ export function formatClientName(value: string | null | undefined): string {
 }
 
 /**
- * Capitalizes the first letter of every word ("Title Case").
- * "CITY OF TSHWANE" -> "City Of Tshwane", "City of Ekurhuleni" -> "City Of Ekurhuleni".
+ * Capitalizes the first letter of every word ("Title Case"), while keeping
+ * minor connecting words (e.g. of, off, and, the, in, on, at, to, for, with, it)
+ * in lowercase unless they are the first word. Also preserves known acronyms.
+ * e.g. "SUPPLY AND DELIVERY OF IT EQUIPMENT" -> "Supply and Delivery of it Equipment"
+ * e.g. "SWITCH OFF POWER AT SUBSTATION" -> "Switch off Power at Substation"
  */
 export function toTitleCase(value: string | null | undefined): string {
   if (!value) return '';
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  return words
+    .map((word, index) => {
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      if (KNOWN_UPPERCASE_ACRONYMS.has(cleanWord)) {
+        return word.toUpperCase();
+      }
+      const lower = word.toLowerCase();
+      if (index > 0 && LOWERCASE_WORDS.has(lower)) {
+        return lower;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
     .join(' ');
 }
-
 
 /**
  * Formats a date as "24 Feb 2026" in SAST timezone.
@@ -167,6 +200,51 @@ export function formatPercentage(
     maximumFractionDigits: 1,
     ...options,
   }).format(value / 100);
+}
+
+/**
+ * Normalizes and standardizes phone numbers into a consistent, readable format.
+ * e.g. "0118002000" -> "011 800 2000"
+ * e.g. "+27118002000" -> "+27 11 800 2000"
+ * e.g. "082 1234567" -> "082 123 4567"
+ * e.g. "+27 (0) 82 123 4567" -> "+27 82 123 4567"
+ */
+export function formatPhoneNumber(value: string | null | undefined): string {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  // Remove parentheses around (0) in international formats: "+27 (0) 11" -> "+27 11"
+  const cleanParentheses = trimmed.replace(/\(\s*0\s*\)/g, '');
+
+  const hasPlus = cleanParentheses.startsWith('+');
+  const digitsOnly = cleanParentheses.replace(/\D/g, '');
+
+  // South African 10-digit standard: 0XX XXX XXXX (e.g. 0118002000, 0821234567)
+  if (!hasPlus && digitsOnly.length === 10 && digitsOnly.startsWith('0')) {
+    return `${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3, 6)} ${digitsOnly.slice(6)}`;
+  }
+
+  // South African international 11-digit standard: 27XX XXX XXXX (e.g. +27118002000)
+  if (hasPlus && digitsOnly.startsWith('27') && digitsOnly.length === 11) {
+    return `+27 ${digitsOnly.slice(2, 4)} ${digitsOnly.slice(4, 7)} ${digitsOnly.slice(7)}`;
+  }
+
+  // General 9-digit without leading 0: XX XXX XXXX -> 0XX XXX XXXX
+  if (!hasPlus && digitsOnly.length === 9) {
+    return `0${digitsOnly.slice(0, 2)} ${digitsOnly.slice(2, 5)} ${digitsOnly.slice(5)}`;
+  }
+
+  // Fallback: chunk digits cleanly in 3s/4s or return clean formatted string
+  if (digitsOnly.length > 6) {
+    const prefix = hasPlus ? '+' : '';
+    if (digitsOnly.length <= 10) {
+      return `${prefix}${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3, 6)} ${digitsOnly.slice(6)}`.trim();
+    }
+    return `${prefix}${digitsOnly.slice(0, 2)} ${digitsOnly.slice(2, 5)} ${digitsOnly.slice(5, 8)} ${digitsOnly.slice(8)}`.trim();
+  }
+
+  return trimmed;
 }
 
 /**

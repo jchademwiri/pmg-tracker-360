@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Calculator, Sparkles, ArrowRight, TrendingUp, Clock, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/format';
 
 export function RoiCalculator() {
   const [annualTenders, setAnnualTenders] = useState(20);
@@ -153,7 +154,7 @@ export function RoiCalculator() {
                   <div>
                     <div className="text-xs text-muted-foreground">Quarterly PO Inflow</div>
                     <div className="text-sm font-bold text-foreground tabular-nums">
-                      R&nbsp;{projectedQuarterlyCashflow.toLocaleString('en-ZA')}
+                      {formatCurrency(projectedQuarterlyCashflow)}
                     </div>
                   </div>
                 </div>
@@ -170,7 +171,7 @@ export function RoiCalculator() {
                   <div>
                     <div className="text-xs text-muted-foreground">Total Active PO Portfolio</div>
                     <div className="text-sm font-bold text-foreground tabular-nums">
-                      R&nbsp;{projectedAnnualPoVolume.toLocaleString('en-ZA')}
+                      {formatCurrency(projectedAnnualPoVolume)}
                     </div>
                   </div>
                 </div>
