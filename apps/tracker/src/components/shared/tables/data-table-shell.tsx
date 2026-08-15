@@ -255,7 +255,7 @@ export function DataTableShell({
         {showContent && (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block">
               {children}
             </div>
 
