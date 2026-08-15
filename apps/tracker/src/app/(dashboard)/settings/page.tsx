@@ -242,12 +242,12 @@ export default async function SettingsPage() {
               <div>• Upgrade or change seats</div>
               <div>• Payment history & invoices</div>
             </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/billing">
+            <Link href="/billing">
+              <Button type="button" variant="outline" className="w-full">
                 Manage Billing
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -270,8 +270,8 @@ export default async function SettingsPage() {
               <div>• Track ticket resolutions</div>
               <div>• Access user documentation</div>
             </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/support">
+            <Link href="/support">
+              <Button type="button" variant="outline" className="w-full">
                 Get Support
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>

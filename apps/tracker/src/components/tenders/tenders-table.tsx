@@ -29,7 +29,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { formatDate, formatCurrency } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 export interface Tender {
@@ -101,19 +101,19 @@ function resolveValidityExpiry(tender: Tender): {
 function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   if (!submissionDate) return null;
   const now = new Date();
-  const sub = new Date(submissionDate);
-  const diffTime = sub.getTime() - now.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffTime = new Date(submissionDate).getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
 }
 
 function ContactDetailsCell({ tender }: { tender: Tender }) {
-  const [copiedField, setCopiedField] = useState<'phone' | 'email' | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const contactName = tender.contactName || tender.client?.contactName;
   const contactEmail = tender.contactEmail || tender.client?.contactEmail;
   const contactPhone = tender.contactPhone || tender.client?.contactPhone;
 
-  const handleCopy = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
+  const handleCopy = (e: React.MouseEvent, text: string, type: string) => {
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedField(type);
@@ -128,6 +128,14 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
       </div>
     );
   }
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(description);
+    setCopied(true);
+    toast.success('Description copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
@@ -272,46 +280,6 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
   return <span className="text-muted-foreground text-xs">—</span>;
 }
 
-function DescriptionCell({ description }: { description: string | null }) {
-  const [copied, setCopied] = useState(false);
-
-  if (!description) {
-    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
-  }
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(description);
-    setCopied(true);
-    toast.success('Description copied to clipboard');
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="group relative flex items-start gap-1.5 pr-2">
-      <p
-        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed capitalize break-words flex-1"
-        title={description}
-      >
-        {description}
-      </p>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 opacity-80 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 cursor-pointer"
-        title="Copy full description"
-        aria-label="Copy description"
-      >
-        {copied ? (
-          <Check className="h-3.5 w-3.5 text-emerald-400" />
-        ) : (
-          <Copy className="h-3.5 w-3.5" />
-        )}
-      </button>
-    </div>
-  );
-}
-
 export function TendersTable({
   tenders,
   totalCount,
@@ -352,18 +320,6 @@ export function TendersTable({
                   {tender.client?.name ? tender.client.name.toUpperCase() : 'UNKNOWN CLIENT'}
                 </h3>
 
-                {/* Description (Multi-line up to 3 lines, Capitalized words, with Quick Copy) */}
-                <div className="pt-1">
-                  <DescriptionCell description={tender.description} />
-                </div>
-
-                {/* Value */}
-                {tender.value && (
-                  <div className="text-xs font-mono font-semibold text-foreground pt-1">
-                    Estimated: {formatCurrency(tender.value)}
-                  </div>
-                )}
-
                 {/* Mobile Contact Quick Row */}
                 <div className="pt-1">
                   <ContactDetailsCell tender={tender} />
@@ -379,9 +335,9 @@ export function TendersTable({
         </MobileCardList>
       }
     >
-      {/* Desktop table with 5 clean, focused columns (No Actions Column, Sticky Header) */}
-      <Table className="w-full table-fixed" containerClassName="overflow-visible">
-        <TableHeader className="sticky top-0 z-20 bg-primary shadow-xs">
+      {/* Desktop table with 4 clean, focused columns */}
+      <Table className="w-full table-fixed">
+        <TableHeader className="bg-primary">
           <TableRow className="hover:bg-transparent border-b border-primary">
             <TableHead className="w-[15%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
             <TableHead className="w-[37%] sticky top-0 z-20 bg-primary font-semibold text-xs uppercase tracking-wider text-primary-foreground">Description</TableHead>
@@ -399,11 +355,11 @@ export function TendersTable({
               }`}
               onClick={() => onRowClick?.(tender.id)}
             >
-              {/* 1. Tender & Client (15% Width, ALL CAPS) */}
-              <TableCell className="py-3.5 whitespace-normal">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
+              {/* 1. Tender & Client */}
+              <TableCell className="py-3.5">
+                <div className="flex items-center gap-3">
+                  <div className="size-9 rounded-xl bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                    <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <div
@@ -414,7 +370,7 @@ export function TendersTable({
                     </div>
                     <Link
                       href={`/tenders/${tender.id}`}
-                      className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors uppercase truncate"
+                      className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors truncate w-fit"
                       onClick={(event) => event.stopPropagation()}
                     >
                       {tender.tenderNumber.toUpperCase()}
@@ -423,30 +379,18 @@ export function TendersTable({
                 </div>
               </TableCell>
 
-              {/* 2. Description (37% Width, Multi-line up to 3 lines, Capitalized words, Quick Copy Button) */}
-              <TableCell className="py-3.5 whitespace-normal break-words">
-                <DescriptionCell description={tender.description} />
-              </TableCell>
-
-              {/* 3. Contact Details (18% Width) */}
-              <TableCell className="py-3.5 whitespace-normal">
+              {/* 2. Contact Details (Phone / Email) */}
+              <TableCell className="py-3.5">
                 <ContactDetailsCell tender={tender} />
               </TableCell>
 
-              {/* 4. Status & Value (15% Width) */}
-              <TableCell className="py-3.5 whitespace-normal">
-                <div className="flex flex-col gap-1 text-left">
-                  <StatusBadge domain="tender" status={tender.status} />
-                  {tender.value ? (
-                    <span className="text-xs font-mono font-semibold text-foreground">
-                      {formatCurrency(tender.value)}
-                    </span>
-                  ) : null}
-                </div>
+              {/* 3. Status */}
+              <TableCell className="py-3.5">
+                <StatusBadge domain="tender" status={tender.status} />
               </TableCell>
 
-              {/* 5. Validity & Deadlines (15% Width) */}
-              <TableCell className="py-3.5 whitespace-normal">
+              {/* 4. Validity & Deadlines (High-Visibility POP Badge) */}
+              <TableCell className="py-3.5">
                 <ValidityDeadlineCell tender={tender} />
               </TableCell>
             </TableRow>
