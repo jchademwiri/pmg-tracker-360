@@ -13,6 +13,8 @@ import {
   MobileCard,
   MobileCardHeader,
   MobileCardBody,
+  MobileCardField,
+  MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
 import {
@@ -29,7 +31,7 @@ import {
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatCurrency, formatClientName, toTitleCase, formatPhoneNumber } from '@/lib/format';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
 
 export interface Tender {
@@ -102,18 +104,21 @@ function getDaysUntilDeadline(submissionDate: Date | null): number | null {
   if (!submissionDate) return null;
   const now = new Date();
   const diffTime = new Date(submissionDate).getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 function ContactDetailsCell({ tender }: { tender: Tender }) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const contactName = tender.contactName || tender.client?.contactName;
-  const contactEmail = tender.contactEmail || tender.client?.contactEmail;
-  const contactPhone = tender.contactPhone || tender.client?.contactPhone;
+  const rawPhone = tender.contactPhone || tender.client?.contactPhone;
+  const rawEmail = tender.contactEmail || tender.client?.contactEmail;
 
-  const handleCopy = (e: React.MouseEvent, text: string, type: string) => {
+  const displayPhone = rawPhone ? formatPhoneNumber(rawPhone) : null;
+  const displayEmail = rawEmail ? rawEmail.trim().toLowerCase() : null;
+  const displayName = contactName ? toTitleCase(contactName) : null;
+
+  const handleCopyContact = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedField(type);
@@ -121,7 +126,7 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  if (!contactPhone && !contactEmail && !contactName) {
+  if (!displayPhone && !displayEmail && !displayName) {
     return (
       <div className="text-xs text-muted-foreground/60 italic">
         No contact logged
@@ -131,26 +136,26 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
 
   return (
     <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
-      {contactName && (
+      {displayName && (
         <div className="font-semibold text-foreground truncate flex items-center gap-1.5">
-          <span className="truncate">{contactName}</span>
+          <span className="truncate">{displayName}</span>
         </div>
       )}
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {contactPhone && (
+        {displayPhone && (
           <div className="inline-flex items-center gap-1">
             <a
-              href={`tel:${contactPhone}`}
+              href={`tel:${displayPhone.replace(/\s+/g, '')}`}
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-emerald-400 font-medium transition-colors"
-              title={`Call ${contactPhone}`}
+              title={`Call ${displayPhone}`}
             >
-              <Phone className="h-3 w-3 text-emerald-400" aria-hidden="true" />
-              <span>{contactPhone}</span>
+              <Phone className="h-3 w-3 text-emerald-400 shrink-0" aria-hidden="true" />
+              <span>{displayPhone}</span>
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopy(e, contactPhone, 'phone')}
+              onClick={(e) => handleCopyContact(e, displayPhone, 'phone')}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Phone Number"
             >
@@ -163,19 +168,19 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
           </div>
         )}
 
-        {contactEmail && (
+        {displayEmail && (
           <div className="inline-flex items-center gap-1">
             <a
-              href={`mailto:${contactEmail}?subject=Follow-up%20re%20Tender%20${encodeURIComponent(tender.tenderNumber)}`}
+              href={`mailto:${displayEmail}?subject=Follow-up%20re%20Tender%20${encodeURIComponent(tender.tenderNumber)}`}
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-sky-400 font-medium transition-colors truncate max-w-[170px]"
-              title={`Email ${contactEmail}`}
+              title={`Email ${displayEmail}`}
             >
-              <Mail className="h-3 w-3 text-sky-400" aria-hidden="true" />
-              <span className="truncate">{contactEmail}</span>
+              <Mail className="h-3 w-3 text-sky-400 shrink-0" aria-hidden="true" />
+              <span className="truncate">{displayEmail}</span>
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopy(e, contactEmail, 'email')}
+              onClick={(e) => handleCopyContact(e, displayEmail, 'email')}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Email Address"
             >
@@ -192,16 +197,126 @@ function ContactDetailsCell({ tender }: { tender: Tender }) {
   );
 }
 
+function DescriptionCell({ description }: { description: string | null }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!description) {
+    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
+  }
+
+  const handleCopyDescription = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(description);
+    setCopied(true);
+    toast.success('Description copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="group relative flex items-start gap-1.5 pr-2">
+      <p
+        className="text-xs text-muted-foreground line-clamp-3 leading-relaxed break-words flex-1"
+        title={description}
+      >
+        {toTitleCase(description)}
+      </p>
+      <button
+        type="button"
+        onClick={handleCopyDescription}
+        className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-accent/60 opacity-80 group-hover:opacity-100 focus:opacity-100 transition-all shrink-0 cursor-pointer"
+        title="Copy full description"
+        aria-label="Copy description"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-emerald-400" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </div>
+  );
+}
+
+function StatusValueCell({ tender }: { tender: Tender }) {
+  return (
+    <div className="flex flex-col gap-1 text-left">
+      <StatusBadge domain="tender" status={tender.status} />
+      {tender.value && Number(tender.value) > 0 ? (
+        <span className="font-mono font-bold text-xs tabular-nums text-emerald-400 dark:text-emerald-300">
+          {formatCurrency(Number(tender.value))}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+const OPEN_PRE_SUBMISSION_STATUSES = new Set([
+  'open',
+  'draft',
+  'new',
+  'review',
+  'approved_to_prepare',
+  'preparation',
+  'pricing',
+  'ready',
+]);
+
 function ValidityDeadlineCell({ tender }: { tender: Tender }) {
-  const { expiryDate, isExpired, daysDiff } = resolveValidityExpiry(tender);
+  const isOpenPreSubmission =
+    OPEN_PRE_SUBMISSION_STATUSES.has(tender.status) ||
+    (!['submitted', 'evaluation', 'closed', 'awarded', 'lost', 'cancelled'].includes(tender.status));
+
   const daysLeftToSubmit = getDaysUntilDeadline(tender.submissionDate);
 
-  // If Validity is EXPIRED (High Urgency)
+  // 1. If Tender is OPEN / PRE-SUBMISSION -> Show Closing Date prominently
+  if (isOpenPreSubmission) {
+    if (!tender.submissionDate) {
+      return <span className="text-muted-foreground text-xs italic">No closing date</span>;
+    }
+
+    return (
+      <div className="flex flex-col gap-1 text-left">
+        <div className="font-semibold text-foreground text-xs flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+          <span>Closes: <strong className="text-foreground">{formatDate(tender.submissionDate)}</strong></span>
+        </div>
+        <div>
+          {daysLeftToSubmit !== null && (
+            daysLeftToSubmit < 0 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300">
+                <AlertTriangle className="h-3 w-3 text-rose-400" />
+                {Math.abs(daysLeftToSubmit)}d overdue
+              </span>
+            ) : daysLeftToSubmit === 0 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 animate-pulse">
+                <Hourglass className="h-3 w-3 text-amber-400" />
+                Closing Today (11:00 AM)
+              </span>
+            ) : daysLeftToSubmit <= 3 ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300">
+                <Hourglass className="h-3 w-3 text-amber-400" />
+                {daysLeftToSubmit} days left
+              </span>
+            ) : (
+              <span className="text-[11px] text-muted-foreground font-medium pl-5">
+                {daysLeftToSubmit} days left
+              </span>
+            )
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // 2. For Submitted / Under Evaluation Tenders -> Check Validity Expiry
+  const { expiryDate, isExpired, daysDiff } = resolveValidityExpiry(tender);
+
+  // If Validity is EXPIRED (High Urgency Alert)
   if (isExpired && expiryDate) {
     const daysAgo = Math.abs(daysDiff ?? 0);
     return (
       <div className="flex flex-col gap-1 text-left">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-500/20 border border-rose-500/50 text-rose-300 shadow-sm animate-pulse w-fit">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300 shadow-xs animate-pulse w-fit">
           <AlertTriangle className="h-3.5 w-3.5 text-rose-400 shrink-0" aria-hidden="true" />
           <span>Expired {daysAgo} {daysAgo === 1 ? 'day' : 'days'} ago</span>
         </div>
@@ -216,7 +331,7 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
   if (expiryDate && daysDiff !== null && daysDiff >= 0 && daysDiff <= 14) {
     return (
       <div className="flex flex-col gap-1 text-left">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-500/20 border border-amber-500/50 text-amber-300 shadow-sm w-fit">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-300 shadow-xs w-fit">
           <Hourglass className="h-3.5 w-3.5 text-amber-400 shrink-0" aria-hidden="true" />
           <span>Expires in {daysDiff} {daysDiff === 1 ? 'day' : 'days'}</span>
         </div>
@@ -227,7 +342,7 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
     );
   }
 
-  // Standard Validity & Closing Info
+  // Standard Validity & Submitted Date Info
   if (expiryDate) {
     return (
       <div className="flex flex-col gap-0.5 text-xs text-left">
@@ -244,27 +359,14 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
     );
   }
 
-  // Open Tender closing countdown
+  // Fallback if only submissionDate exists (post-submission)
   if (tender.submissionDate) {
     return (
       <div className="flex flex-col gap-0.5 text-xs text-left">
         <div className="font-semibold text-foreground flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span>{formatDate(tender.submissionDate)}</span>
+          <span>Submitted: <strong className="text-foreground">{formatDate(tender.submissionDate)}</strong></span>
         </div>
-        {daysLeftToSubmit !== null && (
-          <div className="text-[11px] pl-5">
-            {daysLeftToSubmit < 0 ? (
-              <span className="text-rose-400 font-bold">{Math.abs(daysLeftToSubmit)}d overdue</span>
-            ) : daysLeftToSubmit === 0 ? (
-              <span className="text-amber-400 font-bold">Closing Today (11:00 AM)</span>
-            ) : (
-              <span className={daysLeftToSubmit <= 3 ? 'text-amber-400 font-bold' : 'text-muted-foreground'}>
-                {daysLeftToSubmit} days left
-              </span>
-            )}
-          </div>
-        )}
       </div>
     );
   }
@@ -283,7 +385,6 @@ export function TendersTable({
 }: TendersTableProps) {
   return (
     <DataTableShell
-      title="Tenders"
       entityLabel="tenders"
       totalCount={totalCount}
       currentPage={currentPage}
@@ -308,54 +409,77 @@ export function TendersTable({
                 status={tender.status}
               />
               <MobileCardBody>
-                <h3 className="font-semibold text-foreground text-sm">
-                  {tender.client?.name || 'Unknown Client'}
+                <h3 className="font-semibold text-foreground text-sm tracking-wide">
+                  {formatClientName(tender.client?.name) || 'Unknown Client'}
                 </h3>
+
+                {tender.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-3 mt-1">
+                    {toTitleCase(tender.description)}
+                  </p>
+                )}
 
                 {/* Mobile Contact Quick Row */}
                 <div className="pt-1">
                   <ContactDetailsCell tender={tender} />
                 </div>
 
-                {/* Validity Status */}
-                <div className="pt-2">
-                  <ValidityDeadlineCell tender={tender} />
-                </div>
+                <MobileCardGrid>
+                  {tender.value && Number(tender.value) > 0 && (
+                    <MobileCardField label="Value">
+                      {formatCurrency(Number(tender.value))}
+                    </MobileCardField>
+                  )}
+                  <MobileCardField label="Validity Status" className="col-span-2">
+                    <ValidityDeadlineCell tender={tender} />
+                  </MobileCardField>
+                </MobileCardGrid>
               </MobileCardBody>
             </MobileCard>
           ))}
         </MobileCardList>
       }
     >
-      {/* Desktop table with 4 clean, focused columns */}
+      {/* Desktop table with 5 balanced columns */}
       <Table className="w-full table-fixed">
-        <TableHeader className="bg-primary">
-          <TableRow className="hover:bg-transparent border-b border-primary">
-            <TableHead className="w-[42%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Tender & Client</TableHead>
-            <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Status</TableHead>
-            <TableHead className="w-[17%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Value</TableHead>
-            <TableHead className="w-[18%] font-semibold text-xs uppercase tracking-wider text-primary-foreground">Deadline</TableHead>
-            <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-primary-foreground">Actions</TableHead>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[18%]">
+              Tender & Client
+            </TableHead>
+            <TableHead className="w-[34%]">
+              Description
+            </TableHead>
+            <TableHead className="w-[18%]">
+              Contact Details
+            </TableHead>
+            <TableHead className="w-[15%]">
+              Status & Value
+            </TableHead>
+            <TableHead className="w-[15%]">
+              Deadline & Validity
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tenders.map((tender) => (
             <TableRow
               key={tender.id}
-              className={`transition-colors duration-150 border-b border-border/40 ${
-                onRowClick ? 'cursor-pointer hover:bg-accent/40' : ''
-              }`}
+              className={onRowClick ? 'cursor-pointer' : ''}
               onClick={() => onRowClick?.(tender.id)}
             >
               {/* 1. Tender & Client */}
-              <TableCell className="py-3.5">
-                <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-xl bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                    <Building2 className="h-4.5 w-4.5 text-muted-foreground" />
+              <TableCell className="whitespace-normal">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <div className="font-semibold text-foreground text-sm truncate">
-                      {tender.client?.name || 'Unknown Client'}
+                    <div
+                      className="font-bold text-foreground text-xs truncate tracking-tight"
+                      title={tender.client?.name ? formatClientName(tender.client.name) : 'Unknown Client'}
+                    >
+                      {tender.client?.name ? formatClientName(tender.client.name) : 'Unknown Client'}
                     </div>
                     <Link
                       href={`/tenders/${tender.id}`}
@@ -368,18 +492,23 @@ export function TendersTable({
                 </div>
               </TableCell>
 
-              {/* 2. Contact Details (Phone / Email) */}
-              <TableCell className="py-3.5">
+              {/* 2. Description (with Copy button) */}
+              <TableCell>
+                <DescriptionCell description={tender.description} />
+              </TableCell>
+
+              {/* 3. Contact Details (Phone / Email) */}
+              <TableCell>
                 <ContactDetailsCell tender={tender} />
               </TableCell>
 
-              {/* 3. Status */}
-              <TableCell className="py-3.5">
-                <StatusBadge domain="tender" status={tender.status} />
+              {/* 4. Status & Value */}
+              <TableCell>
+                <StatusValueCell tender={tender} />
               </TableCell>
 
-              {/* 4. Validity & Deadlines (High-Visibility POP Badge) */}
-              <TableCell className="py-3.5">
+              {/* 5. Deadline & Validity */}
+              <TableCell>
                 <ValidityDeadlineCell tender={tender} />
               </TableCell>
             </TableRow>

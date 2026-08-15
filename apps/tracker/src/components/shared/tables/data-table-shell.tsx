@@ -41,7 +41,7 @@ const EMPTY_ICONS = {
 
 interface DataTableShellProps {
   /* ── Header ── */
-  title: string;
+  title?: string;
   /** Optional action button in header */
   actionLabel?: string;
   actionHref?: string;
@@ -255,7 +255,7 @@ export function DataTableShell({
         {showContent && (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden md:block">
               {children}
             </div>
 

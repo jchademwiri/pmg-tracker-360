@@ -5,6 +5,7 @@ import { Download, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { formatClientName } from '@/lib/format';
 
 type ClientOption = { id: string; name: string };
 
@@ -100,7 +101,11 @@ export function ClientTenderReportButtons({ clients }: { clients: ClientOption[]
         aria-label="Select client for tender report"
       >
         <option value="">Select client...</option>
-        {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
+        {clients.map((client) => (
+          <option key={client.id} value={client.id}>
+            {formatClientName(client.name)}
+          </option>
+        ))}
       </select>
       <div className="grid grid-cols-2 gap-2">
         <Button type="button" onClick={() => handleExport('xlsx')} disabled={format !== null || clients.length === 0}>

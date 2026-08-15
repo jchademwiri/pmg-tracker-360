@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { Client } from '@pmg/db/schema';
 import Link from 'next/link';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDate, formatDateTime, formatCurrency, formatClientName } from '@/lib/format';
 
 interface ClientDetailsProps {
   client: Client;
@@ -150,7 +150,7 @@ export function ClientDetails({
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Clients
           </Button>
-          <h1 className="text-xl font-bold">{client.name}</h1>
+          <h1 className="text-xl font-bold">{formatClientName(client.name)}</h1>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -203,7 +203,7 @@ export function ClientDetails({
                 <label className="text-sm font-medium text-muted-foreground">
                   Client Name
                 </label>
-                <p className="text-lg font-medium">{client.name}</p>
+                <p className="text-lg font-medium">{formatClientName(client.name)}</p>
               </div>
 
               {client.notes ? (
@@ -356,8 +356,7 @@ export function ClientDetails({
                           <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                             {tender.value && (
                               <span>
-                                Value: R{' '}
-                                {Number(tender.value).toLocaleString()}
+                                Value: {formatCurrency(tender.value)}
                               </span>
                             )}
                             {tender.submissionDate && (
@@ -438,8 +437,7 @@ export function ClientDetails({
                           <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                             {proj.awardValue && (
                               <span>
-                                Award: R{' '}
-                                {Number(proj.awardValue).toLocaleString()}
+                                Award: {formatCurrency(proj.awardValue)}
                               </span>
                             )}
                             {proj.contractStartDate && (

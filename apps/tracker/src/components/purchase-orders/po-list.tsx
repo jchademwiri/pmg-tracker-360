@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
-  Search,
-  Plus,
   MoreHorizontalIcon,
+  Building2,
   Package,
+  Calendar,
+  FolderKanban,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/ui/status-badge';
 import {
   MobileCard,
@@ -19,10 +19,6 @@ import {
   MobileCardGrid,
   MobileCardList,
 } from '@/components/ui/mobile-card';
-import {
-  MobileFilterDrawer,
-  MobileFilterField,
-} from '@/components/ui/mobile-filter-drawer';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -49,20 +45,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { DataTableShell } from '@/components/shared/tables/data-table-shell';
+import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
 
 import {
-  getPurchaseOrders,
   deletePurchaseOrder,
 } from '@/server/purchase-orders';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { formatCurrency, formatDate, formatClientName, toTitleCase } from '@/lib/format';
 import Link from 'next/link';
 
 interface PurchaseOrderWithProject {
@@ -94,15 +83,14 @@ interface POListProps {
   suppliers?: string[];
 }
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'open', label: 'Open' },
-  { value: 'sent', label: 'Sent' },
-  { value: 'partially_delivered', label: 'Partially Delivered' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'disputed', label: 'Disputed' },
+const PO_STATUS_TABS = [
+  { id: 'all', label: 'All POs' },
+  { id: 'open', label: 'Open' },
+  { id: 'sent', label: 'Sent' },
+  { id: 'partially_delivered', label: 'Partial Delivery' },
+  { id: 'delivered', label: 'Delivered' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'cancelled', label: 'Cancelled' },
 ];
 
 export function POList({
@@ -138,20 +126,6 @@ export function POList({
   const totalPages = Math.ceil(totalCount / itemsPerPage);
   const isLoading = isPending;
 
-  const [draftStatus, setDraftStatus] = useState(statusFilter);
-  const [draftSupplier, setDraftSupplier] = useState(supplierFilter);
-  const [draftProject, setDraftProject] = useState(projectFilter);
-  const [draftStartDate, setDraftStartDate] = useState(startDate);
-  const [draftEndDate, setDraftEndDate] = useState(endDate);
-
-  useEffect(() => {
-    setDraftStatus(statusFilter);
-    setDraftSupplier(supplierFilter);
-    setDraftProject(projectFilter);
-    setDraftStartDate(startDate);
-    setDraftEndDate(endDate);
-  }, [statusFilter, supplierFilter, projectFilter, startDate, endDate]);
-
   const applyFilters = useCallback((updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([key, value]) => {
@@ -161,57 +135,43 @@ export function POList({
         params.set(key, value);
       }
     });
-    if (!updates.page) {
-      params.delete('page');
+    if (!('page' in updates)) {
+      params.set('page', '1');
     }
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
   }, [searchParams, router, pathname]);
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      const currentSearch = searchParams.get('search') || '';
-      if (searchQuery !== currentSearch) {
-        applyFilters({ search: searchQuery });
-      }
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, searchParams, applyFilters]);
-
-  const handleStatusFilter = (status: string) => applyFilters({ status });
-  const handleSupplierFilter = (supplier: string) => applyFilters({ supplier });
-  const handleProjectFilter = (projId: string) => applyFilters({ projectId: projId });
-  const handleStartDateChange = (date: string) => applyFilters({ startDate: date });
-  const handleEndDateChange = (date: string) => applyFilters({ endDate: date });
-  const handlePageChange = (page: number) => applyFilters({ page: page.toString() });
-
-  const handleApplyMobileFilters = () => {
-    applyFilters({
-      status: draftStatus,
-      supplier: draftSupplier,
-      projectId: draftProject,
-      startDate: draftStartDate,
-      endDate: draftEndDate,
-    });
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    applyFilters({ search: query || null });
   };
 
-  const handleClearMobileFilters = () => {
-    setDraftStatus('all');
-    setDraftSupplier('all');
-    setDraftProject('all');
-    setDraftStartDate('');
-    setDraftEndDate('');
-    applyFilters({ status: null, supplier: null, projectId: null, startDate: null, endDate: null });
+  const handleStatusFilter = (status: string) => {
+    applyFilters({ status: status === 'all' ? null : status });
+  };
+
+  const handleSupplierFilter = (supplier: string) => {
+    applyFilters({ supplier: supplier === 'all' ? null : supplier });
+  };
+
+  const handleProjectFilter = (projId: string) => {
+    applyFilters({ projectId: projId === 'all' ? null : projId });
+  };
+
+  const handlePageChange = (page: number) => {
+    applyFilters({ page: page.toString() });
   };
 
   const confirmDeletePO = async () => {
     if (!deletePOId) return;
+
     startTransition(async () => {
       const result = await deletePurchaseOrder(organizationId, deletePOId);
       if (result.success) {
+        toast.success('Purchase order deleted successfully');
         router.refresh();
-        toast.success('Purchase order deleted');
       } else {
         toast.error(result.error || 'Failed to delete purchase order');
       }
@@ -219,230 +179,136 @@ export function POList({
     });
   };
 
-  const hasActiveFilters = statusFilter !== 'all' || supplierFilter !== 'all' || projectFilter !== 'all' || !!startDate || !!endDate;
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{ key: string; label: string; value: string; onRemove: () => void }> = [];
+    if (statusFilter !== 'all') {
+      const tab = PO_STATUS_TABS.find(t => t.id === statusFilter);
+      chips.push({
+        key: 'status',
+        label: 'Status',
+        value: tab?.label || statusFilter,
+        onRemove: () => handleStatusFilter('all'),
+      });
+    }
+    if (supplierFilter !== 'all') {
+      chips.push({
+        key: 'supplier',
+        label: 'Supplier',
+        value: formatClientName(supplierFilter),
+        onRemove: () => handleSupplierFilter('all'),
+      });
+    }
+    if (projectFilter !== 'all') {
+      const project = projects.find(p => p.id === projectFilter);
+      chips.push({
+        key: 'project',
+        label: 'Project',
+        value: project ? project.projectNumber.toUpperCase() : projectFilter,
+        onRemove: () => handleProjectFilter('all'),
+      });
+    }
+    if (startDate || endDate) {
+      chips.push({
+        key: 'date',
+        label: 'Date Range',
+        value: `${startDate || 'Start'} to ${endDate || 'Now'}`,
+        onRemove: () => applyFilters({ startDate: null, endDate: null }),
+      });
+    }
+    if (searchQuery) {
+      chips.push({
+        key: 'search',
+        label: 'Search',
+        value: `"${searchQuery}"`,
+        onRemove: () => handleSearch(''),
+      });
+    }
+    return chips;
+  }, [statusFilter, supplierFilter, projectFilter, startDate, endDate, searchQuery, projects, applyFilters]);
 
-  const activeFilterChips = [
-    ...(statusFilter !== 'all' ? [{ key: 'status', label: 'Status', value: STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter }] : []),
-    ...(supplierFilter !== 'all' ? [{ key: 'supplier', label: 'Supplier', value: supplierFilter }] : []),
-    ...(projectFilter !== 'all' && !projectId ? [{ key: 'projectId', label: 'Project', value: projects.find(p => p.id === projectFilter)?.projectNumber?.toUpperCase() || projectFilter }] : []),
-    ...(searchQuery ? [{ key: 'search', label: 'Search', value: searchQuery }] : []),
-  ];
+  const facetedFilters = useMemo(() => {
+    const filtersList = [];
+    if (!projectId && projects.length > 0) {
+      filtersList.push({
+        id: 'project',
+        placeholder: 'All Projects',
+        options: [
+          { value: 'all', label: 'All Projects' },
+          ...projects.map((p) => ({
+            value: p.id,
+            label: p.projectNumber.toUpperCase(),
+          })),
+        ],
+        value: projectFilter,
+        onChange: handleProjectFilter,
+        width: 'w-[190px]',
+      });
+    }
+    if (suppliers.length > 0) {
+      filtersList.push({
+        id: 'supplier',
+        placeholder: 'All Suppliers',
+        icon: Building2,
+        options: [
+          { value: 'all', label: 'All Suppliers' },
+          ...suppliers.map((s) => ({
+            value: s,
+            label: formatClientName(s),
+          })),
+        ],
+        value: supplierFilter,
+        onChange: handleSupplierFilter,
+        width: 'w-[190px]',
+      });
+    }
+    return filtersList;
+  }, [projectId, projects, projectFilter, suppliers, supplierFilter]);
+
+  const hasActiveFilters = activeFilterChips.length > 0;
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* Universal Compact DataTableToolbar */}
+      <DataTableToolbar
+        tabs={PO_STATUS_TABS}
+        activeTab={statusFilter}
+        onTabChange={handleStatusFilter}
+        searchValue={searchQuery}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search by PO number, supplier, or description..."
+        facetedFilters={facetedFilters}
+        activeFilters={activeFilterChips}
+        onClearAllFilters={() => {
+          applyFilters({
+            search: null,
+            status: null,
+            supplier: null,
+            projectId: null,
+            startDate: null,
+            endDate: null,
+          });
+        }}
+        mobileDrawerTitle="Filter Purchase Orders"
+      />
+
       <DataTableShell
-        title="Purchase Orders"
         entityLabel="purchase orders"
         totalCount={totalCount}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         dataLength={pos.length}
-        searchPlaceholder="Search by PO number, supplier, or description..."
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
         isLoading={isLoading}
-        activeFilters={hasActiveFilters ? activeFilterChips : undefined}
-        onRemoveFilter={(key) => {
-          if (key === 'status') applyFilters({ status: null });
-          if (key === 'supplier') applyFilters({ supplier: null });
-          if (key === 'projectId') applyFilters({ projectId: null });
-          if (key === 'search') { setSearchQuery(''); applyFilters({ search: null }); }
-        }}
-        onClearFilters={() => { setSearchQuery(''); handleClearMobileFilters(); }}
         emptyState={{
           type: searchQuery || hasActiveFilters ? 'no-results' : 'empty',
-          icon: 'file',
+          icon: 'package',
           title: searchQuery || hasActiveFilters ? 'No purchase orders found' : 'No purchase orders yet',
           description: searchQuery || hasActiveFilters
-            ? 'No purchase orders match your search criteria.'
+            ? 'No purchase orders match your filter criteria.'
             : 'Get started by creating your first purchase order.',
           actionLabel: searchQuery || hasActiveFilters ? undefined : 'Add Purchase Order',
           actionHref: searchQuery || hasActiveFilters ? undefined : '/projects/purchase-orders/create',
         }}
-        actionLabel={pos.length > 0 ? 'Add Purchase Order' : undefined}
-        actionHref="/projects/purchase-orders/create"
-        desktopFilterBar={
-          <div className="flex flex-wrap items-center gap-2">
-            {!projectId && (
-              <Select value={projectFilter} onValueChange={handleProjectFilter}>
-                <SelectTrigger className="w-[240px]">
-                  <SelectValue placeholder="Filter by Project" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.projectNumber.toUpperCase()}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <Select value={statusFilter} onValueChange={handleStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={supplierFilter} onValueChange={handleSupplierFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by Supplier" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Suppliers</SelectItem>
-                {suppliers.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Date:</span>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => handleStartDateChange(e.target.value)}
-                className="w-[140px] h-9"
-              />
-              <span>to</span>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => handleEndDateChange(e.target.value)}
-                className="w-[140px] h-9"
-              />
-            </div>
-          </div>
-        }
-        mobileFilterBar={
-          <MobileFilterDrawer
-            activeFilterCount={hasActiveFilters ? Object.entries({ statusFilter, supplierFilter, projectFilter, startDate, endDate }).filter(([k, v]) => v !== 'all' && v !== '').length : 0}
-            onApply={handleApplyMobileFilters}
-            onClear={handleClearMobileFilters}
-            title="Filter Purchase Orders"
-          >
-            {!projectId && (
-              <MobileFilterField label="Project">
-                <Select value={draftProject} onValueChange={setDraftProject}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All Projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Projects</SelectItem>
-                    {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.projectNumber.toUpperCase()}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </MobileFilterField>
-            )}
-            <MobileFilterField label="Status">
-              <Select value={draftStatus} onValueChange={setDraftStatus}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </MobileFilterField>
-            <MobileFilterField label="Supplier">
-              <Select value={draftSupplier} onValueChange={setDraftSupplier}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Suppliers" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Suppliers</SelectItem>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </MobileFilterField>
-            <MobileFilterField label="Date From">
-              <Input type="date" value={draftStartDate} onChange={(e) => setDraftStartDate(e.target.value)} className="w-full" />
-            </MobileFilterField>
-            <MobileFilterField label="Date To">
-              <Input type="date" value={draftEndDate} onChange={(e) => setDraftEndDate(e.target.value)} className="w-full" />
-            </MobileFilterField>
-          </MobileFilterDrawer>
-        }
-      >
-        {/* Desktop Table */}
-        <Table className="w-full table-fixed">
-          <TableHeader className="bg-muted/30">
-            <TableRow className="hover:bg-transparent border-b border-border/60">
-              <TableHead className="w-[36%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">PO & Supplier</TableHead>
-              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Project</TableHead>
-              <TableHead className="w-[16%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
-              <TableHead className="w-[15%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Total Amount</TableHead>
-              <TableHead className="w-[10%] font-semibold text-xs uppercase tracking-wider text-muted-foreground">Delivery</TableHead>
-              <TableHead className="w-[7%] text-right font-semibold text-xs uppercase tracking-wider text-muted-foreground">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pos.map((po) => (
-              <TableRow
-                key={po.id}
-                className="cursor-pointer group border-b border-border/40 hover:bg-accent/40 transition-colors duration-150"
-                onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}
-              >
-                <TableCell className="py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="size-9 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
-                      <Package className="h-4.5 w-4.5 text-muted-foreground" />
-                    </div>
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <div className="font-semibold text-foreground text-sm font-mono text-sky-500 dark:text-sky-400 truncate">
-                        {po.poNumber}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {po.supplierName || 'Not specified'}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-medium">
-                    {po.project?.projectNumber.toUpperCase() || '-'}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={po.status} />
-                </TableCell>
-                <TableCell className="font-semibold text-sm">
-                  {formatCurrency(po.totalAmount)}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {formatDate(po.expectedDeliveryDate)}
-                </TableCell>
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
-                        <MoreHorizontalIcon className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}>View Details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/projects/purchase-orders/${po.id}/edit`)}>Edit PO</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setDeletePOId(po.id)} disabled={isPending}>
-                        Delete PO
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
         mobileContent={
           <MobileCardList>
             {pos.map((po) => {
@@ -454,18 +320,24 @@ export function POList({
 
               return (
                 <MobileCard key={po.id} onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}>
-                  <MobileCardHeader identifier={po.poNumber} status={po.status} actions={actions} />
+                  <MobileCardHeader
+                    identifier={po.poNumber.toUpperCase()}
+                    badge={<StatusBadge status={po.status} domain="purchaseOrder" />}
+                    actions={actions}
+                  />
                   <MobileCardBody>
+                    <h3 className="font-semibold text-foreground text-sm tracking-wide">
+                      {formatClientName(po.supplierName) || 'No Supplier'}
+                    </h3>
+                    <div className="text-sm font-mono font-bold tabular-nums text-foreground">
+                      {formatCurrency(po.totalAmount)}
+                    </div>
                     {po.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{po.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mt-1">{toTitleCase(po.description)}</p>
                     )}
                     <MobileCardGrid>
-                      <MobileCardField label="Supplier">{po.supplierName || 'Not specified'}</MobileCardField>
-                      <MobileCardField label="Project">{po.project?.projectNumber.toUpperCase() || 'Unknown'}</MobileCardField>
-                      <MobileCardField label="Total Amount">{formatCurrency(po.totalAmount)}</MobileCardField>
-                      <MobileCardField label="PO Date">{formatDate(po.poDate)}</MobileCardField>
-                      <MobileCardField label="Expected Delivery">{formatDate(po.expectedDeliveryDate)}</MobileCardField>
-                      <MobileCardField label="Created">{formatDate(po.createdAt)}</MobileCardField>
+                      <MobileCardField label="Project">{po.project?.projectNumber.toUpperCase() || 'None'}</MobileCardField>
+                      <MobileCardField label="PO Date">{po.poDate ? formatDate(po.poDate) : 'Not set'}</MobileCardField>
                     </MobileCardGrid>
                   </MobileCardBody>
                 </MobileCard>
@@ -473,14 +345,125 @@ export function POList({
             })}
           </MobileCardList>
         }
+      >
+        {/* Desktop Table with 6 balanced columns */}
+        <Table className="w-full table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[28%]">PO & Supplier</TableHead>
+              <TableHead className="w-[18%]">Project</TableHead>
+              <TableHead className="w-[14%]">Status</TableHead>
+              <TableHead className="w-[17%]">Total Amount</TableHead>
+              <TableHead className="w-[16%]">PO Date</TableHead>
+              <TableHead className="w-[7%] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pos.map((po) => (
+              <TableRow
+                key={po.id}
+                className="cursor-pointer"
+                onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}
+              >
+                {/* 1. PO & Supplier */}
+                <TableCell className="whitespace-normal">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="font-bold text-foreground text-xs truncate tracking-tight">
+                        {formatClientName(po.supplierName) || 'No Supplier'}
+                      </div>
+                      <div className="font-mono font-bold text-xs text-sky-400 truncate">
+                        {po.poNumber.toUpperCase()}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+
+                {/* 2. Project Link */}
+                <TableCell>
+                  <div className="text-xs">
+                    {po.project ? (
+                      <Link
+                        href={`/projects/${po.project.id}`}
+                        className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 hover:underline font-mono font-bold transition-colors truncate"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FolderKanban className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{po.project.projectNumber.toUpperCase()}</span>
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </div>
+                </TableCell>
+
+                {/* 3. Status */}
+                <TableCell>
+                  <StatusBadge status={po.status} domain="purchaseOrder" />
+                </TableCell>
+
+                {/* 4. Total Amount */}
+                <TableCell>
+                  <span className="text-xs font-mono font-bold tabular-nums text-foreground">
+                    {formatCurrency(po.totalAmount)}
+                  </span>
+                </TableCell>
+
+                {/* 5. PO Date */}
+                <TableCell>
+                  {po.poDate ? (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span>{formatDate(po.poDate)}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
+
+                {/* 6. Actions */}
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
+                        <MoreHorizontalIcon className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => router.push(`/projects/purchase-orders/${po.id}`)}>
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(`/projects/purchase-orders/${po.id}/edit`)}>
+                        Edit PO
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setDeletePOId(po.id)}
+                        variant="destructive"
+                        disabled={isPending}
+                      >
+                        Delete PO
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </DataTableShell>
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletePOId} onOpenChange={(open) => !open && setDeletePOId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Purchase Order</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the purchase order and cannot be undone.
+              Are you sure you want to delete this purchase order? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -491,6 +474,6 @@ export function POList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -15,7 +15,9 @@ import {
   MobileFilterDrawer,
   MobileFilterField,
 } from '@/components/ui/mobile-filter-drawer';
-import { X, Search, Filter } from 'lucide-react';
+import { X, Search, Building2, ArrowUpDown, RotateCcw, AlertTriangle } from 'lucide-react';
+import { formatClientName } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export interface TenderFilters {
   search: string;
@@ -32,38 +34,43 @@ export interface TendersSearchFiltersProps {
   className?: string;
 }
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Status' },
-  { value: 'closing_soon', label: 'Closing Soon' },
-  { value: 'under_preparation', label: 'Under Preparation' },
-  { value: 'awaiting_results', label: 'Awaiting Results' },
-  { value: 'open', label: 'Open' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'evaluation', label: 'Evaluation' },
-  { value: 'awarded', label: 'Awarded to Convert' },
-  { value: 'lost', label: 'Lost / Rejected' },
-];
-
 const QUICK_VIEWS = [
   { value: 'all', label: 'All' },
   { value: 'closing_soon', label: 'Closing Soon' },
   { value: 'under_preparation', label: 'Under Preparation' },
   { value: 'awaiting_results', label: 'Awaiting Results' },
+  {
+    value: 'validity_expired_uncontacted',
+    label: 'Needs Follow-up',
+    icon: AlertTriangle,
+    isAlert: true,
+  },
   { value: 'awarded', label: 'Awarded to Convert' },
   { value: 'lost', label: 'Lost / Rejected' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'createdAt', label: 'Date Created' },
-  { value: 'tenderNumber', label: 'Tender Number' },
-  { value: 'submissionDate', label: 'Closing Date' },
-  { value: 'status', label: 'Status' },
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'closing_soon', label: 'Closing Soon' },
+  { value: 'under_preparation', label: 'Under Preparation' },
+  { value: 'awaiting_results', label: 'Awaiting Results' },
+  { value: 'validity_expired_uncontacted', label: 'Needs Follow-up (Expired Validity)' },
+  { value: 'open', label: 'Open' },
+  { value: 'evaluation', label: 'Evaluation' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'awarded', label: 'Awarded to Convert' },
+  { value: 'lost', label: 'Lost / Rejected' },
 ];
 
-const SORT_ORDER_OPTIONS = [
-  { value: 'desc', label: 'Newest First' },
-  { value: 'asc', label: 'Oldest First' },
-];
+const SORT_PRESETS = [
+  { value: 'submissionDate:asc', label: 'Closing Date (Soonest first)', sortBy: 'submissionDate', sortOrder: 'asc' },
+  { value: 'submissionDate:desc', label: 'Closing Date (Latest first)', sortBy: 'submissionDate', sortOrder: 'desc' },
+  { value: 'createdAt:desc', label: 'Date Created (Newest first)', sortBy: 'createdAt', sortOrder: 'desc' },
+  { value: 'createdAt:asc', label: 'Date Created (Oldest first)', sortBy: 'createdAt', sortOrder: 'asc' },
+  { value: 'tenderNumber:asc', label: 'Tender Number (A-Z)', sortBy: 'tenderNumber', sortOrder: 'asc' },
+  { value: 'tenderNumber:desc', label: 'Tender Number (Z-A)', sortBy: 'tenderNumber', sortOrder: 'desc' },
+  { value: 'status:asc', label: 'Status (A-Z)', sortBy: 'status', sortOrder: 'asc' },
+] as const;
 
 export function TendersSearchFilters({
   filters: controlledFilters,
@@ -80,8 +87,22 @@ export function TendersSearchFilters({
   });
   const [draftMobileFilters, setDraftMobileFilters] =
     useState<TenderFilters | null>(null);
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const filters = controlledFilters ?? internalFilters;
   const mobileFilters = draftMobileFilters ?? filters;
+
+  // Keyboard shortcut (Cmd+K / Ctrl+K or /) to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleFilterChange = useCallback(
     (newFilters: Partial<TenderFilters>) => {
@@ -113,19 +134,20 @@ export function TendersSearchFilters({
     [handleFilterChange]
   );
 
-  const handleSortByChange = useCallback(
-    (value: string) => {
-      handleFilterChange({ sortBy: value as TenderFilters['sortBy'] });
+  const handleCombinedSortChange = useCallback(
+    (sortKey: string) => {
+      const matched = SORT_PRESETS.find((s) => s.value === sortKey);
+      if (matched) {
+        handleFilterChange({
+          sortBy: matched.sortBy as TenderFilters['sortBy'],
+          sortOrder: matched.sortOrder as TenderFilters['sortOrder'],
+        });
+      }
     },
     [handleFilterChange]
   );
 
-  const handleSortOrderChange = useCallback(
-    (value: string) => {
-      handleFilterChange({ sortOrder: value as TenderFilters['sortOrder'] });
-    },
-    [handleFilterChange]
-  );
+  const currentSortValue = `${filters.sortBy}:${filters.sortOrder}`;
 
   const clearFilters = useCallback(() => {
     const clearedFilters: TenderFilters = {
@@ -146,7 +168,7 @@ export function TendersSearchFilters({
       active.push({
         key: 'search',
         label: 'Search',
-        value: filters.search,
+        value: `"${filters.search}"`,
       });
     }
 
@@ -164,7 +186,7 @@ export function TendersSearchFilters({
       active.push({
         key: 'client',
         label: 'Client',
-        value: client?.name || filters.clientId,
+        value: client ? formatClientName(client.name) : filters.clientId,
       });
     }
 
@@ -174,258 +196,254 @@ export function TendersSearchFilters({
   const hasActiveFilters = activeFilters.length > 0;
   const activeFilterCount = activeFilters.length;
 
-  const selectQuickView = useCallback(
-    (status: string) => {
-      handleFilterChange({ status, clientId: 'all' });
-    },
-    [handleFilterChange]
-  );
-
   return (
-    <div className={`space-y-4 ${className}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        {QUICK_VIEWS.map((view) => (
-          <Button
-            key={view.value}
-            type="button"
-            variant={filters.status === view.value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => selectQuickView(view.value)}
-            className="h-8"
-          >
-            {view.label}
-          </Button>
-        ))}
+    <div className={cn('space-y-3', className)}>
+      {/* Level 1: Compact Segmented Status Tabs */}
+      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+        <nav
+          className="inline-flex items-center gap-1 p-1 bg-muted/40 border border-border/50 rounded-lg text-xs shrink-0"
+          aria-label="Tender Status Filter Tabs"
+        >
+          {QUICK_VIEWS.map((view) => {
+            const isActive = filters.status === view.value;
+            const ViewIcon = (view as any).icon;
+            const isAlert = Boolean((view as any).isAlert);
+            return (
+              <button
+                key={view.value}
+                type="button"
+                onClick={() => handleStatusChange(view.value)}
+                className={cn(
+                  'px-3 py-1.5 rounded-md font-medium transition-all duration-150 text-xs whitespace-nowrap cursor-pointer flex items-center gap-1.5',
+                  isActive
+                    ? 'bg-background text-foreground shadow-xs font-semibold border border-border/70 dark:border-border/60'
+                    : isAlert
+                      ? 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                )}
+              >
+                {ViewIcon && <ViewIcon className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                <span>{view.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col lg:flex-row lg:flex-wrap gap-4">
+      {/* Level 2: Compact Search & Control Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4 pointer-events-none" />
           <Input
+            ref={searchInputRef}
             placeholder="Search tenders by number or description..."
             value={filters.search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10"
+            className="h-9 pl-8 pr-14 text-xs bg-muted/20 border-border/60 hover:border-border focus:bg-background transition-colors"
           />
+          {filters.search ? (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-sm transition-colors cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <kbd className="hidden sm:inline-flex items-center absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none h-4.5 select-none rounded border border-border/60 bg-muted/50 px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              ⌘K
+            </kbd>
+          )}
         </div>
 
-        <div className="hidden gap-4 lg:flex">
-          {/* Status Filter */}
-          <Select value={filters.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[170px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
+        {/* Desktop Dropdowns */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
           {/* Client Filter */}
           <Select value={filters.clientId} onValueChange={handleClientChange}>
-            <SelectTrigger className="w-[170px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Client" />
+            <SelectTrigger className="h-9 w-[180px] text-xs bg-muted/20 border-border/60 hover:border-border">
+              <Building2 className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="All Clients" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Clients</SelectItem>
+            <SelectContent className="max-h-72">
+              <SelectItem value="all" className="text-xs font-medium">
+                All Clients
+              </SelectItem>
               {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name}
+                <SelectItem key={client.id} value={client.id} className="text-xs">
+                  {formatClientName(client.name)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {/* Sort By */}
-          <Select value={filters.sortBy} onValueChange={handleSortByChange}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Sort by" />
+          {/* Consolidated Sort */}
+          <Select value={currentSortValue} onValueChange={handleCombinedSortChange}>
+            <SelectTrigger className="h-9 w-[210px] text-xs bg-muted/20 border-border/60 hover:border-border">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Sort order" />
             </SelectTrigger>
             <SelectContent>
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Sort Order */}
-          <Select value={filters.sortOrder} onValueChange={handleSortOrderChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Order" />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_ORDER_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              {SORT_PRESETS.map((preset) => (
+                <SelectItem key={preset.value} value={preset.value} className="text-xs">
+                  {preset.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <MobileFilterDrawer
-          activeFilterCount={activeFilterCount}
-          title="Filter Tenders"
-          onApply={() => {
-            if (draftMobileFilters) {
-              handleFilterChange(draftMobileFilters);
-            }
-          }}
-          onClear={() => {
-            const clearedFilters: TenderFilters = {
-              search: filters.search,
-              status: 'all',
-              clientId: 'all',
-              sortBy: 'createdAt',
-              sortOrder: 'desc',
-            };
-            setDraftMobileFilters(clearedFilters);
-            handleFilterChange(clearedFilters);
-          }}
-        >
-          <MobileFilterField label="Status">
-            <Select
-              value={mobileFilters.status}
-              onValueChange={(status) =>
-                setDraftMobileFilters({ ...mobileFilters, status })
+        {/* Mobile Filter Drawer Trigger */}
+        <div className="sm:hidden">
+          <MobileFilterDrawer
+            activeFilterCount={activeFilterCount}
+            title="Filter Tenders"
+            onApply={() => {
+              if (draftMobileFilters) {
+                handleFilterChange(draftMobileFilters);
               }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </MobileFilterField>
+            }}
+            onClear={() => {
+              const clearedFilters: TenderFilters = {
+                search: filters.search,
+                status: 'all',
+                clientId: 'all',
+                sortBy: 'createdAt',
+                sortOrder: 'desc',
+              };
+              setDraftMobileFilters(clearedFilters);
+              handleFilterChange(clearedFilters);
+            }}
+          >
+            <MobileFilterField label="Status">
+              <Select
+                value={mobileFilters.status}
+                onValueChange={(status) =>
+                  setDraftMobileFilters({ ...mobileFilters, status })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
 
-          <MobileFilterField label="Client">
-            <Select
-              value={mobileFilters.clientId}
-              onValueChange={(clientId) =>
-                setDraftMobileFilters({ ...mobileFilters, clientId })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </MobileFilterField>
+            <MobileFilterField label="Client">
+              <Select
+                value={mobileFilters.clientId}
+                onValueChange={(clientId) =>
+                  setDraftMobileFilters({ ...mobileFilters, clientId })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Client" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {formatClientName(client.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
 
-          <MobileFilterField label="Sort by">
-            <Select
-              value={mobileFilters.sortBy}
-              onValueChange={(sortBy) =>
-                setDraftMobileFilters({
-                  ...mobileFilters,
-                  sortBy: sortBy as TenderFilters['sortBy'],
-                })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </MobileFilterField>
+            <MobileFilterField label="Sort order">
+              <Select
+                value={`${mobileFilters.sortBy}:${mobileFilters.sortOrder}`}
+                onValueChange={(val) => {
+                  const matched = SORT_PRESETS.find((s) => s.value === val);
+                  if (matched) {
+                    setDraftMobileFilters({
+                      ...mobileFilters,
+                      sortBy: matched.sortBy as TenderFilters['sortBy'],
+                      sortOrder: matched.sortOrder as TenderFilters['sortOrder'],
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sort order" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </MobileFilterField>
+          </MobileFilterDrawer>
+        </div>
 
-          <MobileFilterField label="Order">
-            <Select
-              value={mobileFilters.sortOrder}
-              onValueChange={(sortOrder) =>
-                setDraftMobileFilters({
-                  ...mobileFilters,
-                  sortOrder: sortOrder as TenderFilters['sortOrder'],
-                })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Order" />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_ORDER_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </MobileFilterField>
-        </MobileFilterDrawer>
-
-        {/* Clear Filters Button */}
+        {/* Clear Filters (Desktop Micro-Button) */}
         {hasActiveFilters && (
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={clearFilters}
-            className="whitespace-nowrap cursor-pointer"
+            className="hidden sm:inline-flex h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+            title="Reset all filters"
           >
-            Clear Filters
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+            Reset
           </Button>
         )}
-
-        {/* Active Filters Display */}
-        {hasActiveFilters && (
-          <div className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1">
-            <span className="text-sm text-muted-foreground">
-              Active filters:
-            </span>
-            {activeFilters.map((filter) => (
-              <Badge
-                key={filter.key}
-                variant="secondary"
-                className="flex items-center gap-1"
-              >
-                <span className="font-medium">{filter.label}:</span>
-                <span>{filter.value}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 ml-1 hover:bg-transparent cursor-pointer"
-                  onClick={() => {
-                    if (filter.key === 'search') {
-                      handleFilterChange({ search: '' });
-                    } else if (filter.key === 'status') {
-                      handleFilterChange({ status: 'all' });
-                    } else if (filter.key === 'client') {
-                      handleFilterChange({ clientId: 'all' });
-                    }
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Level 3: Active Filter Chips */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <span className="text-[11px] font-medium text-muted-foreground mr-1">
+            Filtered by:
+          </span>
+          {activeFilters.map((filter) => (
+            <Badge
+              key={filter.key}
+              variant="secondary"
+              className="h-6 px-2 py-0 text-[11px] font-normal bg-muted/60 hover:bg-muted text-foreground border border-border/50 flex items-center gap-1.5 rounded-md"
+            >
+              <span className="font-semibold text-muted-foreground">
+                {filter.label}:
+              </span>
+              <span className="truncate max-w-[140px]">{filter.value}</span>
+              <button
+                type="button"
+                className="hover:text-destructive focus:outline-none cursor-pointer rounded-full p-0.5"
+                onClick={() => {
+                  if (filter.key === 'search') {
+                    handleFilterChange({ search: '' });
+                  } else if (filter.key === 'status') {
+                    handleFilterChange({ status: 'all' });
+                  } else if (filter.key === 'client') {
+                    handleFilterChange({ clientId: 'all' });
+                  }
+                }}
+                aria-label={`Remove ${filter.label} filter`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-[11px] text-muted-foreground hover:text-foreground underline ml-1 cursor-pointer transition-colors"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
     </div>
   );
 }

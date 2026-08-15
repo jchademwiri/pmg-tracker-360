@@ -40,7 +40,7 @@ import {
   verifyDeliveryNote,
   voidDeliveryNote,
 } from '@/server/purchase-orders';
-import { formatCurrency, formatDate, formatDateTime } from '@/lib/format';
+import { formatCurrency, formatDate, formatDateTime, toTitleCase } from '@/lib/format';
 import { MobileActionBar, MobileActionBarSpacer } from '@/components/ui/mobile-action-bar';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -470,64 +470,62 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="pl-6 w-[12%]">Item #</TableHead>
+                        <TableHead className="w-[30%]">Description</TableHead>
+                        <TableHead className="w-[11%] text-right">Ordered</TableHead>
+                        <TableHead className="w-[11%] text-right">Delivered</TableHead>
+                        <TableHead className="w-[11%] text-right">Outstanding</TableHead>
+                        <TableHead className="w-[12%] text-right">Unit Price</TableHead>
+                        <TableHead className="pr-6 w-[13%]">Progress</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(!po.lineItems || po.lineItems.length === 0) ? (
                         <TableRow>
-                          <TableHead className="pl-6 w-[10%]">Item #</TableHead>
-                          <TableHead className="w-[25%]">Description</TableHead>
-                          <TableHead className="w-[12%] text-right">Ordered</TableHead>
-                          <TableHead className="w-[12%] text-right">Delivered</TableHead>
-                          <TableHead className="w-[12%] text-right">Outstanding</TableHead>
-                          <TableHead className="w-[14%] text-right">Unit Price</TableHead>
-                          <TableHead className="pr-6 w-[15%]">Progress</TableHead>
+                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground italic">
+                            No line items associated with this purchase order.
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(!po.lineItems || po.lineItems.length === 0) ? (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground italic">
-                              No line items associated with this purchase order.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          po.lineItems.map((item) => {
-                            const ordered = parseFloat(item.quantity) || 0;
-                            const delivered = po.deliveryNotes?.reduce((sum, note) => {
-                              const dItem = note.items?.find((di) => di.lineItemId === item.id);
-                              return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
-                            }, 0) || 0;
-                            const outstanding = Math.max(0, ordered - delivered);
-                            const percentage = ordered > 0 ? Math.min(100, (delivered / ordered) * 100) : 0;
-                            
-                            return (
-                              <TableRow key={item.id}>
-                                <TableCell className="pl-6 font-semibold text-blue-600">{item.itemNumber}</TableCell>
-                                <TableCell className="font-medium">{item.description}</TableCell>
-                                <TableCell className="text-right font-medium">{ordered}</TableCell>
-                                <TableCell className="text-right text-emerald-600 font-semibold">{delivered}</TableCell>
-                                <TableCell className={`text-right font-semibold ${outstanding > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{outstanding}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                                <TableCell className="pr-6">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 bg-secondary h-2.5 rounded-full overflow-hidden">
-                                      <div 
-                                        className={`h-full rounded-full transition-all duration-300 ${percentage >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                                        style={{ width: `${percentage}%` }}
-                                      />
-                                    </div>
-                                    <span className="text-xs font-semibold text-muted-foreground w-8 text-right">
-                                      {Math.round(percentage)}%
-                                    </span>
+                      ) : (
+                        po.lineItems.map((item) => {
+                          const ordered = parseFloat(item.quantity) || 0;
+                          const delivered = po.deliveryNotes?.reduce((sum, note) => {
+                            const dItem = note.items?.find((di) => di.lineItemId === item.id);
+                            return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
+                          }, 0) || 0;
+                          const outstanding = Math.max(0, ordered - delivered);
+                          const percentage = ordered > 0 ? Math.min(100, (delivered / ordered) * 100) : 0;
+                          
+                          return (
+                            <TableRow key={item.id} className="cursor-default">
+                              <TableCell className="pl-6 font-mono font-bold text-xs text-sky-400">{item.itemNumber.toUpperCase()}</TableCell>
+                              <TableCell className="font-medium text-foreground text-xs">{toTitleCase(item.description)}</TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">{ordered}</TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-emerald-400">{delivered}</TableCell>
+                              <TableCell className={`text-right font-mono font-bold text-xs tabular-nums ${outstanding > 0 ? 'text-amber-400' : 'text-muted-foreground'}`}>{outstanding}</TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">{formatCurrency(item.unitPrice)}</TableCell>
+                              <TableCell className="pr-6">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 bg-zinc-800 h-1.5 rounded-full overflow-hidden border border-white/5">
+                                    <div 
+                                      className={`h-full rounded-full transition-all duration-300 ${percentage >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                      style={{ width: `${percentage}%` }}
+                                    />
                                   </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                                  <span className="text-xs font-mono font-bold tabular-nums text-muted-foreground w-8 text-right">
+                                    {Math.round(percentage)}%
+                                  </span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
                 </CardContent>
               </Card>
 

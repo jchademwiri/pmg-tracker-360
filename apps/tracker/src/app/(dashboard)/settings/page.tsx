@@ -185,12 +185,12 @@ export default async function SettingsPage() {
               <div>• Change password and security</div>
               <div>• Manage email preferences</div>
             </div>
-            <Link href="/settings/profile">
-              <Button type="button" className="w-full">
-                Manage Profile
+            <Button asChild className="w-full">
+              <Link href="/settings/profile" className="inline-flex items-center justify-center">
+                <span>Manage Profile</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -214,12 +214,12 @@ export default async function SettingsPage() {
               <div>• Manage team members</div>
               <div>• Configure organization settings</div>
             </div>
-            <Link href="/organization">
-              <Button type="button" className="w-full">
-                Manage Organizations
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/organization" className="inline-flex items-center justify-center">
+                <span>Manage Organizations</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -242,12 +242,12 @@ export default async function SettingsPage() {
               <div>• Upgrade or change seats</div>
               <div>• Payment history & invoices</div>
             </div>
-            <Link href="/billing">
-              <Button type="button" variant="outline" className="w-full">
-                Manage Billing
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/billing" className="inline-flex items-center justify-center">
+                <span>Manage Billing</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -270,12 +270,12 @@ export default async function SettingsPage() {
               <div>• Track ticket resolutions</div>
               <div>• Access user documentation</div>
             </div>
-            <Link href="/support">
-              <Button type="button" variant="outline" className="w-full">
-                Get Support
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/support" className="inline-flex items-center justify-center">
+                <span>Get Support</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

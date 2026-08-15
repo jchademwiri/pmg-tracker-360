@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Member } from '@pmg/db/schema';
 import MembersTableAction from '@/components/members-table-action';
 import { UserPlus, AlertCircle, RefreshCw } from 'lucide-react';
+import { formatDate } from '@/lib/format';
 
 interface MembersTableProps {
   members: Member[];
@@ -288,12 +289,8 @@ export function MembersTable({
               <TableCell>
                 <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>
               </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {new Date(member.createdAt).toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
+              <TableCell className="text-xs text-muted-foreground">
+                {formatDate(member.createdAt)}
               </TableCell>
               <TableCell className="text-right">
                 <MembersTableAction

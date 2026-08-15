@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/format';
 
 export interface GroupableItem {
   id: string;
@@ -109,7 +110,7 @@ export default function MonthlyAccordionGroup({
                       <div className="flex items-center gap-3">
                         {it.valueZar !== undefined && (
                           <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                            R {it.valueZar.toLocaleString('en-ZA')}
+                            {formatCurrency(it.valueZar)}
                           </span>
                         )}
                         <Badge variant="outline" className="capitalize text-xs">
