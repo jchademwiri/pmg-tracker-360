@@ -254,15 +254,22 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             const entityId = mode === 'create' ? result.tender?.id : tender?.id;
 
             if (entityId) {
-              await Promise.all(
+              const uploadResults = await Promise.all(
                 files.map(async (file) => {
                   const formData = new FormData();
                   formData.append('file', file);
-                  await uploadDocument(organizationId, formData, {
+                  return await uploadDocument(organizationId, formData, {
                     tenderId: entityId,
                   });
                 })
               );
+
+              const failedUploads = uploadResults.filter((res) => !res.success);
+              if (failedUploads.length > 0) {
+                toast.warning(
+                  `Tender saved, but ${failedUploads.length} attachment(s) failed to upload: ${failedUploads[0].error || 'Upload error'}`
+                );
+              }
             }
           }
 

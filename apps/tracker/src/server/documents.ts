@@ -2,11 +2,10 @@
 
 import { db } from '@pmg/db';
 import { document, tender, tenderExtension } from '@pmg/db/schema';
-import { validateSessionAndOrg } from './utils';
-import { eq, and, desc } from 'drizzle-orm';
+import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { StorageService } from '@/lib/storage';
-
 
 interface DocumentUploadTarget {
   tenderId?: string;
@@ -34,7 +33,7 @@ export async function uploadDocument(
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      return { success: false, error: 'File size exceeds 10MB limit' };
+      return { success: false, error: 'File size exceeds 10MB limit per file' };
     }
 
     // Validate file type
@@ -51,7 +50,35 @@ export async function uploadDocument(
       'text/plain',
     ];
     if (!allowedTypes.includes(file.type)) {
-      return { success: false, error: 'File type not supported. Please upload PDF, Word, Excel, images, or text files.' };
+      return {
+        success: false,
+        error: 'File type not supported. Please upload PDF, Word, Excel, images, or text files.',
+      };
+    }
+
+    // Storage Quota Enforcement
+    const plan = await getOrganizationOwnerPlan(organizationId);
+    const maxStorageMb =
+      plan === 'enterprise'
+        ? 50000
+        : plan === 'pro'
+          ? 10000
+          : plan === 'starter'
+            ? 1000
+            : 100;
+    const maxStorageBytes = maxStorageMb * 1024 * 1024;
+
+    const storageResult = await db
+      .select({ totalSize: sql<number>`coalesce(sum(${document.size}), 0)` })
+      .from(document)
+      .where(eq(document.organizationId, organizationId));
+
+    const currentBytes = Number(storageResult[0]?.totalSize || 0);
+    if (currentBytes + file.size > maxStorageBytes) {
+      return {
+        success: false,
+        error: `Storage limit reached (${maxStorageMb} MB for ${plan.toUpperCase()} plan). Please upgrade your subscription to upload more documents.`,
+      };
     }
 
     // Read file as buffer
@@ -82,8 +109,21 @@ export async function uploadDocument(
     }
 
     // Generate a unique storage key with tender number prefix where applicable
-    const entityPrefix = target.tenderId ? 'tenders' : target.extensionId ? 'extensions' : target.projectId ? 'projects' : target.purchaseOrderId ? 'purchase-orders' : 'documents';
-    const entityId = target.tenderId || target.projectId || target.purchaseOrderId || target.extensionId || 'unknown';
+    const entityPrefix = target.tenderId
+      ? 'tenders'
+      : target.extensionId
+        ? 'extensions'
+        : target.projectId
+          ? 'projects'
+          : target.purchaseOrderId
+            ? 'purchase-orders'
+            : 'documents';
+    const entityId =
+      target.tenderId ||
+      target.projectId ||
+      target.purchaseOrderId ||
+      target.extensionId ||
+      'unknown';
     const timestamp = Date.now();
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const prefixPath = storagePrefix ? `${storagePrefix}/` : '';
@@ -92,8 +132,12 @@ export async function uploadDocument(
     // Upload to R2
     const uploadedKey = await StorageService.uploadFile(fileBuffer, storageKey, file.type);
 
+    // Generate signed URL immediately for client preview and instant download
+    const signedUrl = await StorageService.getSignedUrl(uploadedKey);
+
     // Save document record in database
     const docId = crypto.randomUUID();
+    const now = new Date();
     await db.insert(document).values({
       id: docId,
       organizationId,
@@ -106,6 +150,7 @@ export async function uploadDocument(
       purchaseOrderId: target.purchaseOrderId || null,
       extensionId: target.extensionId || null,
       uploadedBy: userId,
+      createdAt: now,
     });
 
     // Revalidate relevant paths
@@ -124,6 +169,8 @@ export async function uploadDocument(
         size: file.size,
         type: file.type,
         url: uploadedKey,
+        signedUrl,
+        createdAt: now,
       },
     };
   } catch (error: any) {
