@@ -323,6 +323,11 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
         <div className="text-[11px] text-muted-foreground pl-1">
           Lapsed: <strong className="text-foreground">{formatDate(expiryDate)}</strong>
         </div>
+        {tender.submissionDate && (
+          <div className="text-[11px] text-muted-foreground pl-1">
+            Submitted: <strong className="text-foreground/90 font-medium">{formatDate(tender.submissionDate)}</strong>
+          </div>
+        )}
       </div>
     );
   }
@@ -338,6 +343,11 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
         <div className="text-[11px] text-muted-foreground pl-1">
           Valid to: <strong className="text-foreground">{formatDate(expiryDate)}</strong>
         </div>
+        {tender.submissionDate && (
+          <div className="text-[11px] text-muted-foreground pl-1">
+            Submitted: <strong className="text-foreground/90 font-medium">{formatDate(tender.submissionDate)}</strong>
+          </div>
+        )}
       </div>
     );
   }
@@ -348,11 +358,11 @@ function ValidityDeadlineCell({ tender }: { tender: Tender }) {
       <div className="flex flex-col gap-0.5 text-xs text-left">
         <div className="font-semibold text-foreground flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span>Valid until {formatDate(expiryDate)}</span>
+          <span>Valid until <strong className="text-foreground">{formatDate(expiryDate)}</strong></span>
         </div>
         {tender.submissionDate && (
           <div className="text-muted-foreground text-[11px] pl-5">
-            Submitted: {formatDate(tender.submissionDate)}
+            Submitted: <strong className="text-foreground/90 font-medium">{formatDate(tender.submissionDate)}</strong>
           </div>
         )}
       </div>
@@ -409,7 +419,7 @@ export function TendersTable({
                 status={tender.status}
               />
               <MobileCardBody>
-                <h3 className="font-semibold text-foreground text-sm tracking-wide">
+                <h3 className="font-semibold text-foreground text-sm tracking-wide line-clamp-2 break-words">
                   {formatClientName(tender.client?.name) || 'Unknown Client'}
                 </h3>
 
@@ -474,17 +484,18 @@ export function TendersTable({
                   <div className="size-8 rounded-lg bg-accent/60 border border-border/60 text-foreground flex items-center justify-center shrink-0">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <div className="flex flex-col gap-0.5 min-w-0">
+                  <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                     <div
-                      className="font-bold text-foreground text-xs truncate tracking-tight"
+                      className="font-bold text-foreground text-xs line-clamp-2 break-words leading-tight tracking-tight"
                       title={tender.client?.name ? formatClientName(tender.client.name) : 'Unknown Client'}
                     >
                       {tender.client?.name ? formatClientName(tender.client.name) : 'Unknown Client'}
                     </div>
                     <Link
                       href={`/tenders/${tender.id}`}
-                      className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors truncate w-fit"
+                      className="text-xs font-mono font-bold text-sky-400 hover:text-sky-300 hover:underline transition-colors line-clamp-2 break-all leading-tight w-fit"
                       onClick={(event) => event.stopPropagation()}
+                      title={tender.tenderNumber.toUpperCase()}
                     >
                       {tender.tenderNumber.toUpperCase()}
                     </Link>
