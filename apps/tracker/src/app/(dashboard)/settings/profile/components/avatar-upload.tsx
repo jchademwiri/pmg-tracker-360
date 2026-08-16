@@ -20,9 +20,11 @@ import {
   Loader2,
   Check,
   Trash2,
-  AlertCircle,
+  UploadCloud,
+  ImageIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface AvatarUploadProps {
   currentImage?: string | null;
@@ -54,8 +56,9 @@ export function AvatarUpload({
 
   // Get user initials for avatar fallback
   const getInitials = (name: string) => {
-    return name
+    return (name || 'User')
       .split(' ')
+      .filter(Boolean)
       .map((n) => n[0])
       .join('')
       .toUpperCase()
@@ -72,26 +75,10 @@ export function AvatarUpload({
     }
   }, []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
-
-      if (disabled) return;
-
-      const files = e.dataTransfer.files;
-      if (files && files[0]) {
-        handleFileSelect(files[0]);
-      }
-    },
-    [disabled]
-  );
-
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = useCallback((file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error('Please select an image file (PNG, JPG, WebP, GIF)');
       return;
     }
 
@@ -108,7 +95,23 @@ export function AvatarUpload({
       setShowUploadDialog(true);
     };
     reader.readAsDataURL(file);
-  };
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+      if (disabled) return;
+
+      const files = e.dataTransfer.files;
+      if (files && files[0]) {
+        handleFileSelect(files[0]);
+      }
+    },
+    [disabled, handleFileSelect]
+  );
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,9 +128,14 @@ export function AvatarUpload({
       if (!file) return;
 
       setIsUploading(true);
-      setUploadProgress(10); // Start progress
+      setUploadProgress(20);
+
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => (prev < 80 ? prev + 15 : prev));
+      }, 200);
 
       const result = await uploadAction(file);
+      clearInterval(progressInterval);
 
       setUploadProgress(100);
       setIsUploading(false);
@@ -164,55 +172,62 @@ export function AvatarUpload({
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      {/* Current Avatar */}
+      {/* Current Avatar with Floating Camera Badge */}
       <div className="relative group">
-        <Avatar className="h-24 w-24 cursor-pointer transition-all duration-200 hover:ring-4 hover:ring-primary/20">
+        <Avatar
+          className="h-28 w-28 cursor-pointer ring-2 ring-border/80 group-hover:ring-4 group-hover:ring-primary/30 transition-all duration-200 shadow-sm"
+          onClick={() => !disabled && fileInputRef.current?.click()}
+        >
           <AvatarImage
             src={currentImage || undefined}
             alt={`Profile picture of ${userName}`}
             className="object-cover"
           />
-          <AvatarFallback className="text-lg">
+          <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
             {getInitials(userName)}
           </AvatarFallback>
         </Avatar>
 
-        {/* Upload Overlay */}
-        <div
-          className={`absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 ${
-            disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-          }`}
+        {/* Floating Quick Action Badge */}
+        <button
+          type="button"
           onClick={(e) => {
-            e.stopPropagation(); // Prevent bubbling issues
+            e.stopPropagation();
             if (!disabled) fileInputRef.current?.click();
           }}
+          disabled={disabled}
+          aria-label={`Change ${entityName.toLowerCase()}`}
+          className={cn(
+            'absolute bottom-0 right-0 p-2 rounded-full border border-border/80 bg-background/95 backdrop-blur-sm shadow-md text-foreground hover:text-primary hover:bg-muted transition-all duration-150',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
         >
-          <Camera className="h-6 w-6 text-white" />
-        </div>
+          <Camera className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled}
-          className="flex items-center space-x-2"
+          className="h-8 text-xs gap-1.5 shadow-sm"
         >
-          <Upload className="h-4 w-4" />
-          <span>Change Photo</span>
+          <Upload className="h-3.5 w-3.5" />
+          <span>Change {entityName === 'Profile picture' ? 'Photo' : 'Logo'}</span>
         </Button>
 
         {currentImage && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={handleRemoveImage}
             disabled={disabled}
-            className="flex items-center space-x-2 text-destructive hover:text-destructive"
+            className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
             <span>Remove</span>
           </Button>
         )}
@@ -222,99 +237,107 @@ export function AvatarUpload({
       <Input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
         onChange={handleFileInputChange}
         className="hidden"
         disabled={disabled}
       />
 
-      {/* Upload Dialog */}
+      {/* Upload & Circular Crop Preview Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Upload {entityName}</DialogTitle>
             <DialogDescription>
-              Choose a new {entityName.toLowerCase()}. The image will be cropped
-              to a square and resized to fit.
+              Preview how your {entityName.toLowerCase()} will appear across the workspace.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Image Preview */}
+          <div className="space-y-4 py-2">
+            {/* Circular Preview Container */}
             {previewImage && (
-              <div className="relative w-full h-48 border rounded-lg overflow-hidden bg-muted">
-                <Image
-                  src={previewImage}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                />
+              <div className="flex flex-col items-center justify-center p-6 bg-muted/20 border border-border/60 rounded-xl space-y-3">
+                <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-background shadow-lg ring-2 ring-primary/20">
+                  <Image
+                    src={previewImage}
+                    alt="Preview"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Square preview format</p>
               </div>
             )}
 
             {/* Upload Progress */}
             {isUploading && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Uploading...</span>
-                  <span>{Math.round(uploadProgress)}%</span>
+              <div className="space-y-1.5 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                <div className="flex items-center justify-between text-xs font-medium text-primary">
+                  <span className="flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Uploading...
+                  </span>
+                  <span className="font-mono">{Math.round(uploadProgress)}%</span>
                 </div>
-                <Progress value={uploadProgress} className="h-2" />
+                <Progress value={uploadProgress} className="h-1.5" />
               </div>
             )}
 
-            {/* Drag and Drop Area */}
+            {/* Drag and Drop Area inside Dialog */}
             <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+              className={cn(
+                'border-2 border-dashed rounded-xl p-5 text-center transition-all duration-200',
                 dragActive
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted-foreground/25'
-              }`}
+                  ? 'border-primary bg-primary/10 scale-[0.99] ring-2 ring-primary/20'
+                  : 'border-border/60 hover:border-primary/40 bg-muted/5'
+              )}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Drag and drop an image here, or{' '}
+              <UploadCloud className="h-6 w-6 mx-auto mb-1.5 text-muted-foreground" />
+              <p className="text-xs font-medium text-foreground">
+                Drag a new image here, or{' '}
                 <button
                   type="button"
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline font-semibold"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={disabled}
+                  disabled={disabled || isUploading}
                 >
                   browse files
                 </button>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                PNG, JPG, GIF up to 5MB
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                PNG, JPG, WebP up to 5MB
               </p>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
+              size="sm"
               onClick={handleCancelUpload}
               disabled={isUploading}
             >
               Cancel
             </Button>
             <Button
+              size="sm"
               onClick={handleConfirmUpload}
               disabled={!previewImage || isUploading}
-              className="flex items-center space-x-2"
+              className="gap-1.5"
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Uploading...</span>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <Check className="h-4 w-4" />
-                  <span>Upload</span>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Save & Apply</span>
                 </>
               )}
             </Button>
