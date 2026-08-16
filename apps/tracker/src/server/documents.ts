@@ -1,21 +1,37 @@
 'use server';
 
 import { db } from '@pmg/db';
-import { document, tender, tenderExtension } from '@pmg/db/schema';
+import {
+  document,
+  tender,
+  tenderExtension,
+  project,
+  purchaseOrder,
+  organization,
+} from '@pmg/db/schema';
 import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { StorageService } from '@/lib/storage';
 
-interface DocumentUploadTarget {
+export interface DocumentUploadTarget {
   tenderId?: string;
   projectId?: string;
   purchaseOrderId?: string;
   extensionId?: string;
+  category?:
+    | 'tender'
+    | 'briefing'
+    | 'extension'
+    | 'appointment_letter'
+    | 'contract'
+    | 'sla'
+    | 'general';
+  extensionDate?: string | Date;
 }
 
 /**
- * Upload a document and store it in R2, then save the metadata in the database.
+ * Upload a document and store it in R2 under `<org-slug>/...`, then save the metadata in the database.
  */
 export async function uploadDocument(
   organizationId: string,
@@ -85,49 +101,203 @@ export async function uploadDocument(
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // Resolve tender number for storage key prefix (for tender and extension documents)
-    let storagePrefix = '';
-    if (target.tenderId) {
+    // Resolve Organization Slug for top-level bucket folder
+    const orgRecord = await db
+      .select({ slug: organization.slug, name: organization.name })
+      .from(organization)
+      .where(eq(organization.id, organizationId))
+      .limit(1);
+
+    const orgSlug = (orgRecord[0]?.slug || orgRecord[0]?.name || organizationId)
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+
+    let finalFileName = file.name;
+    let storageKey = `${orgSlug}/documents/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+    // Naming logic based on entity target and category
+    if (target.extensionId || (target.tenderId && target.category === 'extension')) {
+      let tenderNum = 'TENDER';
+      let extensionDateStr = '';
+
+      if (target.extensionId) {
+        const ext = await db
+          .select({
+            tenderNumber: tender.tenderNumber,
+            newEvaluationDate: tenderExtension.newEvaluationDate,
+            extensionDate: tenderExtension.extensionDate,
+          })
+          .from(tenderExtension)
+          .innerJoin(tender, eq(tenderExtension.tenderId, tender.id))
+          .where(eq(tenderExtension.id, target.extensionId))
+          .limit(1);
+
+        if (ext.length > 0) {
+          tenderNum = ext[0].tenderNumber.replace(/[^a-zA-Z0-9_-]/g, '-').toUpperCase();
+          const d = target.extensionDate
+            ? new Date(target.extensionDate)
+            : ext[0].newEvaluationDate
+              ? new Date(ext[0].newEvaluationDate)
+              : ext[0].extensionDate
+                ? new Date(ext[0].extensionDate)
+                : new Date();
+          extensionDateStr = d.toISOString().slice(0, 10);
+        }
+      } else if (target.tenderId) {
+        const t = await db
+          .select({ tenderNumber: tender.tenderNumber })
+          .from(tender)
+          .where(eq(tender.id, target.tenderId))
+          .limit(1);
+        if (t.length > 0) {
+          tenderNum = t[0].tenderNumber.replace(/[^a-zA-Z0-9_-]/g, '-').toUpperCase();
+        }
+        const d = target.extensionDate ? new Date(target.extensionDate) : new Date();
+        extensionDateStr = d.toISOString().slice(0, 10);
+      }
+
+      const existingExtDocs = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(document)
+        .where(
+          and(
+            eq(document.organizationId, organizationId),
+            target.extensionId
+              ? eq(document.extensionId, target.extensionId)
+              : target.tenderId
+                ? eq(document.tenderId, target.tenderId)
+                : undefined
+          )
+        );
+
+      const extSeq = Number(existingExtDocs[0]?.count || 0) + 1;
+      const seqSuffix = extSeq > 1 ? `-${extSeq}` : '';
+      finalFileName = `Extension-${tenderNum}-${extensionDateStr}${seqSuffix}.${fileExt}`;
+      storageKey = `${orgSlug}/tenders/${tenderNum}/extensions/${finalFileName}`;
+    } else if (target.tenderId) {
       const t = await db
         .select({ tenderNumber: tender.tenderNumber })
         .from(tender)
         .where(eq(tender.id, target.tenderId))
         .limit(1);
-      if (t.length > 0) {
-        storagePrefix = t[0].tenderNumber.toLowerCase().replace(/[^a-z0-9._-]/g, '_');
-      }
-    } else if (target.extensionId) {
-      const ext = await db
-        .select({ tenderNumber: tender.tenderNumber })
-        .from(tenderExtension)
-        .innerJoin(tender, eq(tenderExtension.tenderId, tender.id))
-        .where(eq(tenderExtension.id, target.extensionId))
-        .limit(1);
-      if (ext.length > 0) {
-        storagePrefix = ext[0].tenderNumber.toLowerCase().replace(/[^a-z0-9._-]/g, '_');
-      }
-    }
+      const tenderNum = (t[0]?.tenderNumber || 'TENDER')
+        .replace(/[^a-zA-Z0-9_-]/g, '-')
+        .toUpperCase();
 
-    // Generate a unique storage key with tender number prefix where applicable
-    const entityPrefix = target.tenderId
-      ? 'tenders'
-      : target.extensionId
-        ? 'extensions'
-        : target.projectId
-          ? 'projects'
-          : target.purchaseOrderId
-            ? 'purchase-orders'
-            : 'documents';
-    const entityId =
-      target.tenderId ||
-      target.projectId ||
-      target.purchaseOrderId ||
-      target.extensionId ||
-      'unknown';
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const prefixPath = storagePrefix ? `${storagePrefix}/` : '';
-    const storageKey = `${organizationId}/${entityPrefix}/${prefixPath}${entityId}/${timestamp}-${safeName}`;
+      const docPrefix = target.category === 'briefing' ? 'Briefing' : 'Tender';
+
+      const existingTenderDocs = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(document)
+        .where(
+          and(
+            eq(document.organizationId, organizationId),
+            eq(document.tenderId, target.tenderId),
+            sql`${document.extensionId} IS NULL`
+          )
+        );
+      const docSeq = Number(existingTenderDocs[0]?.count || 0) + 1;
+
+      finalFileName = `${docPrefix}-${tenderNum}-${docSeq}.${fileExt}`;
+    } else if (target.projectId) {
+      const p = await db
+        .select({ projectNumber: project.projectNumber, description: project.description })
+        .from(project)
+        .where(eq(project.id, target.projectId))
+        .limit(1);
+      const projectIdent = (p[0]?.projectNumber || p[0]?.description || 'PRJ')
+        .replace(/[^a-zA-Z0-9_-]/g, '-')
+        .toUpperCase();
+
+      const category = target.category || 'general';
+
+      if (category === 'appointment_letter') {
+        const existing = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(document)
+          .where(
+            and(
+              eq(document.organizationId, organizationId),
+              eq(document.projectId, target.projectId),
+              sql`${document.name} ILIKE 'Appointment-Letter-%'`
+            )
+          );
+        const seq = Number(existing[0]?.count || 0) + 1;
+        finalFileName = `Appointment-Letter-${projectIdent}-${seq}.${fileExt}`;
+        storageKey = `${orgSlug}/projects/${projectIdent}/appointment-letters/${finalFileName}`;
+      } else if (category === 'contract' || category === 'sla') {
+        const prefix = category === 'sla' ? 'SLA' : 'Contract';
+        const existing = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(document)
+          .where(
+            and(
+              eq(document.organizationId, organizationId),
+              eq(document.projectId, target.projectId),
+              sql`(${document.name} ILIKE 'Contract-%' OR ${document.name} ILIKE 'SLA-%')`
+            )
+          );
+        const seq = Number(existing[0]?.count || 0) + 1;
+        finalFileName = `${prefix}-${projectIdent}-${seq}.${fileExt}`;
+        storageKey = `${orgSlug}/projects/${projectIdent}/contracts/${finalFileName}`;
+      } else if (category === 'extension') {
+        const d = target.extensionDate ? new Date(target.extensionDate) : new Date();
+        const dateStr = d.toISOString().slice(0, 10);
+        const existing = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(document)
+          .where(
+            and(
+              eq(document.organizationId, organizationId),
+              eq(document.projectId, target.projectId),
+              sql`${document.name} ILIKE 'Extension-%'`
+            )
+          );
+        const seq = Number(existing[0]?.count || 0) + 1;
+        const seqSuffix = seq > 1 ? `-${seq}` : '';
+        finalFileName = `Extension-${projectIdent}-${dateStr}${seqSuffix}.${fileExt}`;
+        storageKey = `${orgSlug}/projects/${projectIdent}/extensions/${finalFileName}`;
+      } else {
+        const existing = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(document)
+          .where(
+            and(
+              eq(document.organizationId, organizationId),
+              eq(document.projectId, target.projectId),
+              sql`${document.name} ILIKE 'Project-%'`
+            )
+          );
+        const seq = Number(existing[0]?.count || 0) + 1;
+        finalFileName = `Project-${projectIdent}-${seq}.${fileExt}`;
+        storageKey = `${orgSlug}/projects/${projectIdent}/general/${finalFileName}`;
+      }
+    } else if (target.purchaseOrderId) {
+      const po = await db
+        .select({ poNumber: purchaseOrder.poNumber })
+        .from(purchaseOrder)
+        .where(eq(purchaseOrder.id, target.purchaseOrderId))
+        .limit(1);
+      const poNum = (po[0]?.poNumber || 'PO')
+        .replace(/[^a-zA-Z0-9_-]/g, '-')
+        .toUpperCase();
+
+      const existing = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(document)
+        .where(
+          and(
+            eq(document.organizationId, organizationId),
+            eq(document.purchaseOrderId, target.purchaseOrderId)
+          )
+        );
+      const seq = Number(existing[0]?.count || 0) + 1;
+      finalFileName = `POD-${poNum}-${seq}.${fileExt}`;
+      storageKey = `${orgSlug}/purchase-orders/${poNum}/${finalFileName}`;
+    }
 
     // Upload to R2
     const uploadedKey = await StorageService.uploadFile(fileBuffer, storageKey, file.type);
@@ -141,7 +311,7 @@ export async function uploadDocument(
     await db.insert(document).values({
       id: docId,
       organizationId,
-      name: file.name,
+      name: finalFileName,
       url: uploadedKey,
       size: file.size,
       type: file.type,
@@ -165,7 +335,7 @@ export async function uploadDocument(
       success: true,
       document: {
         id: docId,
-        name: file.name,
+        name: finalFileName,
         size: file.size,
         type: file.type,
         url: uploadedKey,

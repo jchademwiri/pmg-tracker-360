@@ -78,17 +78,11 @@ export async function createTenderExtension(
     // 4. Handle File Upload
     const file = formData.get('file');
     if (file && file instanceof File && file.size > 0) {
-      // Prefix filename with "Extension - " as requested
-      const extensionPrefix = 'Extension - ';
-      const newFileName = `${extensionPrefix}${file.name}`;
-      const newFile = new File([file], newFileName, { type: file.type });
-
-      const newFormData = new FormData();
-      newFormData.append('file', newFile);
-
-      const uploadResult = await uploadDocument(organizationId, newFormData, {
+      const uploadResult = await uploadDocument(organizationId, formData, {
         tenderId: validatedData.tenderId,
         extensionId: extensionId,
+        category: 'extension',
+        extensionDate: validatedData.newEvaluationDate || validatedData.extensionDate,
       });
 
       if (!uploadResult.success) {
@@ -286,16 +280,11 @@ export async function updateTenderExtension(
         await db.delete(document).where(eq(document.extensionId, validatedData.extensionId));
 
         // Upload new file
-        const extensionPrefix = 'Extension - ';
-        const newFileName = `${extensionPrefix}${file.name}`;
-        const newFile = new File([file], newFileName, { type: file.type });
-
-        const newFormData = new FormData();
-        newFormData.append('file', newFile);
-
-        const uploadResult = await uploadDocument(organizationId, newFormData, {
+        const uploadResult = await uploadDocument(organizationId, formData, {
           tenderId: existing.tenderId,
           extensionId: validatedData.extensionId,
+          category: 'extension',
+          extensionDate: validatedData.newEvaluationDate || validatedData.extensionDate,
         });
 
         if (!uploadResult.success) {

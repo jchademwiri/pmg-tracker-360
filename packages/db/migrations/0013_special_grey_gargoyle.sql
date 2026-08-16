@@ -8,7 +8,7 @@ CREATE TABLE "support_tickets" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "security_audit_log" DROP CONSTRAINT "security_audit_log_user_id_user_id_fk";
+ALTER TABLE "security_audit_log" DROP CONSTRAINT IF EXISTS "security_audit_log_user_id_user_id_fk";
 --> statement-breakpoint
 ALTER TABLE "security_audit_log" ALTER COLUMN "user_id" DROP NOT NULL;--> statement-breakpoint
 

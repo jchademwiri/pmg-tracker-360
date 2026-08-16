@@ -30,6 +30,13 @@ import {
   inArray,
 } from 'drizzle-orm';
 import { PLATFORM_ORG_ID } from './constants';
+import {
+  getCloudflareR2StorageStats,
+  type CloudflareStorageOverview,
+  type BucketUsage,
+} from './cloudflare-r2';
+
+export type { CloudflareStorageOverview, BucketUsage };
 
 /* =============================================================================
    Types
@@ -45,6 +52,12 @@ export type PlatformOverviewStats = {
   totalStorageBytes: number;
   totalStorageMB: number;
   totalStorageGB: number;
+  totalStorageCapacityGB: number;
+  availableStorageGB: number;
+  availableStorageMB: number;
+  storageUtilizationPct: number;
+  storageWarningStatus: 'healthy' | 'warning' | 'critical';
+  storageOverview: CloudflareStorageOverview;
   totalDocuments: number;
   totalTenderPipelineValue: number;
   totalTenderAwardedValue: number;
@@ -224,11 +237,13 @@ export async function getPlatformOverviewStats(): Promise<PlatformOverviewStats>
     totalUsers > 0 ? Math.round((verifiedUsers / totalUsers) * 100) : 0;
 
   const totalStorageBytes = Number(docStats[0]?.totalBytes ?? 0);
-  const totalStorageMB = Number((totalStorageBytes / (1024 * 1024)).toFixed(2));
-  const totalStorageGB = Number(
-    (totalStorageBytes / (1024 * 1024 * 1024)).toFixed(3)
-  );
   const totalDocuments = Number(docStats[0]?.docCount ?? 0);
+
+  // Fetch Cloudflare live storage metrics (all buckets) or fallback to DB-tracked
+  const storageOverview = await getCloudflareR2StorageStats(
+    totalStorageBytes,
+    totalDocuments
+  );
 
   const totalTenderPipelineValue = Number(tenderStats[0]?.pipelineValue ?? 0);
   const totalTenderAwardedValue = Number(tenderStats[0]?.awardedValue ?? 0);
@@ -253,8 +268,14 @@ export async function getPlatformOverviewStats(): Promise<PlatformOverviewStats>
     verifiedUsers,
     verificationRate,
     totalStorageBytes,
-    totalStorageMB,
-    totalStorageGB,
+    totalStorageMB: storageOverview.totalUsedMB,
+    totalStorageGB: storageOverview.totalUsedGB,
+    totalStorageCapacityGB: storageOverview.totalCapacityGB,
+    availableStorageGB: storageOverview.availableStorageGB,
+    availableStorageMB: storageOverview.availableStorageMB,
+    storageUtilizationPct: storageOverview.utilizationPct,
+    storageWarningStatus: storageOverview.warningStatus,
+    storageOverview,
     totalDocuments,
     totalTenderPipelineValue,
     totalTenderAwardedValue,
@@ -361,6 +382,7 @@ export async function getGrowthTrend(): Promise<GrowthTrendItem[]> {
 export async function getStorageBreakdown(): Promise<{
   categories: StorageCategoryBreakdown[];
   topTenants: TenantStorageUsage[];
+  storageOverview: CloudflareStorageOverview;
 }> {
   const [categoryResults, topTenantResults] = await Promise.all([
     db
@@ -486,7 +508,20 @@ export async function getStorageBreakdown(): Promise<{
     });
   }
 
-  return { categories, topTenants };
+  // Calculate Cloudflare R2 storage overview
+  const totalDocCount =
+    Number(raw.tenderCount) +
+    Number(raw.projectCount) +
+    Number(raw.poCount) +
+    Number(raw.extCount) +
+    Number(raw.otherCount);
+
+  const storageOverview = await getCloudflareR2StorageStats(
+    Number(raw.totalBytes),
+    totalDocCount
+  );
+
+  return { categories, topTenants, storageOverview };
 }
 
 /**

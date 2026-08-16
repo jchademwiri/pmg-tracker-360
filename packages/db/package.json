@@ -14,6 +14,8 @@
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio",
     "dev": "drizzle-kit studio",
+    "db:check": "bun scripts/check-drift.ts",
+    "db:status": "bun scripts/check-drift.ts",
     "db:reset": "bun scripts/reset-db.ts",
     "db:promote": "bun scripts/promote-admin.ts",
     "check-types": "tsc --noEmit"

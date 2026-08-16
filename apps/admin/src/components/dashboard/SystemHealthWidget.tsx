@@ -1,6 +1,7 @@
 'use client';
 
-import { Server, Database, Activity, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Server, Database, Activity, CheckCircle2, ShieldCheck, Cloud } from 'lucide-react';
+import Link from 'next/link';
 
 type Props = {
   totalUsers: number;
@@ -30,7 +31,7 @@ export default function SystemHealthWidget({
         </span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
           <div className="text-[11px] text-zinc-500 font-medium">Database (PostgreSQL)</div>
           <div className="text-xs font-semibold text-emerald-400 mt-1 flex items-center gap-1">
@@ -55,17 +56,31 @@ export default function SystemHealthWidget({
           </div>
         </div>
 
+        <Link
+          href="/reports"
+          className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl hover:border-zinc-700 transition-colors group cursor-pointer block"
+        >
+          <div className="text-[11px] text-zinc-500 font-medium flex items-center justify-between">
+            <span>Cloudflare R2</span>
+            <Cloud className="h-3 w-3 text-amber-400" />
+          </div>
+          <div className="text-xs font-semibold text-emerald-400 mt-1 flex items-center gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            10 GB Tier (Healthy)
+          </div>
+        </Link>
+
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
           <div className="text-[11px] text-zinc-500 font-medium">Tenders DB Index</div>
           <div className="text-xs font-semibold text-zinc-300 mt-1">
-            {totalTenders.toLocaleString()} records
+            {totalTenders.toLocaleString('en-US')} records
           </div>
         </div>
 
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
           <div className="text-[11px] text-zinc-500 font-medium">Active Projects</div>
           <div className="text-xs font-semibold text-zinc-300 mt-1">
-            {activeProjects.toLocaleString()} active
+            {activeProjects.toLocaleString('en-US')} active
           </div>
         </div>
       </div>

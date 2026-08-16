@@ -1,0 +1,17 @@
+node_modules
+.next
+.turbo
+dist
+build
+.agents
+.claude
+.kiro
+.vscode
+.tmp
+bun.lock
+skills-lock.json
+*.min.js
+*.min.css
+packages/db/migrations
+docs
+apps/docs

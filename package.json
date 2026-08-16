@@ -5,9 +5,15 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format": "prettier --write \"{apps,packages}/*/src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"{apps,packages}/*/src/**/*.{ts,tsx}\"",
     "check-types": "turbo run check-types",
-    "test:e2e": "turbo run test:e2e"
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "db:check": "bun --cwd packages/db scripts/check-drift.ts",
+    "db:generate": "bun --cwd packages/db generate",
+    "db:migrate": "bun --cwd packages/db migrate",
+    "db:studio": "bun --cwd packages/db studio"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
