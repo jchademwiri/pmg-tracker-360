@@ -53,9 +53,6 @@ describe('Client CRUD Integration Tests', () => {
     if (testOrgId) {
       await db.delete(organization).where(eq(organization.id, testOrgId));
     }
-    // Close DB connection
-    const { client } = await import('@pmg/db');
-    await client.end();
   });
 
   describe('Create Client', () => {

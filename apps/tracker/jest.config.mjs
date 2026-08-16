@@ -49,6 +49,11 @@ const jestConfig = async () => {
   config.transformIgnorePatterns = [
     String.raw`[/\\]node_modules[/\\](?!((\.bun[/\\](@t3-oss\+.*|@better-auth\+.*|better-auth|@react-email\+.*|resend\+.*|@noble\+.*)@)|(@t3-oss[/\\]|@better-auth[/\\]|better-auth[/\\]|@react-email[/\\]|resend[/\\]|@noble[/\\])))`,
   ];
+  if (config.transform['^.+\\.(js|jsx|ts|tsx)$']) {
+    config.transform['^.+\\.(js|jsx|ts|tsx|mjs)$'] =
+      config.transform['^.+\\.(js|jsx|ts|tsx)$'];
+    delete config.transform['^.+\\.(js|jsx|ts|tsx)$'];
+  }
   return config;
 };
 

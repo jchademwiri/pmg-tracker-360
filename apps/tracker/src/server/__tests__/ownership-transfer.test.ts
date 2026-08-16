@@ -92,10 +92,6 @@ describe('Ownership Transfer Tests', () => {
     }
     if (ownerId) await db.delete(user).where(eq(user.id, ownerId));
     if (newOwnerId) await db.delete(user).where(eq(user.id, newOwnerId));
-
-    // Close DB connection
-    const { client } = await import('@pmg/db');
-    await client.end();
   });
 
   describe('Initiate Transfer', () => {

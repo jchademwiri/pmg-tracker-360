@@ -64,7 +64,7 @@ jobs:
         run: bun run db:migrate
 
       - name: Install Playwright Browsers & Dependencies
-        run: bun x playwright install --with-deps chromium
+        run: cd apps/tracker && bun run playwright install --with-deps chromium
 
       - name: Run Playwright E2E Tests
         run: |
