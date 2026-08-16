@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { FileUploader } from '@/components/ui/file-uploader';
 import { Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { createTenderExtension, updateTenderExtension } from '@/server/modules/extensions';
 import { useRouter } from 'next/navigation';
@@ -293,19 +294,25 @@ export function ExtensionForm({
             />
 
             <div className="space-y-2">
-              <FormLabel>Extension Letter {isEdit ? '(optional — new file replaces existing)' : '*'}</FormLabel>
-              <Input
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.png"
-                className="cursor-pointer"
-                onChange={(e) => {
-                  setSelectedFile(e.target.files?.[0] ?? null);
+              <FormLabel>
+                Extension Letter {isEdit ? '(optional — new file replaces existing)' : '*'}
+              </FormLabel>
+              <FileUploader
+                value={selectedFile ? [selectedFile] : []}
+                onValueChange={(files) => setSelectedFile(files[0] || null)}
+                maxFiles={1}
+                maxSize={10 * 1024 * 1024}
+                disabled={isPending}
+                accept={{
+                  'application/pdf': ['.pdf'],
+                  'application/msword': ['.doc'],
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+                  'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
                 }}
-                required={!isEdit}
               />
-              {isEdit && extension?.documents?.[0] && (
-                <p className="text-xs text-muted-foreground">
-                  Current file: {extension.documents[0].name}
+              {isEdit && extension?.documents?.[0] && !selectedFile && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Current file: <span className="font-medium text-foreground">{extension.documents[0].name}</span>
                 </p>
               )}
             </div>

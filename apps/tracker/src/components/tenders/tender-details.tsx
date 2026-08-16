@@ -377,17 +377,24 @@ export function TenderDetails({
                 setShowAwardDialog(true);
                 return;
               }
+              if (['submitted', 'evaluation'].includes(stageValue) && !tender.submissionDate) {
+                toast.error('A submission date is required before transitioning to Submitted or Evaluation.');
+                return;
+              }
+              if (['approved_to_prepare', 'preparation'].includes(stageValue) && !tender.client?.id) {
+                toast.error('A client must be assigned before transitioning to Approved or Preparing.');
+                return;
+              }
               handleStatusUpdate(stageValue as any);
             };
 
             /**
              * Returns the reason a stage is disabled for transition guard feedback.
-             * This mirrors the server-side guards in updateTenderStatus.
              */
             const getStageDisabledReason = (stageValue: string, stageIdx: number): string | null => {
-              // Can't go back more than one step from current
-              if (stageIdx > currentStatusIndex + 1) {
-                return 'Progress to the next stage first';
+              // Already on current stage
+              if (stageValue === tender.status || (stageValue === 'new' && tender.status === 'open')) {
+                return 'Current stage';
               }
               // If tender is finalized, can't go back to active
               const finalizedStatuses = ['awarded', 'lost', 'closed', 'cancelled'];
@@ -396,21 +403,19 @@ export function TenderDetails({
               }
               // Submission date required
               if (['submitted', 'evaluation'].includes(stageValue) && !tender.submissionDate) {
-                return 'Submission date is required first';
+                return 'Submission date required';
               }
               // Client required
               if (['approved_to_prepare', 'preparation'].includes(stageValue) && !tender.client?.id) {
-                return 'A client must be assigned first';
+                return 'Client required';
               }
               return null;
             };
 
             const isStageDisabled = (stageValue: string, stageIdx: number): boolean => {
-              // Already there
+              // Already on this stage
               if (stageValue === tender.status) return true;
               if (stageValue === 'new' && tender.status === 'open') return true;
-              // Can't skip ahead
-              if (stageIdx > currentStatusIndex + 1) return true;
               // Finalized can't go back
               const finalizedStatuses = ['awarded', 'lost', 'closed', 'cancelled'];
               if (finalizedStatuses.includes(tender.status) && !finalizedStatuses.includes(stageValue)) return true;
@@ -445,29 +450,28 @@ export function TenderDetails({
                       ? "bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20" 
                       : "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-500/20 ring-4 ring-blue-500/10";
 
-                    const button = (
+                    return (
                       <button
                         key={stage.value}
+                        type="button"
                         onClick={() => handleStageClick(stage.value)}
                         disabled={isPending || disabled}
-                        className={`flex flex-col items-center relative z-10 cursor-pointer group focus:outline-none disabled:cursor-not-allowed disabled:opacity-70 ${disabled ? '' : ''}`}
-                        title={disabled && disableReason ? disableReason : undefined}
+                        className={`flex flex-col items-center relative z-10 cursor-pointer group focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 transition-transform ${!disabled && !isActive ? 'hover:scale-105' : ''}`}
+                        title={disabled ? (disableReason || undefined) : `Transition to ${stage.label}`}
                       >
-                        <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotColor} group-hover:scale-105`}>
-                          {idx + 1}
+                        <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotColor} ${!disabled && !isActive ? 'group-hover:border-blue-500 group-hover:text-blue-500' : ''}`}>
+                          {isCompleted ? '✓' : idx + 1}
                         </div>
                         <span className={`text-[11px] font-semibold mt-2 transition-colors duration-300 ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground group-hover:text-foreground'}`}>
                           {stage.label}
                         </span>
-                        {disabled && disableReason && (
-                          <span className="text-[9px] text-muted-foreground/60 mt-0.5 max-w-[80px] truncate hidden group-hover:block">
+                        {disabled && disableReason && !isActive && (
+                          <span className="text-[9px] text-muted-foreground/60 mt-0.5 max-w-[85px] truncate text-center">
                             {disableReason}
                           </span>
                         )}
                       </button>
                     );
-
-                    return button;
                   })}
                 </div>
 
@@ -513,9 +517,10 @@ export function TenderDetails({
                       return (
                         <button
                           key={stage.value}
+                          type="button"
                           onClick={() => !disabled && handleStageClick(stage.value)}
                           disabled={isPending || disabled}
-                          title={disabled && disableReason ? disableReason : undefined}
+                          title={disabled ? (disableReason || undefined) : `Transition to ${stage.label}`}
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pillClass} ${!disabled && !isActive ? 'hover:border-blue-500/50 hover:text-blue-600' : ''}`}
                         >
                           {isCompleted && <span className="text-[10px]">✓</span>}

@@ -1,41 +1,160 @@
 ---
 name: done
-description: Runs automated end-to-end testing, executes full production build (bun run build), fixes any errors, commits changes to dev, pushes to origin/dev, and creates or updates a comprehensive PR to master. Use when the user types "/done", "done", "ship it", or requests to test, build, commit, push and PR.
+description: Global ship workflow skill. Detects project tooling (monorepo/Next.js/Vite), runs automated tests & production build, detects active branch, fetches remote updates, proactively resolves merge conflicts, commits, pushes, creates/updates PR (feature -> dev, dev -> master), cleans up merged & squash-merged branches, and compiles walkthrough.md. Use when the user types "/done", "done", "ship it", or requests to test, build, commit, push, resolve conflicts, and PR across any project.
 metadata:
   author: pmg
-  version: "1.0.0"
+  version: "2.2.0"
 ---
 
-# Done Command (Full CI/CD Ship Workflow)
+# Done Command (Global Intelligent CI/CD Ship Workflow)
 
-This skill automates the complete test-build-commit-push-PR workflow in a single command.
+A universal skill that automates project tooling detection, testing, production build verification, branch routing, proactive merge conflict resolution, conventional commits, remote pushes, GitHub Pull Request management, safe branch cleanup, and walkthrough compilation across all your projects.
 
 ---
 
-## Standard Execution Sequence
+## Universal Decision Flowchart
 
-Whenever the user types `/done` or asks to finish and ship their changes:
+```mermaid
+flowchart TD
+    Start(["User triggers /done"]) --> ToolDetect["1. Detect Tooling & Run Tests & Build\n(Dynamic detection: bun/npm/pnpm/turbo)"]
+    ToolDetect --> BranchCheck{"2. Check Current Branch\n(git branch --show-current)"}
+    
+    BranchCheck -->|On 'master' / 'main'| MasterPath["Create new branch\n(git checkout -b feat/...)\nTarget Base: 'dev' or 'main'"]
+    BranchCheck -->|On 'dev' / 'develop'| DevPath["Target Base: 'master' / 'main'"]
+    BranchCheck -->|On Feature/Fix branch| FeaturePath["Target Base: 'dev' (or 'main')"]
+    
+    MasterPath --> FetchSync["3. Fetch Remote & Sync\n(git fetch origin + merge target base)"]
+    DevPath --> FetchSync
+    FeaturePath --> FetchSync
+    
+    FetchSync --> ConflictCheck{"Any Merge Conflicts?"}
+    ConflictCheck -->|Yes| ResolveConflicts["Inspect & Resolve Conflicts\nStage & Commit Merge\nRe-verify Tests & Build"]
+    ConflictCheck -->|No| CommitChanges["4. Stage & Commit\n(Conventional Commit)"]
+    ResolveConflicts --> CommitChanges
+    
+    CommitChanges --> PushRemote["5. Push to Remote\n(git push origin <branch>)"]
+    PushRemote --> CheckPR{"6. PR Exists for\nHead -> Base?"}
+    CheckPR -->|Yes| UpdatePR["Update PR Description & Release Notes\n(gh pr edit)"]
+    CheckPR -->|No| CreatePR["Create Pull Request\n(gh pr create --base <base> --head <branch>)"]
+    
+    UpdatePR --> CleanupMerged["7. Safe Local Branch Cleanup\n(Prunes regular + squash-merged branches)"]
+    CreatePR --> CleanupMerged
+    CleanupMerged --> Walkthrough["8. Generate walkthrough.md Artifact"]
+    Walkthrough --> DoneReport(["9. Output Verification Report & PR Link"])
+```
 
-### 1. Run Tests & Fix Errors
-- Run unit/integration tests: `npm --prefix apps/tracker run test -- --passWithNoTests`
-- Run Playwright E2E tests: `npx playwright test`
-- If any test fails, inspect logs, fix the root cause, and re-run until all tests pass.
+---
 
-### 2. Run Production Monorepo Build
-- Execute: `bun run build` (or `npx turbo run build`)
-- Ensure all workspaces (`tracker`, `admin`, `docs`) compile successfully with 0 TypeScript/Turbopack errors.
+## Execution Guide
 
-### 3. Stage & Commit to `dev` Branch
-- Run `git status` and `git diff --stat` to review changed files.
-- Stage changes: `git add .`
-- Commit with a descriptive conventional commit message (e.g. `feat(...)`, `fix(...)`, `refactor(...)`).
+### Step 1: Detect Project Tooling & Run Tests & Build
+Dynamically detect the package manager and scripts in the repository:
+1. **Unit & Integration Tests**:
+   - Monorepo: `npm --prefix apps/tracker run test -- --passWithNoTests` (or workspace test script).
+   - Standard Node/Bun: `bun test` or `npm test -- --passWithNoTests`.
+2. **Production Build**:
+   - Monorepo: `bun run build` or `npx turbo run build`.
+   - Next.js / Vite: `npm run build` or `bun run build`.
+   - Confirm all workspaces compile cleanly with 0 errors.
 
-### 4. Push to Remote & Verify PR to `master`
-- Push commits: `git push origin dev`
-- Check existing PRs: `gh pr list`
-- If an open PR from `dev` to `master` exists, update it with `gh pr edit` containing comprehensive release notes and test matrices.
-- If no PR exists, create one targeting `master`:
-  ```bash
-  gh pr create --base master --head dev --title "feat: ..." --body "..."
-  ```
-- Report the final verification results and provide the GitHub PR link to the user.
+---
+
+### Step 2: Branch Detection & Target Base Selection
+Determine current active branch:
+```bash
+git branch --show-current
+```
+
+Determine target PR base:
+- **If currently on `master` or `main`**:
+  - **Never push directly to production**.
+  - Create branch: `git checkout -b feat/<timestamp-or-desc>` (or `fix/...`).
+  - Target PR Base: **`dev`** (or `main` if no staging branch exists).
+- **If currently on `dev` or `develop`**:
+  - Target PR Base: **`master`** (or `main`).
+- **If currently on a feature / fix / refactor branch**:
+  - Target PR Base: **`dev`** (fallback: `main`/`master`).
+
+---
+
+### Step 3: Fetch Updates & Proactive Conflict Resolution
+Always sync before pushing:
+1. **Fetch from remote**:
+   ```bash
+   git fetch origin
+   ```
+2. **Merge target base into working branch**:
+   ```bash
+   git merge origin/<target-base>
+   ```
+3. **If Merge Conflicts Occur**:
+   - Identify conflicted files via `git status` or grep for `<<<<<<<`.
+   - Resolve conflicts by prioritizing the new feature/fix while preserving upstream additions.
+   - Stage resolved files: `git add <resolved-files>`
+   - Commit merge resolution: `git commit -m "merge: resolve conflicts with <target-base>"`
+   - Re-run build & tests to guarantee zero regressions.
+
+---
+
+### Step 4: Stage & Commit Local Changes
+1. Inspect uncommitted changes:
+   ```bash
+   git status
+   git diff --stat
+   ```
+2. Stage all modifications:
+   ```bash
+   git add .
+   ```
+3. Commit with a conventional commit message:
+   ```bash
+   git commit -m "<type>(<scope>): <concise description of changes>"
+   ```
+
+---
+
+### Step 5: Push Branch to Remote
+```bash
+git push origin <current-branch>
+```
+
+---
+
+### Step 6: Create or Update Pull Request
+1. Check for existing open PR:
+   ```bash
+   gh pr list --base <target-base> --head <current-branch>
+   ```
+2. **If open PR exists**:
+   - Update PR body:
+     ```bash
+     gh pr edit <pr-number> --body-file "<path-to-notes.md>"
+     ```
+3. **If no open PR exists**:
+   - Create PR:
+     ```bash
+     gh pr create --base <target-base> --head <current-branch> --title "<type>(<scope>): <title>" --body-file "<path-to-notes.md>"
+     ```
+
+---
+
+### Step 7: Safe Merged & Gone Branch Cleanup
+Prune dead local branches (both regular merged and squash-merged) while keeping `dev`, `master`, and `main` strictly protected:
+```powershell
+git fetch origin --prune
+
+# 1. Delete standard merged branches (excluding dev, master, main)
+git branch --merged dev | Where-Object { $_.Trim() -notmatch '^(dev|master|main|\*)' } | ForEach-Object { git branch -d $_.Trim() }
+
+# 2. Delete squash-merged branches whose remote tracking is ': gone]'
+git branch -vv | Where-Object { $_ -match ': gone\]' -and $_.Trim() -notmatch '^(dev|master|main|\*)' } | ForEach-Object {
+    $b = ($_ -split '\s+')[0].Replace('*','').Trim()
+    if ($b -and $b -notin @('dev', 'master', 'main')) { git branch -D $b }
+}
+```
+
+---
+
+### Step 8: Walkthrough Compilation & Report
+1. Create or update `walkthrough.md` summarizing the changes, files modified, test results, and PR link.
+2. Report final status to the user with a clickable link to the GitHub Pull Request.
