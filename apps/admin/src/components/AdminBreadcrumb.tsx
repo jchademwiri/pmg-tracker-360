@@ -8,6 +8,7 @@ import { useBreadcrumb } from '@/lib/breadcrumb-context';
 
 const SEGMENT_LABELS: Record<string, string> = {
   reports: 'Reports & Analytics',
+  storage: 'Storage & Cloudflare R2',
   organizations: 'Organizations',
   users: 'Users',
   sessions: 'Sessions',

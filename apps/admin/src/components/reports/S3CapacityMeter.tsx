@@ -195,27 +195,6 @@ export function S3CapacityMeter({ storage }: Props) {
         </div>
       </div>
 
-      {/* ── Dynamic Upgrade & Action Advice Banner ── */}
-      <div className={`p-4 rounded-xl border flex items-start gap-3 text-xs leading-relaxed ${badgeBg}`}>
-        <div className="mt-0.5 shrink-0">{statusIcon}</div>
-        <div className="space-y-1">
-          <div className="font-semibold text-zinc-100 text-sm">
-            {warningStatus === 'critical'
-              ? 'Immediate Action Required: Cloudflare R2 Free Tier Threshold Reached'
-              : warningStatus === 'warning'
-              ? 'Upgrade Planning: Approaching Cloudflare 10 GB Monthly Free Tier'
-              : 'Storage Capacity Status: Operating Well Within Free Tier'}
-          </div>
-          <p className="text-zinc-300">
-            {warningStatus === 'critical'
-              ? `You have consumed ${utilizationPct}% of your 10 GB allocation (${totalUsedGB} GB used). Cloudflare R2 automatically bills $0.015/GB-month for any excess storage beyond 10 GB. Ensure payment methods are active in your Cloudflare dashboard to maintain uninterrupted document uploads.`
-              : warningStatus === 'warning'
-              ? `Your combined storage across all buckets is at ${utilizationPct}% (${totalUsedGB} GB of ${totalCapacityGB} GB). When you cross 10 GB, Cloudflare will transition additional storage to pay-as-you-go pricing ($0.015 per GB-month).`
-              : `You have ${availableStorageGB} GB of free storage remaining before reaching Cloudflare's 10 GB monthly threshold. All document attachments and backups are healthy.`}
-          </p>
-        </div>
-      </div>
-
       {/* ── Multi-Bucket Breakdown Inventory Table ── */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center justify-between">

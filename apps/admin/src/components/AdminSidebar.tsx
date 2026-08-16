@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Shield,
+  HardDrive,
   Database,
   LogOut,
   type LucideIcon,
@@ -68,6 +69,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Platform',
     items: [
+      { href: '/storage', label: 'Storage & R2', icon: HardDrive },
       { href: '/system-admins', label: 'System Admins', icon: ShieldCheck },
     ],
   },

@@ -3,7 +3,7 @@ import {
   BarChart3,
   Building2,
   Users,
-  HardDrive,
+  FolderKanban,
   Coins,
   FileSpreadsheet,
   TrendingUp,
@@ -21,7 +21,6 @@ import {
 import { GrowthChart } from '@/components/reports/GrowthChart';
 import { StorageDonutChart } from '@/components/reports/StorageDonutChart';
 import { TopTenantsChart } from '@/components/reports/TopTenantsChart';
-import { S3CapacityMeter } from '@/components/reports/S3CapacityMeter';
 import { ReportDownloadCards } from '@/components/reports/ReportDownloadCards';
 import { TenantUtilizationTable } from './TenantUtilizationTable';
 
@@ -56,7 +55,7 @@ export default async function AdminReportsPage() {
             Platform Reports & Analytics
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            System-wide operational intelligence, tenant growth trajectories, Cloudflare R2 multi-bucket capacity, and downloadable master dossiers.
+            System-wide operational intelligence, tenant growth trajectories, platform performance, and downloadable master dossiers.
           </p>
         </div>
       </div>
@@ -82,17 +81,11 @@ export default async function AdminReportsPage() {
         />
 
         <MetricCard
-          label="Cloudflare R2 Storage"
-          count={`${overview.totalStorageMB.toLocaleString('en-US')} MB`}
-          icon={<HardDrive className="w-5 h-5 text-amber-400" />}
-          variant={
-            overview.storageWarningStatus === 'critical'
-              ? 'danger'
-              : overview.storageWarningStatus === 'warning'
-              ? 'warning'
-              : 'primary'
-          }
-          secondaryNote={`${overview.availableStorageGB} GB free of ${overview.totalStorageCapacityGB} GB (${overview.storageUtilizationPct}% used)`}
+          label="Active Projects"
+          count={overview.activeProjects}
+          icon={<FolderKanban className="w-5 h-5 text-amber-400" />}
+          variant="warning"
+          secondaryNote={`${overview.totalProjects} total contracted projects`}
         />
 
         <MetricCard
@@ -103,9 +96,6 @@ export default async function AdminReportsPage() {
           secondaryNote={`${overview.totalTenders} total tenders (${fmtCurrency(overview.totalTenderAwardedValue)} won)`}
         />
       </div>
-
-      {/* ── Cloudflare R2 Live Capacity & Multi-Bucket Meter ── */}
-      <S3CapacityMeter storage={overview.storageOverview} />
 
       {/* ── Visual Analytics Section ────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
