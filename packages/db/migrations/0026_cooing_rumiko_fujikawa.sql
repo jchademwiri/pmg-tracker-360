@@ -7,9 +7,11 @@ CREATE TYPE "public"."risk_status" AS ENUM('open', 'mitigated', 'closed');--> st
 CREATE TYPE "public"."tender_priority" AS ENUM('low', 'medium', 'high', 'urgent');--> statement-breakpoint
 CREATE TYPE "public"."tender_status" AS ENUM('draft', 'open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled');--> statement-breakpoint
 ALTER TABLE "document" ALTER COLUMN "size" SET DATA TYPE bigint USING NULLIF("size", '')::bigint;--> statement-breakpoint
+DROP INDEX IF EXISTS "invitation_organization_id_email_pending_unique";--> statement-breakpoint
 ALTER TABLE "invitation" ALTER COLUMN "status" DROP DEFAULT;--> statement-breakpoint
 ALTER TABLE "invitation" ALTER COLUMN "status" SET DATA TYPE "public"."invitation_status" USING "status"::text::"public"."invitation_status";--> statement-breakpoint
 ALTER TABLE "invitation" ALTER COLUMN "status" SET DEFAULT 'pending'::"public"."invitation_status";--> statement-breakpoint
+CREATE UNIQUE INDEX "invitation_organization_id_email_pending_unique" ON "invitation" USING btree ("organization_id","email") WHERE status = 'pending'::"public"."invitation_status";--> statement-breakpoint
 ALTER TABLE "organization" ALTER COLUMN "metadata" SET DATA TYPE jsonb USING "metadata"::jsonb;--> statement-breakpoint
 ALTER TABLE "ownership_transfer" ALTER COLUMN "status" DROP DEFAULT;--> statement-breakpoint
 ALTER TABLE "ownership_transfer" ALTER COLUMN "status" SET DATA TYPE "public"."ownership_transfer_status" USING "status"::text::"public"."ownership_transfer_status";--> statement-breakpoint
