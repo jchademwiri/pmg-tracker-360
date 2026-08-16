@@ -50,4 +50,10 @@ CREATE INDEX "idx_po_org_id" ON "purchase_order" USING btree ("organization_id")
 CREATE INDEX "idx_tender_status" ON "tender" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_tender_client_id" ON "tender" USING btree ("client_id");--> statement-breakpoint
 CREATE INDEX "idx_tender_org_id" ON "tender" USING btree ("organization_id");--> statement-breakpoint
-ALTER TABLE "verification" ADD CONSTRAINT "verification_identifier_value_unique" UNIQUE("identifier","value");
+ALTER TABLE "verification" ADD CONSTRAINT "verification_identifier_value_unique" UNIQUE("identifier","value");--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "validity_days" integer;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "validity_date" timestamp;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "briefing_date" timestamp;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "briefing_location" text;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "is_briefing_mandatory" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "briefing_attended" boolean DEFAULT false NOT NULL;
