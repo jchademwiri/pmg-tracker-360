@@ -120,6 +120,28 @@ function isPreviewable(mimeType: string, fileName?: string): boolean {
   );
 }
 
+function getDocumentTypeBadge(fileName: string) {
+  if (fileName.startsWith('Appointment-Letter-')) {
+    return { label: 'Appointment Letter', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400' };
+  }
+  if (fileName.startsWith('Contract-') || fileName.startsWith('SLA-')) {
+    return { label: 'Contract / SLA', className: 'bg-indigo-500/10 text-indigo-700 border-indigo-500/30 dark:text-indigo-400' };
+  }
+  if (fileName.startsWith('Extension-')) {
+    return { label: 'Extension', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400' };
+  }
+  if (fileName.startsWith('Briefing-')) {
+    return { label: 'Briefing', className: 'bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-400' };
+  }
+  if (fileName.startsWith('Tender-')) {
+    return { label: 'Tender Spec', className: 'bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400' };
+  }
+  if (fileName.startsWith('POD-')) {
+    return { label: 'POD', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400' };
+  }
+  return null;
+}
+
 export function DocumentManager({
   organizationId,
   entityId,
@@ -138,6 +160,10 @@ export function DocumentManager({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
   const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
+  const [uploadCategory, setUploadCategory] = useState<string>(
+    entityType === 'project' ? 'general' : 'tender'
+  );
+  const [extensionDate, setExtensionDate] = useState<string>('');
 
   const handleUploadFiles = useCallback(
     async (filesToUpload: File[]) => {
@@ -146,12 +172,14 @@ export function DocumentManager({
       setIsUploading(true);
       setUploadProgress(10);
 
-      const targetPayload = {
+      const targetPayload: any = {
         [entityType === 'tender'
           ? 'tenderId'
           : entityType === 'project'
             ? 'projectId'
             : 'purchaseOrderId']: entityId,
+        category: uploadCategory,
+        extensionDate: extensionDate || undefined,
       };
 
       let successCount = 0;
@@ -199,7 +227,7 @@ export function DocumentManager({
       setIsUploading(false);
       setUploadProgress(null);
     },
-    [organizationId, entityId, entityType, router]
+    [organizationId, entityId, entityType, uploadCategory, extensionDate, router]
   );
 
   const onDrop = useCallback(
@@ -380,26 +408,119 @@ export function DocumentManager({
 
           {/* Collapsible / Empty-State Dropzone */}
           {(documents.length === 0 || showDropzone) && (
-            <div
-              {...getRootProps()}
-              className={cn(
-                'border-2 border-dashed rounded-xl p-8 cursor-pointer text-center transition-all duration-200',
-                isDragActive
-                  ? 'border-primary bg-primary/10 scale-[0.99] ring-4 ring-primary/20'
-                  : 'border-border/70 hover:border-primary/50 hover:bg-muted/30 bg-muted/10',
-                isUploading && 'opacity-50 pointer-events-none'
-              )}
-            >
-              <input {...getInputProps()} />
-              <div className="mx-auto w-12 h-12 rounded-full border border-border/60 bg-background flex items-center justify-center shadow-sm mb-3">
-                <UploadCloud className={cn('h-6 w-6', isDragActive ? 'text-primary animate-bounce' : 'text-muted-foreground')} />
+            <div className="space-y-3 p-4 rounded-2xl border border-primary/20 bg-muted/10">
+              {/* Upload Category Selector */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border/40">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-semibold text-muted-foreground mr-1">Upload As:</span>
+                  {entityType === 'project' ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'general' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('general')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        📄 General Document
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'appointment_letter' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('appointment_letter')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        📜 Appointment Letter
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'contract' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('contract')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        📝 Contract / SLA
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'extension' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('extension')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        ⏳ Extension
+                      </Button>
+                    </>
+                  ) : entityType === 'tender' ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'tender' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('tender')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        📄 Tender Document
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'briefing' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('briefing')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        📋 Site Briefing
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={uploadCategory === 'extension' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setUploadCategory('extension')}
+                        className="text-xs h-7 px-2.5 rounded-full"
+                      >
+                        ⏳ Extension Letter
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+
+                {uploadCategory === 'extension' && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap font-medium">
+                      Extension Date:
+                    </label>
+                    <input
+                      type="date"
+                      value={extensionDate}
+                      onChange={(e) => setExtensionDate(e.target.value)}
+                      className="h-7 text-xs px-2 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                    />
+                  </div>
+                )}
               </div>
-              <p className="font-medium text-sm text-foreground">
-                {isDragActive ? 'Drop files here to upload...' : 'Click to upload or drag & drop files here'}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                PDF, Word (.docx), Excel (.xlsx), Images (.png, .jpg), and Text (up to 10MB per file)
-              </p>
+
+              <div
+                {...getRootProps()}
+                className={cn(
+                  'border-2 border-dashed rounded-xl p-6 cursor-pointer text-center transition-all duration-200 bg-background/50',
+                  isDragActive
+                    ? 'border-primary bg-primary/10 scale-[0.99] ring-4 ring-primary/20'
+                    : 'border-border/70 hover:border-primary/50 hover:bg-muted/30',
+                  isUploading && 'opacity-50 pointer-events-none'
+                )}
+              >
+                <input {...getInputProps()} />
+                <div className="mx-auto w-10 h-10 rounded-full border border-border/60 bg-background flex items-center justify-center shadow-sm mb-2">
+                  <UploadCloud className={cn('h-5 w-5', isDragActive ? 'text-primary animate-bounce' : 'text-muted-foreground')} />
+                </div>
+                <p className="font-medium text-sm text-foreground">
+                  {isDragActive ? 'Drop files here to upload...' : 'Click to upload or drag & drop files here'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 max-w-sm mx-auto">
+                  PDF, Word (.docx), Excel (.xlsx), Images (.png, .jpg), and Text (up to 10MB per file)
+                </p>
+              </div>
             </div>
           )}
 
@@ -544,6 +665,7 @@ export function DocumentManager({
                 const colorClass = getFileColor(doc.type, doc.name);
                 const canPreview = isPreviewable(doc.type, doc.name);
                 const downloadUrl = getDownloadUrl(doc);
+                const typeBadge = getDocumentTypeBadge(doc.name);
 
                 return (
                   <div
@@ -558,9 +680,16 @@ export function DocumentManager({
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1 pr-2">
-                        <p className="text-xs sm:text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                          {doc.name}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs sm:text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                            {doc.name}
+                          </p>
+                          {typeBadge && (
+                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-md font-medium shrink-0 border leading-none', typeBadge.className)}>
+                              {typeBadge.label}
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
                           <span className="font-mono">{formatFileSize(doc.size)}</span>
                           <span>•</span>
@@ -662,6 +791,7 @@ export function DocumentManager({
                 const colorClass = getFileColor(doc.type, doc.name);
                 const canPreview = isPreviewable(doc.type, doc.name);
                 const downloadUrl = getDownloadUrl(doc);
+                const typeBadge = getDocumentTypeBadge(doc.name);
 
                 return (
                   <div
@@ -679,7 +809,14 @@ export function DocumentManager({
                         <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={doc.name}>
                           {doc.name}
                         </p>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                        {typeBadge && (
+                          <div className="mt-1">
+                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-md font-medium border leading-none', typeBadge.className)}>
+                              {typeBadge.label}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
                           <span className="font-mono">{formatFileSize(doc.size)}</span>
                           <span>•</span>
                           <span>{formatDate(doc.createdAt)}</span>

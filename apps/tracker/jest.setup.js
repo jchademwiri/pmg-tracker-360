@@ -32,10 +32,10 @@ loadJestEnv();
 
 jest.setTimeout(60000);
 
-import '@testing-library/jest-dom';
-
-
-import 'jest-axe/extend-expect';
+if (typeof window !== 'undefined') {
+  require('@testing-library/jest-dom');
+  require('jest-axe/extend-expect');
+}
 import { TextDecoder, TextEncoder } from 'util';
 
 global.TextEncoder ??= TextEncoder;

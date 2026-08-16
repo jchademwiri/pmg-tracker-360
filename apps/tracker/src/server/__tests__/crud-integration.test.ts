@@ -25,6 +25,16 @@ jest.mock('next/cache', () => ({
   revalidatePath: jest.fn(),
 }));
 
+// Mock validateSessionAndOrg for integration tests
+jest.mock('@/server/utils', () => ({
+  ...jest.requireActual('@/server/utils'),
+  validateSessionAndOrg: jest.fn(async () => ({
+    userId: 'test_user_id',
+    role: 'owner',
+    session: { user: { id: 'test_user_id', name: 'Test User' } },
+  })),
+}));
+
 // Mock console.error to avoid noise and potential Jest issues with ZodError logging
 const originalConsoleError = console.error;
 beforeAll(() => {
@@ -53,9 +63,6 @@ describe('Client CRUD Integration Tests', () => {
     if (testOrgId) {
       await db.delete(organization).where(eq(organization.id, testOrgId));
     }
-    // Close DB connection
-    const { client } = await import('@pmg/db');
-    await client.end();
   });
 
   describe('Create Client', () => {

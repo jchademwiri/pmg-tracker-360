@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "check-types": "tsc --noEmit",
     "test": "jest",
-    "test:integration": "RUN_INTEGRATION_TESTS=true jest --runInBand src/server/__tests__/crud-integration.test.ts src/server/__tests__/ownership-transfer.test.ts",
+    "test:integration": "RUN_INTEGRATION_TESTS=true jest --forceExit --runInBand src/server/__tests__/crud-integration.test.ts src/server/__tests__/ownership-transfer.test.ts",
     "test:e2e": "playwright test",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

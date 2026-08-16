@@ -10,3 +10,4 @@ export * from '@/server/tender-export';
 export * from '@/server/tender-excel-export';
 export * from '@/server/calendar';
 export * from '@/server/documents';
+export * from '@/server/storage';

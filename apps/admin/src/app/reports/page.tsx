@@ -3,7 +3,7 @@ import {
   BarChart3,
   Building2,
   Users,
-  HardDrive,
+  FolderKanban,
   Coins,
   FileSpreadsheet,
   TrendingUp,
@@ -55,7 +55,7 @@ export default async function AdminReportsPage() {
             Platform Reports & Analytics
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            System-wide operational intelligence, tenant growth trajectories, S3 storage consumption, and downloadable master dossiers.
+            System-wide operational intelligence, tenant growth trajectories, platform performance, and downloadable master dossiers.
           </p>
         </div>
       </div>
@@ -81,11 +81,11 @@ export default async function AdminReportsPage() {
         />
 
         <MetricCard
-          label="S3 Storage Used"
-          count={`${overview.totalStorageMB.toLocaleString()} MB`}
-          icon={<HardDrive className="w-5 h-5 text-amber-400" />}
+          label="Active Projects"
+          count={overview.activeProjects}
+          icon={<FolderKanban className="w-5 h-5 text-amber-400" />}
           variant="warning"
-          secondaryNote={`${overview.totalDocuments.toLocaleString()} documents (${overview.totalStorageGB} GB)`}
+          secondaryNote={`${overview.totalProjects} total contracted projects`}
         />
 
         <MetricCard
@@ -123,7 +123,7 @@ export default async function AdminReportsPage() {
               <PieChart className="h-4 w-4 text-emerald-400" />
               <h2 className="font-semibold text-zinc-100 text-sm">Storage by Resource Type</h2>
             </div>
-            <span className="text-xs text-zinc-500 font-mono">AWS S3</span>
+            <span className="text-xs text-zinc-500 font-mono">Cloudflare R2</span>
           </div>
           <p className="text-xs text-zinc-400 mb-4">
             Distribution of file volume across tenders, contracts, POs, and extensions.
