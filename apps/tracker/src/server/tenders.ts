@@ -707,8 +707,13 @@ export async function updateTenderStatus(
       });
     }
 
-    const session = await getServerSession();
-    const userId = session?.user?.id;
+    let userId: string | undefined;
+    try {
+      const session = await getServerSession();
+      userId = session?.user?.id;
+    } catch {
+      // Ignore session error in non-request contexts
+    }
 
     if (existingTender[0].status !== validatedData.status) {
       await logTenderActivity(
