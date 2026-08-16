@@ -35,14 +35,6 @@ jest.mock('@/server/utils', () => ({
   })),
 }));
 
-// Mock getServerSession for integration tests
-jest.mock('@/lib/auth', () => ({
-  ...jest.requireActual('@/lib/auth'),
-  getServerSession: jest.fn(async () => ({
-    user: { id: 'test_user_id', name: 'Test User', email: 'test@example.com' },
-  })),
-}));
-
 // Mock console.error to avoid noise and potential Jest issues with ZodError logging
 const originalConsoleError = console.error;
 beforeAll(() => {
