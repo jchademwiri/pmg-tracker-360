@@ -17,7 +17,7 @@ import OrganizationInvitation from '@/emails/organization-invitation';
 import { createAuthMiddleware, APIError } from 'better-auth/api';
 import { checkDirectSignUp } from '@/lib/auth/signup-guard';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_testing');
 
 const senderName = process.env.SENDER_NAME || 'Tender Track 360';
 const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
