@@ -1,10 +1,10 @@
-name: CI — TypeScript & Lint
+name: CI — Quality, Database & Build
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, master, main]
   pull_request:
-    branches: [dev, main]
+    branches: [dev, master, main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,7 +19,7 @@ env:
 
 jobs:
   typecheck:
-    name: tsc --noEmit
+    name: Typecheck (tsc)
     runs-on: ubuntu-latest
 
     steps:
@@ -43,11 +43,11 @@ jobs:
             ${{ runner.os }}-turbo-${{ github.ref }}
             ${{ runner.os }}-turbo-
 
-      - name: Run type check (tracker + admin)
+      - name: Run type check
         run: bun run check-types -- --output-logs=new-only
 
   lint:
-    name: ESLint
+    name: Lint (ESLint)
     runs-on: ubuntu-latest
 
     steps:
@@ -71,5 +71,153 @@ jobs:
             ${{ runner.os }}-turbo-${{ github.ref }}
             ${{ runner.os }}-turbo-
 
-      - name: Run lint (tracker + admin)
+      - name: Run lint
         run: bun run lint -- --output-logs=new-only
+
+  format:
+    name: Code Formatting (Prettier)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check code formatting
+        run: bun run format:check || echo "⚠️ Formatting differences found; run 'bun run format' to normalize."
+        continue-on-error: true
+
+  db-validate:
+    name: Database Migrations & Schema Drift Check
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: pmg_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/pmg_test_db?sslmode=disable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Drizzle Migrations on Test DB
+        run: bun run db:migrate
+
+      - name: Verify Schema Drift (schema.ts vs migrations)
+        run: |
+          bun run db:generate
+          if [[ -n $(git status --porcelain packages/db/migrations) ]]; then
+            echo "❌ ERROR: Schema drift detected!"
+            echo "You modified packages/db/src/schema.ts without generating a migration file."
+            echo "Please run 'bun run db:generate' locally and commit the resulting migration."
+            git status --short packages/db/migrations
+            exit 1
+          else
+            echo "✅ Schema is fully in sync with migrations."
+          fi
+
+      - name: Check Live DB Migration Status
+        run: bun run db:check
+
+      - name: Run Server Integration Tests
+        env:
+          RUN_INTEGRATION_TESTS: "true"
+        run: |
+          cd apps/tracker && bun run test:integration
+
+  unit-tests:
+    name: Unit Tests (Jest & Vitest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.ref }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-${{ github.ref }}
+            ${{ runner.os }}-turbo-
+
+      - name: Run Unit Tests
+        run: bun run test
+
+  build:
+    name: Production Build Verification
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint]
+
+    env:
+      SKIP_ENV_VALIDATION: true
+      BETTER_AUTH_SECRET: "ci-build-test-secret-value-32chars"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      NEXT_PUBLIC_URL: "http://localhost:3000"
+      RESEND_API_KEY: "re_ci_build_dummy_key"
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/build_db?sslmode=disable"
+      R2_ACCOUNT_ID: "ci-r2-account-id"
+      R2_ACCESS_KEY_ID: "ci-r2-access-key-id"
+      R2_SECRET_ACCESS_KEY: "ci-r2-secret-access-key"
+      R2_BUCKET_NAME: "ci-bucket"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.5
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.ref }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-${{ github.ref }}
+            ${{ runner.os }}-turbo-
+
+      - name: Build all apps & packages
+        run: bun run build

@@ -307,7 +307,35 @@ export async function generateStorageAuditExcel(): Promise<Buffer> {
   workbook.creator = 'PMG Tracker 360 - Storage Audit';
   workbook.created = new Date();
 
-  // Sheet 1: Storage Categories
+  // Sheet 1: Capacity & Account Quota Summary
+  const capSheet = workbook.addWorksheet('Capacity & Quota Summary');
+  capSheet.columns = [
+    { header: 'Metric', key: 'metric', width: 36 },
+    { header: 'Value', key: 'value', width: 24 },
+    { header: 'Details / Context', key: 'details', width: 44 },
+  ];
+  capSheet.getRow(1).height = 26;
+  capSheet.getRow(1).eachCell((cell) => {
+    cell.font = headerFont;
+    cell.fill = headerFill(SLATE_DARK);
+  });
+
+  const addCapRow = (m: string, v: string | number, d: string) => {
+    const r = capSheet.addRow({ metric: m, value: v, details: d });
+    r.font = { name: 'Segoe UI', size: 10 };
+    r.getCell('metric').font = { name: 'Segoe UI', size: 10, bold: true };
+    r.getCell('value').alignment = { horizontal: typeof v === 'number' ? 'right' : 'left' };
+    r.eachCell((cell) => { cell.border = thinBorder; });
+  };
+
+  addCapRow('Cloudflare Plan Tier Limit', `${overview.totalStorageCapacityGB}.00 GB`, 'Cloudflare R2 Monthly Free Tier');
+  addCapRow('Total Combined Storage Used', `${overview.totalStorageMB.toLocaleString()} MB`, `${overview.totalStorageGB} GB across all detected buckets`);
+  addCapRow('Available Free Storage Remaining', `${overview.availableStorageGB} GB`, `${overview.availableStorageMB.toLocaleString()} MB remaining before pay-as-you-go`);
+  addCapRow('Capacity Utilization Rate', `${overview.storageUtilizationPct}%`, overview.storageWarningStatus.toUpperCase());
+  addCapRow('Total Document Attachments', overview.totalDocuments, 'Files tracked in PMG Tracker 360 database');
+  addCapRow('Live Cloudflare API Connection', storageData.storageOverview.connectedLiveApi ? 'Connected (Multi-Bucket Sync)' : 'Local DB Monitored', 'Set CLOUDFLARE_API_TOKEN for live multi-app discovery');
+
+  // Sheet 2: Storage Categories
   const catSheet = workbook.addWorksheet('Storage Categories');
   catSheet.columns = [
     { header: 'Category', key: 'category', width: 32 },

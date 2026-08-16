@@ -523,17 +523,20 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(15, 23, 42);
-  doc.text('1. S3 Storage Overview & Totals', margin, y);
+  doc.text('1. Cloudflare R2 Storage Overview & Multi-Bucket Capacity', margin, y);
   y += 5;
 
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, y, pageWidth - margin * 2, 16, 2, 2, 'FD');
+  doc.roundedRect(margin, y, pageWidth - margin * 2, 20, 2, 2, 'FD');
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(30, 41, 59);
-  doc.text(`Total Storage Consumed: ${overview.totalStorageMB.toLocaleString()} MB (${overview.totalStorageGB} GB) across ${overview.totalDocuments.toLocaleString()} uploaded files`, margin + 4, y + 10);
-  y += 22;
+  doc.text(`Total Storage Consumed: ${overview.totalStorageMB.toLocaleString()} MB (${overview.totalStorageGB} GB) across ${overview.totalDocuments.toLocaleString()} uploaded files`, margin + 4, y + 6);
+  doc.text(`Provisioned Plan Capacity: ${overview.totalStorageCapacityGB}.00 GB Cloudflare Free Tier | Available Remaining: ${overview.availableStorageGB} GB (${overview.availableStorageMB.toLocaleString()} MB)`, margin + 4, y + 11.5);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Capacity Utilization: ${overview.storageUtilizationPct}% (${overview.storageWarningStatus.toUpperCase()}) | Detected Buckets: ${storageData.storageOverview.buckets.length}`, margin + 4, y + 16.5);
+  y += 26;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);

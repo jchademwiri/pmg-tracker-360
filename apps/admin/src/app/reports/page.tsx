@@ -21,6 +21,7 @@ import {
 import { GrowthChart } from '@/components/reports/GrowthChart';
 import { StorageDonutChart } from '@/components/reports/StorageDonutChart';
 import { TopTenantsChart } from '@/components/reports/TopTenantsChart';
+import { S3CapacityMeter } from '@/components/reports/S3CapacityMeter';
 import { ReportDownloadCards } from '@/components/reports/ReportDownloadCards';
 import { TenantUtilizationTable } from './TenantUtilizationTable';
 
@@ -55,7 +56,7 @@ export default async function AdminReportsPage() {
             Platform Reports & Analytics
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            System-wide operational intelligence, tenant growth trajectories, S3 storage consumption, and downloadable master dossiers.
+            System-wide operational intelligence, tenant growth trajectories, Cloudflare R2 multi-bucket capacity, and downloadable master dossiers.
           </p>
         </div>
       </div>
@@ -81,11 +82,17 @@ export default async function AdminReportsPage() {
         />
 
         <MetricCard
-          label="S3 Storage Used"
+          label="Cloudflare R2 Storage"
           count={`${overview.totalStorageMB.toLocaleString()} MB`}
           icon={<HardDrive className="w-5 h-5 text-amber-400" />}
-          variant="warning"
-          secondaryNote={`${overview.totalDocuments.toLocaleString()} documents (${overview.totalStorageGB} GB)`}
+          variant={
+            overview.storageWarningStatus === 'critical'
+              ? 'danger'
+              : overview.storageWarningStatus === 'warning'
+              ? 'warning'
+              : 'primary'
+          }
+          secondaryNote={`${overview.availableStorageGB} GB free of ${overview.totalStorageCapacityGB} GB (${overview.storageUtilizationPct}% used)`}
         />
 
         <MetricCard
@@ -96,6 +103,9 @@ export default async function AdminReportsPage() {
           secondaryNote={`${overview.totalTenders} total tenders (${fmtCurrency(overview.totalTenderAwardedValue)} won)`}
         />
       </div>
+
+      {/* ── Cloudflare R2 Live Capacity & Multi-Bucket Meter ── */}
+      <S3CapacityMeter storage={overview.storageOverview} />
 
       {/* ── Visual Analytics Section ────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
@@ -123,7 +133,7 @@ export default async function AdminReportsPage() {
               <PieChart className="h-4 w-4 text-emerald-400" />
               <h2 className="font-semibold text-zinc-100 text-sm">Storage by Resource Type</h2>
             </div>
-            <span className="text-xs text-zinc-500 font-mono">AWS S3</span>
+            <span className="text-xs text-zinc-500 font-mono">Cloudflare R2</span>
           </div>
           <p className="text-xs text-zinc-400 mb-4">
             Distribution of file volume across tenders, contracts, POs, and extensions.
