@@ -46,9 +46,7 @@ const customJestConfig = {
 
 const jestConfig = async () => {
   const config = await createJestConfig(customJestConfig)();
-  config.transformIgnorePatterns = [
-    String.raw`[/\\]node_modules[/\\](?!((\.bun[/\\])|(@t3-oss|@better-auth|better-auth|better-call|rou3|jose|@react-email|resend|@noble)[/\\]))`,
-  ];
+  config.transformIgnorePatterns = [];
   if (config.transform['^.+\\.(js|jsx|ts|tsx)$']) {
     config.transform['^.+\\.(js|jsx|ts|tsx|mjs)$'] =
       config.transform['^.+\\.(js|jsx|ts|tsx)$'];
