@@ -532,10 +532,10 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(30, 41, 59);
-  doc.text(`Total Storage Consumed: ${overview.totalStorageMB.toLocaleString()} MB (${overview.totalStorageGB} GB) across ${overview.totalDocuments.toLocaleString()} uploaded files`, margin + 4, y + 6);
-  doc.text(`Provisioned Plan Capacity: ${overview.totalStorageCapacityGB}.00 GB Cloudflare Free Tier | Available Remaining: ${overview.availableStorageGB} GB (${overview.availableStorageMB.toLocaleString()} MB)`, margin + 4, y + 11.5);
+  doc.text(`Total Storage Consumed: ${overview.totalStorageMB?.toLocaleString() ?? 0} MB (${overview.totalStorageGB ?? 0} GB) across ${(overview.totalDocuments ?? 0).toLocaleString()} uploaded files`, margin + 4, y + 6);
+  doc.text(`Provisioned Plan Capacity: ${overview.totalStorageCapacityGB ?? 10}.00 GB Cloudflare Free Tier | Available Remaining: ${overview.availableStorageGB ?? 10} GB (${overview.availableStorageMB?.toLocaleString() ?? 0} MB)`, margin + 4, y + 11.5);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Capacity Utilization: ${overview.storageUtilizationPct}% (${overview.storageWarningStatus.toUpperCase()}) | Detected Buckets: ${storageData.storageOverview.buckets.length}`, margin + 4, y + 16.5);
+  doc.text(`Capacity Utilization: ${overview.storageUtilizationPct ?? 0}% (${(overview.storageWarningStatus ?? 'normal').toUpperCase()}) | Detected Buckets: ${storageData.storageOverview?.buckets?.length ?? 0}`, margin + 4, y + 16.5);
   y += 26;
 
   doc.setFont('helvetica', 'bold');

@@ -47,7 +47,7 @@ export function TenantUtilizationTable({ tenants }: Props) {
       render: (t) => (
         <div className="flex items-center gap-1.5 font-mono text-xs">
           <HardDrive className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-          <span className="text-zinc-200 font-medium">{t.storageMB.toLocaleString()} MB</span>
+          <span className="text-zinc-200 font-medium">{t.storageMB.toLocaleString('en-US')} MB</span>
           <span className="text-zinc-500 text-[10px]">({t.documentCount} files)</span>
         </div>
       ),

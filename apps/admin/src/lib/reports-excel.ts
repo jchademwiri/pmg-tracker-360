@@ -328,12 +328,12 @@ export async function generateStorageAuditExcel(): Promise<Buffer> {
     r.eachCell((cell) => { cell.border = thinBorder; });
   };
 
-  addCapRow('Cloudflare Plan Tier Limit', `${overview.totalStorageCapacityGB}.00 GB`, 'Cloudflare R2 Monthly Free Tier');
-  addCapRow('Total Combined Storage Used', `${overview.totalStorageMB.toLocaleString()} MB`, `${overview.totalStorageGB} GB across all detected buckets`);
-  addCapRow('Available Free Storage Remaining', `${overview.availableStorageGB} GB`, `${overview.availableStorageMB.toLocaleString()} MB remaining before pay-as-you-go`);
-  addCapRow('Capacity Utilization Rate', `${overview.storageUtilizationPct}%`, overview.storageWarningStatus.toUpperCase());
-  addCapRow('Total Document Attachments', overview.totalDocuments, 'Files tracked in PMG Tracker 360 database');
-  addCapRow('Live Cloudflare API Connection', storageData.storageOverview.connectedLiveApi ? 'Connected (Multi-Bucket Sync)' : 'Local DB Monitored', 'Set CLOUDFLARE_API_TOKEN for live multi-app discovery');
+  addCapRow('Cloudflare Plan Tier Limit', `${overview.totalStorageCapacityGB ?? 10}.00 GB`, 'Cloudflare R2 Monthly Free Tier');
+  addCapRow('Total Combined Storage Used', `${overview.totalStorageMB?.toLocaleString() ?? 0} MB`, `${overview.totalStorageGB ?? 0} GB across all detected buckets`);
+  addCapRow('Available Free Storage Remaining', `${overview.availableStorageGB ?? 10} GB`, `${overview.availableStorageMB?.toLocaleString() ?? 0} MB remaining before pay-as-you-go`);
+  addCapRow('Capacity Utilization Rate', `${overview.storageUtilizationPct ?? 0}%`, (overview.storageWarningStatus ?? 'normal').toUpperCase());
+  addCapRow('Total Document Attachments', overview.totalDocuments ?? 0, 'Files tracked in PMG Tracker 360 database');
+  addCapRow('Live Cloudflare API Connection', storageData.storageOverview?.connectedLiveApi ? 'Connected (Multi-Bucket Sync)' : 'Local DB Monitored', 'Set CLOUDFLARE_API_TOKEN for live multi-app discovery');
 
   // Sheet 2: Storage Categories
   const catSheet = workbook.addWorksheet('Storage Categories');

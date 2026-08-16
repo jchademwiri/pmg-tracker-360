@@ -73,14 +73,14 @@ export default function SystemHealthWidget({
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
           <div className="text-[11px] text-zinc-500 font-medium">Tenders DB Index</div>
           <div className="text-xs font-semibold text-zinc-300 mt-1">
-            {totalTenders.toLocaleString()} records
+            {totalTenders.toLocaleString('en-US')} records
           </div>
         </div>
 
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
           <div className="text-[11px] text-zinc-500 font-medium">Active Projects</div>
           <div className="text-xs font-semibold text-zinc-300 mt-1">
-            {activeProjects.toLocaleString()} active
+            {activeProjects.toLocaleString('en-US')} active
           </div>
         </div>
       </div>

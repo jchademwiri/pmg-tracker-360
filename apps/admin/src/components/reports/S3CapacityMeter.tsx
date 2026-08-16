@@ -20,6 +20,15 @@ type Props = {
   storage: CloudflareStorageOverview;
 };
 
+function formatMB(mb: number): string {
+  if (mb === 0) return '0.00 MB';
+  return `${Number(mb.toFixed(2)).toLocaleString('en-US')} MB`;
+}
+
+function formatNum(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
 export function S3CapacityMeter({ storage }: Props) {
   const [showBuckets, setShowBuckets] = useState(true);
 
@@ -99,7 +108,7 @@ export function S3CapacityMeter({ storage }: Props) {
         <div className="flex items-center justify-between text-xs font-medium">
           <div className="flex items-center gap-2">
             <span className="text-zinc-200 font-bold text-sm">
-              {totalUsedGB >= 1 ? `${totalUsedGB} GB` : `${totalUsedMB.toLocaleString()} MB`}
+              {totalUsedGB >= 1 ? `${totalUsedGB} GB` : formatMB(totalUsedMB)}
             </span>
             <span className="text-zinc-500">used of</span>
             <span className="text-zinc-200 font-bold text-sm">{totalCapacityGB} GB</span>
@@ -158,7 +167,7 @@ export function S3CapacityMeter({ storage }: Props) {
             Combined Used
           </div>
           <div className="text-base font-bold text-amber-400">
-            {totalUsedMB.toLocaleString()} MB
+            {formatMB(totalUsedMB)}
           </div>
           <div className="text-[10px] text-zinc-500">{totalUsedGB} GB across all buckets</div>
         </div>
@@ -171,7 +180,7 @@ export function S3CapacityMeter({ storage }: Props) {
           <div className="text-base font-bold text-emerald-400">
             {availableStorageGB} GB
           </div>
-          <div className="text-[10px] text-zinc-500">{availableStorageMB.toLocaleString()} MB remaining</div>
+          <div className="text-[10px] text-zinc-500">{formatMB(availableStorageMB)} remaining</div>
         </div>
 
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl space-y-1">
@@ -180,9 +189,9 @@ export function S3CapacityMeter({ storage }: Props) {
             PMG Tracker Share
           </div>
           <div className="text-base font-bold text-blue-400">
-            {pmgStorageMB.toLocaleString()} MB
+            {formatMB(pmgStorageMB)}
           </div>
-          <div className="text-[10px] text-zinc-500">{pmgDocumentCount.toLocaleString()} documents</div>
+          <div className="text-[10px] text-zinc-500">{formatNum(pmgDocumentCount)} documents</div>
         </div>
       </div>
 
@@ -267,10 +276,10 @@ export function S3CapacityMeter({ storage }: Props) {
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right text-zinc-300">
-                      {b.objectCount.toLocaleString()}
+                      {formatNum(b.objectCount)}
                     </td>
                     <td className="px-4 py-2.5 text-right font-semibold text-zinc-200">
-                      {b.sizeMB.toLocaleString()} MB
+                      {formatMB(b.sizeMB)}
                     </td>
                     <td className="px-4 py-2.5 text-right text-zinc-400">
                       {b.sizeGB} GB

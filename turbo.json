@@ -33,7 +33,9 @@
     "SENDER_NAME",
     "SENDER_EMAIL",
     "REPLY_TO_EMAIL",
-    "RESEND_DOMAIN"
+    "RESEND_DOMAIN",
+    "CLOUDFLARE_API_TOKEN",
+    "PLATFORM_STORAGE_LIMIT_GB"
   ],
   "tasks": {
     "build": {

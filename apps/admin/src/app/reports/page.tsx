@@ -83,7 +83,7 @@ export default async function AdminReportsPage() {
 
         <MetricCard
           label="Cloudflare R2 Storage"
-          count={`${overview.totalStorageMB.toLocaleString()} MB`}
+          count={`${overview.totalStorageMB.toLocaleString('en-US')} MB`}
           icon={<HardDrive className="w-5 h-5 text-amber-400" />}
           variant={
             overview.storageWarningStatus === 'critical'
