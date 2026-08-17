@@ -39,7 +39,11 @@ const jsonLd = {
   url: 'https://tendertrack360.co.za',
 };
 
-export default function Home() {
+import { getSubscriptionPlans } from '@pmg/db';
+
+export default async function Home() {
+  const plans = await getSubscriptionPlans();
+
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
       <script
@@ -57,8 +61,8 @@ export default function Home() {
         {/* Chapter 2: The 3-Step Tender & PO Engine */}
         <WorkflowEngineSection />
 
-        {/* Chapter 3: Simple 2-Column Pricing (Free Forever vs Pro Beta Access) */}
-        <PricingSection />
+        {/* Chapter 3: Dynamic Database-Driven 3-Tier Pricing */}
+        <PricingSection plans={plans} />
 
         {/* Chapter 4: 4 Essential FAQs & High-Converting Closer */}
         <FaqSection />

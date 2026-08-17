@@ -1,69 +1,14 @@
 import Link from 'next/link';
-import { Check, Crown, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Check, Crown, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { type SubscriptionPlan, DEFAULT_SUBSCRIPTION_PLANS } from '@pmg/db/plans-constants';
 
-export function PricingSection() {
-  const tiers = [
-    {
-      id: 'free',
-      name: 'Free Plan',
-      description: 'Perfect for getting started with basic tender tracking.',
-      price: '0',
-      period: '/ month',
-      features: [
-        '1 Organization Ownership',
-        '10 Tenders / Month',
-        '0 Active Projects',
-        '100 MB Document Storage',
-        'Briefing & Closing Reminders',
-        '90-Day Validity Expiry Alarms',
-        'Standard Returnable Checklist',
-        'Community Support',
-      ],
-      popular: false,
-      ctaText: 'Start For Free',
-    },
-    {
-      id: 'starter',
-      name: 'Starter Plan',
-      description: 'For active contractors bidding regularly and tracking initial POs.',
-      price: '249',
-      period: '/ month (Free during Beta)',
-      features: [
-        '1 Organization Ownership',
-        '20 Tenders / Month',
-        '2 Active Awarded Projects',
-        '1 GB Secure Storage',
-        'Itemized Purchase Order Ledger',
-        'SBD 4 & 6.1 Compliance Matrix',
-        'CSV & PDF Tender Register Export',
-        'Standard Email Support',
-      ],
-      popular: false,
-      ctaText: 'Start For Free',
-    },
-    {
-      id: 'pro',
-      name: 'Pro Plan',
-      description: 'For growing bid teams managing multiple government & commercial contracts.',
-      price: '499',
-      period: '/ month (Free during Beta)',
-      features: [
-        '2 Organization Ownerships',
-        'Unlimited Tenders Tracked',
-        '5 Active Awarded Projects',
-        '10 GB Secure Storage',
-        'Automated 11:00 AM Closing Sirens',
-        'Full CSD, CIDB & Tax Pin Matrix',
-        '30, 60 & 90-Day Cashflow Forecasting',
-        'Boardroom PDF & Excel (.xlsx) Reports',
-        'Multi-Tenant Roles (Admin, Manager, Member)',
-        'In-App Concierge Support Desk (#TICK-1001)',
-      ],
-      popular: true,
-      ctaText: 'Claim Free Pro Access',
-    },
-  ];
+interface PricingSectionProps {
+  plans?: SubscriptionPlan[];
+}
+
+export function PricingSection({ plans = DEFAULT_SUBSCRIPTION_PLANS }: PricingSectionProps) {
+  const activePlans = plans.filter((p) => p.isActive);
 
   return (
     <section id="pricing" className="py-20 md:py-24 border-t border-border/40 bg-background scroll-mt-20">
@@ -90,7 +35,7 @@ export function PricingSection() {
 
         {/* 3-Column Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-          {tiers.map((tier) => (
+          {activePlans.map((tier) => (
             <div
               key={tier.id}
               className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 text-left ${
@@ -102,7 +47,7 @@ export function PricingSection() {
               {tier.popular && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-extrabold tracking-wider uppercase shadow-sm flex items-center gap-1">
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
-                  <span>Most Popular</span>
+                  <span>{tier.badgeText || 'Most Popular'}</span>
                 </div>
               )}
 
@@ -116,11 +61,11 @@ export function PricingSection() {
                   <div className="flex items-baseline gap-1">
                     <span className="text-sm font-semibold text-muted-foreground">R</span>
                     <span className="text-4xl font-extrabold text-foreground font-mono tabular-nums">
-                      {tier.price}
+                      {tier.priceZar}
                     </span>
                   </div>
                   <div className="text-xs text-amber-400 font-medium mt-1">
-                    {tier.period}
+                    / {tier.period}
                   </div>
                 </div>
 
@@ -128,12 +73,13 @@ export function PricingSection() {
                   <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Included Capabilities:
                   </div>
-                  {tier.features.map((feature) => (
-                    <div key={feature} className="flex items-start gap-2 text-xs text-foreground/90 font-medium">
-                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5 font-bold" aria-hidden="true" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
+                  {Array.isArray(tier.features) &&
+                    (tier.features as string[]).map((feature: string) => (
+                      <div key={feature} className="flex items-start gap-2 text-xs text-foreground/90 font-medium">
+                        <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5 font-bold" aria-hidden="true" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
 

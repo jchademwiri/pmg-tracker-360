@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@pmg/db';
+import { db, getPlanLimits } from '@pmg/db';
 import {
   document,
   tender,
@@ -74,15 +74,9 @@ export async function uploadDocument(
 
     // Storage Quota Enforcement
     const plan = await getOrganizationOwnerPlan(organizationId);
-    const maxStorageMb =
-      plan === 'enterprise'
-        ? 50000
-        : plan === 'pro'
-          ? 10000
-          : plan === 'starter'
-            ? 1000
-            : 100;
-    const maxStorageBytes = maxStorageMb * 1024 * 1024;
+    const limits = await getPlanLimits(plan);
+    const maxStorageMb = limits.maxStorageMb;
+    const maxStorageBytes = limits.maxStorageBytes;
 
     const storageResult = await db
       .select({ totalSize: sql<number>`coalesce(sum(${document.size}), 0)` })

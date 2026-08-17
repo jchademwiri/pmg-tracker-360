@@ -64,9 +64,12 @@ import {
   updateOrganizationPlan,
 } from '@/server/storage';
 
+import { type SubscriptionPlan, DEFAULT_SUBSCRIPTION_PLANS } from '@pmg/db/plans-constants';
+
 interface StorageDashboardProps {
   organizationId: string;
   data: StorageAnalyticsData;
+  plans?: SubscriptionPlan[];
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -96,55 +99,6 @@ interface PlanTier {
   features: string[];
   popular?: boolean;
 }
-
-const PLAN_TIERS: PlanTier[] = [
-  {
-    id: 'free',
-    name: 'Free Starter',
-    price: 'R 0',
-    period: 'forever free',
-    storageMb: 100,
-    storageLabel: '100 MB Storage',
-    description: 'Essential storage for solo contractors evaluating tenders.',
-    features: [
-      '100 MB Cloudflare R2 storage',
-      'Up to 10 active tenders',
-      'Standard document uploads (PDF, Word, Excel)',
-      'Community support',
-    ],
-  },
-  {
-    id: 'starter',
-    name: 'Starter Tier',
-    price: 'R 199',
-    period: 'per month',
-    storageMb: 1000,
-    storageLabel: '1 GB Storage (1,000 MB)',
-    description: 'Expanded capacity for growing teams managing multiple bids.',
-    features: [
-      '1 GB Cloudflare R2 storage (10x capacity)',
-      'Unlimited active tenders & projects',
-      'Automated email deadline alerts',
-      'Priority ticket support',
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Pro Professional',
-    price: 'R 499',
-    period: 'per month',
-    storageMb: 10000,
-    storageLabel: '10 GB Storage (10,000 MB)',
-    description: 'High-capacity workspace for established contractors & suppliers.',
-    features: [
-      '10 GB Cloudflare R2 storage (100x capacity)',
-      'Full purchase order & delivery note tracking',
-      'Custom document naming & automated signed URLs',
-      'Dedicated compliance manager support',
-    ],
-    popular: true,
-  },
-];
 
 function getFileIcon(mimeType: string) {
   const mime = mimeType.toLowerCase();
@@ -203,11 +157,37 @@ function getEntityBadge(doc: StorageDocumentItem) {
   }
 }
 
-export function StorageDashboard({ organizationId, data }: StorageDashboardProps) {
+export function StorageDashboard({
+  organizationId,
+  data,
+  plans = DEFAULT_SUBSCRIPTION_PLANS,
+}: StorageDashboardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectedPlanAction, setSelectedPlanAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'recent' | 'largest'>('recent');
+
+  const activePlans = plans.filter((p) => p.isActive);
+
+  const planTiers: PlanTier[] = activePlans.map((p) => {
+    const id = p.id as 'free' | 'starter' | 'pro';
+    const storageLabel =
+      p.maxStorageMb >= 1000
+        ? `${(p.maxStorageMb / 1000).toFixed(0)} GB Storage (${p.maxStorageMb.toLocaleString()} MB)`
+        : `${p.maxStorageMb} MB Storage`;
+
+    return {
+      id,
+      name: p.name,
+      price: `R ${p.priceZar}`,
+      period: p.period,
+      storageMb: p.maxStorageMb,
+      storageLabel,
+      description: p.description,
+      features: Array.isArray(p.features) ? p.features : [],
+      popular: p.popular,
+    };
+  });
 
   const currentPlanId = data.plan.toLowerCase() as PlanTier['id'];
   const isWarning = data.usedPercentage >= 75 && data.usedPercentage < 90;
@@ -347,87 +327,95 @@ export function StorageDashboard({ organizationId, data }: StorageDashboardProps
         </CardContent>
       </Card>
 
-      {/* 1-Click Subscription Plan Tier Grid */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2">
-              <Crown className="h-5 w-5 text-amber-400" />
-              <span>Subscription & Storage Tier Management</span>
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Instantly upgrade or adjust your organization's storage volume with 1-click tier switching.
-            </p>
+      {/* 1-Click Subscription Plan Tier Grid inside Card Container */}
+      <Card className="border-border/80 bg-card/40 backdrop-blur-xs shadow-xs">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <CardTitle className="text-base font-bold tracking-tight flex items-center gap-2">
+                <Crown className="h-4 w-4 text-amber-400" />
+                <span>Subscription & Storage Tier Management</span>
+              </CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Instantly upgrade or adjust your organization's storage volume with 1-click tier switching.
+              </CardDescription>
+            </div>
+            <div className="text-xs text-muted-foreground font-medium bg-muted/60 px-2.5 py-1 rounded-md border border-border/50 w-fit">
+              Current Plan: <strong className="text-foreground uppercase">{currentPlanId}</strong>
+            </div>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLAN_TIERS.map((tier) => {
-            const isCurrent = currentPlanId === tier.id;
-            const isDowngrade =
-              (currentPlanId === 'pro' && (tier.id === 'starter' || tier.id === 'free')) ||
-              (currentPlanId === 'starter' && tier.id === 'free');
-            const isUpgrade = !isCurrent && !isDowngrade;
-            const isActing = selectedPlanAction === tier.id && isPending;
+        <CardContent className="pt-0">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {planTiers.map((tier) => {
+              const isCurrent = currentPlanId === tier.id;
+              const isDowngrade =
+                (currentPlanId === 'pro' && (tier.id === 'starter' || tier.id === 'free')) ||
+                (currentPlanId === 'starter' && tier.id === 'free');
+              const isUpgrade = !isCurrent && !isDowngrade;
+              const isActing = selectedPlanAction === tier.id && isPending;
 
-            return (
-              <Card
-                key={tier.id}
-                className={`relative flex flex-col justify-between transition-all duration-200 ${
-                  isCurrent
-                    ? 'border-primary shadow-md bg-primary/5 ring-1 ring-primary/40'
-                    : tier.popular
-                      ? 'border-amber-500/50 shadow-sm bg-amber-500/5'
-                      : 'border-border/60 hover:border-border'
-                }`}
-              >
-                {tier.popular && !isCurrent && (
-                  <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-black shadow-xs">
-                    Popular
-                  </span>
-                )}
-                {isCurrent && (
-                  <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground shadow-xs flex items-center gap-1">
-                    <Check className="h-3 w-3" />
-                    Active Plan
-                  </span>
-                )}
-
-                <CardHeader className="pb-3 pt-5">
-                  <CardTitle className="text-base font-bold flex items-center justify-between">
-                    <span>{tier.name}</span>
-                  </CardTitle>
-                  <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-2xl font-extrabold tracking-tight text-foreground">
-                      {tier.price}
+              return (
+                <div
+                  key={tier.id}
+                  className={`relative rounded-xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                    isCurrent
+                      ? 'border-primary shadow-sm bg-primary/5 ring-1 ring-primary/40'
+                      : tier.popular
+                        ? 'border-amber-500/50 shadow-xs bg-amber-500/5'
+                        : 'border-border/70 bg-background/50 hover:border-border'
+                  }`}
+                >
+                  {tier.popular && !isCurrent && (
+                    <span className="absolute -top-2.5 right-4 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500 text-black shadow-xs">
+                      Popular
                     </span>
-                    <span className="text-xs text-muted-foreground">/{tier.period}</span>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold bg-muted/60 text-foreground w-fit mt-2">
-                    <HardDrive className="h-3.5 w-3.5 text-primary" />
-                    <span>{tier.storageLabel}</span>
-                  </div>
-                  <CardDescription className="text-xs mt-2 leading-relaxed">
-                    {tier.description}
-                  </CardDescription>
-                </CardHeader>
+                  )}
+                  {isCurrent && (
+                    <span className="absolute -top-2.5 right-4 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground shadow-xs flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Active Plan
+                    </span>
+                  )}
 
-                <CardContent className="space-y-4 pt-0">
-                  <ul className="space-y-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3">
-                    {tier.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-foreground">{tier.name}</h3>
+                    </div>
+
+                    <div className="flex items-baseline gap-1 mt-1.5">
+                      <span className="text-xl font-extrabold tracking-tight text-foreground">
+                        {tier.price}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">/{tier.period}</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-muted/60 text-foreground w-fit mt-2">
+                      <HardDrive className="h-3 w-3 text-primary" />
+                      <span>{tier.storageLabel}</span>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed min-h-[32px]">
+                      {tier.description}
+                    </p>
+
+                    <ul className="space-y-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3 my-3">
+                      {tier.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5 text-[11px]">
+                          <Check className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   <Button
                     type="button"
                     disabled={isCurrent || isPending}
                     variant={isCurrent ? 'secondary' : isUpgrade ? 'default' : 'outline'}
                     size="sm"
-                    className={`w-full font-semibold cursor-pointer ${
+                    className={`w-full text-xs font-semibold cursor-pointer h-8.5 ${
                       isUpgrade && tier.popular
                         ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-xs'
                         : isUpgrade
@@ -438,26 +426,26 @@ export function StorageDashboard({ organizationId, data }: StorageDashboardProps
                   >
                     {isActing ? (
                       <>
-                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                        <span>Updating Plan...</span>
+                        <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                        <span>Updating...</span>
                       </>
                     ) : isCurrent ? (
-                      <span>Current Active Plan</span>
+                      <span>Current Plan</span>
                     ) : isUpgrade ? (
                       <>
-                        <Zap className="h-3.5 w-3.5 mr-1 text-amber-300" />
+                        <Zap className="h-3 w-3 mr-1 text-amber-300" />
                         <span>1-Click Upgrade</span>
                       </>
                     ) : (
-                      <span>Downgrade Tier</span>
+                      <span>Downgrade</span>
                     )}
                   </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 4 Metric Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

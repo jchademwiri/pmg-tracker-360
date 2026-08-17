@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/server';
 import { getUserUsageStats } from '@/server/billing';
+import { getSubscriptionPlans } from '@pmg/db';
 import { redirect } from 'next/navigation';
 import BillingClient from './billing-client';
 
@@ -12,7 +13,10 @@ export default async function BillingPage() {
     redirect('/login');
   }
 
-  const usageResult = await getUserUsageStats();
+  const [usageResult, plans] = await Promise.all([
+    getUserUsageStats(),
+    getSubscriptionPlans(),
+  ]);
 
   return (
     <BillingClient
@@ -20,6 +24,8 @@ export default async function BillingPage() {
       userUpdatedAt={usageResult.userUpdatedAt}
       usage={usageResult.usage}
       invoices={usageResult.invoices || []}
+      plans={plans}
     />
   );
 }
+
