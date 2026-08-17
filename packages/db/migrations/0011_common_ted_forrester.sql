@@ -51,63 +51,78 @@ CREATE TABLE IF NOT EXISTS "waitlist" (
 	CONSTRAINT "waitlist_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
-DROP TABLE IF EXISTS "follow_up" CASCADE;--> statement-breakpoint
-ALTER TABLE "purchase_order" ADD COLUMN IF NOT EXISTS "delivery_address" text;--> statement-breakpoint
-ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "evaluation_date" timestamp;--> statement-breakpoint
-ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "plan" text DEFAULT 'free' NOT NULL;--> statement-breakpoint
+DROP TABLE IF EXISTS "follow_up" CASCADE;
+--> statement-breakpoint
+ALTER TABLE "purchase_order" ADD COLUMN IF NOT EXISTS "delivery_address" text;
+--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "evaluation_date" timestamp;
+--> statement-breakpoint
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "plan" text DEFAULT 'free' NOT NULL;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "document" ADD CONSTRAINT "document_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "document" ADD CONSTRAINT "document_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "document" ADD CONSTRAINT "document_project_id_project_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."project"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "document" ADD CONSTRAINT "document_purchase_order_id_purchase_order_id_fk" FOREIGN KEY ("purchase_order_id") REFERENCES "public"."purchase_order"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "document" ADD CONSTRAINT "document_extension_id_tender_extension_id_fk" FOREIGN KEY ("extension_id") REFERENCES "public"."tender_extension"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "document" ADD CONSTRAINT "document_uploaded_by_user_id_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "notification" ADD CONSTRAINT "notification_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "notification" ADD CONSTRAINT "notification_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "tender_extension" ADD CONSTRAINT "tender_extension_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "tender_extension" ADD CONSTRAINT "tender_extension_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "tender_extension" ADD CONSTRAINT "tender_extension_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 ALTER TABLE "purchase_order" DROP COLUMN IF EXISTS "notes";

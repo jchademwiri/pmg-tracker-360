@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS "subscription_plan" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-INSERT INTO "subscription_plan" (
+DO $$ BEGIN
+  INSERT INTO "subscription_plan" (
 	"id",
 	"name",
 	"description",
@@ -102,3 +103,6 @@ ON CONFLICT ("id") DO UPDATE SET
 	"cta_text" = EXCLUDED."cta_text",
 	"badge_text" = EXCLUDED."badge_text",
 	"updated_at" = now();
+EXCEPTION
+  WHEN others THEN null;
+END $$;

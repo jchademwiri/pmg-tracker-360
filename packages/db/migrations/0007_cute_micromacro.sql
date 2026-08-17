@@ -46,35 +46,41 @@ CREATE TABLE IF NOT EXISTS "session_tracking" (
 DO $$ BEGIN
   ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_from_user_id_user_id_fk" FOREIGN KEY ("from_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_to_user_id_user_id_fk" FOREIGN KEY ("to_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "security_audit_log" ADD CONSTRAINT "security_audit_log_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "security_audit_log" ADD CONSTRAINT "security_audit_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "session_tracking" ADD CONSTRAINT "session_tracking_session_id_session_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."session"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "session_tracking" ADD CONSTRAINT "session_tracking_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+  WHEN others THEN null;
 END $$;

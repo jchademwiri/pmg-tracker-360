@@ -1,18 +1,21 @@
 DO $$ BEGIN
   CREATE TYPE "public"."follow_up_status" AS ENUM('under_evaluation', 'appointed', 'rejected');
 EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE "public"."role" AS ENUM('owner', 'admin', 'member');
 EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   CREATE TYPE "public"."tender_status" AS ENUM('draft', 'submitted', 'appointed', 'rejected', 'under_evaluation');
 EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "contract" (
 	"id" text PRIMARY KEY NOT NULL,
 	"tender_id" text NOT NULL,
@@ -97,54 +100,64 @@ CREATE TABLE IF NOT EXISTS "tender" (
 	CONSTRAINT "tender_tender_number_unique" UNIQUE("tender_number")
 );
 --> statement-breakpoint
-ALTER TABLE "session" ADD COLUMN IF NOT EXISTS "active_organization_id" text;--> statement-breakpoint
+ALTER TABLE "session" ADD COLUMN IF NOT EXISTS "active_organization_id" text;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "contract" ADD CONSTRAINT "contract_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "contract" ADD CONSTRAINT "contract_follow_up_id_follow_up_id_fk" FOREIGN KEY ("follow_up_id") REFERENCES "public"."follow_up"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "control_center" ADD CONSTRAINT "control_center_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "follow_up" ADD CONSTRAINT "follow_up_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviter_id_user_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "member" ADD CONSTRAINT "member_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "member" ADD CONSTRAINT "member_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "tender" ADD CONSTRAINT "tender_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "tender" ADD CONSTRAINT "tender_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+  WHEN others THEN null;
 END $$;

@@ -20,15 +20,17 @@ CREATE TABLE IF NOT EXISTS "purchase_order_delivery_note" (
 DO $$ BEGIN
   ALTER TABLE "purchase_order_delivery_item" ADD CONSTRAINT "purchase_order_delivery_item_delivery_note_id_purchase_order_delivery_note_id_fk" FOREIGN KEY ("delivery_note_id") REFERENCES "public"."purchase_order_delivery_note"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "purchase_order_delivery_item" ADD CONSTRAINT "purchase_order_delivery_item_line_item_id_purchase_order_line_item_id_fk" FOREIGN KEY ("line_item_id") REFERENCES "public"."purchase_order_line_item"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "purchase_order_delivery_note" ADD CONSTRAINT "purchase_order_delivery_note_purchase_order_id_purchase_order_id_fk" FOREIGN KEY ("purchase_order_id") REFERENCES "public"."purchase_order"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+  WHEN others THEN null;
 END $$;

@@ -12,5 +12,5 @@ CREATE TABLE IF NOT EXISTS "purchase_order_line_item" (
 DO $$ BEGIN
   ALTER TABLE "purchase_order_line_item" ADD CONSTRAINT "purchase_order_line_item_purchase_order_id_purchase_order_id_fk" FOREIGN KEY ("purchase_order_id") REFERENCES "public"."purchase_order"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+  WHEN others THEN null;
 END $$;

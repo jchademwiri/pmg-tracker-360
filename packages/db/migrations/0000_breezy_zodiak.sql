@@ -49,10 +49,11 @@ CREATE TABLE IF NOT EXISTS "verification" (
 DO $$ BEGIN
   ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
-END $$;--> statement-breakpoint
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
 DO $$ BEGIN
   ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
-  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+  WHEN others THEN null;
 END $$;
