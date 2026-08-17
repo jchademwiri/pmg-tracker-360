@@ -1,7 +1,22 @@
-CREATE TYPE "public"."follow_up_status" AS ENUM('under_evaluation', 'appointed', 'rejected');--> statement-breakpoint
-CREATE TYPE "public"."role" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
-CREATE TYPE "public"."tender_status" AS ENUM('draft', 'submitted', 'appointed', 'rejected', 'under_evaluation');--> statement-breakpoint
-CREATE TABLE "contract" (
+DO $$ BEGIN
+  CREATE TYPE "public"."follow_up_status" AS ENUM('under_evaluation', 'appointed', 'rejected');
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  CREATE TYPE "public"."role" AS ENUM('owner', 'admin', 'member');
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  CREATE TYPE "public"."tender_status" AS ENUM('draft', 'submitted', 'appointed', 'rejected', 'under_evaluation');
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "contract" (
 	"id" text PRIMARY KEY NOT NULL,
 	"tender_id" text NOT NULL,
 	"follow_up_id" text,
@@ -15,7 +30,7 @@ CREATE TABLE "contract" (
 	CONSTRAINT "contract_contract_number_unique" UNIQUE("contract_number")
 );
 --> statement-breakpoint
-CREATE TABLE "control_center" (
+CREATE TABLE IF NOT EXISTS "control_center" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"default_email" text,
@@ -25,7 +40,7 @@ CREATE TABLE "control_center" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "follow_up" (
+CREATE TABLE IF NOT EXISTS "follow_up" (
 	"id" text PRIMARY KEY NOT NULL,
 	"tender_id" text NOT NULL,
 	"contact_person" text,
@@ -41,7 +56,7 @@ CREATE TABLE "follow_up" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "invitation" (
+CREATE TABLE IF NOT EXISTS "invitation" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"email" text NOT NULL,
@@ -51,7 +66,7 @@ CREATE TABLE "invitation" (
 	"inviter_id" text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "member" (
+CREATE TABLE IF NOT EXISTS "member" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"user_id" text NOT NULL,
@@ -59,7 +74,7 @@ CREATE TABLE "member" (
 	"created_at" timestamp NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "organization" (
+CREATE TABLE IF NOT EXISTS "organization" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"slug" text,
@@ -69,7 +84,7 @@ CREATE TABLE "organization" (
 	CONSTRAINT "organization_slug_unique" UNIQUE("slug")
 );
 --> statement-breakpoint
-CREATE TABLE "tender" (
+CREATE TABLE IF NOT EXISTS "tender" (
 	"id" text PRIMARY KEY NOT NULL,
 	"tender_number" text NOT NULL,
 	"title" text NOT NULL,
@@ -85,14 +100,64 @@ CREATE TABLE "tender" (
 	CONSTRAINT "tender_tender_number_unique" UNIQUE("tender_number")
 );
 --> statement-breakpoint
-ALTER TABLE "session" ADD COLUMN "active_organization_id" text;--> statement-breakpoint
-ALTER TABLE "contract" ADD CONSTRAINT "contract_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "contract" ADD CONSTRAINT "contract_follow_up_id_follow_up_id_fk" FOREIGN KEY ("follow_up_id") REFERENCES "public"."follow_up"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "control_center" ADD CONSTRAINT "control_center_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "follow_up" ADD CONSTRAINT "follow_up_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviter_id_user_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "member" ADD CONSTRAINT "member_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "member" ADD CONSTRAINT "member_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tender" ADD CONSTRAINT "tender_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tender" ADD CONSTRAINT "tender_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "session" ADD COLUMN IF NOT EXISTS "active_organization_id" text;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "contract" ADD CONSTRAINT "contract_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "contract" ADD CONSTRAINT "contract_follow_up_id_follow_up_id_fk" FOREIGN KEY ("follow_up_id") REFERENCES "public"."follow_up"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "control_center" ADD CONSTRAINT "control_center_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "follow_up" ADD CONSTRAINT "follow_up_tender_id_tender_id_fk" FOREIGN KEY ("tender_id") REFERENCES "public"."tender"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviter_id_user_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "member" ADD CONSTRAINT "member_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "member" ADD CONSTRAINT "member_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "tender" ADD CONSTRAINT "tender_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "tender" ADD CONSTRAINT "tender_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;

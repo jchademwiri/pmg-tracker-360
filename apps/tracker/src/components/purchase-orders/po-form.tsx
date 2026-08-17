@@ -698,6 +698,20 @@ export function POForm({
                                 itemNumber: event.target.value.toUpperCase(),
                               }))
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (
+                                  newLineItem.itemNumber.trim() &&
+                                  newLineItem.description.trim() &&
+                                  newLineItem.unit.trim() &&
+                                  newLineItem.unitPrice.trim() !== ''
+                                ) {
+                                  handleCreateProjectLineItem();
+                                }
+                              }
+                            }}
                             placeholder="ITEM-001"
                           />
                         </div>
@@ -713,6 +727,20 @@ export function POForm({
                                 sapReference: event.target.value,
                               }))
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (
+                                  newLineItem.itemNumber.trim() &&
+                                  newLineItem.description.trim() &&
+                                  newLineItem.unit.trim() &&
+                                  newLineItem.unitPrice.trim() !== ''
+                                ) {
+                                  handleCreateProjectLineItem();
+                                }
+                              }
+                            }}
                             placeholder="Optional"
                           />
                         </div>
@@ -728,6 +756,20 @@ export function POForm({
                                 description: event.target.value,
                               }))
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (
+                                  newLineItem.itemNumber.trim() &&
+                                  newLineItem.description.trim() &&
+                                  newLineItem.unit.trim() &&
+                                  newLineItem.unitPrice.trim() !== ''
+                                ) {
+                                  handleCreateProjectLineItem();
+                                }
+                              }
+                            }}
                             placeholder="Cables, installation, hardware"
                           />
                         </div>
@@ -740,6 +782,20 @@ export function POForm({
                             onChange={(event) =>
                               setNewLineItem((prev) => ({ ...prev, unit: event.target.value }))
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (
+                                  newLineItem.itemNumber.trim() &&
+                                  newLineItem.description.trim() &&
+                                  newLineItem.unit.trim() &&
+                                  newLineItem.unitPrice.trim() !== ''
+                                ) {
+                                  handleCreateProjectLineItem();
+                                }
+                              }
+                            }}
                             placeholder="unit"
                           />
                         </div>
@@ -757,6 +813,20 @@ export function POForm({
                                 unitPrice: event.target.value,
                               }))
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (
+                                  newLineItem.itemNumber.trim() &&
+                                  newLineItem.description.trim() &&
+                                  newLineItem.unit.trim() &&
+                                  newLineItem.unitPrice.trim() !== ''
+                                ) {
+                                  handleCreateProjectLineItem();
+                                }
+                              }
+                            }}
                             placeholder="0.00"
                           />
                         </div>
@@ -771,7 +841,7 @@ export function POForm({
                               !newLineItem.unit.trim() ||
                               newLineItem.unitPrice.trim() === ''
                             }
-                            className="w-full"
+                            className="w-full cursor-pointer"
                           >
                             Save Item
                           </Button>
@@ -861,6 +931,11 @@ export function POForm({
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                              }
+                                            }}
                                             {...inputField}
                                           />
                                         </FormControl>
@@ -995,6 +1070,11 @@ export function POForm({
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                              }
+                                            }}
                                             {...inputField}
                                           />
                                         </FormControl>

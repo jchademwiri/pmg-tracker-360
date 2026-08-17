@@ -114,7 +114,7 @@ function StepActions({
   const isLastStep = currentStep === totalSteps;
 
   return (
-    <div className="flex items-center rounded-lg justify-between space-x-4 pt-8 border-t bg-card px-6 py-6">
+    <div className="flex items-center rounded-lg justify-between space-x-4 pt-8 border-t bg-card px-6 py-6 mb-6">
       <Button
         type="button"
         variant="outline"

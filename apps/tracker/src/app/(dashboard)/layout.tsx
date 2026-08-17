@@ -91,7 +91,7 @@ export default async function MainDashboardLayout({
               </div>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pb-20 md:pb-4 overflow-y-auto">
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pb-28 md:pb-24 overflow-y-auto">
             {children}
           </div>
           <MobileBottomNav />

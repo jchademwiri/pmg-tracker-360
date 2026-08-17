@@ -4,7 +4,7 @@ import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Calendar, User, PhoneCall, Loader2 } from 'lucide-react';
+import { Calendar, User, PhoneCall, Loader2, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 import {
   Dialog,
@@ -77,14 +77,14 @@ export function TenderFollowUpDialog({
         onOpenChange(val);
       }
     }}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
+      <DialogContent className="sm:max-w-[720px] md:max-w-[780px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-foreground">
             <PhoneCall className="h-5 w-5 text-blue-500" />
             Log Tender Follow-up
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Record a follow-up conversation or qualification milestone for Tender <span className="font-semibold text-foreground">{tenderNumber.toUpperCase()}</span>.
+          <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
+            Record a follow-up conversation or status query for Tender <span className="font-bold text-foreground">{tenderNumber.toUpperCase()}</span>.
           </DialogDescription>
         </DialogHeader>
 
@@ -96,19 +96,19 @@ export function TenderFollowUpDialog({
             }}
             className="space-y-4 pt-2"
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="followUpDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold">Follow-up Date</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">Follow-up Date *</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                         <Input
                           type="date"
-                          className="pl-10"
+                          className="pl-10 text-xs sm:text-sm"
                           disabled={isPending}
                           value={toSASTDateString(field.value)}
                           onChange={(e) => {
@@ -124,16 +124,66 @@ export function TenderFollowUpDialog({
 
               <FormField
                 control={form.control}
+                name="nextFollowUpDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">Next Follow-up Date (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          type="date"
+                          className="pl-10 text-xs sm:text-sm"
+                          disabled={isPending}
+                          value={toSASTDateString(field.value)}
+                          onChange={(e) => {
+                            field.onChange(parseDateToUTC(e.target.value));
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="contactPerson"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold">Contact Person</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">Client Contact Person</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                         <Input
-                          placeholder="Name of official"
-                          className="pl-10"
+                          placeholder="e.g. John Doe (Procurement Officer)"
+                          className="pl-10 text-xs sm:text-sm"
+                          disabled={isPending}
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="outcome"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">Outcome / Status Headline</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <CheckCircle2 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          placeholder="e.g. Under technical BEC evaluation"
+                          className="pl-10 text-xs sm:text-sm"
                           disabled={isPending}
                           {...field}
                           value={field.value || ''}
@@ -151,11 +201,11 @@ export function TenderFollowUpDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold">Conversation Notes</FormLabel>
+                  <FormLabel className="text-xs sm:text-sm font-semibold">Discussion Notes & Feedback</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="What was discussed? Any feedback or instructions?"
-                      className="min-h-[80px]"
+                      placeholder="Detailed notes from the call, email correspondence, or meeting with the client regarding validity, clarifications, or award timeline..."
+                      className="min-h-[110px] text-xs sm:text-sm leading-relaxed"
                       disabled={isPending}
                       {...field}
                       value={field.value || ''}
@@ -166,67 +216,25 @@ export function TenderFollowUpDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="outcome"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-semibold">Outcome / Actions (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g. Awaiting spec changes, promised update date"
-                      disabled={isPending}
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="nextFollowUpDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-semibold">Schedule Next Follow-up (Optional)</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        type="date"
-                        className="pl-10"
-                        disabled={isPending}
-                        value={toSASTDateString(field.value)}
-                        onChange={(e) => {
-                          field.onChange(parseDateToUTC(e.target.value));
-                        }}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-2.5 pt-3 border-t">
               <Button
                 variant="outline"
                 type="button"
+                size="sm"
                 disabled={isPending}
                 onClick={() => onOpenChange(false)}
-                className="cursor-pointer"
+                className="cursor-pointer text-xs"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
+                size="sm"
                 disabled={isPending}
-                className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold h-9 px-4"
               >
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Log Follow-up
+                {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                Save Follow-up Entry
               </Button>
             </div>
           </form>
