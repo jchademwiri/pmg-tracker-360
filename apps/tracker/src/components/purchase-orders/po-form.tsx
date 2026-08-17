@@ -232,6 +232,40 @@ export function POForm({
     loadProjectLineItems();
   }, [organizationId, selectedProjectId]);
 
+  const handleNextStep = async () => {
+    let fieldsToValidate: (keyof POFormValues)[] = [];
+    if (currentStep === 1) {
+      fieldsToValidate = ['poNumber', 'description', 'status', 'totalAmount'];
+    } else if (currentStep === 2) {
+      fieldsToValidate = ['projectId'];
+    }
+
+    const isValid = await form.trigger(fieldsToValidate as any);
+    if (isValid) {
+      setCurrentStep((prev) => Math.min(prev + 1, 3));
+    }
+  };
+
+  const handleStepClick = async (targetStep: number) => {
+    if (targetStep === currentStep) return;
+    if (targetStep < currentStep) {
+      setCurrentStep(targetStep);
+      return;
+    }
+
+    // Moving forward - validate intermediate steps
+    if (currentStep === 1) {
+      const isValid = await form.trigger(['poNumber', 'description', 'status', 'totalAmount'] as any);
+      if (!isValid) return;
+    }
+    if (currentStep <= 2 && targetStep === 3) {
+      const isValid = await form.trigger(['projectId'] as any);
+      if (!isValid) return;
+    }
+
+    setCurrentStep(targetStep);
+  };
+
   const handleCreateProjectLineItem = async () => {
     if (!selectedProjectId) {
       toast.error('Select a project before adding saved line items.');
@@ -243,14 +277,31 @@ export function POForm({
       return;
     }
 
+    if (!newLineItem.description.trim()) {
+      toast.error('Description is required.');
+      return;
+    }
+
     const result = await createProjectLineItem(organizationId, {
       projectId: selectedProjectId,
-      ...newLineItem,
+      itemNumber: newLineItem.itemNumber.trim(),
+      sapReference: newLineItem.sapReference.trim() || undefined,
+      description: newLineItem.description.trim(),
+      unit: newLineItem.unit.trim() || 'unit',
+      unitPrice: newLineItem.unitPrice.trim() || '0.00',
     });
 
     if (result.success && result.lineItem) {
-      toast.success('Line item created successfully');
+      toast.success(`Item "${result.lineItem.itemNumber}" added to Purchase Order`);
       setProjectLineItems((prev) => [...prev, result.lineItem]);
+      // Automatically add to the purchase order items list
+      append({
+        projectLineItemId: result.lineItem.id,
+        description: result.lineItem.description || '',
+        unit: result.lineItem.unit || 'unit',
+        quantity: '1',
+        unitPrice: result.lineItem.unitPrice || '0.00',
+      });
       setNewLineItem({ itemNumber: '', sapReference: '', description: '', unit: 'unit', unitPrice: '0.00' });
     } else {
       toast.error(result.error || 'Failed to create saved line item');
@@ -269,6 +320,16 @@ export function POForm({
   };
 
   const onSubmit = async (data: POFormValues) => {
+    if (currentStep < 3) {
+      handleNextStep();
+      return;
+    }
+
+    if (!data.lineItems || data.lineItems.length === 0) {
+      toast.error('Please add at least one line item to this purchase order.');
+      return;
+    }
+
     startTransition(async () => {
       try {
         if (initialData?.id) {
@@ -298,9 +359,19 @@ export function POForm({
         }
       } catch (error) {
         console.error('Form submission error:', error);
-        toast.error('An error occurred while saving the purchase order');
+        toast.error('An unexpected error occurred while saving the purchase order');
       }
     });
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (currentStep < 3) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleNextStep();
+      return;
+    }
+    form.handleSubmit(onSubmit)(e);
   };
 
   const steps: StepConfig[] = [
@@ -330,13 +401,11 @@ export function POForm({
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleFormSubmit} className="space-y-8">
           <StepIndicator
             steps={steps}
             currentStep={currentStep}
-            onStepClick={(step) => {
-              if (step < currentStep) setCurrentStep(step);
-            }}
+            onStepClick={handleStepClick}
           />
 
           {/* STEP 1: PO Details */}
@@ -654,127 +723,228 @@ export function POForm({
             <div className="animate-in fade-in duration-200">
               <Card className="shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                  <CardTitle className="flex items-center text-lg">
-                    <Package className="h-5 w-5 mr-2 text-indigo-600" />
-                    PO Line Items
-                  </CardTitle>
+                  <div>
+                    <CardTitle className="flex items-center text-lg">
+                      <Package className="h-5 w-5 mr-2 text-indigo-600" />
+                      PO Line Items
+                      {fields.length > 0 && (
+                        <span className="ml-2.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                          {fields.length} {fields.length === 1 ? 'item' : 'items'}
+                        </span>
+                      )}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Add items to be ordered and priced on this purchase order
+                    </p>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      if (!selectedProjectId) {
+                        toast.error('Please select a project first (Step 2).');
+                        return;
+                      }
+                      if (projectLineItems.length === 0) {
+                        toast.info('Create your first item below to add it to the purchase order.');
+                        const el = document.getElementById('new-item-number');
+                        if (el) el.focus();
+                        return;
+                      }
                       append({
-                        projectLineItemId: '',
-                        description: '',
-                        unit: 'unit',
+                        projectLineItemId: projectLineItems[0]?.id || '',
+                        description: projectLineItems[0]?.description || '',
+                        unit: projectLineItems[0]?.unit || 'unit',
                         quantity: '1',
-                        unitPrice: '0.00',
-                      })
-                    }
-                    disabled={!selectedProjectId || projectLineItems.length === 0}
+                        unitPrice: projectLineItems[0]?.unitPrice || '0.00',
+                      });
+                    }}
+                    disabled={!selectedProjectId}
                     className="cursor-pointer"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Item
+                    Add Existing Item
                   </Button>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="border-b p-6">
+                  <div className="border-b p-6 bg-muted/10">
                     {!selectedProjectId ? (
                       <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
                         Select a project before adding purchase order line items.
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-3 rounded-md border bg-muted/20 p-4 md:grid-cols-[120px_140px_1fr_100px_120px_auto]">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            Item Number *
-                          </label>
-                          <Input
-                            value={newLineItem.itemNumber}
-                            onChange={(event) =>
-                              setNewLineItem((prev) => ({
-                                ...prev,
-                                itemNumber: event.target.value.toUpperCase(),
-                              }))
-                            }
-                            placeholder="ITEM-001"
-                          />
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Quick Add &amp; Price New Line Item
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            Automatically adds item to project catalogue &amp; this PO
+                          </span>
                         </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            SAP Reference
-                          </label>
-                          <Input
-                            value={newLineItem.sapReference}
-                            onChange={(event) =>
-                              setNewLineItem((prev) => ({
-                                ...prev,
-                                sapReference: event.target.value,
-                              }))
-                            }
-                            placeholder="Optional"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            Description
-                          </label>
-                          <Input
-                            value={newLineItem.description}
-                            onChange={(event) =>
-                              setNewLineItem((prev) => ({
-                                ...prev,
-                                description: event.target.value,
-                              }))
-                            }
-                            placeholder="Cables, installation, hardware"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            Unit
-                          </label>
-                          <Input
-                            value={newLineItem.unit}
-                            onChange={(event) =>
-                              setNewLineItem((prev) => ({ ...prev, unit: event.target.value }))
-                            }
-                            placeholder="unit"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                            Unit Price
-                          </label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newLineItem.unitPrice}
-                            onChange={(event) =>
-                              setNewLineItem((prev) => ({
-                                ...prev,
-                                unitPrice: event.target.value,
-                              }))
-                            }
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleCreateProjectLineItem}
-                            disabled={
-                              !newLineItem.itemNumber.trim() ||
-                              !newLineItem.description.trim() ||
-                              !newLineItem.unit.trim() ||
-                              newLineItem.unitPrice.trim() === ''
-                            }
-                            className="w-full"
-                          >
-                            Save Item
-                          </Button>
+                        <div className="grid grid-cols-1 gap-3 rounded-lg border bg-card p-4 shadow-sm md:grid-cols-[130px_130px_1fr_100px_130px_auto]">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                              Item Number *
+                            </label>
+                            <Input
+                              id="new-item-number"
+                              value={newLineItem.itemNumber}
+                              onChange={(event) =>
+                                setNewLineItem((prev) => ({
+                                  ...prev,
+                                  itemNumber: event.target.value.toUpperCase(),
+                                }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (
+                                    newLineItem.itemNumber.trim() &&
+                                    newLineItem.description.trim() &&
+                                    newLineItem.unit.trim() &&
+                                    newLineItem.unitPrice.trim() !== ''
+                                  ) {
+                                    handleCreateProjectLineItem();
+                                  }
+                                }
+                              }}
+                              placeholder="ITEM-001"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                              SAP Reference
+                            </label>
+                            <Input
+                              value={newLineItem.sapReference}
+                              onChange={(event) =>
+                                setNewLineItem((prev) => ({
+                                  ...prev,
+                                  sapReference: event.target.value,
+                                }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (
+                                    newLineItem.itemNumber.trim() &&
+                                    newLineItem.description.trim() &&
+                                    newLineItem.unit.trim() &&
+                                    newLineItem.unitPrice.trim() !== ''
+                                  ) {
+                                    handleCreateProjectLineItem();
+                                  }
+                                }
+                              }}
+                              placeholder="Optional SAP"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                              Description *
+                            </label>
+                            <Input
+                              value={newLineItem.description}
+                              onChange={(event) =>
+                                setNewLineItem((prev) => ({
+                                  ...prev,
+                                  description: event.target.value,
+                                }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (
+                                    newLineItem.itemNumber.trim() &&
+                                    newLineItem.description.trim() &&
+                                    newLineItem.unit.trim() &&
+                                    newLineItem.unitPrice.trim() !== ''
+                                  ) {
+                                    handleCreateProjectLineItem();
+                                  }
+                                }
+                              }}
+                              placeholder="Cables, installation, hardware"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                              Unit *
+                            </label>
+                            <Input
+                              value={newLineItem.unit}
+                              onChange={(event) =>
+                                setNewLineItem((prev) => ({ ...prev, unit: event.target.value }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (
+                                    newLineItem.itemNumber.trim() &&
+                                    newLineItem.description.trim() &&
+                                    newLineItem.unit.trim() &&
+                                    newLineItem.unitPrice.trim() !== ''
+                                  ) {
+                                    handleCreateProjectLineItem();
+                                  }
+                                }
+                              }}
+                              placeholder="unit"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                              Unit Price (ZAR) *
+                            </label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={newLineItem.unitPrice}
+                              onChange={(event) =>
+                                setNewLineItem((prev) => ({
+                                  ...prev,
+                                  unitPrice: event.target.value,
+                                }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (
+                                    newLineItem.itemNumber.trim() &&
+                                    newLineItem.description.trim() &&
+                                    newLineItem.unit.trim() &&
+                                    newLineItem.unitPrice.trim() !== ''
+                                  ) {
+                                    handleCreateProjectLineItem();
+                                  }
+                                }
+                              }}
+                              placeholder="0.00"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <Button
+                              type="button"
+                              onClick={handleCreateProjectLineItem}
+                              disabled={
+                                !newLineItem.itemNumber.trim() ||
+                                !newLineItem.description.trim() ||
+                                !newLineItem.unit.trim() ||
+                                newLineItem.unitPrice.trim() === ''
+                              }
+                              className="w-full cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm"
+                            >
+                              <Plus className="h-4 w-4 mr-1.5" />
+                              Add to PO
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -861,6 +1031,11 @@ export function POForm({
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                              }
+                                            }}
                                             {...inputField}
                                           />
                                         </FormControl>
@@ -870,19 +1045,35 @@ export function POForm({
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <div className="relative">
-                                    <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
-                                      R
-                                    </span>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="0.00"
-                                      className="pl-6 bg-muted cursor-not-allowed"
-                                      readOnly
-                                      value={priceVal || '0.00'}
-                                    />
-                                  </div>
+                                  <FormField
+                                    control={form.control as any}
+                                    name={`lineItems.${index}.unitPrice` as any}
+                                    render={({ field: inputField }) => (
+                                      <FormItem>
+                                        <FormControl>
+                                          <div className="relative">
+                                            <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
+                                              R
+                                            </span>
+                                            <Input
+                                              type="number"
+                                              step="0.01"
+                                              min="0"
+                                              placeholder="0.00"
+                                              className="pl-6 font-medium"
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                }
+                                              }}
+                                              {...inputField}
+                                            />
+                                          </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                 </TableCell>
                                 <TableCell className="font-medium text-sm">
                                   {formatCurrency(subtotal)}
@@ -995,6 +1186,11 @@ export function POForm({
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                              }
+                                            }}
                                             {...inputField}
                                           />
                                         </FormControl>
@@ -1007,20 +1203,36 @@ export function POForm({
 
                               <div className="grid grid-cols-2 gap-2 pt-1">
                                 <div>
-                                  <label className="text-xs font-medium text-muted-foreground">Unit Price (ZAR)</label>
-                                  <div className="relative mt-1">
-                                    <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
-                                      R
-                                    </span>
-                                    <Input
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="0.00"
-                                      className="pl-6 bg-muted cursor-not-allowed h-9"
-                                      readOnly
-                                      value={priceVal || '0.00'}
-                                    />
-                                  </div>
+                                  <label className="text-xs font-medium text-muted-foreground">Unit Price (ZAR) *</label>
+                                  <FormField
+                                    control={form.control as any}
+                                    name={`lineItems.${index}.unitPrice` as any}
+                                    render={({ field: inputField }) => (
+                                      <FormItem className="mt-1">
+                                        <FormControl>
+                                          <div className="relative">
+                                            <span className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
+                                              R
+                                            </span>
+                                            <Input
+                                              type="number"
+                                              step="0.01"
+                                              min="0"
+                                              placeholder="0.00"
+                                              className="pl-6 h-9 font-medium"
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.preventDefault();
+                                                }
+                                              }}
+                                              {...inputField}
+                                            />
+                                          </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                 </div>
 
                                 <div>
@@ -1060,11 +1272,11 @@ export function POForm({
           <StepActions
             onCancel={() => router.back()}
             onPrevious={currentStep > 1 ? () => setCurrentStep((prev) => prev - 1) : undefined}
-            onNext={currentStep < 3 ? () => setCurrentStep((prev) => prev + 1) : undefined}
+            onNext={currentStep < 3 ? handleNextStep : undefined}
             currentStep={currentStep}
             totalSteps={steps.length}
             isPending={isPending}
-            submitLabel={initialData?.id ? 'Update Purchase Order' : 'Create Purchase Order'}
+            submitLabel={initialData?.id ? 'Save & Update Purchase Order' : 'Save & Create Purchase Order'}
             loadingLabel={initialData?.id ? 'Updating...' : 'Creating...'}
           />
         </form>

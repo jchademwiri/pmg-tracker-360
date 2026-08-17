@@ -132,7 +132,9 @@ export function ProjectForm({
           organizationId,
           clientId,
           1,
-          100
+          100,
+          project?.id,
+          project?.tender?.id
         );
         setTenders(result.tenders);
       } catch (error) {
@@ -141,7 +143,7 @@ export function ProjectForm({
         setLoadingTenders(false);
       }
     },
-    [organizationId]
+    [organizationId, project?.id, project?.tender?.id]
   );
 
   useEffect(() => {

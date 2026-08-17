@@ -1,22 +1,33 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';import {
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
   ArrowLeft,
   FileText,
   User,
   Calendar,
   Mail,
   Phone,
+  Building,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Sparkles,
+  ExternalLink,
+  MapPin,
+  HelpCircle,
+  TrendingUp,
 } from 'lucide-react';
 import { StepIndicator, StepActions, type StepConfig } from '@/components/ui/form-stepper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Form,
   FormControl,
@@ -24,6 +35,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -50,6 +62,7 @@ import {
 import { FileUploader } from '@/components/ui/file-uploader';
 import { uploadDocument } from '@/server/documents';
 import { ClientCreateDialog } from '@/components/clients/client-create-dialog';
+import { formatDate as sharedFormatDate } from '@/lib/format';
 
 interface TenderWithClient {
   id: string;
@@ -93,6 +106,21 @@ interface TenderFormProps {
   mode: 'create' | 'edit';
 }
 
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  new: { label: 'Opportunity', color: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' },
+  review: { label: 'In Review', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  approved_to_prepare: { label: 'Approved to Prepare', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  preparation: { label: 'Preparing', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  ready: { label: 'Ready for Submission', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+  open: { label: 'Open', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  submitted: { label: 'Submitted', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  evaluation: { label: 'In Evaluation', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  awarded: { label: 'Appointed / Won', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  lost: { label: 'Rejected / Lost', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+  closed: { label: 'Closed', color: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20' },
+  cancelled: { label: 'Cancelled', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+};
+
 export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -101,7 +129,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [validityType, setValidityType] = useState<'days' | 'date'>(
-    tender?.validityDays ? 'days' : (tender?.validityDate ? 'date' : 'days')
+    tender?.validityDays ? 'days' : tender?.validityDate ? 'date' : 'days'
   );
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [hasDraft, setHasDraft] = useState(false);
@@ -131,12 +159,17 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
       briefingAttended: tender?.briefingAttended || false,
       status:
         (tender?.status as
+          | 'new'
+          | 'review'
+          | 'approved_to_prepare'
+          | 'preparation'
+          | 'ready'
           | 'open'
           | 'closed'
           | 'evaluation'
           | 'awarded'
           | 'lost'
-          | 'cancelled') || 'open',
+          | 'cancelled') || 'new',
     },
   });
 
@@ -144,7 +177,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   useEffect(() => {
     const loadClients = async () => {
       try {
-        const result = await getClients(organizationId, '', 1, 100); // Get first 100 clients
+        const result = await getClients(organizationId, '', 1, 100);
         setClients(result.clients);
       } catch (error) {
         console.error('Error loading clients:', error);
@@ -156,7 +189,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
     loadClients();
   }, [organizationId]);
 
-  // Draft loading checks
+  // Draft loading checks for create mode
   useEffect(() => {
     if (mode === 'create') {
       const draft = localStorage.getItem(`tender_draft_${organizationId}`);
@@ -195,7 +228,10 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
         const parsed = JSON.parse(draft);
         if (parsed.values) {
           Object.entries(parsed.values).forEach(([key, val]) => {
-            if ((key === 'submissionDate' || key === 'validityDate' || key === 'briefingDate') && val) {
+            if (
+              (key === 'submissionDate' || key === 'validityDate' || key === 'briefingDate') &&
+              val
+            ) {
               form.setValue(key as any, new Date(val as string));
             } else {
               form.setValue(key as any, val);
@@ -218,6 +254,27 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
     setHasDraft(false);
     toast.success('Draft discarded');
   };
+
+  // Selected client object
+  const selectedClientId = form.watch('clientId');
+  const selectedClient = useMemo(() => {
+    return clients.find((c) => c.id === selectedClientId) || null;
+  }, [clients, selectedClientId]);
+
+  // Live computed validity expiry date
+  const watchedSubmissionDate = form.watch('submissionDate');
+  const watchedValidityDays = form.watch('validityDays');
+  const calculatedExpiryDate = useMemo(() => {
+    if (validityType === 'days' && watchedSubmissionDate && watchedValidityDays) {
+      const days = Number(watchedValidityDays);
+      if (!isNaN(days) && days > 0) {
+        const date = new Date(watchedSubmissionDate);
+        date.setDate(date.getDate() + days);
+        return date;
+      }
+    }
+    return null;
+  }, [validityType, watchedSubmissionDate, watchedValidityDays]);
 
   const onSubmit = (data: TenderCreateInput) => {
     setError(null);
@@ -273,8 +330,16 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             }
           }
 
+          toast.success(
+            mode === 'create'
+              ? 'Tender created successfully'
+              : 'Tender updated successfully'
+          );
+
           if (data.status === 'awarded' && result.projectId) {
             router.push(`/projects/${result.projectId}/edit`);
+          } else if (mode === 'edit' && tender?.id) {
+            router.push(`/tenders/${tender.id}`);
           } else {
             router.push('/tenders');
           }
@@ -290,59 +355,117 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
   };
 
   const handleCancel = () => {
-    router.back();
+    if (mode === 'edit' && tender?.id) {
+      router.push(`/tenders/${tender.id}`);
+    } else {
+      router.back();
+    }
   };
 
+  const currentStatusConfig = STATUS_LABELS[tender?.status || 'new'] || STATUS_LABELS.new;
+
   return (
-    <div className="w-full max-w-none space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between space-x-4">
-        <Button variant="ghost" size="sm" onClick={handleCancel}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div className="text-right">
-          <h1 className="text-2xl font-bold">
-            {mode === 'create' ? 'Add New Tender' : 'Edit Tender'}
-          </h1>
-          <p className="text-muted-foreground">
-            {mode === 'create'
-              ? 'Create a new tender with client and submission details'
-              : 'Update tender information and details'}
-          </p>
+    <div className="w-full max-w-none space-y-6 pb-6">
+      {/* ── 1. Top Header Workspace Strip ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCancel}
+            className="cursor-pointer h-9 px-3 rounded-lg text-xs"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            {mode === 'edit' ? 'Back to Details' : 'Back'}
+          </Button>
+
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                {mode === 'create' ? 'Create New Tender' : 'Edit Tender'}
+              </h1>
+              {mode === 'edit' && tender && (
+                <>
+                  <Badge variant="outline" className="font-mono text-xs font-semibold px-2.5 py-0.5">
+                    {tender.tenderNumber.toUpperCase()}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs font-semibold px-2.5 py-0.5 ${currentStatusConfig.color}`}
+                  >
+                    {currentStatusConfig.label}
+                  </Badge>
+                </>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              {mode === 'create'
+                ? 'Register a new tender opportunity with client details, timelines, and specifications'
+                : 'Modify tender parameters, client organization, deadlines, and documentation'}
+            </p>
+          </div>
         </div>
+
+        {mode === 'edit' && tender?.id && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/tenders/${tender.id}`)}
+              className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer h-8"
+            >
+              View Detailed View
+              <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Stepper Progress */}
+      {/* ── 2. Modern Step Navigation Rail ── */}
       <StepIndicator
         steps={steps}
         currentStep={currentStep}
         onStepClick={async (step) => {
-          if (step < currentStep) {
+          if (mode === 'edit') {
+            // In edit mode, allow direct non-linear tab switching
             setCurrentStep(step);
-          } else if (step === 2 && currentStep === 1) {
-            const isValid = await form.trigger(['tenderNumber', 'clientId']);
-            if (isValid) setCurrentStep(2);
-          } else if (step === 3 && currentStep === 2) {
-            const isValid = await form.trigger(['tenderNumber', 'clientId']);
-            if (isValid) setCurrentStep(3);
+          } else {
+            // In create mode, validate previous steps before proceeding
+            if (step < currentStep) {
+              setCurrentStep(step);
+            } else if (step === 2 && currentStep === 1) {
+              const isValid = await form.trigger(['tenderNumber', 'clientId']);
+              if (isValid) setCurrentStep(2);
+            } else if (step === 3 && currentStep === 2) {
+              const isValid = await form.trigger(['tenderNumber', 'clientId']);
+              if (isValid) setCurrentStep(3);
+            }
           }
         }}
       />
 
-      {/* Draft Notification Banner */}
+      {/* Draft Notification Banner (Create Mode) */}
       {hasDraft && (
-        <div className="flex items-center justify-between p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 backdrop-blur-md">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-semibold text-sm text-blue-400">Draft Found</span>
-            <span className="text-xs text-muted-foreground">You have an unsaved draft from your last session.</span>
+        <div className="flex items-center justify-between p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 backdrop-blur-md shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <span className="font-semibold text-xs sm:text-sm text-blue-600 dark:text-blue-400 block">
+                Unsaved Draft Available
+              </span>
+              <span className="text-xs text-muted-foreground">
+                You have saved form data from your previous session. Would you like to restore it?
+              </span>
+            </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
               type="button"
-              className="text-xs cursor-pointer"
+              className="text-xs cursor-pointer h-8"
               onClick={handleDiscardDraft}
             >
               Discard
@@ -351,7 +474,7 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
               variant="default"
               size="sm"
               type="button"
-              className="text-xs bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer h-8"
               onClick={handleRestoreDraft}
             >
               Restore Draft
@@ -360,43 +483,51 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
         </div>
       )}
 
+      {/* ── 3. Main Form Container ── */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <div className="text-red-800 text-sm">{error}</div>
+            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3 text-destructive text-sm">
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* STEP 1: General & Contact Info */}
+          {/* ══════════════════════════════════════════════════════════════
+              STEP 1: General & Contact Info
+             ══════════════════════════════════════════════════════════════ */}
           {currentStep === 1 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-200">
-              {/* Basic Information */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                    Basic Information
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-200">
+              {/* Card 1: Basic Information & Client */}
+              <Card className="rounded-xl border-border/60 shadow-xs overflow-hidden">
+                <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    Basic Tender Information
                   </CardTitle>
+                  <CardDescription className="text-xs">
+                    Assign a unique tender reference and link the client organization
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 p-6">
+
+                <CardContent className="p-5 space-y-4">
                   <FormField
                     control={form.control}
                     name="tenderNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tender Number *</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Tender Reference Number *</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter unique tender number"
+                            placeholder="e.g. MWP-1029-TX"
                             {...field}
                             onChange={(e) => {
                               const sanitized = sanitizeTenderNumber(e.target.value);
                               field.onChange(sanitized);
                             }}
                             disabled={isPending}
-                            className="rounded-md uppercase"
+                            className="font-mono uppercase text-sm"
                           />
                         </FormControl>
                         <FormMessage />
@@ -404,12 +535,13 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     )}
                   />
 
+                  {/* Client Selector with Quick Create Action */}
                   <FormField
                     control={form.control}
                     name="clientId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client *</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Client Organization *</FormLabel>
                         <div className="flex items-center gap-2">
                           <Select
                             onValueChange={field.onChange}
@@ -417,8 +549,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                             disabled={isPending || loadingClients}
                           >
                             <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select a client" />
+                              <SelectTrigger className="w-full text-xs sm:text-sm">
+                                <SelectValue placeholder="Select a client organization..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -428,19 +560,18 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                                 </SelectItem>
                               ) : clients.length === 0 ? (
                                 <SelectItem value="no-clients" disabled>
-                                  No clients available
+                                  No clients registered yet
                                 </SelectItem>
                               ) : (
-                                clients.map((client) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    <div className="flex flex-col">
-                                      <span>{client.name}</span>
-                                    </div>
+                                clients.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.name}
                                   </SelectItem>
                                 ))
                               )}
                             </SelectContent>
                           </Select>
+
                           <ClientCreateDialog
                             organizationId={organizationId}
                             onClientCreated={(newClient) => {
@@ -465,32 +596,57 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     )}
                   />
 
+                  {/* Inline Client Card Snapshot */}
+                  {selectedClient && (
+                    <div className="rounded-xl border border-border/60 bg-muted/20 p-3.5 space-y-2 text-xs">
+                      <div className="flex items-center gap-2 text-foreground font-semibold">
+                        <Building className="h-3.5 w-3.5 text-blue-600" />
+                        <span>{selectedClient.name}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-muted-foreground pt-1 border-t border-border/40">
+                        {selectedClient.contactName && (
+                          <div className="flex items-center gap-1.5">
+                            <User className="h-3 w-3 text-muted-foreground/60" />
+                            <span>{selectedClient.contactName}</span>
+                          </div>
+                        )}
+                        {selectedClient.contactEmail && (
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Mail className="h-3 w-3 text-muted-foreground/60" />
+                            <span className="truncate">{selectedClient.contactEmail}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status Dropdown */}
                   <FormField
                     control={form.control}
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Lifecycle Status</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           disabled={isPending}
                         >
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
+                            <SelectTrigger className="text-xs sm:text-sm">
+                              <SelectValue placeholder="Select current status..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="new">Opportunity</SelectItem>
-                            <SelectItem value="review">Review</SelectItem>
+                            <SelectItem value="review">In Review</SelectItem>
                             <SelectItem value="approved_to_prepare">Approved to Prepare</SelectItem>
-                            <SelectItem value="preparation">Preparing</SelectItem>
-                            <SelectItem value="ready">Ready</SelectItem>
+                            <SelectItem value="preparation">Preparing Bid</SelectItem>
+                            <SelectItem value="ready">Ready for Submission</SelectItem>
                             <SelectItem value="open">Open</SelectItem>
                             <SelectItem value="submitted">Submitted</SelectItem>
-                            <SelectItem value="evaluation">Evaluation</SelectItem>
-                            <SelectItem value="awarded">Appointed / Awarded</SelectItem>
+                            <SelectItem value="evaluation">In Evaluation</SelectItem>
+                            <SelectItem value="awarded">Appointed / Awarded (Won)</SelectItem>
                             <SelectItem value="lost">Rejected / Lost</SelectItem>
                             <SelectItem value="closed">Closed</SelectItem>
                             <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -501,19 +657,20 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     )}
                   />
 
+                  {/* Scope & Description */}
                   <FormField
                     control={form.control}
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Tender Scope & Description</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Enter tender description..."
+                            placeholder="Enter detailed scope of work, key deliverables, or project summary..."
                             rows={4}
                             {...field}
                             disabled={isPending}
-                            className="rounded-md"
+                            className="text-xs sm:text-sm leading-relaxed"
                           />
                         </FormControl>
                         <FormMessage />
@@ -523,30 +680,31 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                 </CardContent>
               </Card>
 
-              {/* Tender Follow-up Contact */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <User className="h-5 w-5 mr-2 text-amber-600" />
+              {/* Card 2: Tender Follow-up & Enquiry Contact */}
+              <Card className="rounded-xl border-border/60 shadow-xs overflow-hidden">
+                <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <User className="h-4 w-4 text-amber-600" />
                     Tender Follow-up Contact
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Tender-specific enquiry or validity follow-up details
-                  </p>
+                  <CardDescription className="text-xs">
+                    Client procurement officer or designated enquiry focal point
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 p-6">
+
+                <CardContent className="p-5 space-y-4">
                   <FormField
                     control={form.control}
                     name="contactName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Person</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Contact Person Name</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                             <Input
-                              placeholder="e.g. Supply Chain Officer"
-                              className="pl-10 rounded-md"
+                              placeholder="e.g. SCM Specialist / Bid Secretary"
+                              className="pl-9 text-xs sm:text-sm"
                               {...field}
                               value={field.value || ''}
                               disabled={isPending}
@@ -563,14 +721,14 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     name="contactEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Enquiry Email Address</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                             <Input
                               type="email"
-                              placeholder="e.g. enquiries@client.co.za"
-                              className="pl-10 rounded-md"
+                              placeholder="e.g. tenders@client.gov.za"
+                              className="pl-9 text-xs sm:text-sm"
                               {...field}
                               value={field.value || ''}
                               disabled={isPending}
@@ -587,14 +745,14 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     name="contactPhone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Contact Telephone Number</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                             <Input
                               type="tel"
-                              placeholder="e.g. +27 11 555 0123"
-                              className="pl-10 rounded-md"
+                              placeholder="e.g. +27 11 800 2000"
+                              className="pl-9 text-xs sm:text-sm"
                               {...field}
                               value={field.value || ''}
                               disabled={isPending}
@@ -610,39 +768,41 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             </div>
           )}
 
-          {/* STEP 2: Timeline & Value */}
+          {/* ══════════════════════════════════════════════════════════════
+              STEP 2: Timeline, Validity & Value
+             ══════════════════════════════════════════════════════════════ */}
           {currentStep === 2 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in duration-200">
-              {/* Submission Details */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                    Submission Details
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-200">
+              {/* Card 1: Closing Deadlines & Validity Calculation */}
+              <Card className="rounded-xl border-border/60 shadow-xs overflow-hidden">
+                <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-emerald-600" />
+                    Timeline & Financial Valuation
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Financial and timeline information (optional)
-                  </p>
+                  <CardDescription className="text-xs">
+                    Specify closing submission timestamp, validity parameters, and estimated budget
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 p-6">
+
+                <CardContent className="p-5 space-y-4">
+                  {/* Closing Date */}
                   <FormField
                     control={form.control}
                     name="submissionDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Closing Date & Time</FormLabel>
+                        <FormLabel className="text-xs font-semibold">Submission Closing Date & Time</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                             <Input
                               type="datetime-local"
-                              className="pl-10 rounded-md"
+                              className="pl-9 text-xs sm:text-sm"
                               {...field}
                               value={toLocalDateTimeString(field.value)}
                               onChange={(e) => {
-                                field.onChange(
-                                  fromLocalDateTimeString(e.target.value)
-                                );
+                                field.onChange(fromLocalDateTimeString(e.target.value));
                               }}
                               disabled={isPending}
                             />
@@ -653,58 +813,78 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     )}
                   />
 
-                  <div className="space-y-3">
-                    <FormLabel>Tender Validity *</FormLabel>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={validityType === 'days' ? 'default' : 'outline'}
-                        onClick={() => {
-                          setValidityType('days');
-                          form.setValue('validityDate', undefined);
-                        }}
-                        className="flex-1"
-                        disabled={isPending}
-                      >
-                        In Days
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={validityType === 'date' ? 'default' : 'outline'}
-                        onClick={() => {
-                          setValidityType('date');
-                          form.setValue('validityDays', undefined);
-                        }}
-                        className="flex-1"
-                        disabled={isPending}
-                      >
-                        Specific Date
-                      </Button>
+                  {/* Validity Toggle & Calculator */}
+                  <div className="space-y-3 pt-1 border-t border-border/40">
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-xs font-semibold">Bid Validity Period *</FormLabel>
+                      <div className="flex rounded-lg border border-border p-0.5 bg-muted/30">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValidityType('days');
+                            form.setValue('validityDate', undefined);
+                          }}
+                          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                            validityType === 'days'
+                              ? 'bg-background text-foreground shadow-xs'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          In Days
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValidityType('date');
+                            form.setValue('validityDays', undefined);
+                          }}
+                          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
+                            validityType === 'date'
+                              ? 'bg-background text-foreground shadow-xs'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Specific Date
+                        </button>
+                      </div>
                     </div>
 
                     {validityType === 'days' ? (
-                      <FormField
-                        control={form.control}
-                        name="validityDays"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="Enter number of days (e.g. 90)"
-                                {...field}
-                                value={field.value ?? ''}
-                                onChange={(e) => {
-                                  const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
-                                  field.onChange(val);
-                                }}
-                                disabled={isPending}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+                      <div className="space-y-2">
+                        <FormField
+                          control={form.control}
+                          name="validityDays"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="e.g. 90 or 120 days"
+                                  className="text-xs sm:text-sm"
+                                  {...field}
+                                  value={field.value ?? ''}
+                                  onChange={(e) => {
+                                    const val =
+                                      e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                    field.onChange(val);
+                                  }}
+                                  disabled={isPending}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {calculatedExpiryDate && (
+                          <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-lg">
+                            <Clock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <span>
+                              Computed Validity Expiry: <strong>{sharedFormatDate(calculatedExpiryDate)}</strong>
+                            </span>
+                          </div>
                         )}
-                      />
+                      </div>
                     ) : (
                       <FormField
                         control={form.control}
@@ -713,10 +893,10 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                           <FormItem>
                             <FormControl>
                               <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                                 <Input
                                   type="date"
-                                  className="pl-10 rounded-md"
+                                  className="pl-9 text-xs sm:text-sm"
                                   {...field}
                                   value={toLocalDateString(field.value)}
                                   onChange={(e) => {
@@ -733,21 +913,22 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     )}
                   </div>
 
+                  {/* Estimated Tender Value */}
                   <FormField
                     control={form.control}
                     name="value"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tender Value</FormLabel>
+                      <FormItem className="pt-1 border-t border-border/40">
+                        <FormLabel className="text-xs font-semibold">Estimated Tender Value (ZAR)</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <span className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-muted-foreground font-semibold text-sm">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">
                               R
                             </span>
                             <Input
                               type="text"
-                              placeholder="Enter tender value"
-                              className="pl-10 rounded-md"
+                              placeholder="0.00"
+                              className="pl-8 text-xs sm:text-sm font-medium"
                               {...field}
                               value={field.value || ''}
                               disabled={isPending}
@@ -758,65 +939,33 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                       </FormItem>
                     )}
                   />
-
-                  {/* Client Information Display */}
-                  {form.watch('clientId') && (
-                    <div className="bg-accent rounded-md p-4">
-                      <h4 className="text-sm font-medium text-foreground mb-2">
-                        Selected Client Information
-                      </h4>
-                      {(() => {
-                        const selectedClient = clients.find(
-                          (c) => c.id === form.watch('clientId')
-                        );
-                        if (!selectedClient) return null;
-
-                        return (
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                              <User className="h-3 w-3 mr-1" />
-                              {selectedClient.name}
-                            </div>
-                            {selectedClient.contactName && (
-                              <div>Contact: {selectedClient.contactName}</div>
-                            )}
-                            {selectedClient.contactEmail && (
-                              <div>Email: {selectedClient.contactEmail}</div>
-                            )}
-                            {selectedClient.contactPhone && (
-                              <div>Phone: {selectedClient.contactPhone}</div>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
-              {/* Clarification & Briefing Session */}
-              <Card className="backdrop-blur-md bg-card/70 border-border/40 shadow-sm mt-6 lg:mt-0">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-indigo-500" />
+              {/* Card 2: Clarification Meeting & Briefing Schedule */}
+              <Card className="rounded-xl border-border/60 shadow-xs overflow-hidden">
+                <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-indigo-600" />
                     Clarification Meeting & Briefing Session
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Clarification meeting schedule and mandatory attendance tracking
-                  </p>
+                  <CardDescription className="text-xs">
+                    Log briefing sessions and track compulsory attendance requirements
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <CardContent className="p-5 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="briefingDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Briefing Date & Time</FormLabel>
+                          <FormLabel className="text-xs font-semibold">Briefing Date & Time</FormLabel>
                           <FormControl>
                             <Input
                               type="datetime-local"
-                              className="rounded-md"
+                              className="text-xs sm:text-sm"
                               {...field}
                               value={toSASTDateTimeString(field.value)}
                               onChange={(e) => {
@@ -835,15 +984,18 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                       name="briefingLocation"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Venue / Meeting Link</FormLabel>
+                          <FormLabel className="text-xs font-semibold">Venue / Online Link</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="e.g. Boardroom A or Microsoft Teams link"
-                              className="rounded-md"
-                              {...field}
-                              value={field.value || ''}
-                              disabled={isPending}
-                            />
+                            <div className="relative">
+                              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
+                              <Input
+                                placeholder="e.g. Teams link / HQ Room"
+                                className="pl-9 text-xs sm:text-sm"
+                                {...field}
+                                value={field.value || ''}
+                                disabled={isPending}
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -851,27 +1003,35 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     />
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-t pt-4">
+                  {/* Attendance Toggles */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-border/40">
                     <FormField
                       control={form.control}
                       name="isBriefingMandatory"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
+                        <FormItem
+                          onClick={() => field.onChange(!field.value)}
+                          className={`flex items-start gap-3 p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
+                            field.value
+                              ? 'border-indigo-500 bg-indigo-500/10 shadow-xs'
+                              : 'border-border/60 hover:border-indigo-500/40 bg-card'
+                          }`}
+                        >
                           <FormControl>
                             <input
                               type="checkbox"
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                              className="mt-0.5 h-4 w-4 rounded border-border text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                               checked={field.value || false}
-                              onChange={field.onChange}
+                              onChange={(e) => field.onChange(e.target.checked)}
                               disabled={isPending}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="font-semibold text-sm">
+                          <div className="space-y-0.5">
+                            <FormLabel className="font-bold text-xs sm:text-sm text-foreground cursor-pointer block">
                               Mandatory Briefing
                             </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                              Attendance is compulsory for bid validity
+                            <p className="text-[11px] text-muted-foreground leading-snug">
+                              Attendance is compulsory for bid compliance.
                             </p>
                           </div>
                         </FormItem>
@@ -882,22 +1042,29 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                       control={form.control}
                       name="briefingAttended"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm bg-background/50 flex-1">
+                        <FormItem
+                          onClick={() => field.onChange(!field.value)}
+                          className={`flex items-start gap-3 p-3.5 rounded-xl border-2 transition-all cursor-pointer ${
+                            field.value
+                              ? 'border-emerald-500 bg-emerald-500/10 shadow-xs'
+                              : 'border-border/60 hover:border-emerald-500/40 bg-card'
+                          }`}
+                        >
                           <FormControl>
                             <input
                               type="checkbox"
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                              className="mt-0.5 h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                               checked={field.value || false}
-                              onChange={field.onChange}
+                              onChange={(e) => field.onChange(e.target.checked)}
                               disabled={isPending}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="font-semibold text-sm">
+                          <div className="space-y-0.5">
+                            <FormLabel className="font-bold text-xs sm:text-sm text-foreground cursor-pointer block">
                               Briefing Attended
                             </FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                              Clarification register signed/attended
+                            <p className="text-[11px] text-muted-foreground leading-snug">
+                              Attendance certificate or register signed.
                             </p>
                           </div>
                         </FormItem>
@@ -909,42 +1076,48 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             </div>
           )}
 
-          {/* STEP 3: Documents */}
+          {/* ══════════════════════════════════════════════════════════════
+              STEP 3: Documents & Attachments
+             ══════════════════════════════════════════════════════════════ */}
           {currentStep === 3 && (
-            <Card className="shadow-sm animate-in fade-in duration-200">
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <FileText className="h-5 w-5 mr-2 text-purple-600" />
-                  Documents
+            <Card className="rounded-xl border-border/60 shadow-xs overflow-hidden animate-in fade-in duration-200">
+              <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-purple-600" />
+                  Tender Attachments & Specifications
                 </CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Upload tender documents, specifications, or requirements (PDF,
-                  Word, Excel, Images)
-                </p>
+                <CardDescription className="text-xs">
+                  Upload tender documents, ITT returnables, pricing schedules, or technical specifications
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 p-6">
+
+              <CardContent className="p-6 space-y-4">
                 <FileUploader
                   value={files}
                   onValueChange={setFiles}
-                  maxFiles={5}
+                  maxFiles={10}
                   disabled={isPending}
                 />
               </CardContent>
             </Card>
           )}
 
-          {/* Form Actions */}
+          {/* ── 4. Form Actions Footer Bar ── */}
           <StepActions
             onCancel={handleCancel}
             onPrevious={() => setCurrentStep((prev) => prev - 1)}
             onNext={async () => {
-              let fieldsToValidate: Array<keyof TenderCreateInput> = [];
-              if (currentStep === 1) {
-                fieldsToValidate = ['tenderNumber', 'clientId'];
-              }
-              const isValid = await form.trigger(fieldsToValidate);
-              if (isValid) {
+              if (mode === 'edit') {
                 setCurrentStep((prev) => prev + 1);
+              } else {
+                let fieldsToValidate: Array<keyof TenderCreateInput> = [];
+                if (currentStep === 1) {
+                  fieldsToValidate = ['tenderNumber', 'clientId'];
+                }
+                const isValid = await form.trigger(fieldsToValidate);
+                if (isValid) {
+                  setCurrentStep((prev) => prev + 1);
+                }
               }
             }}
             currentStep={currentStep}

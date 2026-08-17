@@ -1026,18 +1026,26 @@ export async function getAvailableTendersForProjects(
   organizationId: string,
   clientId?: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 100,
+  currentProjectId?: string,
+  currentTenderId?: string
 ) {
   try {
     await validateSessionAndOrg(organizationId);
     const offset = (page - 1) * limit;
 
+    const projectLinkCondition = currentProjectId
+      ? or(isNull(project.tenderId), eq(project.id, currentProjectId))
+      : currentTenderId
+      ? or(isNull(project.tenderId), eq(tender.id, currentTenderId))
+      : isNull(project.tenderId);
+
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
       isNull(tender.deletedAt),
-      eq(tender.status, 'awarded'),
-      // Exclude tenders that are already linked to projects
-      isNull(project.tenderId)
+      // Allow awarded tenders or in-progress/submitted tenders
+      inArray(tender.status, ['awarded', 'ready', 'submitted', 'evaluation', 'open']),
+      projectLinkCondition
     );
 
     // Add client filter if provided

@@ -1,4 +1,4 @@
-CREATE TABLE "support_ticket_messages" (
+CREATE TABLE IF NOT EXISTS "support_ticket_messages" (
 	"id" text PRIMARY KEY NOT NULL,
 	"ticket_id" text NOT NULL,
 	"sender_id" text,
@@ -11,9 +11,22 @@ CREATE TABLE "support_ticket_messages" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "support_tickets" ADD COLUMN "ticket_number" integer;--> statement-breakpoint
-ALTER TABLE "support_tickets" ADD COLUMN "subject" text DEFAULT 'Support Request' NOT NULL;--> statement-breakpoint
-ALTER TABLE "support_tickets" ADD COLUMN "priority" text DEFAULT 'medium' NOT NULL;--> statement-breakpoint
-ALTER TABLE "support_tickets" ADD COLUMN "updated_at" timestamp DEFAULT now() NOT NULL;--> statement-breakpoint
-ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_ticket_id_support_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."support_tickets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_sender_id_user_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
+ALTER TABLE "support_tickets" ADD COLUMN IF NOT EXISTS "ticket_number" integer;
+--> statement-breakpoint
+ALTER TABLE "support_tickets" ADD COLUMN IF NOT EXISTS "subject" text DEFAULT 'Support Request' NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "support_tickets" ADD COLUMN IF NOT EXISTS "priority" text DEFAULT 'medium' NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "support_tickets" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now() NOT NULL;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_ticket_id_support_tickets_id_fk" FOREIGN KEY ("ticket_id") REFERENCES "public"."support_tickets"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_sender_id_user_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
+EXCEPTION
+  WHEN others THEN null;
+END $$;

@@ -18,6 +18,9 @@ import {
   Share2,
   Copy,
   ExternalLink,
+  Trophy,
+  XCircle,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -65,8 +68,7 @@ interface TenderHeroHeaderProps {
   onEdit: () => void;
   onExportPdf: () => void;
   onDelete: () => void;
-  onOpenAwardDialog: () => void;
-  onOpenLostDialog: () => void;
+  onOpenOutcomeDialog: () => void;
   onOpenFollowUpDialog: () => void;
   onStatusUpdate: (
     newStatus:
@@ -91,8 +93,7 @@ export function TenderHeroHeader({
   onEdit,
   onExportPdf,
   onDelete,
-  onOpenAwardDialog,
-  onOpenLostDialog,
+  onOpenOutcomeDialog,
   onOpenFollowUpDialog,
   onStatusUpdate,
 }: TenderHeroHeaderProps) {
@@ -105,7 +106,15 @@ export function TenderHeroHeader({
     { value: 'ready', label: 'Ready' },
     { value: 'submitted', label: 'Submitted' },
     { value: 'evaluation', label: 'Evaluation' },
-    { value: 'awarded', label: tender.status === 'lost' ? 'Lost' : 'Awarded' },
+    {
+      value: 'outcome',
+      label:
+        tender.status === 'awarded'
+          ? 'Awarded'
+          : tender.status === 'lost'
+            ? 'Lost'
+            : 'Outcome',
+    },
   ];
 
   const getStatusIndex = (status: string) => {
@@ -136,16 +145,12 @@ export function TenderHeroHeader({
   const currentStatusIndex = getStatusIndex(tender.status);
 
   const handleStageClick = (stageValue: string) => {
+    if (stageValue === 'outcome') {
+      onOpenOutcomeDialog();
+      return;
+    }
     if (stageValue === tender.status) return;
     if (stageValue === 'new' && tender.status === 'open') return;
-    if (stageValue === 'awarded') {
-      onOpenAwardDialog();
-      return;
-    }
-    if (stageValue === 'lost') {
-      onOpenLostDialog();
-      return;
-    }
     if (['submitted', 'evaluation'].includes(stageValue) && !tender.submissionDate) {
       toast.error('A submission date is required before transitioning to Submitted or Evaluation.');
       return;
@@ -158,6 +163,9 @@ export function TenderHeroHeader({
   };
 
   const getStageDisabledReason = (stageValue: string): string | null => {
+    if (stageValue === 'outcome') {
+      return null; // Always clickable to view or record outcome
+    }
     if (stageValue === tender.status || (stageValue === 'new' && tender.status === 'open')) {
       return 'Current stage';
     }
@@ -281,7 +289,38 @@ export function TenderHeroHeader({
         </div>
 
         {/* Primary Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Record Outcome Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenOutcomeDialog}
+            className={`cursor-pointer shadow-xs ${
+              tender.status === 'awarded'
+                ? 'border-emerald-500/50 text-emerald-700 dark:text-emerald-300 bg-emerald-500/5 hover:bg-emerald-500/10'
+                : tender.status === 'lost'
+                  ? 'border-red-500/50 text-red-700 dark:text-red-300 bg-red-500/5 hover:bg-red-500/10'
+                  : 'border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/5 hover:bg-amber-500/10'
+            }`}
+          >
+            {tender.status === 'awarded' ? (
+              <>
+                <Trophy className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                Award Details
+              </>
+            ) : tender.status === 'lost' ? (
+              <>
+                <XCircle className="h-3.5 w-3.5 mr-1.5 text-red-600" />
+                Rejection Debrief
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-600" />
+                Record Outcome
+              </>
+            )}
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -328,6 +367,10 @@ export function TenderHeroHeader({
                 <Copy className="h-4 w-4 mr-2" />
                 Copy Ref Code
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenOutcomeDialog} className="cursor-pointer">
+                <Trophy className="h-4 w-4 mr-2 text-amber-500" />
+                Record Outcome (Won/Lost)
+              </DropdownMenuItem>
               {tender.client && (
                 <DropdownMenuItem asChild>
                   <Link href={`/clients/${tender.client.id}`} className="cursor-pointer">
@@ -362,7 +405,7 @@ export function TenderHeroHeader({
             </span>
           </div>
           <span className="text-[11px] text-muted-foreground hidden sm:inline">
-            Click any eligible milestone to advance
+            Click any eligible milestone to advance or record final outcome
           </span>
         </div>
 
@@ -371,7 +414,8 @@ export function TenderHeroHeader({
           {stages.map((stage, idx) => {
             const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
             const isActive = idx === currentStatusIndex;
-            const isTerminal = stage.value === 'awarded';
+            const isTerminal = stage.value === 'outcome';
+            const isWon = tender.status === 'awarded' && isTerminal;
             const isLost = tender.status === 'lost' && isTerminal;
             const disabled = isStageDisabled(stage.value);
             const disableReason = getStageDisabledReason(stage.value);
@@ -380,9 +424,20 @@ export function TenderHeroHeader({
             if (isCompleted) {
               bgClass = 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30';
             } else if (isActive) {
-              bgClass = isLost
-                ? 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/40 ring-2 ring-red-500/20 font-semibold'
-                : 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-500/20 font-semibold shadow-xs';
+              if (isWon) {
+                bgClass =
+                  'bg-emerald-600 text-white border-emerald-600 ring-2 ring-emerald-500/20 font-semibold shadow-xs';
+              } else if (isLost) {
+                bgClass =
+                  'bg-red-600 text-white border-red-600 ring-2 ring-red-500/20 font-semibold shadow-xs';
+              } else {
+                bgClass =
+                  'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-500/20 font-semibold shadow-xs';
+              }
+            } else if (isTerminal) {
+              // Highlight the outcome step with an inviting outline if evaluation is reached
+              bgClass =
+                'bg-amber-500/5 hover:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
             }
 
             return (
@@ -397,14 +452,14 @@ export function TenderHeroHeader({
                     >
                       <span
                         className={`inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] shrink-0 ${
-                          isActive && !isLost
+                          isActive
                             ? 'bg-white text-blue-600 font-bold'
                             : isCompleted
                               ? 'bg-blue-500 text-white'
                               : 'bg-muted-foreground/20 text-muted-foreground'
                         }`}
                       >
-                        {isCompleted ? '✓' : idx + 1}
+                        {isWon ? '🏆' : isLost ? '✕' : isCompleted ? '✓' : idx + 1}
                       </span>
                       <span className="truncate">{stage.label}</span>
                     </button>
@@ -412,7 +467,9 @@ export function TenderHeroHeader({
                   <TooltipContent side="bottom" className="text-xs">
                     {disabled
                       ? disableReason || 'Stage transition locked'
-                      : `Transition to ${stage.label}`}
+                      : isTerminal
+                        ? 'Record Decision Outcome (Appointed or Rejected)'
+                        : `Transition to ${stage.label}`}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -425,13 +482,22 @@ export function TenderHeroHeader({
           {stages.map((stage, idx) => {
             const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
             const isActive = idx === currentStatusIndex;
+            const isTerminal = stage.value === 'outcome';
+            const isWon = tender.status === 'awarded' && isTerminal;
+            const isLost = tender.status === 'lost' && isTerminal;
             const disabled = isStageDisabled(stage.value);
 
             let pillStyle = 'bg-muted/40 text-muted-foreground border-border/40';
             if (isCompleted) {
               pillStyle = 'bg-blue-500/15 text-blue-600 border-blue-500/30';
             } else if (isActive) {
-              pillStyle = 'bg-blue-600 text-white border-blue-600 font-semibold';
+              if (isWon) {
+                pillStyle = 'bg-emerald-600 text-white border-emerald-600 font-semibold';
+              } else if (isLost) {
+                pillStyle = 'bg-red-600 text-white border-red-600 font-semibold';
+              } else {
+                pillStyle = 'bg-blue-600 text-white border-blue-600 font-semibold';
+              }
             }
 
             return (
@@ -442,7 +508,7 @@ export function TenderHeroHeader({
                 disabled={isPending || disabled}
                 className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-medium transition-all ${pillStyle}`}
               >
-                {isCompleted && <span>✓</span>}
+                {isWon ? '🏆' : isLost ? '✕' : isCompleted && <span>✓</span>}
                 <span>{stage.label}</span>
               </button>
             );
