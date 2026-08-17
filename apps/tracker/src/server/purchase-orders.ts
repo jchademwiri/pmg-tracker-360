@@ -61,6 +61,7 @@ type POLineItemInput = {
   id?: string;
   projectLineItemId: string;
   quantity: string;
+  unitPrice?: string;
 };
 
 export async function getProjectLineItems(organizationId: string, projectId: string) {
@@ -508,7 +509,16 @@ async function getValidatedProjectLineItemSnapshots(
   return lineItems.map((item) => {
     const savedItem = savedItemMap.get(item.projectLineItemId)!;
     const qty = parseFloat(item.quantity) || 0;
-    const price = parseFloat(savedItem.unitPrice) || 0;
+    
+    // Support per-PO adjustable unit price, falling back to the saved catalogue price
+    const customPrice =
+      item.unitPrice !== undefined && item.unitPrice !== null && item.unitPrice.trim() !== ''
+        ? parseFloat(item.unitPrice)
+        : NaN;
+    const price =
+      !isNaN(customPrice) && customPrice >= 0
+        ? customPrice
+        : parseFloat(savedItem.unitPrice) || 0;
 
     if (qty <= 0) {
       throw new Error(`Quantity for "${savedItem.description}" must be greater than zero.`);
@@ -522,7 +532,7 @@ async function getValidatedProjectLineItemSnapshots(
       description: savedItem.description,
       unit: savedItem.unit,
       quantity: qty.toString(),
-      unitPrice: price.toString(),
+      unitPrice: price.toFixed(2),
       subtotal: (qty * price).toFixed(2),
     };
   });
