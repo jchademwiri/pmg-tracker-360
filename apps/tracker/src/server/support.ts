@@ -6,6 +6,7 @@ import { eq, and, sql, desc, asc, isNull, count } from 'drizzle-orm';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
+import { checkRateLimit, getClientIp, verifyBotProtection } from '@/lib/bot-protection';
 
 import { formatTicketCode } from '@/lib/support-utils';
 
@@ -19,6 +20,8 @@ const supportTicketSchema = z.object({
     .min(1, 'Message is required')
     .max(2000, 'Message is too long'),
   userId: z.string().optional(),
+  honeypot: z.string().optional(),
+  formMountedAt: z.number().optional(),
 });
 
 export type SupportTicketInput = z.input<typeof supportTicketSchema>;
@@ -27,14 +30,58 @@ export async function createSupportTicket(input: SupportTicketInput) {
   try {
     const validated = supportTicketSchema.parse(input);
 
-    // Look up registered user if available
-    let linkedUserId: string | null = validated.userId || null;
+    // Verify session if available
+    let sessionUser: { id: string; name?: string | null; email?: string | null } | null = null;
+    try {
+      const headerList = await headers();
+      const session = await auth.api.getSession({ headers: headerList });
+      if (session?.user) {
+        sessionUser = session.user;
+      }
+    } catch {
+      // Non-blocking if called outside session context
+    }
 
-    if (!linkedUserId && validated.email) {
+    // Look up registered user if available
+    let linkedUserId: string | null = sessionUser?.id || validated.userId || null;
+    const effectiveName = sessionUser?.name || validated.name;
+    const effectiveEmail = sessionUser?.email || validated.email;
+
+    // For unauthenticated/public submissions, enforce bot protection and rate limiting
+    if (!sessionUser) {
+      const clientIp = await getClientIp();
+
+      // IP Rate limit check
+      const rateLimit = checkRateLimit(`ticket:${clientIp}`, 5, 10 * 60 * 1000);
+      if (!rateLimit.allowed) {
+        return {
+          success: false,
+          error: `Too many submissions. Please wait ${Math.ceil((rateLimit.retryAfterSeconds || 60) / 60)} minute(s).`,
+        };
+      }
+
+      // Bot protection check
+      const botCheck = await verifyBotProtection({
+        name: effectiveName,
+        email: effectiveEmail,
+        honeypot: validated.honeypot,
+        formMountedAt: validated.formMountedAt,
+      });
+
+      if (botCheck.isBot) {
+        console.warn(`[Anti-Spam] Ticket creation blocked: ${botCheck.reason}`);
+        return {
+          success: true,
+          ticketId: crypto.randomUUID(),
+        };
+      }
+    }
+
+    if (!linkedUserId && effectiveEmail) {
       const [foundUser] = await db
         .select({ id: userTable.id })
         .from(userTable)
-        .where(eq(sql`lower(${userTable.email})`, validated.email.toLowerCase()))
+        .where(eq(sql`lower(${userTable.email})`, effectiveEmail.toLowerCase()))
         .limit(1);
 
       if (foundUser) {
@@ -50,8 +97,8 @@ export async function createSupportTicket(input: SupportTicketInput) {
       .insert(supportTickets)
       .values({
         id: ticketId,
-        name: validated.name,
-        email: validated.email,
+        name: effectiveName,
+        email: effectiveEmail,
         subject: validated.subject || 'Support Request',
         message: validated.message,
         userId: linkedUserId,
@@ -73,8 +120,8 @@ export async function createSupportTicket(input: SupportTicketInput) {
       ticketId,
       senderId: linkedUserId,
       senderType: 'user',
-      senderName: validated.name,
-      senderEmail: validated.email,
+      senderName: effectiveName,
+      senderEmail: effectiveEmail,
       message: validated.message,
       isInternal: false,
       createdAt: now,
@@ -90,8 +137,8 @@ export async function createSupportTicket(input: SupportTicketInput) {
 
     const safeSubject = escapeHtml(validated.subject || 'Support Request');
     const safeMessage = escapeHtml(validated.message).replace(/\n/g, '<br>');
-    const safeName = escapeHtml(validated.name);
-    const safeEmail = escapeHtml(validated.email);
+    const safeName = escapeHtml(effectiveName);
+    const safeEmail = escapeHtml(effectiveEmail);
     const safePriority = (validated.priority || 'medium').toUpperCase();
     const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
     const adminUrl = process.env.ADMIN_APP_URL || 'https://admin.tendertrack360.co.za/support-tickets';

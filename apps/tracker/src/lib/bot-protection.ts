@@ -232,3 +232,68 @@ export async function verifyBotProtection({
   return { isBot: false };
 }
 
+/**
+ * In-memory sliding window rate limiter
+ */
+const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
+
+// Periodic garbage collection to prevent memory leaks
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of rateLimitMap.entries()) {
+      if (record.expiresAt < now) {
+        rateLimitMap.delete(key);
+      }
+    }
+  }, 5 * 60 * 1000).unref?.();
+}
+
+/**
+ * Checks if an IP or identifier has exceeded the allowed number of requests in a given window.
+ */
+export function checkRateLimit(
+  identifier: string,
+  maxRequests: number = 5,
+  windowMs: number = 10 * 60 * 1000
+): { allowed: boolean; retryAfterSeconds?: number } {
+  const now = Date.now();
+  const existing = rateLimitMap.get(identifier);
+
+  if (!existing || existing.expiresAt < now) {
+    rateLimitMap.set(identifier, {
+      count: 1,
+      expiresAt: now + windowMs,
+    });
+    return { allowed: true };
+  }
+
+  if (existing.count >= maxRequests) {
+    const retryAfterSeconds = Math.ceil((existing.expiresAt - now) / 1000);
+    return { allowed: false, retryAfterSeconds };
+  }
+
+  existing.count += 1;
+  return { allowed: true };
+}
+
+/**
+ * Extracts the client IP from request headers
+ */
+export async function getClientIp(): Promise<string> {
+  try {
+    const headerList = await headers();
+    const forwardedFor = headerList.get('x-forwarded-for');
+    if (forwardedFor) {
+      return forwardedFor.split(',')[0].trim();
+    }
+    const realIp = headerList.get('x-real-ip') || headerList.get('cf-connecting-ip');
+    if (realIp) {
+      return realIp.trim();
+    }
+  } catch {
+    // Fallback if called outside request context
+  }
+  return '127.0.0.1';
+}
+

@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useActionState, useRef, useTransition } from 'react';
+import { useActionState, useRef, useTransition, useState, useEffect } from 'react';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,12 +26,20 @@ export function ContactForm() {
     message: '',
   });
 
+  const [formMountedAt, setFormMountedAt] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    setFormMountedAt(Date.now());
+  }, []);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       email: '',
       details: '',
+      company_website_hp: '',
+      formMountedAt,
     },
   });
 
@@ -40,6 +48,7 @@ export function ContactForm() {
     startTransition(() => {
       formAction(new FormData(formRef.current!));
       form.reset();
+      setFormMountedAt(Date.now());
     });
   };
 
@@ -49,17 +58,18 @@ export function ContactForm() {
   return (
     <div className="w-full space-y-6">
       <div className="text-left mb-6">
-        <h2 className="text-2xl font-bold">Send us a message</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Send us a message</h2>
         <p className="text-sm text-muted-foreground mt-2">
           Fill out the form below and we'll get back to you shortly.
         </p>
 
         {state.message && (
           <div
-            className={`mt-4 px-3 py-2 rounded-md text-sm border ${
+            role="status"
+            className={`mt-4 px-4 py-3 rounded-lg text-sm font-medium border transition-all duration-200 ${
               state.success
-                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                : 'bg-red-500/10 text-red-600 border-red-500/20'
+                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                : 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
             }`}
           >
             {state.message}
@@ -72,8 +82,30 @@ export function ContactForm() {
           ref={formRef}
           action={formAction}
           onSubmit={onSubmit}
-          className="space-y-6"
+          className="space-y-5"
         >
+          {/* Honeypot field (hidden from humans, caught by bots) */}
+          <div
+            aria-hidden="true"
+            className="opacity-0 absolute -z-50 select-none pointer-events-none h-0 w-0 overflow-hidden"
+            tabIndex={-1}
+          >
+            <label htmlFor="company_website_hp">Leave this field blank</label>
+            <input
+              id="company_website_hp"
+              type="text"
+              name="company_website_hp"
+              autoComplete="off"
+              tabIndex={-1}
+              defaultValue=""
+            />
+            <input
+              type="hidden"
+              name="formMountedAt"
+              value={formMountedAt}
+            />
+          </div>
+
           <FormField
             control={form.control}
             name="name"
@@ -119,7 +151,7 @@ export function ContactForm() {
                 <FormControl>
                   <Textarea
                     placeholder="Tell us how we can help..."
-                    className="min-h-[120px]"
+                    className="min-h-[120px] resize-y"
                     {...field}
                   />
                 </FormControl>
@@ -139,3 +171,4 @@ export function ContactForm() {
     </div>
   );
 }
+
