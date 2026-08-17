@@ -11,7 +11,7 @@ ADD COLUMN "primary_contact_phone" text;
 ALTER TABLE "client"
 ADD COLUMN "primary_contact_position" text;
 --> statement-breakpoint
-ALTER TABLE "client" DROP COLUMN "industry";
+ALTER TABLE "client" DROP COLUMN IF EXISTS "industry";
 --> statement-breakpoint
 -- Project table updates: Replace name with project_number, description with project_description
 ALTER TABLE "project"
@@ -30,15 +30,15 @@ SET "project_description" = "description"
 WHERE "description" IS NOT NULL;
 --> statement-breakpoint
 -- Drop old columns
-ALTER TABLE "project" DROP COLUMN "name";
+ALTER TABLE "project" DROP COLUMN IF EXISTS "name";
 --> statement-breakpoint
-ALTER TABLE "project" DROP COLUMN "description";
+ALTER TABLE "project" DROP COLUMN IF EXISTS "description";
 --> statement-breakpoint
 -- Tender table updates: Remove title, add client_id column
 ALTER TABLE "tender"
 ADD COLUMN "client_id" text;
 --> statement-breakpoint
-ALTER TABLE "tender" DROP COLUMN "title";
+ALTER TABLE "tender" DROP COLUMN IF EXISTS "title";
 --> statement-breakpoint
 -- Note: Keep client column for data migration, will be dropped in next migration
 -- Note: Foreign key constraint will be added in next migration after data migration

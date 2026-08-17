@@ -1,5 +1,5 @@
-ALTER TYPE "public"."role" ADD VALUE 'manager' BEFORE 'member';--> statement-breakpoint
-CREATE TABLE "organization_deletion_log" (
+ALTER TYPE "public"."role" ADD VALUE IF NOT EXISTS 'manager' BEFORE 'member';--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "organization_deletion_log" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"organization_name" text NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE "organization_deletion_log" (
 	"metadata" text
 );
 --> statement-breakpoint
-CREATE TABLE "organization_security_settings" (
+CREATE TABLE IF NOT EXISTS "organization_security_settings" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"require_2fa" boolean DEFAULT false NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE "organization_security_settings" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "ownership_transfer" (
+CREATE TABLE IF NOT EXISTS "ownership_transfer" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"from_user_id" text NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE "ownership_transfer" (
 	CONSTRAINT "ownership_transfer_transfer_token_unique" UNIQUE("transfer_token")
 );
 --> statement-breakpoint
-CREATE TABLE "security_audit_log" (
+CREATE TABLE IF NOT EXISTS "security_audit_log" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
 	"user_id" text NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE "security_audit_log" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "session_tracking" (
+CREATE TABLE IF NOT EXISTS "session_tracking" (
 	"id" text PRIMARY KEY NOT NULL,
 	"session_id" text NOT NULL,
 	"organization_id" text,
@@ -78,27 +78,83 @@ CREATE TABLE "session_tracking" (
 	"logout_time" timestamp
 );
 --> statement-breakpoint
-ALTER TABLE "contract" ADD COLUMN "deleted_at" timestamp;--> statement-breakpoint
-ALTER TABLE "contract" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "follow_up" ADD COLUMN "deleted_at" timestamp;--> statement-breakpoint
-ALTER TABLE "follow_up" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "organization" ADD COLUMN "deleted_at" timestamp;--> statement-breakpoint
-ALTER TABLE "organization" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "organization" ADD COLUMN "deletion_reason" text;--> statement-breakpoint
-ALTER TABLE "organization" ADD COLUMN "permanent_deletion_scheduled_at" timestamp;--> statement-breakpoint
-ALTER TABLE "tender" ADD COLUMN "deleted_at" timestamp;--> statement-breakpoint
-ALTER TABLE "tender" ADD COLUMN "deleted_by" text;--> statement-breakpoint
-ALTER TABLE "organization_deletion_log" ADD CONSTRAINT "organization_deletion_log_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "organization_deletion_log" ADD CONSTRAINT "organization_deletion_log_restored_by_user_id_fk" FOREIGN KEY ("restored_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "organization_security_settings" ADD CONSTRAINT "organization_security_settings_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_from_user_id_user_id_fk" FOREIGN KEY ("from_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_to_user_id_user_id_fk" FOREIGN KEY ("to_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "security_audit_log" ADD CONSTRAINT "security_audit_log_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "security_audit_log" ADD CONSTRAINT "security_audit_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "session_tracking" ADD CONSTRAINT "session_tracking_session_id_session_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."session"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "session_tracking" ADD CONSTRAINT "session_tracking_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "contract" ADD CONSTRAINT "contract_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "follow_up" ADD CONSTRAINT "follow_up_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "organization" ADD CONSTRAINT "organization_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tender" ADD CONSTRAINT "tender_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "contract" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp;--> statement-breakpoint
+ALTER TABLE "contract" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "follow_up" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp;--> statement-breakpoint
+ALTER TABLE "follow_up" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "organization" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp;--> statement-breakpoint
+ALTER TABLE "organization" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+ALTER TABLE "organization" ADD COLUMN IF NOT EXISTS "deletion_reason" text;--> statement-breakpoint
+ALTER TABLE "organization" ADD COLUMN IF NOT EXISTS "permanent_deletion_scheduled_at" timestamp;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "deleted_by" text;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "organization_deletion_log" ADD CONSTRAINT "organization_deletion_log_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "organization_deletion_log" ADD CONSTRAINT "organization_deletion_log_restored_by_user_id_fk" FOREIGN KEY ("restored_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "organization_security_settings" ADD CONSTRAINT "organization_security_settings_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_from_user_id_user_id_fk" FOREIGN KEY ("from_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "ownership_transfer" ADD CONSTRAINT "ownership_transfer_to_user_id_user_id_fk" FOREIGN KEY ("to_user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "security_audit_log" ADD CONSTRAINT "security_audit_log_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "security_audit_log" ADD CONSTRAINT "security_audit_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "session_tracking" ADD CONSTRAINT "session_tracking_session_id_session_id_fk" FOREIGN KEY ("session_id") REFERENCES "public"."session"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "session_tracking" ADD CONSTRAINT "session_tracking_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "contract" ADD CONSTRAINT "contract_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "follow_up" ADD CONSTRAINT "follow_up_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "organization" ADD CONSTRAINT "organization_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;--> statement-breakpoint
+DO $$ BEGIN
+  ALTER TABLE "tender" ADD CONSTRAINT "tender_deleted_by_user_id_fk" FOREIGN KEY ("deleted_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+  WHEN duplicate_object OR undefined_column OR undefined_table OR invalid_foreign_key THEN null;
+END $$;

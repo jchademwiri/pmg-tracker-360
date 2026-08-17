@@ -1,3 +1,3 @@
-ALTER TABLE "tender" ADD COLUMN "contact_name" text;--> statement-breakpoint
-ALTER TABLE "tender" ADD COLUMN "contact_email" text;--> statement-breakpoint
-ALTER TABLE "tender" ADD COLUMN "contact_phone" text;
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "contact_name" text;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "contact_email" text;--> statement-breakpoint
+ALTER TABLE "tender" ADD COLUMN IF NOT EXISTS "contact_phone" text;
