@@ -1,19 +1,11 @@
 'use client';
 
-import { useTransition, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useTransition, useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
-  ArrowLeft,
-  Edit,
-  Trash2,
   FileText,
-  User,
-  Mail,
-  Phone,
   Calendar,
-  MoreHorizontal,
   Building,
-  FileDown,
   CheckCircle2,
   Plus,
   PhoneCall,
@@ -22,24 +14,33 @@ import {
   TrendingUp,
   ClipboardCheck,
   Loader2,
+  ExternalLink,
+  MessageSquare,
+  Clock,
+  RefreshCw,
+  History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { deleteTender, updateTenderStatus, createTenderFollowUp, getTenderActivities } from '@/server/tenders';
+  deleteTender,
+  updateTenderStatus,
+  createTenderFollowUp,
+  getTenderActivities,
+} from '@/server/tenders';
 import { formatCurrency, formatDate as sharedFormatDate, formatDateTime } from '@/lib/format';
-import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocumentManager } from '@/components/documents/document-manager';
 import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
+
+import { ExtensionList, ExtendedTenderExtension } from './extension-list';
+import { TenderToProjectDialog } from './tender-to-project-dialog';
+import { TenderLostDialog } from './tender-lost-dialog';
+import { TenderFollowUpDialog } from './tender-follow-up-dialog';
+import { TenderHeroHeader } from './tender-hero-header';
+import { TenderStakeholdersCard } from './tender-stakeholders-card';
 
 interface TenderWithClient {
   id: string;
@@ -79,11 +80,6 @@ interface Document {
   url?: string;
 }
 
-import { ExtensionList, ExtendedTenderExtension } from './extension-list';
-import { TenderToProjectDialog } from './tender-to-project-dialog';
-import { TenderLostDialog } from './tender-lost-dialog';
-import { TenderFollowUpDialog } from './tender-follow-up-dialog';
-
 interface FollowUp {
   id: string;
   tenderId: string;
@@ -104,7 +100,7 @@ interface TenderDetailsProps {
   followUps: FollowUp[];
 }
 
-
+const VALID_TABS = ['overview', 'documents', 'extensions', 'follow-ups', 'activities'];
 
 export function TenderDetails({
   tender,
@@ -114,12 +110,36 @@ export function TenderDetails({
   followUps,
 }: TenderDetailsProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+
+  // Dialog states
   const [showAwardDialog, setShowAwardDialog] = useState(false);
   const [showLostDialog, setShowLostDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
   const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Tab state synchronized with URL query params
+  const activeTab = useMemo(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && VALID_TABS.includes(tabParam)) {
+      return tabParam;
+    }
+    return 'overview';
+  }, [searchParams]);
+
+  const handleTabChange = (newTab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newTab === 'overview') {
+      params.delete('tab');
+    } else {
+      params.set('tab', newTab);
+    }
+    const query = params.toString();
+    const newUrl = query ? `${pathname}?${query}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  };
 
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
@@ -197,7 +217,19 @@ export function TenderDetails({
   };
 
   const handleStatusUpdate = async (
-    newStatus: 'new' | 'review' | 'approved_to_prepare' | 'preparation' | 'ready' | 'submitted' | 'evaluation' | 'awarded' | 'lost' | 'cancelled' | 'closed' | 'open',
+    newStatus:
+      | 'new'
+      | 'review'
+      | 'approved_to_prepare'
+      | 'preparation'
+      | 'ready'
+      | 'submitted'
+      | 'evaluation'
+      | 'awarded'
+      | 'lost'
+      | 'cancelled'
+      | 'closed'
+      | 'open',
     details?: {
       awardValue?: string | null;
       contractStartDate?: Date | null;
@@ -232,10 +264,6 @@ export function TenderDetails({
     });
   };
 
-  const handleBack = () => {
-    router.push('/tenders');
-  };
-
   const handleExportPdf = async () => {
     const toastId = toast.loading('Generating PDF...');
     try {
@@ -250,8 +278,6 @@ export function TenderDetails({
       document.body.appendChild(link);
       link.click();
       link.remove();
-      // Defer revoking: some browsers haven't started reading the blob yet
-      // and will cancel the download if the URL is revoked synchronously.
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       toast.success('PDF downloaded successfully', { id: toastId });
@@ -261,899 +287,482 @@ export function TenderDetails({
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return formatDateTime(date, 'Not set');
-  };
-
-  const formatDateOnly = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return sharedFormatDate(date, 'Not set');
-  };
-
-
+  const latestFollowUp = followUps.length > 0 ? followUps[0] : null;
 
   return (
     <div className="w-full space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tenders
-          </Button>
-        </div>
+      {/* ── 1. Hero Header, Compact Lifecycle Rail & 4-Tile KPI Strip ── */}
+      <TenderHeroHeader
+        tender={tender}
+        isPending={isPending}
+        onEdit={handleEdit}
+        onExportPdf={handleExportPdf}
+        onDelete={handleDelete}
+        onOpenAwardDialog={() => setShowAwardDialog(true)}
+        onOpenLostDialog={() => setShowLostDialog(true)}
+        onOpenFollowUpDialog={() => setShowFollowUpDialog(true)}
+        onStatusUpdate={handleStatusUpdate}
+      />
 
-        <div className="flex items-center space-x-2">
-          <h1 className="text-xl text-foreground/80 font-bold">
-            {tender.tenderNumber.toUpperCase()}
-          </h1>
+      {/* ── 2. Main 2-Column Responsive Workspace (Stakeholders visible across ALL tabs) ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        {/* Left Column (2/3 width on large screens) - Holds the Tabbed Interface */}
+        <div className="xl:col-span-2 space-y-6 min-w-0">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <div className="flex items-center justify-between border-b border-border/60 pb-px">
+              <TabsList className="bg-transparent h-auto p-0 gap-2 flex-wrap">
+                <TabsTrigger
+                  value="overview"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs rounded-lg px-3.5 py-1.5 text-xs font-semibold"
+                >
+                  Overview
+                </TabsTrigger>
 
-          <Button
-            variant="outline"
-            onClick={handleEdit}
-            className="cursor-pointer"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Tender
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="cursor-pointer">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Tender
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer">
-                <FileDown className="h-4 w-4 mr-2" />
-                Export PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDelete}
-                className="text-red-600 cursor-pointer"
-                disabled={isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Tender
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Tender Lifecycle Stage Stepper */}
-      <Card className="rounded-lg shadow-sm border overflow-hidden">
-        <div className="px-4 py-2.5 bg-muted/20 border-b flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tender Lifecycle Stage</span>
-            <StatusBadge domain="tender" status={tender.status} />
-          </div>
-          <span className="text-xs text-muted-foreground">Click a stage to transition the workflow</span>
-        </div>
-        <div className="p-5">
-          {(() => {
-            const stages = [
-              { value: 'new', label: 'Opportunity' },
-              { value: 'review', label: 'To Review' },
-              { value: 'approved_to_prepare', label: 'Approved' },
-              { value: 'preparation', label: 'Preparing' },
-              { value: 'ready', label: 'Ready' },
-              { value: 'submitted', label: 'Submitted' },
-              { value: 'evaluation', label: 'Evaluation' },
-              { value: 'awarded', label: tender.status === 'lost' ? 'Lost' : 'Awarded' },
-            ];
-
-            const getStatusIndex = (status: string) => {
-              switch (status) {
-                case 'new': case 'open': return 0;
-                case 'review': return 1;
-                case 'approved_to_prepare': return 2;
-                case 'preparation': return 3;
-                case 'ready': return 4;
-                case 'submitted': return 5;
-                case 'evaluation': return 6;
-                case 'awarded': case 'lost': return 7;
-                default: return -1;
-              }
-            };
-
-            const currentStatusIndex = getStatusIndex(tender.status);
-            const currentStage = stages[currentStatusIndex];
-
-            const handleStageClick = (stageValue: string) => {
-              if (stageValue === tender.status) return;
-              if (stageValue === 'new' && tender.status === 'open') return;
-              if (stageValue === 'awarded') {
-                setShowAwardDialog(true);
-                return;
-              }
-              if (['submitted', 'evaluation'].includes(stageValue) && !tender.submissionDate) {
-                toast.error('A submission date is required before transitioning to Submitted or Evaluation.');
-                return;
-              }
-              if (['approved_to_prepare', 'preparation'].includes(stageValue) && !tender.client?.id) {
-                toast.error('A client must be assigned before transitioning to Approved or Preparing.');
-                return;
-              }
-              handleStatusUpdate(stageValue as any);
-            };
-
-            /**
-             * Returns the reason a stage is disabled for transition guard feedback.
-             */
-            const getStageDisabledReason = (stageValue: string, stageIdx: number): string | null => {
-              // Already on current stage
-              if (stageValue === tender.status || (stageValue === 'new' && tender.status === 'open')) {
-                return 'Current stage';
-              }
-              // If tender is finalized, can't go back to active
-              const finalizedStatuses = ['awarded', 'lost', 'closed', 'cancelled'];
-              if (finalizedStatuses.includes(tender.status) && ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'].includes(stageValue)) {
-                return 'Cannot revert a finalized tender';
-              }
-              // Submission date required
-              if (['submitted', 'evaluation'].includes(stageValue) && !tender.submissionDate) {
-                return 'Submission date required';
-              }
-              // Client required
-              if (['approved_to_prepare', 'preparation'].includes(stageValue) && !tender.client?.id) {
-                return 'Client required';
-              }
-              return null;
-            };
-
-            const isStageDisabled = (stageValue: string, stageIdx: number): boolean => {
-              // Already on this stage
-              if (stageValue === tender.status) return true;
-              if (stageValue === 'new' && tender.status === 'open') return true;
-              // Finalized can't go back
-              const finalizedStatuses = ['awarded', 'lost', 'closed', 'cancelled'];
-              if (finalizedStatuses.includes(tender.status) && !finalizedStatuses.includes(stageValue)) return true;
-              // Requirement checks
-              if (['submitted', 'evaluation'].includes(stageValue) && !tender.submissionDate) return true;
-              if (['approved_to_prepare', 'preparation'].includes(stageValue) && !tender.client?.id) return true;
-              return false;
-            };
-
-            return (
-              <>
-                {/* ── Desktop: Full horizontal stepper ── */}
-                <div className="hidden md:flex items-center w-full justify-between relative py-2">
-                  <div className="absolute top-[21px] left-0 right-0 h-0.5 bg-border -translate-y-1/2 z-0" />
-                  {currentStatusIndex >= 0 && (
-                    <div 
-                      className="absolute top-[21px] left-0 h-0.5 bg-blue-500 -translate-y-1/2 z-0 transition-all duration-500 ease-in-out" 
-                      style={{ width: `${(currentStatusIndex / (stages.length - 1)) * 100}%` }}
-                    />
+                <TabsTrigger
+                  value="documents"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs rounded-lg px-3.5 py-1.5 text-xs font-semibold gap-1.5"
+                >
+                  Documents
+                  {documents.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+                      {documents.length}
+                    </Badge>
                   )}
-                  {stages.map((stage, idx) => {
-                    const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
-                    const isActive = idx === currentStatusIndex;
-                    const isTerminal = stage.value === 'awarded';
-                    const isLost = tender.status === 'lost' && isTerminal;
-                    const disabled = isStageDisabled(stage.value, idx);
-                    const disableReason = getStageDisabledReason(stage.value, idx);
+                </TabsTrigger>
 
-                    let dotColor = "bg-background border-border text-muted-foreground hover:border-blue-500/50";
-                    if (isCompleted) dotColor = "bg-blue-500 border-blue-500 text-white";
-                    else if (isActive) dotColor = isLost 
-                      ? "bg-red-500 border-red-500 text-white shadow-md shadow-red-500/20" 
-                      : "bg-blue-500 border-blue-500 text-white shadow-md shadow-blue-500/20 ring-4 ring-blue-500/10";
+                <TabsTrigger
+                  value="extensions"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs rounded-lg px-3.5 py-1.5 text-xs font-semibold gap-1.5"
+                >
+                  Extensions
+                  {extensions.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+                      {extensions.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
 
-                    return (
-                      <button
-                        key={stage.value}
-                        type="button"
-                        onClick={() => handleStageClick(stage.value)}
-                        disabled={isPending || disabled}
-                        className={`flex flex-col items-center relative z-10 cursor-pointer group focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 transition-transform ${!disabled && !isActive ? 'hover:scale-105' : ''}`}
-                        title={disabled ? (disableReason || undefined) : `Transition to ${stage.label}`}
-                      >
-                        <div className={`h-8 w-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotColor} ${!disabled && !isActive ? 'group-hover:border-blue-500 group-hover:text-blue-500' : ''}`}>
-                          {isCompleted ? '✓' : idx + 1}
-                        </div>
-                        <span className={`text-[11px] font-semibold mt-2 transition-colors duration-300 ${isActive ? 'text-foreground font-bold' : 'text-muted-foreground group-hover:text-foreground'}`}>
-                          {stage.label}
-                        </span>
-                        {disabled && disableReason && !isActive && (
-                          <span className="text-[9px] text-muted-foreground/60 mt-0.5 max-w-[85px] truncate text-center">
-                            {disableReason}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <TabsTrigger
+                  value="follow-ups"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs rounded-lg px-3.5 py-1.5 text-xs font-semibold gap-1.5"
+                >
+                  Follow-ups
+                  {followUps.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+                      {followUps.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
 
-                {/* ── Mobile: Compact vertical list ── */}
-                <div className="md:hidden space-y-2">
-                  {/* Current stage summary */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">
-                        Stage {currentStatusIndex + 1} of {stages.length}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        — {currentStage?.label || 'Unknown'}
-                      </span>
-                    </div>
-                  </div>
+                <TabsTrigger
+                  value="activities"
+                  className="data-[state=active]:bg-card data-[state=active]:shadow-xs rounded-lg px-3.5 py-1.5 text-xs font-semibold"
+                >
+                  Activities
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-                  {/* Compact progress bar */}
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mb-3">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-in-out"
-                      style={{ width: `${((currentStatusIndex + 1) / stages.length) * 100}%` }}
-                    />
-                  </div>
-
-                  {/* Stage list as compact vertical pills */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {stages.map((stage, idx) => {
-                      const isCompleted = currentStatusIndex >= 0 && idx < currentStatusIndex;
-                      const isActive = idx === currentStatusIndex;
-                      const disabled = isStageDisabled(stage.value, idx);
-                      const disableReason = getStageDisabledReason(stage.value, idx);
-
-                      let pillClass = 'border-border text-muted-foreground bg-background';
-                      if (isCompleted) pillClass = 'border-blue-500/30 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-300';
-                      else if (isActive) {
-                        const isLost = tender.status === 'lost' && stage.value === 'awarded';
-                        pillClass = isLost
-                          ? 'border-red-500 text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-300 font-semibold'
-                          : 'border-blue-500 text-blue-700 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-300 font-semibold';
-                      }
-
-                      return (
-                        <button
-                          key={stage.value}
-                          type="button"
-                          onClick={() => !disabled && handleStageClick(stage.value)}
-                          disabled={isPending || disabled}
-                          title={disabled ? (disableReason || undefined) : `Transition to ${stage.label}`}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pillClass} ${!disabled && !isActive ? 'hover:border-blue-500/50 hover:text-blue-600' : ''}`}
-                        >
-                          {isCompleted && <span className="text-[10px]">✓</span>}
-                          {stage.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </Card>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="extensions">Extensions</TabsTrigger>
-          <TabsTrigger value="follow-ups">Follow-ups</TabsTrigger>
-          <TabsTrigger value="activities">Activities</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-6">
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            {/* Main Information */}
-            <div className="xl:col-span-3 space-y-6">
-              {/* Basic Information */}
-              <Card className="rounded-lg shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                    Tender Information
+            {/* ── OVERVIEW TAB ── */}
+            <TabsContent value="overview" className="mt-5 space-y-5">
+              {/* Tender Scope & Detailed Description */}
+              <Card className="rounded-xl border-border/60 shadow-xs">
+                <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    Tender Scope & Specifications
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Tender Number
-                      </label>
-                      <p className="text-lg font-medium text-blue-600">
-                        {tender.tenderNumber.toUpperCase()}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Status
-                      </label>
-                      <div className="mt-1">
-                        <StatusBadge domain="tender" status={tender.status} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Tender Value
-                      </label>
-                      <p className="text-lg font-medium">
-                        {formatCurrency(tender.value)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Closing Date
-                      </label>
-                      <p className="text-foreground">
-                        {formatDate(tender.submissionDate)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Tender Validity (Initial)
-                      </label>
-                      <p className="text-foreground">
-                        {tender.validityDays ? `${tender.validityDays} Days` : formatDateOnly(tender.validityDate)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Current Validity Deadline
-                      </label>
-                      <p className="text-foreground font-semibold text-blue-600">
-                        {formatDateOnly(tender.evaluationDate)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Award Outcome Details */}
-                  {tender.status === 'awarded' && (
-                    <div className="border-t pt-4 mt-2">
-                      <h4 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Award & Appointment Outcome
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-emerald-500/[0.01] border border-emerald-500/10 rounded-lg p-3">
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Final Award Value</label>
-                          <p className="text-base font-semibold text-emerald-600">{formatCurrency(tender.awardValue || tender.value)}</p>
-                        </div>
-                        {tender.evaluationNotes && (
-                          <div className="md:col-span-2">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outcome Notes</label>
-                            <p className="text-sm text-foreground whitespace-pre-wrap mt-0.5">{tender.evaluationNotes}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Lost Outcome Details */}
-                  {tender.status === 'lost' && (
-                    <div className="border-t pt-4 mt-2">
-                      <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-1.5">
-                        <AlertTriangle className="h-4 w-4 text-red-600" />
-                        Tender Outcome Details (Lost / Rejected)
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-red-500/[0.01] border border-red-500/10 rounded-lg p-3">
-                        <div>
-                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reason for Loss</label>
-                          <p className="text-sm font-medium capitalize mt-0.5">{tender.lossReason ? tender.lossReason.replace('_', ' ') : 'Not recorded'}</p>
-                        </div>
-                        {tender.lossDetails && (
-                          <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Additional Loss Details</label>
-                            <p className="text-sm text-foreground mt-0.5">{tender.lossDetails}</p>
-                          </div>
-                        )}
-                        {tender.evaluationNotes && (
-                          <div className="md:col-span-2">
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Evaluation / Feedback Notes</label>
-                            <p className="text-sm text-foreground whitespace-pre-wrap mt-0.5">{tender.evaluationNotes}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {tender.description && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Description
-                      </label>
-                      <p className="text-foreground whitespace-pre-wrap">
+                <CardContent className="p-5 space-y-4">
+                  {tender.description ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
                         {tender.description}
                       </p>
                     </div>
-                  )}
-
-                  {!tender.description && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Description
-                      </label>
-                      <p className="text-muted-foreground italic">
-                        No description added
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Tender Follow-up Contact */}
-              <Card className="rounded-lg shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <User className="h-5 w-5 mr-2 text-amber-600" />
-                    Tender Follow-up Contact
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {tender.contactName || tender.contactEmail || tender.contactPhone ? (
-                    <div className="space-y-3">
-                      {tender.contactName && (
-                        <div className="flex items-center space-x-3">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">
-                              Contact Person
-                            </label>
-                            <p className="text-foreground">{tender.contactName}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {tender.contactEmail && (
-                        <div className="flex items-center space-x-3">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">
-                              Email Address
-                            </label>
-                            <p className="text-foreground">
-                              <Link
-                                href={`mailto:${tender.contactEmail}`}
-                                className="text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                {tender.contactEmail}
-                              </Link>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {tender.contactPhone && (
-                        <div className="flex items-center space-x-3">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">
-                              Phone Number
-                            </label>
-                            <p className="text-foreground">
-                              <Link
-                                href={`tel:${tender.contactPhone}`}
-                                className="text-blue-600 hover:text-blue-800 hover:underline"
-                              >
-                                {tender.contactPhone}
-                              </Link>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground italic">
-                      No tender-specific follow-up contact added.
-                    </p>
+                    <div className="rounded-lg border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">
+                      <FileText className="h-6 w-6 mx-auto mb-1 text-muted-foreground/30" />
+                      <p className="italic">No description or scope notes added for this tender.</p>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={handleEdit}
+                        className="text-xs text-blue-600 mt-1 cursor-pointer h-auto p-0"
+                      >
+                        + Add Tender Scope
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Client Information */}
-              <Card className="rounded-lg shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <Building className="h-5 w-5 mr-2 text-green-600" />
-                    Client Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {tender.client ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">
-                            Client Name
-                          </label>
-                          <p className="text-lg font-medium">
-                            {tender.client.name}
+              {/* Award / Appointment Outcome Card (if awarded) */}
+              {tender.status === 'awarded' && (
+                <Card className="rounded-xl border-emerald-500/30 bg-emerald-500/[0.02] shadow-xs">
+                  <CardHeader className="py-3 px-5 border-b border-emerald-500/20 bg-emerald-500/5">
+                    <CardTitle className="text-sm font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      Award & Appointment Outcome
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Final Award Value
+                        </span>
+                        <p className="text-lg font-bold text-emerald-600 mt-0.5">
+                          {formatCurrency(tender.awardValue || tender.value)}
+                        </p>
+                      </div>
+                      {tender.evaluationNotes && (
+                        <div className="sm:col-span-2">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Appointment & Evaluation Notes
+                          </span>
+                          <p className="text-xs text-foreground/90 mt-1 whitespace-pre-wrap rounded-lg bg-background/60 p-3 border border-border/40">
+                            {tender.evaluationNotes}
                           </p>
                         </div>
-                        <Link href={`/clients/${tender.client.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="cursor-pointer"
-                          >
-                            View Client
-                          </Button>
-                        </Link>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Loss / Rejected Outcome Card (if lost) */}
+              {tender.status === 'lost' && (
+                <Card className="rounded-xl border-red-500/30 bg-red-500/[0.02] shadow-xs">
+                  <CardHeader className="py-3 px-5 border-b border-red-500/20 bg-red-500/5">
+                    <CardTitle className="text-sm font-semibold text-red-800 dark:text-red-300 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      Tender Outcome Details (Lost / Rejected)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Primary Reason for Loss
+                        </span>
+                        <p className="text-sm font-bold text-red-600 capitalize mt-0.5">
+                          {tender.lossReason ? tender.lossReason.replace('_', ' ') : 'Not recorded'}
+                        </p>
                       </div>
-
-                      {(tender.client.contactName ||
-                        tender.client.contactEmail ||
-                        tender.client.contactPhone) && (
-                        <div className="border-t pt-4">
-                          <h4 className="text-sm font-medium text-muted-foreground mb-3">
-                            Contact Information
-                          </h4>
-                          <div className="space-y-3">
-                            {tender.client.contactName && (
-                              <div className="flex items-center space-x-3">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Contact Person
-                                  </label>
-                                  <p className="text-foreground">
-                                    {tender.client.contactName}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-
-                            {tender.client.contactEmail && (
-                              <div className="flex items-center space-x-3">
-                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Email Address
-                                  </label>
-                                  <p className="text-foreground">
-                                    <Link
-                                      href={`mailto:${tender.client.contactEmail}`}
-                                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    >
-                                      {tender.client.contactEmail}
-                                    </Link>
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-
-                            {tender.client.contactPhone && (
-                              <div className="flex items-center space-x-3">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Phone Number
-                                  </label>
-                                  <p className="text-foreground">
-                                    <Link
-                                      href={`tel:${tender.client.contactPhone}`}
-                                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                                    >
-                                      {tender.client.contactPhone}
-                                    </Link>
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                      {tender.lossDetails && (
+                        <div>
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Additional Details
+                          </span>
+                          <p className="text-xs text-foreground mt-0.5">
+                            {tender.lossDetails}
+                          </p>
                         </div>
                       )}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Building className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-foreground mb-2">
-                        No Client Information
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Client information is not available for this tender.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    {tender.evaluationNotes && (
+                      <div className="pt-2 border-t border-red-500/10">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Evaluation / Debriefing Feedback
+                        </span>
+                        <p className="text-xs text-foreground/90 mt-1 whitespace-pre-wrap rounded-lg bg-background/60 p-3 border border-border/40">
+                          {tender.evaluationNotes}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Quick Actions */}
-              <Card className="rounded-lg shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start cursor-pointer"
-                    onClick={handleEdit}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Tender
-                  </Button>
-                  {(tender.contactEmail || tender.client?.contactEmail) && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() =>
-                        window.open(
-                          `mailto:${tender.contactEmail || tender.client?.contactEmail}`,
-                          '_blank'
-                        )
-                      }
-                    >
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email Follow-up Contact
-                    </Button>
-                  )}
-                  {(tender.contactPhone || tender.client?.contactPhone) && (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() =>
-                        window.open(
-                          `tel:${tender.contactPhone || tender.client?.contactPhone}`,
-                          '_blank'
-                        )
-                      }
-                    >
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call Follow-up Contact
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Status Management */}
-              <Card className="rounded-lg shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Status Management</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="text-sm text-muted-foreground mb-3">
-                    Current Status:{' '}
-                    <StatusBadge domain="tender" status={tender.status} />
-                  </div>
-
-                   {tender.status !== 'evaluation' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('evaluation')}
-                      disabled={isPending}
-                    >
-                      Mark as Submitted / Evaluation
-                    </Button>
-                  )}
-
-                  {tender.status !== 'awarded' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() => setShowAwardDialog(true)}
-                      disabled={isPending}
-                    >
-                      Mark as Appointed / Awarded
-                    </Button>
-                  )}
-
-                  {tender.status !== 'lost' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() => setShowLostDialog(true)}
-                      disabled={isPending}
-                    >
-                      Mark as Rejected / Lost
-                    </Button>
-                  )}
-
-                  {tender.status !== 'closed' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('closed')}
-                      disabled={isPending}
-                    >
-                      Mark as Closed
-                    </Button>
-                  )}
-
-                  {tender.status !== 'open' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('open')}
-                      disabled={isPending}
-                    >
-                      Mark as Open
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Timestamps */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Timeline
+              {/* Recent Follow-up Highlight Snapshot */}
+              <Card className="rounded-xl border-border/60 shadow-xs">
+                <CardHeader className="py-3 px-5 bg-muted/20 border-b border-border/40 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-violet-600" />
+                    Latest Communication Snapshot
                   </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleTabChange('follow-ups')}
+                    className="h-7 text-xs text-blue-600 hover:text-blue-700 px-2 cursor-pointer"
+                  >
+                    View All Logs
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </Button>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Created
-                    </label>
-                    <p className="text-sm">{formatDate(tender.createdAt)}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Last Updated
-                    </label>
-                    <p className="text-sm">{formatDate(tender.updatedAt)}</p>
-                  </div>
-                  {tender.submissionDate && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Closing Date
-                      </label>
-                      <p className="text-sm">
-                        {formatDate(tender.submissionDate)}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="documents" className="mt-6">
-          <DocumentManager
-            organizationId={organizationId}
-            entityId={tender.id}
-            entityType="tender"
-            initialDocuments={documents}
-          />
-        </TabsContent>
-
-        <TabsContent value="extensions" className="mt-6">
-          <ExtensionList
-            extensions={extensions}
-            organizationId={organizationId}
-            tenderId={tender.id}
-          />
-        </TabsContent>
-
-        <TabsContent value="follow-ups" className="mt-6">
-          <Card className="rounded-lg shadow-sm border border-border/40">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <div>
-                <CardTitle className="text-xl">Follow-up Log Workspace</CardTitle>
-                <CardDescription>Keep track of all client communication and bid status queries</CardDescription>
-              </div>
-              <Button onClick={() => setShowFollowUpDialog(true)} className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white">
-                <Plus className="mr-2 h-4 w-4" /> Log Follow-up
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {followUps.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
-                  <PhoneCall className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="font-semibold text-sm">No follow-ups logged yet</p>
-                  <p className="text-xs mt-1">Keep a digital trail of updates to ensure you stay aligned on validities.</p>
-                </div>
-              ) : (
-                <div className="relative border-l-2 border-blue-500/20 pl-6 ml-3 space-y-6">
-                  {followUps.map((f) => (
-                    <div key={f.id} className="relative">
-                      {/* Timeline dot */}
-                      <span className="absolute -left-[31px] top-1 bg-background border-2 border-blue-500 rounded-full h-4 w-4 z-10 flex items-center justify-center">
-                        <span className="bg-blue-500 rounded-full h-1.5 w-1.5" />
-                      </span>
-                      <div className="bg-background border border-border/40 hover:border-blue-500/10 p-4 rounded-xl shadow-sm transition-all duration-300">
-                        <div className="flex justify-between items-start gap-4 flex-wrap">
-                          <div>
-                            <span className="text-xs font-semibold text-blue-500">{formatDateOnly(f.followUpDate)}</span>
-                            {f.contactPerson && (
-                              <p className="text-xs font-medium text-muted-foreground mt-0.5">Contact: <span className="text-foreground">{f.contactPerson}</span></p>
-                            )}
-                          </div>
-                          {f.nextFollowUpDate && (
-                            <Badge variant="outline" className="text-[10px] text-amber-600 bg-amber-500/[0.02] border-amber-500/20">
-                              Next: {formatDateOnly(f.nextFollowUpDate)}
-                            </Badge>
+                <CardContent className="p-4">
+                  {latestFollowUp ? (
+                    <div className="rounded-lg border border-border/50 bg-background/50 p-3 space-y-2 text-xs">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">
+                            {sharedFormatDate(latestFollowUp.followUpDate)}
+                          </span>
+                          {latestFollowUp.contactPerson && (
+                            <span className="text-muted-foreground">
+                              with <span className="text-foreground font-medium">{latestFollowUp.contactPerson}</span>
+                            </span>
                           )}
                         </div>
-                        {f.notes && (
-                          <p className="text-sm text-foreground/80 mt-2.5 whitespace-pre-wrap">{f.notes}</p>
-                        )}
-                        {f.outcome && (
-                          <div className="mt-3 flex items-start gap-1.5 bg-muted/30 p-2 rounded-lg text-xs text-muted-foreground">
-                            <span className="font-semibold text-foreground shrink-0">Outcome:</span>
-                            <span>{f.outcome}</span>
-                          </div>
+                        {latestFollowUp.nextFollowUpDate && (
+                          <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 bg-amber-500/5">
+                            Next: {sharedFormatDate(latestFollowUp.nextFollowUpDate)}
+                          </Badge>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="activities" className="mt-6">
-          <Card className="rounded-lg shadow-sm border border-border/40">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Tender Activity Timeline</CardTitle>
-              <CardDescription className="text-muted-foreground text-xs">Chronological timeline of all workspace lifecycle events</CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-8">
-              {loadingActivities ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : activities.length > 0 ? (
-                <div className="relative pl-6 border-l-2 border-border space-y-8 mt-4">
-                  {activities.map((act) => {
-                    return (
-                      <div key={act.id} className="relative group">
-                        {/* Timeline Dot */}
-                        <div className="absolute -left-[31px] top-0.5 p-1 bg-background border-2 border-border rounded-full group-hover:border-muted-foreground transition-colors duration-200">
-                          {getActivityIcon(act.activityType)}
+                      {latestFollowUp.notes && (
+                        <p className="text-foreground/80 whitespace-pre-wrap">{latestFollowUp.notes}</p>
+                      )}
+                      {latestFollowUp.outcome && (
+                        <div className="pt-1.5 text-[11px] text-muted-foreground flex items-center gap-1">
+                          <span className="font-semibold text-foreground">Outcome:</span>
+                          <span>{latestFollowUp.outcome}</span>
                         </div>
-                        
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-muted-foreground">
-                              {sharedFormatDate(act.createdAt)} • {new Date(act.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            {act.user?.name && (
-                              <span className="inline-flex items-center text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                                <User className="h-2.5 w-2.5 mr-1" />
-                                {act.user.name}
-                              </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-xs text-muted-foreground">
+                      <PhoneCall className="h-5 w-5 mx-auto mb-1.5 text-muted-foreground/30" />
+                      <p>No client communication logged yet.</p>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => setShowFollowUpDialog(true)}
+                        className="text-xs text-blue-600 mt-1 cursor-pointer h-auto p-0"
+                      >
+                        + Log First Follow-up
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── DOCUMENTS TAB ── */}
+            <TabsContent value="documents" className="mt-5">
+              <DocumentManager
+                organizationId={organizationId}
+                entityId={tender.id}
+                entityType="tender"
+                initialDocuments={documents}
+              />
+            </TabsContent>
+
+            {/* ── EXTENSIONS TAB ── */}
+            <TabsContent value="extensions" className="mt-5">
+              <ExtensionList
+                extensions={extensions}
+                organizationId={organizationId}
+                tenderId={tender.id}
+              />
+            </TabsContent>
+
+            {/* ── FOLLOW-UPS TAB ── */}
+            <TabsContent value="follow-ups" className="mt-5">
+              <Card className="rounded-xl shadow-xs border border-border/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <div>
+                    <CardTitle className="text-base font-semibold">Follow-up Log Workspace</CardTitle>
+                    <CardDescription className="text-xs">
+                      Keep track of all client communication and bid status queries
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => setShowFollowUpDialog(true)}
+                    className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-xs h-8"
+                  >
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Log Follow-up
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {followUps.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
+                      <PhoneCall className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="font-semibold text-sm">No follow-ups logged yet</p>
+                      <p className="text-xs mt-1 text-muted-foreground">
+                        Keep a digital trail of updates to ensure you stay aligned on validities.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="relative border-l-2 border-blue-500/20 pl-6 ml-3 space-y-5">
+                      {followUps.map((f) => (
+                        <div key={f.id} className="relative">
+                          {/* Timeline dot */}
+                          <span className="absolute -left-[31px] top-1 bg-background border-2 border-blue-500 rounded-full h-4 w-4 z-10 flex items-center justify-center">
+                            <span className="bg-blue-500 rounded-full h-1.5 w-1.5" />
+                          </span>
+                          <div className="bg-card border border-border/50 hover:border-blue-500/30 p-4 rounded-xl shadow-xs transition-all duration-200">
+                            <div className="flex justify-between items-start gap-4 flex-wrap">
+                              <div>
+                                <span className="text-xs font-semibold text-blue-600">
+                                  {sharedFormatDate(f.followUpDate)}
+                                </span>
+                                {f.contactPerson && (
+                                  <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                                    Contact:{' '}
+                                    <span className="text-foreground font-semibold">
+                                      {f.contactPerson}
+                                    </span>
+                                  </p>
+                                )}
+                              </div>
+                              {f.nextFollowUpDate && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] text-amber-600 bg-amber-500/5 border-amber-500/20"
+                                >
+                                  Next: {sharedFormatDate(f.nextFollowUpDate)}
+                                </Badge>
+                              )}
+                            </div>
+                            {f.notes && (
+                              <p className="text-xs sm:text-sm text-foreground/90 mt-2 whitespace-pre-wrap">
+                                {f.notes}
+                              </p>
+                            )}
+                            {f.outcome && (
+                              <div className="mt-2.5 flex items-start gap-1.5 bg-muted/40 p-2 rounded-lg text-xs text-muted-foreground">
+                                <span className="font-semibold text-foreground shrink-0">Outcome:</span>
+                                <span>{f.outcome}</span>
+                              </div>
                             )}
                           </div>
-                          
-                          <p className="text-sm text-foreground/80 font-light transition-colors duration-200">
-                            {act.description}
-                          </p>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
-                  <Activity className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                  <p className="text-sm font-semibold">No logged activities for this tender</p>
-                  <p className="text-xs mt-1">Actions like status changes, extensions, and follow-ups will log here.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
+            {/* ── ACTIVITIES TAB (With Integrated Timeline & Audit Card) ── */}
+            <TabsContent value="activities" className="mt-5 space-y-5">
+              {/* Integrated Timeline & Audit Milestones */}
+              <Card className="rounded-xl border-border/60 shadow-xs overflow-hidden">
+                <CardHeader className="py-3 px-5 bg-muted/20 border-b border-border/40">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <History className="h-4 w-4 text-purple-600" />
+                    Lifecycle Milestones & Audit Trail
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
+                      <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-muted-foreground block text-[11px]">Created</span>
+                        <span className="text-foreground font-semibold">
+                          {formatDateTime(tender.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
+                      <RefreshCw className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-muted-foreground block text-[11px]">Last Modified</span>
+                        <span className="text-foreground font-semibold">
+                          {formatDateTime(tender.updatedAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
+                      <Calendar className="h-4 w-4 text-sky-500 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-muted-foreground block text-[11px]">Closing Timestamp</span>
+                        <span className="text-foreground font-semibold">
+                          {tender.submissionDate ? formatDateTime(tender.submissionDate) : 'Not specified'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                      <div>
+                        <span className="font-medium text-muted-foreground block text-[11px]">Validity Target</span>
+                        <span className="text-foreground font-semibold">
+                          {sharedFormatDate(tender.evaluationDate || tender.validityDate)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Activity Stream */}
+              <Card className="rounded-xl shadow-xs border border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-base font-semibold">Tender Event Feed</CardTitle>
+                  <CardDescription className="text-xs">
+                    Chronological audit log of all status transitions, follow-ups, and extensions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-6 pb-8">
+                  {loadingActivities ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : activities.length > 0 ? (
+                    <div className="relative pl-6 border-l-2 border-border space-y-6 mt-2">
+                      {activities.map((act) => (
+                        <div key={act.id} className="relative group">
+                          <div className="absolute -left-[31px] top-0.5 p-1 bg-background border-2 border-border rounded-full group-hover:border-blue-500 transition-colors duration-200">
+                            {getActivityIcon(act.activityType)}
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-muted-foreground">
+                                {sharedFormatDate(act.createdAt)} •{' '}
+                                {new Date(act.createdAt).toLocaleTimeString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              {act.user?.name && (
+                                <span className="inline-flex items-center text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                  {act.user.name}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-xs sm:text-sm text-foreground/90">
+                              {act.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
+                      <Activity className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                      <p className="text-sm font-semibold">No logged activities for this tender</p>
+                      <p className="text-xs mt-1">Actions like status changes, extensions, and follow-ups will log here.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Right Column (1/3 width on large screens) - Permanently visible Stakeholders & Contacts on ALL tabs */}
+        <div className="space-y-6">
+          <TenderStakeholdersCard
+            client={tender.client}
+            tenderContact={{
+              contactName: tender.contactName,
+              contactEmail: tender.contactEmail,
+              contactPhone: tender.contactPhone,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* ── Dialog Modals ── */}
       <TenderToProjectDialog
         open={showAwardDialog}
         onOpenChange={setShowAwardDialog}
