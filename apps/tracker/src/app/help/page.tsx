@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
-import { Header } from '@/components/home-page/Header';
-import { FooterSection } from '@/components/home-page/FooterSection';
-import { Button } from '@/components/ui';
-import Link from 'next/link';
+import type { Metadata } from "next";
+import { Header } from "@/components/home-page/Header";
+import { FooterSection } from "@/components/home-page/FooterSection";
+import { Button } from "@/components/ui";
+import Link from "next/link";
 import {
   Search,
   BookOpen,
@@ -11,62 +11,62 @@ import {
   FolderLock,
   ArrowRight,
   HelpCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 export const metadata: Metadata = {
-  title: 'Help Center & Support | Tender Track 360',
+  title: "Help Center & Support | Tender Track 360",
   description:
-    'Browse our comprehensive guide, FAQs, and technical articles to master your tender management pipeline, compliance documentation, and project workflows.',
+    "Browse our comprehensive guide, FAQs, and technical articles to master your tender management pipeline, compliance documentation, and project workflows.",
 };
 
 export default function HelpPage() {
   const categories = [
     {
       icon: BookOpen,
-      title: 'Getting Started',
+      title: "Getting Started",
       description:
-        'Set up your organization, invite core team members, and navigate your dashboard.',
-      articles: '5 articles',
+        "Set up your organization, invite core team members, and navigate your dashboard.",
+      articles: "5 articles",
     },
     {
       icon: Settings,
-      title: 'Tender Operations',
+      title: "Tender Operations",
       description:
-        'Add bidding numbers, resolve closing date statuses, and mark tenders as submitted.',
-      articles: '8 articles',
+        "Add bidding numbers, resolve closing date statuses, and mark tenders as submitted.",
+      articles: "8 articles",
     },
     {
       icon: FolderLock,
-      title: 'Projects & POs',
+      title: "Projects & POs",
       description:
-        'Learn how won tenders automatically initialize projects and track purchase orders.',
-      articles: '6 articles',
+        "Learn how won tenders automatically initialize projects and track purchase orders.",
+      articles: "6 articles",
     },
     {
       icon: ShieldAlert,
-      title: 'Compliance & Security',
+      title: "Compliance & Security",
       description:
-        'Manage CSD documents, secure user role permissions, and track system audit logs.',
-      articles: '4 articles',
+        "Manage CSD documents, secure user role permissions, and track system audit logs.",
+      articles: "4 articles",
     },
   ];
 
   const faqs = [
     {
-      q: 'How does Tender Track 360 handle closing date statuses?',
+      q: "How does Tender Track 360 handle closing date statuses?",
       a: 'The system automates status transitions based on the submission date. Tenders remain "open" while the closing date is in the future. The day after the closing date, the status dynamically resolves to "closed" (unless locked by manual status overrides like evaluation or awarded).',
     },
     {
-      q: 'What happens when I mark a tender as Appointed / Awarded?',
-      a: 'Marking a tender as awarded triggers the automatic instantiation of a corresponding Project record in the database. The system copies the client metadata, description, and tender number into the new project, and instantly redirects you to the project edit screen so you can specify durations and start dates.',
+      q: "What happens when I mark a tender as Appointed / Awarded?",
+      a: "Marking a tender as awarded triggers the automatic instantiation of a corresponding Project record in the database. The system copies the client metadata, description, and tender number into the new project, and instantly redirects you to the project edit screen so you can specify durations and start dates.",
     },
     {
-      q: 'Can members and managers delete existing tenders?',
+      q: "Can members and managers delete existing tenders?",
       a: 'Yes, but only under safe operational conditions. Managers and members can only delete tenders in the "open" state. Once a tender is locked in "evaluation", "closed", "awarded", or "lost" status, only the organization Owner or Admin can delete the record.',
     },
     {
-      q: 'How are my CSD and B-BBEE compliance files secured?',
-      a: 'Tender Track 360 supports standard document storage securely isolated per tenant. Access control permissions protect compliance folders, and security logs capture every file read or update action, providing high compliance auditing.',
+      q: "How are my CSD and B-BBEE compliance files secured?",
+      a: "Tender Track 360 supports standard document storage securely isolated per tenant. Access control permissions protect compliance folders, and security logs capture every file read or update action, providing high compliance auditing.",
     },
   ];
 
@@ -82,7 +82,8 @@ export default function HelpPage() {
               How can we help you?
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Search our help center articles, find quick solutions, or browse categories below.
+              Search our help center articles, find quick solutions, or browse
+              categories below.
             </p>
             <div className="relative max-w-md mx-auto">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -159,8 +160,8 @@ export default function HelpPage() {
             Still need assistance?
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Our South African customer support and sales teams are available Monday
-            to Friday, 8:00 AM - 5:00 PM (SAST) to assist you.
+            Our South African customer support and sales teams are available
+            Monday to Friday, 8:00 AM - 5:00 PM (SAST) to assist you.
           </p>
           <div className="flex justify-center gap-4">
             <Button asChild size="lg">

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 type BreadcrumbContextType = {
   labels: Record<string, string>;
@@ -12,7 +12,11 @@ const BreadcrumbContext = createContext<BreadcrumbContextType>({
   setLabel: () => {},
 });
 
-export function BreadcrumbProvider({ children }: { children: React.ReactNode }) {
+export function BreadcrumbProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [labels, setLabels] = useState<Record<string, string>>({});
 
   const setLabel = (segment: string, label: string) => {
@@ -33,7 +37,13 @@ export function useBreadcrumb() {
   return useContext(BreadcrumbContext);
 }
 
-export function SetBreadcrumbLabel({ segment, label }: { segment: string; label: string }) {
+export function SetBreadcrumbLabel({
+  segment,
+  label,
+}: {
+  segment: string;
+  label: string;
+}) {
   const { setLabel } = useBreadcrumb();
 
   useEffect(() => {

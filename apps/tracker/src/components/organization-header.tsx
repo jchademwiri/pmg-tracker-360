@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { organization, Role } from '@pmg/db/schema';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from "react";
+import { organization, Role } from "@pmg/db/schema";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Edit,
   Settings,
@@ -14,8 +14,8 @@ import {
   Calendar,
   AlertCircle,
   Loader,
-} from 'lucide-react';
-import { handleError, handleSuccess } from '@/lib/error-handler';
+} from "lucide-react";
+import { handleError, handleSuccess } from "@/lib/error-handler";
 
 interface OrganizationHeaderProps {
   organization: typeof organization.$inferSelect & {
@@ -30,7 +30,7 @@ interface OrganizationHeaderProps {
 
 // Loading skeleton for organization header
 function OrganizationHeaderSkeleton({
-  className = '',
+  className = "",
 }: {
   className?: string;
 }) {
@@ -66,7 +66,7 @@ function OrganizationHeaderSkeleton({
 function OrganizationHeaderError({
   error,
   onRetry,
-  className = '',
+  className = "",
 }: {
   error: string;
   onRetry?: () => void;
@@ -97,7 +97,7 @@ function OrganizationHeaderError({
 
 export function OrganizationHeader({
   organization,
-  className = '',
+  className = "",
   isLoading = false,
   error = null,
   onRetry,
@@ -124,24 +124,24 @@ export function OrganizationHeader({
 
   // Check if user has admin permissions (owner or admin)
   const canEdit =
-    organization.userRole && ['owner', 'admin'].includes(organization.userRole);
+    organization.userRole && ["owner", "admin"].includes(organization.userRole);
 
   // Generate organization initials for avatar fallback
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((word) => word.charAt(0))
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   // Format creation date
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     }).format(new Date(date));
   };
 
@@ -153,13 +153,13 @@ export function OrganizationHeader({
 
       // Removed simulated delay; this will be replaced with real async work
 
-      handleSuccess('Edit mode enabled', {
-        description: 'You can now edit organization details',
+      handleSuccess("Edit mode enabled", {
+        description: "You can now edit organization details",
       });
     } catch (error) {
       handleError(error as Error, {
-        title: 'Edit Failed',
-        fallbackMessage: 'Failed to enable edit mode',
+        title: "Edit Failed",
+        fallbackMessage: "Failed to enable edit mode",
       });
     } finally {
       setIsProcessing(false);
@@ -173,13 +173,13 @@ export function OrganizationHeader({
 
       // Removed simulated delay; navigate immediately when implemented
 
-      handleSuccess('Opening settings', {
-        description: 'Redirecting to organization settings',
+      handleSuccess("Opening settings", {
+        description: "Redirecting to organization settings",
       });
     } catch (error) {
       handleError(error as Error, {
-        title: 'Settings Failed',
-        fallbackMessage: 'Failed to open organization settings',
+        title: "Settings Failed",
+        fallbackMessage: "Failed to open organization settings",
       });
     } finally {
       setIsProcessing(false);
@@ -213,9 +213,9 @@ export function OrganizationHeader({
                 {organization.userRole && (
                   <Badge
                     variant={
-                      organization.userRole === 'owner'
-                        ? 'default'
-                        : 'secondary'
+                      organization.userRole === "owner"
+                        ? "default"
+                        : "secondary"
                     }
                     className="w-fit"
                   >
@@ -230,8 +230,8 @@ export function OrganizationHeader({
                   <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
                     <span>
-                      {organization.memberCount}{' '}
-                      {organization.memberCount === 1 ? 'member' : 'members'}
+                      {organization.memberCount}{" "}
+                      {organization.memberCount === 1 ? "member" : "members"}
                     </span>
                   </div>
                 )}
@@ -245,11 +245,12 @@ export function OrganizationHeader({
               {/* Organization Description/Metadata */}
               {organization.metadata && (
                 <p className="mt-2 text-muted-foreground text-sm sm:text-base">
-                  {typeof organization.metadata === 'string'
+                  {typeof organization.metadata === "string"
                     ? organization.metadata
-                    : typeof organization.metadata === 'object' && (organization.metadata as any).description
-                    ? (organization.metadata as any).description
-                    : JSON.stringify(organization.metadata)}
+                    : typeof organization.metadata === "object" &&
+                        (organization.metadata as any).description
+                      ? (organization.metadata as any).description
+                      : JSON.stringify(organization.metadata)}
                 </p>
               )}
             </div>
@@ -272,7 +273,7 @@ export function OrganizationHeader({
                   <Edit className="h-4 w-4" />
                 )}
                 <span className="hidden sm:inline">
-                  {isProcessing ? 'Loading...' : 'Edit'}
+                  {isProcessing ? "Loading..." : "Edit"}
                 </span>
               </Button>
 
@@ -290,7 +291,7 @@ export function OrganizationHeader({
                   <Settings className="h-4 w-4" />
                 )}
                 <span className="hidden sm:inline">
-                  {isProcessing ? 'Loading...' : 'Settings'}
+                  {isProcessing ? "Loading..." : "Settings"}
                 </span>
               </Button>
             </div>
@@ -319,7 +320,7 @@ export function OrganizationHeader({
                   Loading...
                 </>
               ) : (
-                'Add description'
+                "Add description"
               )}
             </Button>
           </div>

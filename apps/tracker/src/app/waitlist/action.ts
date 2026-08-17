@@ -1,10 +1,10 @@
-'use server';
+"use server";
 
-import { formSchema } from './schema';
-import { db } from '@pmg/db';
-import { waitlist } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
+import { formSchema } from "./schema";
+import { db } from "@pmg/db";
+import { waitlist } from "@pmg/db/schema";
+import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 type FormState = {
   success?: boolean;
@@ -14,7 +14,7 @@ type FormState = {
 
 export async function submitWaitlistForm(
   prevState: FormState,
-  data: FormData
+  data: FormData,
 ): Promise<FormState> {
   const formData = Object.fromEntries(data);
   const parsed = formSchema.safeParse(formData);
@@ -22,7 +22,7 @@ export async function submitWaitlistForm(
   if (!parsed.success) {
     return {
       success: false,
-      message: 'Please check the form for errors.',
+      message: "Please check the form for errors.",
       errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
     };
   }
@@ -38,7 +38,7 @@ export async function submitWaitlistForm(
     if (existingEntry.length > 0) {
       return {
         success: true,
-        message: 'You are already on our waitlist! We will keep you posted.',
+        message: "You are already on our waitlist! We will keep you posted.",
       };
     }
 
@@ -46,35 +46,33 @@ export async function submitWaitlistForm(
       id: nanoid(),
       email: parsed.data.email,
       companyName: parsed.data.companyName,
-      source: 'website',
+      source: "website",
     });
 
     // Notify router.so (non-blocking, don't fail on error)
     try {
-      await fetch(
-        'https://app.router.so/api/endpoints/ac4auqxl',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.ROUTER_API_KEY}`,
-          },
-          body: JSON.stringify(parsed.data),
-        }
-      );
+      await fetch("https://app.router.so/api/endpoints/ac4auqxl", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.ROUTER_API_KEY}`,
+        },
+        body: JSON.stringify(parsed.data),
+      });
     } catch {
-      console.error('Router.so submission failed');
+      console.error("Router.so submission failed");
     }
 
     return {
       success: true,
-      message: 'You have been added to the waitlist! We will notify you when early access opens.',
+      message:
+        "You have been added to the waitlist! We will notify you when early access opens.",
     };
   } catch (error) {
-    console.error('Waitlist submission error:', error);
+    console.error("Waitlist submission error:", error);
     return {
       success: false,
-      message: 'Something went wrong. Please try again or contact support.',
+      message: "Something went wrong. Please try again or contact support.",
     };
   }
 }

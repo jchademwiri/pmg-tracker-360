@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Force dynamic rendering for this page
-export const dynamic = 'force-dynamic';
-import { CreateOrganizationForm } from '@/components/shared/forms/create-organization-form';
-import { authClient } from '@/lib/auth-client';
-import { useEffect, useState } from 'react';
+export const dynamic = "force-dynamic";
+import { CreateOrganizationForm } from "@/components/shared/forms/create-organization-form";
+import { authClient } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
 
 export default function CreateOrganizationPage() {
-  const [organizations, setOrganizations] = useState<{ id: string; name: string; slug: string }[]>([]);
+  const [organizations, setOrganizations] = useState<
+    { id: string; name: string; slug: string }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +22,7 @@ export default function CreateOrganizationPage() {
           setOrganizations(result.data);
         }
       } catch (error) {
-        console.error('Error fetching organizations:', error);
+        console.error("Error fetching organizations:", error);
       } finally {
         setIsLoading(false);
       }
@@ -56,7 +58,9 @@ export default function CreateOrganizationPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
-            <CreateOrganizationForm currentOrganizationCount={organizations.length} />
+            <CreateOrganizationForm
+              currentOrganizationCount={organizations.length}
+            />
           </CardContent>
         </Card>
       </div>

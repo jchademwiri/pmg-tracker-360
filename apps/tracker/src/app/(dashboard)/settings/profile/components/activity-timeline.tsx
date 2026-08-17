@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Activity,
   Calendar,
@@ -27,24 +27,24 @@ import {
   MapPin,
   Eye,
   EyeOff,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface ActivityEvent {
   id: string;
   type:
-    | 'login'
-    | 'logout'
-    | 'password_change'
-    | 'email_verification'
-    | 'session_revoke'
-    | 'profile_update'
-    | 'security_alert';
+    | "login"
+    | "logout"
+    | "password_change"
+    | "email_verification"
+    | "session_revoke"
+    | "profile_update"
+    | "security_alert";
   timestamp: Date;
   description: string;
   device?: string;
   location?: string;
   ipAddress?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: "low" | "medium" | "high" | "critical";
   metadata?: Record<string, unknown>;
 }
 
@@ -63,26 +63,26 @@ export function ActivityTimeline({
   activities,
   sessions = [],
 }: ActivityTimelineProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterSeverity, setFilterSeverity] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [showDetails, setShowDetails] = useState(false);
 
   // Combine activities with session data for a comprehensive timeline
   const timelineEvents = useMemo(() => {
     const sessionEvents: ActivityEvent[] = sessions.map((session) => ({
       id: `session-${session.id}`,
-      type: 'login',
+      type: "login",
       timestamp: session.lastActive,
       description: `Active session on ${session.device}`,
       device: session.device,
       location: session.location,
-      severity: session.current ? 'low' : 'medium',
+      severity: session.current ? "low" : "medium",
       metadata: { current: session.current },
     }));
 
     const allEvents = [...activities, ...sessionEvents].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
     );
 
     return allEvents.filter((event) => {
@@ -91,9 +91,9 @@ export function ActivityTimeline({
         event.device?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.location?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesType = filterType === 'all' || event.type === filterType;
+      const matchesType = filterType === "all" || event.type === filterType;
       const matchesSeverity =
-        filterSeverity === 'all' || event.severity === filterSeverity;
+        filterSeverity === "all" || event.severity === filterSeverity;
 
       return matchesSearch && matchesType && matchesSeverity;
     });
@@ -101,28 +101,28 @@ export function ActivityTimeline({
 
   const getEventIcon = (type: string, severity?: string) => {
     const iconClass =
-      severity === 'critical' || severity === 'high'
-        ? 'text-red-500'
-        : severity === 'medium'
-          ? 'text-yellow-500'
-          : severity === 'low'
-            ? 'text-green-500'
-            : 'text-blue-500';
+      severity === "critical" || severity === "high"
+        ? "text-red-500"
+        : severity === "medium"
+          ? "text-yellow-500"
+          : severity === "low"
+            ? "text-green-500"
+            : "text-blue-500";
 
     switch (type) {
-      case 'login':
+      case "login":
         return <LogIn className={`h-4 w-4 ${iconClass}`} />;
-      case 'logout':
+      case "logout":
         return <LogOut className={`h-4 w-4 ${iconClass}`} />;
-      case 'password_change':
+      case "password_change":
         return <Key className={`h-4 w-4 ${iconClass}`} />;
-      case 'email_verification':
+      case "email_verification":
         return <Mail className={`h-4 w-4 ${iconClass}`} />;
-      case 'session_revoke':
+      case "session_revoke":
         return <Shield className={`h-4 w-4 ${iconClass}`} />;
-      case 'profile_update':
+      case "profile_update":
         return <Activity className={`h-4 w-4 ${iconClass}`} />;
-      case 'security_alert':
+      case "security_alert":
         return <AlertTriangle className={`h-4 w-4 ${iconClass}`} />;
       default:
         return <Activity className={`h-4 w-4 ${iconClass}`} />;
@@ -133,8 +133,8 @@ export function ActivityTimeline({
     if (!device) return <Monitor className="h-4 w-4" />;
 
     if (
-      device.toLowerCase().includes('mobile') ||
-      device.toLowerCase().includes('phone')
+      device.toLowerCase().includes("mobile") ||
+      device.toLowerCase().includes("phone")
     ) {
       return <Smartphone className="h-4 w-4" />;
     }
@@ -144,10 +144,10 @@ export function ActivityTimeline({
   const formatTimestamp = (date: Date) => {
     const now = new Date();
     const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60)
+      (now.getTime() - date.getTime()) / (1000 * 60),
     );
 
-    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
 
     const diffInHours = Math.floor(diffInMinutes / 60);
@@ -156,22 +156,26 @@ export function ActivityTimeline({
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
 
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const getSeverityBadge = (severity?: string) => {
     if (!severity) return null;
 
     const variants = {
-      critical: 'destructive' as const,
-      high: 'destructive' as const,
-      medium: 'secondary' as const,
-      low: 'outline' as const,
+      critical: "destructive" as const,
+      high: "destructive" as const,
+      medium: "secondary" as const,
+      low: "outline" as const,
     };
 
     return (
       <Badge
-        variant={variants[severity as keyof typeof variants] || 'outline'}
+        variant={variants[severity as keyof typeof variants] || "outline"}
         className="text-xs"
       >
         {severity.toUpperCase()}
@@ -180,22 +184,22 @@ export function ActivityTimeline({
   };
 
   const activityTypes = [
-    { value: 'all', label: 'All Activities' },
-    { value: 'login', label: 'Logins' },
-    { value: 'logout', label: 'Logouts' },
-    { value: 'password_change', label: 'Password Changes' },
-    { value: 'email_verification', label: 'Email Verification' },
-    { value: 'session_revoke', label: 'Session Management' },
-    { value: 'profile_update', label: 'Profile Updates' },
-    { value: 'security_alert', label: 'Security Alerts' },
+    { value: "all", label: "All Activities" },
+    { value: "login", label: "Logins" },
+    { value: "logout", label: "Logouts" },
+    { value: "password_change", label: "Password Changes" },
+    { value: "email_verification", label: "Email Verification" },
+    { value: "session_revoke", label: "Session Management" },
+    { value: "profile_update", label: "Profile Updates" },
+    { value: "security_alert", label: "Security Alerts" },
   ];
 
   const severityLevels = [
-    { value: 'all', label: 'All Severities' },
-    { value: 'critical', label: 'Critical' },
-    { value: 'high', label: 'High' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'low', label: 'Low' },
+    { value: "all", label: "All Severities" },
+    { value: "critical", label: "Critical" },
+    { value: "high", label: "High" },
+    { value: "medium", label: "Medium" },
+    { value: "low", label: "Low" },
   ];
 
   return (
@@ -220,7 +224,7 @@ export function ActivityTimeline({
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
-                <span>{showDetails ? 'Hide' : 'Show'} Details</span>
+                <span>{showDetails ? "Hide" : "Show"} Details</span>
               </Button>
             </div>
           </div>
@@ -279,8 +283,8 @@ export function ActivityTimeline({
                   key={event.id}
                   className={`flex items-start space-x-4 p-4 ${
                     index !== timelineEvents.length - 1
-                      ? 'border-b border-border'
-                      : ''
+                      ? "border-b border-border"
+                      : ""
                   }`}
                 >
                   {/* Timeline Icon */}
@@ -336,14 +340,14 @@ export function ActivityTimeline({
                           <div className="mt-2 p-2 bg-muted/50 rounded text-xs space-y-1">
                             {event.ipAddress && (
                               <div>
-                                <span className="font-medium">IP Address:</span>{' '}
+                                <span className="font-medium">IP Address:</span>{" "}
                                 {event.ipAddress}
                               </div>
                             )}
                             {event.metadata &&
                               Object.keys(event.metadata).length > 0 && (
                                 <div>
-                                  <span className="font-medium">Details:</span>{' '}
+                                  <span className="font-medium">Details:</span>{" "}
                                   {JSON.stringify(event.metadata, null, 2)}
                                 </div>
                               )}
@@ -362,10 +366,10 @@ export function ActivityTimeline({
                 </h3>
                 <p className="text-muted-foreground">
                   {searchTerm ||
-                  filterType !== 'all' ||
-                  filterSeverity !== 'all'
-                    ? 'Try adjusting your filters to see more activities.'
-                    : 'Your activity timeline will appear here as you use the application.'}
+                  filterType !== "all" ||
+                  filterSeverity !== "all"
+                    ? "Try adjusting your filters to see more activities."
+                    : "Your activity timeline will appear here as you use the application."}
                 </p>
               </div>
             )}
@@ -382,7 +386,7 @@ export function ActivityTimeline({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {timelineEvents.filter((e) => e.type === 'login').length}
+                {timelineEvents.filter((e) => e.type === "login").length}
               </div>
               <div className="text-xs text-muted-foreground">Recent Logins</div>
             </div>
@@ -390,7 +394,7 @@ export function ActivityTimeline({
               <div className="text-2xl font-bold text-blue-600">
                 {
                   timelineEvents.filter(
-                    (e) => e.severity === 'high' || e.severity === 'critical'
+                    (e) => e.severity === "high" || e.severity === "critical",
                   ).length
                 }
               </div>
@@ -411,7 +415,7 @@ export function ActivityTimeline({
                 {Math.floor(
                   (Date.now() -
                     (timelineEvents[0]?.timestamp.getTime() || Date.now())) /
-                    (1000 * 60 * 60 * 24)
+                    (1000 * 60 * 60 * 24),
                 )}
               </div>
               <div className="text-xs text-muted-foreground">Days Active</div>

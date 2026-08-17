@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback, useState } from 'react';
-import { AlertCircle, X } from 'lucide-react';
-import StatusBadge from './StatusBadge';
-import ConfirmDialog from './ConfirmDialog';
-import { getOrgDetail, type OrgDetail } from '../app/organizations/actions';
+import { useEffect, useCallback, useState } from "react";
+import { AlertCircle, X } from "lucide-react";
+import StatusBadge from "./StatusBadge";
+import ConfirmDialog from "./ConfirmDialog";
+import { getOrgDetail, type OrgDetail } from "../app/organizations/actions";
 
 /* ─── State Machine ─────────────────────────────────────────────────────── */
 
 type DrawerState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'loaded'; data: OrgDetail };
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "loaded"; data: OrgDetail };
 
 /* ─── Props ─────────────────────────────────────────────────────────────── */
 
@@ -24,20 +24,20 @@ type OrgDrawerProps = {
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 
 function formatDate(date: Date | null | undefined): string {
-  if (!date) return '—';
-  return new Date(date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 }
 
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .slice(0, 2)
-    .map((w) => w[0] ?? '')
-    .join('')
+    .map((w) => w[0] ?? "")
+    .join("")
     .toUpperCase();
 }
 
@@ -67,9 +67,17 @@ import {
   restoreOrg,
   purgeOrg,
   removeOrgMember,
-} from '../app/organizations/actions';
-import { useRouter } from 'next/navigation';
-import { Trash2, RotateCcw, ShieldAlert, Edit2, UserMinus, Check, Loader } from 'lucide-react';
+} from "../app/organizations/actions";
+import { useRouter } from "next/navigation";
+import {
+  Trash2,
+  RotateCcw,
+  ShieldAlert,
+  Edit2,
+  UserMinus,
+  Check,
+  Loader,
+} from "lucide-react";
 
 function DrawerBody({
   data,
@@ -85,8 +93,8 @@ function DrawerBody({
 
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState(org.name);
-  const [slugInput, setSlugInput] = useState(org.slug ?? '');
-  const [suspendReason, setSuspendReason] = useState('');
+  const [slugInput, setSlugInput] = useState(org.slug ?? "");
+  const [suspendReason, setSuspendReason] = useState("");
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -95,13 +103,13 @@ function DrawerBody({
 
   let metadataDisplay: string | null = null;
   if (org.metadata) {
-    if (typeof org.metadata === 'string') {
+    if (typeof org.metadata === "string") {
       try {
         metadataDisplay = JSON.stringify(JSON.parse(org.metadata), null, 2);
       } catch {
         metadataDisplay = org.metadata;
       }
-    } else if (typeof org.metadata === 'object') {
+    } else if (typeof org.metadata === "object") {
       try {
         metadataDisplay = JSON.stringify(org.metadata, null, 2);
       } catch {
@@ -123,7 +131,7 @@ function DrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to update organization details.');
+      setErrorMsg(res.error ?? "Failed to update organization details.");
     }
   }
 
@@ -137,7 +145,7 @@ function DrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to suspend organization.');
+      setErrorMsg(res.error ?? "Failed to suspend organization.");
     }
   }
 
@@ -150,7 +158,7 @@ function DrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to restore organization.');
+      setErrorMsg(res.error ?? "Failed to restore organization.");
     }
   }
 
@@ -159,15 +167,15 @@ function DrawerBody({
     title: string;
     description: string;
     confirmText: string;
-    variant: 'danger' | 'warning' | 'info';
+    variant: "danger" | "warning" | "info";
     requireValue?: string;
     onConfirm: () => Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    description: '',
-    confirmText: 'Confirm',
-    variant: 'danger',
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
     onConfirm: async () => {},
   });
 
@@ -181,7 +189,7 @@ function DrawerBody({
       onClose();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to purge organization.');
+      setErrorMsg(res.error ?? "Failed to purge organization.");
     }
   }
 
@@ -195,18 +203,18 @@ function DrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to remove member.');
+      setErrorMsg(res.error ?? "Failed to remove member.");
     }
   }
 
   function handlePurgeClick() {
     setConfirmDialog({
       isOpen: true,
-      title: 'Purge Organization',
+      title: "Purge Organization",
       description: `PERMANENTLY delete organization "${org.name}" and all associated data? This action cannot be undone.`,
-      confirmText: 'Purge Organization',
-      variant: 'danger',
-      requireValue: 'PURGE',
+      confirmText: "Purge Organization",
+      variant: "danger",
+      requireValue: "PURGE",
       onConfirm: executePurge,
     });
   }
@@ -214,10 +222,10 @@ function DrawerBody({
   function handleRemoveMemberClick(userId: string, userName: string) {
     setConfirmDialog({
       isOpen: true,
-      title: 'Remove Organization Member',
+      title: "Remove Organization Member",
       description: `Are you sure you want to remove ${userName} from ${org.name}?`,
-      confirmText: 'Remove Member',
-      variant: 'warning',
+      confirmText: "Remove Member",
+      variant: "warning",
       onConfirm: () => executeRemoveMember(userId),
     });
   }
@@ -240,7 +248,7 @@ function DrawerBody({
             className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
           >
             <Edit2 className="w-3.5 h-3.5" />
-            {isEditing ? 'Cancel Edit' : 'Edit Info'}
+            {isEditing ? "Cancel Edit" : "Edit Info"}
           </button>
         </div>
 
@@ -287,7 +295,8 @@ function DrawerBody({
             Suspend Organization
           </h4>
           <p className="text-xs text-zinc-400">
-            This will soft-delete the organization and schedule permanent purge in 72 hours.
+            This will soft-delete the organization and schedule permanent purge
+            in 72 hours.
           </p>
           <input
             type="text"
@@ -310,7 +319,11 @@ function DrawerBody({
               onClick={handleSuspend}
               className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1"
             >
-              {actionLoading ? <Loader className="w-3 h-3 animate-spin" /> : 'Confirm Suspend'}
+              {actionLoading ? (
+                <Loader className="w-3 h-3 animate-spin" />
+              ) : (
+                "Confirm Suspend"
+              )}
             </button>
           </div>
         </div>
@@ -318,7 +331,10 @@ function DrawerBody({
 
       {/* Edit Form */}
       {isEditing ? (
-        <form onSubmit={handleSaveDetails} className="space-y-4 bg-zinc-900 p-4 border border-zinc-800 rounded-xl">
+        <form
+          onSubmit={handleSaveDetails}
+          className="space-y-4 bg-zinc-900 p-4 border border-zinc-800 rounded-xl"
+        >
           <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
             Edit Details
           </h4>
@@ -355,7 +371,11 @@ function DrawerBody({
               disabled={actionLoading}
               className="px-3 py-1.5 bg-white text-black text-xs font-semibold rounded-lg hover:bg-zinc-200 flex items-center gap-1"
             >
-              {actionLoading ? <Loader className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+              {actionLoading ? (
+                <Loader className="w-3 h-3 animate-spin" />
+              ) : (
+                <Check className="w-3 h-3" />
+              )}
               Save Changes
             </button>
           </div>
@@ -374,7 +394,7 @@ function DrawerBody({
 
           <div className="flex justify-between">
             <span className="text-zinc-500">Slug</span>
-            <span className="text-zinc-300">{org.slug ?? '—'}</span>
+            <span className="text-zinc-300">{org.slug ?? "—"}</span>
           </div>
 
           <div className="flex justify-between">
@@ -404,14 +424,18 @@ function DrawerBody({
           {org.deletedAt && (
             <div className="flex justify-between">
               <span className="text-zinc-500">Status</span>
-              <span className="text-red-400 font-semibold">SUSPENDED ({formatDate(org.deletedAt)})</span>
+              <span className="text-red-400 font-semibold">
+                SUSPENDED ({formatDate(org.deletedAt)})
+              </span>
             </div>
           )}
 
           {org.deletionReason && (
             <div className="flex flex-col gap-1">
               <span className="text-zinc-500">Reason</span>
-              <span className="text-zinc-300 text-xs">{org.deletionReason}</span>
+              <span className="text-zinc-300 text-xs">
+                {org.deletionReason}
+              </span>
             </div>
           )}
 
@@ -448,10 +472,7 @@ function DrawerBody({
         ) : (
           <ul className="space-y-2">
             {members.map((m) => (
-              <li
-                key={m.userId}
-                className="flex items-center gap-3 py-1"
-              >
+              <li key={m.userId} className="flex items-center gap-3 py-1">
                 {/* Avatar */}
                 <div className="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-semibold text-white shrink-0">
                   {getInitials(m.userName)}
@@ -532,28 +553,25 @@ function DrawerBody({
 /* ─── OrgDrawer ─────────────────────────────────────────────────────────── */
 
 export default function OrgDrawer({ orgId, onClose }: OrgDrawerProps) {
-  const [state, setState] = useState<DrawerState>({ status: 'idle' });
+  const [state, setState] = useState<DrawerState>({ status: "idle" });
 
   // Fetch org detail whenever orgId changes
-  const fetchOrgDetail = useCallback(
-    async (id: string) => {
-      setState({ status: 'loading' });
-      try {
-        const data = await getOrgDetail(id);
-        setState({ status: 'loaded', data });
-      } catch (err) {
-        setState({
-          status: 'error',
-          message: err instanceof Error ? err.message : 'Unknown error',
-        });
-      }
-    },
-    []
-  );
+  const fetchOrgDetail = useCallback(async (id: string) => {
+    setState({ status: "loading" });
+    try {
+      const data = await getOrgDetail(id);
+      setState({ status: "loaded", data });
+    } catch (err) {
+      setState({
+        status: "error",
+        message: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (orgId === null) {
-      setState({ status: 'idle' });
+      setState({ status: "idle" });
     } else {
       fetchOrgDetail(orgId);
     }
@@ -562,22 +580,22 @@ export default function OrgDrawer({ orgId, onClose }: OrgDrawerProps) {
   // Escape key listener
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
   // Nothing to show when idle
-  if (state.status === 'idle') return null;
+  if (state.status === "idle") return null;
 
   // Resolve header title
   const title =
-    state.status === 'loaded'
+    state.status === "loaded"
       ? state.data.org.name
-      : state.status === 'error'
-      ? 'Error'
-      : 'Loading…';
+      : state.status === "error"
+        ? "Error"
+        : "Loading…";
 
   return (
     <>
@@ -605,9 +623,9 @@ export default function OrgDrawer({ orgId, onClose }: OrgDrawerProps) {
         </div>
 
         {/* Body */}
-        {state.status === 'loading' && <DrawerSkeleton />}
+        {state.status === "loading" && <DrawerSkeleton />}
 
-        {state.status === 'error' && (
+        {state.status === "error" && (
           <div className="flex flex-col items-center gap-2 py-8 text-zinc-500 p-6">
             <AlertCircle className="w-6 h-6 text-red-400" />
             <p className="text-sm">Failed to load organisation details.</p>
@@ -620,7 +638,7 @@ export default function OrgDrawer({ orgId, onClose }: OrgDrawerProps) {
           </div>
         )}
 
-        {state.status === 'loaded' && (
+        {state.status === "loaded" && (
           <DrawerBody
             data={state.data}
             onRefresh={() => orgId && fetchOrgDetail(orgId)}

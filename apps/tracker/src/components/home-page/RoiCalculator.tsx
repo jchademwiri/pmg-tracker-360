@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Calculator, Sparkles, ArrowRight, TrendingUp, Clock, Coins } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/format';
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Calculator,
+  Sparkles,
+  ArrowRight,
+  TrendingUp,
+  Clock,
+  Coins,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/format";
 
 export function RoiCalculator() {
   const [annualTenders, setAnnualTenders] = useState(20);
@@ -17,7 +24,10 @@ export function RoiCalculator() {
   const projectedQuarterlyCashflow = Math.round(projectedAnnualPoVolume / 4);
 
   return (
-    <section id="projections-calculator" className="py-24 border-t border-border/40 bg-secondary/15 scroll-mt-20">
+    <section
+      id="projections-calculator"
+      className="py-24 border-t border-border/40 bg-secondary/15 scroll-mt-20"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-14 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
@@ -28,7 +38,9 @@ export function RoiCalculator() {
             Project Your Cashflow & Time Savings
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground text-pretty">
-            See how managing your active tenders and awarded project POs gives you clear cashflow forecasting and eliminates administrative overhead.
+            See how managing your active tenders and awarded project POs gives
+            you clear cashflow forecasting and eliminates administrative
+            overhead.
           </p>
         </div>
 
@@ -38,7 +50,10 @@ export function RoiCalculator() {
             {/* Slider 1: Annual Tenders */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-sm">
-                <label htmlFor="annual-tenders-calc" className="font-bold text-foreground">
+                <label
+                  htmlFor="annual-tenders-calc"
+                  className="font-bold text-foreground"
+                >
                   Tenders Submitted Per Year
                 </label>
                 <span className="font-mono text-base font-extrabold text-amber-400 tabular-nums">
@@ -65,7 +80,10 @@ export function RoiCalculator() {
             {/* Slider 2: Average PO Value */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-sm">
-                <label htmlFor="avg-po-calc" className="font-bold text-foreground">
+                <label
+                  htmlFor="avg-po-calc"
+                  className="font-bold text-foreground"
+                >
                   Average PO Value per Won Project (ZAR)
                 </label>
                 <span className="font-mono text-base font-extrabold text-amber-400 tabular-nums">
@@ -92,11 +110,15 @@ export function RoiCalculator() {
             {/* Slider 3: Active Awarded Projects */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-sm">
-                <label htmlFor="active-proj-calc" className="font-bold text-foreground">
+                <label
+                  htmlFor="active-proj-calc"
+                  className="font-bold text-foreground"
+                >
                   Active Awarded Projects
                 </label>
                 <span className="font-mono text-base font-extrabold text-amber-400 tabular-nums">
-                  {activeProjects} {activeProjects === 1 ? 'project' : 'projects'}
+                  {activeProjects}{" "}
+                  {activeProjects === 1 ? "project" : "projects"}
                 </span>
               </div>
               <input
@@ -135,7 +157,9 @@ export function RoiCalculator() {
                     <Clock className="h-4 w-4" aria-hidden="true" />
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Tracking Time Saved</div>
+                    <div className="text-xs text-muted-foreground">
+                      Tracking Time Saved
+                    </div>
                     <div className="text-sm font-bold text-foreground">
                       ~{hoursPerMonthSaved}&nbsp;hours / month
                     </div>
@@ -152,7 +176,9 @@ export function RoiCalculator() {
                     <Coins className="h-4 w-4" aria-hidden="true" />
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Quarterly PO Inflow</div>
+                    <div className="text-xs text-muted-foreground">
+                      Quarterly PO Inflow
+                    </div>
                     <div className="text-sm font-bold text-foreground tabular-nums">
                       {formatCurrency(projectedQuarterlyCashflow)}
                     </div>
@@ -169,7 +195,9 @@ export function RoiCalculator() {
                     <TrendingUp className="h-4 w-4" aria-hidden="true" />
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Total Active PO Portfolio</div>
+                    <div className="text-xs text-muted-foreground">
+                      Total Active PO Portfolio
+                    </div>
                     <div className="text-sm font-bold text-foreground tabular-nums">
                       {formatCurrency(projectedAnnualPoVolume)}
                     </div>
@@ -181,7 +209,11 @@ export function RoiCalculator() {
               </div>
             </div>
 
-            <Button size="lg" asChild className="w-full h-11 font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer">
+            <Button
+              size="lg"
+              asChild
+              className="w-full h-11 font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer"
+            >
               <Link href="/sign-up">
                 <span>Start For Free & Project Your Cashflow</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />

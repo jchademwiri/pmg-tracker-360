@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Loader } from 'lucide-react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Loader } from "lucide-react";
 
 // Full page loading component
 export function PageLoadingSkeleton() {
@@ -110,19 +110,19 @@ export function PageLoadingSkeleton() {
 
 // Inline loading spinner component
 export function InlineLoader({
-  size = 'sm',
+  size = "sm",
   text,
-  className = '',
+  className = "",
 }: {
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: "xs" | "sm" | "md" | "lg";
   text?: string;
   className?: string;
 }) {
   const sizeClasses = {
-    xs: 'h-3 w-3',
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
+    xs: "h-3 w-3",
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
   };
 
   return (
@@ -135,17 +135,17 @@ export function InlineLoader({
 
 // Button loading state
 export function ButtonLoader({
-  size = 'sm',
-  className = '',
+  size = "sm",
+  className = "",
 }: {
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }) {
   const sizeClasses = {
-    xs: 'h-3 w-3',
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
+    xs: "h-3 w-3",
+    sm: "h-4 w-4",
+    md: "h-5 w-5",
+    lg: "h-6 w-6",
   };
 
   return (
@@ -156,7 +156,7 @@ export function ButtonLoader({
 // Form loading overlay
 export function FormLoadingOverlay({
   isVisible,
-  text = 'Processing...',
+  text = "Processing...",
 }: {
   isVisible: boolean;
   text?: string;
@@ -232,16 +232,16 @@ export function StepProgress({
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
                 isCompleted
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                  ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
                   : isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
               }`}
             >
               {isCurrent ? (
                 <Loader className="h-3 w-3 animate-spin" />
               ) : isCompleted ? (
-                '✓'
+                "✓"
               ) : (
                 index + 1
               )}
@@ -249,10 +249,10 @@ export function StepProgress({
             <span
               className={`text-sm ${
                 isActive
-                  ? 'font-medium text-foreground'
+                  ? "font-medium text-foreground"
                   : isCompleted
-                    ? 'text-muted-foreground line-through'
-                    : 'text-muted-foreground'
+                    ? "text-muted-foreground line-through"
+                    : "text-muted-foreground"
               }`}
             >
               {step}

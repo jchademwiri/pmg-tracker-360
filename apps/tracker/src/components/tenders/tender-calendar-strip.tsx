@@ -1,39 +1,56 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, CalendarDays, AlertTriangle, Clock, PhoneCall, FileText, ChevronRight } from 'lucide-react';
-import { formatDate } from '@/lib/format';
-import Link from 'next/link';
-import type { CalendarEvent } from '@/server/tender-workload';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Calendar,
+  CalendarDays,
+  AlertTriangle,
+  Clock,
+  PhoneCall,
+  FileText,
+  ChevronRight,
+} from "lucide-react";
+import { formatDate } from "@/lib/format";
+import Link from "next/link";
+import type { CalendarEvent } from "@/server/tender-workload";
 
 interface TenderCalendarStripProps {
   events: CalendarEvent[];
 }
 
-const eventMeta: Record<CalendarEvent['type'], {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}> = {
-  closing_date: { icon: Clock, label: 'Closing' },
-  briefing: { icon: CalendarDays, label: 'Briefing' },
-  validity_expiry: { icon: AlertTriangle, label: 'Validity' },
-  follow_up: { icon: PhoneCall, label: 'Follow-up' },
-  tender_extension: { icon: FileText, label: 'Extension' },
+const eventMeta: Record<
+  CalendarEvent["type"],
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+  }
+> = {
+  closing_date: { icon: Clock, label: "Closing" },
+  briefing: { icon: CalendarDays, label: "Briefing" },
+  validity_expiry: { icon: AlertTriangle, label: "Validity" },
+  follow_up: { icon: PhoneCall, label: "Follow-up" },
+  tender_extension: { icon: FileText, label: "Extension" },
 };
 
-function getUrgencyColor(urgency: CalendarEvent['urgency']) {
+function getUrgencyColor(urgency: CalendarEvent["urgency"]) {
   switch (urgency) {
-    case 'critical': return 'border-l-red-500 bg-red-500/5';
-    case 'warning': return 'border-l-amber-500 bg-amber-500/5';
-    case 'info': return 'border-l-blue-500 bg-blue-500/5';
+    case "critical":
+      return "border-l-red-500 bg-red-500/5";
+    case "warning":
+      return "border-l-amber-500 bg-amber-500/5";
+    case "info":
+      return "border-l-blue-500 bg-blue-500/5";
   }
 }
 
-function getUrgencyDot(urgency: CalendarEvent['urgency']) {
+function getUrgencyDot(urgency: CalendarEvent["urgency"]) {
   switch (urgency) {
-    case 'critical': return 'bg-red-500';
-    case 'warning': return 'bg-amber-500';
-    case 'info': return 'bg-blue-500';
+    case "critical":
+      return "bg-red-500";
+    case "warning":
+      return "bg-amber-500";
+    case "info":
+      return "bg-blue-500";
   }
 }
 
@@ -50,7 +67,9 @@ export function TenderCalendarStrip({ events }: TenderCalendarStripProps) {
         <CardContent>
           <div className="text-center py-4">
             <CalendarDays className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="text-xs text-muted-foreground">No upcoming events in the next 30 days.</p>
+            <p className="text-xs text-muted-foreground">
+              No upcoming events in the next 30 days.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -82,7 +101,9 @@ export function TenderCalendarStrip({ events }: TenderCalendarStripProps) {
           {displayEvents.map((event) => {
             const meta = eventMeta[event.type];
             const Icon = meta.icon;
-            const daysUntil = Math.ceil((event.date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const daysUntil = Math.ceil(
+              (event.date.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+            );
 
             return (
               <Link
@@ -95,21 +116,34 @@ export function TenderCalendarStrip({ events }: TenderCalendarStripProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${getUrgencyDot(event.urgency)}`} />
-                    <p className="text-xs font-medium text-foreground truncate">{event.title}</p>
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full shrink-0 ${getUrgencyDot(event.urgency)}`}
+                    />
+                    <p className="text-xs font-medium text-foreground truncate">
+                      {event.title}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] text-muted-foreground">
                       {formatDate(event.date)}
                     </span>
                     {daysUntil >= 0 && (
-                      <span className={`text-[10px] font-medium ${
-                        daysUntil <= 1 ? 'text-red-500' :
-                        daysUntil <= 3 ? 'text-orange-500' :
-                        daysUntil <= 7 ? 'text-amber-500' :
-                        'text-muted-foreground'
-                      }`}>
-                        {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `in ${daysUntil}d`}
+                      <span
+                        className={`text-[10px] font-medium ${
+                          daysUntil <= 1
+                            ? "text-red-500"
+                            : daysUntil <= 3
+                              ? "text-orange-500"
+                              : daysUntil <= 7
+                                ? "text-amber-500"
+                                : "text-muted-foreground"
+                        }`}
+                      >
+                        {daysUntil === 0
+                          ? "Today"
+                          : daysUntil === 1
+                            ? "Tomorrow"
+                            : `in ${daysUntil}d`}
                       </span>
                     )}
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
@@ -128,7 +162,8 @@ export function TenderCalendarStrip({ events }: TenderCalendarStripProps) {
               href="/tenders?status=all"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              +{events.length - 6} more event{events.length - 6 !== 1 ? 's' : ''}
+              +{events.length - 6} more event
+              {events.length - 6 !== 1 ? "s" : ""}
             </Link>
           </div>
         )}

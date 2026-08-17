@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useSkipNavigation } from '@/hooks/use-focus-management';
-import { Button } from '@/components/ui/button';
+import { useSkipNavigation } from "@/hooks/use-focus-management";
+import { Button } from "@/components/ui/button";
 
 interface SkipNavigationProps {
   sections?: Array<{
@@ -21,8 +21,8 @@ export function SkipNavigation({ sections = [] }: SkipNavigationProps) {
           size="sm"
           onClick={skipToContent}
           className="bg-background border-2 border-primary"
-          onFocus={(e) => e.currentTarget.classList.remove('sr-only')}
-          onBlur={(e) => e.currentTarget.classList.add('sr-only')}
+          onFocus={(e) => e.currentTarget.classList.remove("sr-only")}
+          onBlur={(e) => e.currentTarget.classList.add("sr-only")}
         >
           Skip to main content
         </Button>
@@ -34,8 +34,8 @@ export function SkipNavigation({ sections = [] }: SkipNavigationProps) {
             size="sm"
             onClick={() => skipToSection(section.id)}
             className="bg-background border-2 border-primary"
-            onFocus={(e) => e.currentTarget.classList.remove('sr-only')}
-            onBlur={(e) => e.currentTarget.classList.add('sr-only')}
+            onFocus={(e) => e.currentTarget.classList.remove("sr-only")}
+            onBlur={(e) => e.currentTarget.classList.add("sr-only")}
           >
             Skip to {section.label}
           </Button>

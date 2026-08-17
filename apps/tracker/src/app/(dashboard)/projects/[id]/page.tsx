@@ -1,14 +1,14 @@
-import { getCurrentUser } from '@/server';
-import { getProjectWorkspaceData } from '@/server/projects';
-import { getDocuments } from '@/server/documents';
-import { notFound } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { ProjectWorkspace } from '@/components/projects/project-workspace';
-import { NoOrganizationState } from '@/components/shared/empty-states';
+import { getCurrentUser } from "@/server";
+import { getProjectWorkspaceData } from "@/server/projects";
+import { getDocuments } from "@/server/documents";
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ProjectWorkspace } from "@/components/projects/project-workspace";
+import { NoOrganizationState } from "@/components/shared/empty-states";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -27,14 +27,21 @@ export default async function ProjectDetailPage({
   }
 
   // 1. Fetch project workspace data
-  const result = await getProjectWorkspaceData(session.activeOrganizationId, id);
+  const result = await getProjectWorkspaceData(
+    session.activeOrganizationId,
+    id,
+  );
 
   if (!result.success || !result.project) {
     notFound();
   }
 
   // 2. Fetch project documents (with signed URLs)
-  const docsResult = await getDocuments(session.activeOrganizationId, 'project', id);
+  const docsResult = await getDocuments(
+    session.activeOrganizationId,
+    "project",
+    id,
+  );
   const documents = docsResult.success ? docsResult.documents : [];
 
   const project = result.project;
@@ -44,7 +51,11 @@ export default async function ProjectDetailPage({
       {/* Back navigation */}
       <div className="flex items-center">
         <Link href="/projects">
-          <Button variant="ghost" size="sm" className="cursor-pointer hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="cursor-pointer hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Projects
           </Button>

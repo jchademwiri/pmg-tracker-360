@@ -1,18 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import {
+  useState,
+  useTransition,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   MoreHorizontalIcon,
   Building2,
   Copy,
   Check,
   FileText,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { StatusBadge } from '@/components/ui/status-badge';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   MobileCard,
   MobileCardHeader,
@@ -20,7 +26,7 @@ import {
   MobileCardField,
   MobileCardGrid,
   MobileCardList,
-} from '@/components/ui/mobile-card';
+} from "@/components/ui/mobile-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +36,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -38,19 +44,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DataTableShell } from '@/components/shared/tables/data-table-shell';
-import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
+} from "@/components/ui/dropdown-menu";
+import { DataTableShell } from "@/components/shared/tables/data-table-shell";
+import { DataTableToolbar } from "@/components/shared/data-table-toolbar";
 
-import { getProjects, deleteProject } from '@/server/projects';
-import { formatDate, formatClientName, toTitleCase } from '@/lib/format';
+import { getProjects, deleteProject } from "@/server/projects";
+import { formatDate, formatClientName, toTitleCase } from "@/lib/format";
 
 interface ProjectWithRelations {
   id: string;
@@ -83,24 +89,32 @@ interface ProjectListProps {
 }
 
 const PROJECT_TABS = [
-  { id: 'all', label: 'All Projects' },
-  { id: 'active', label: 'Active' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'cancelled', label: 'Cancelled' },
+  { id: "all", label: "All Projects" },
+  { id: "active", label: "Active" },
+  { id: "completed", label: "Completed" },
+  { id: "cancelled", label: "Cancelled" },
 ];
 
-function ProjectDescriptionCell({ description }: { description: string | null }) {
+function ProjectDescriptionCell({
+  description,
+}: {
+  description: string | null;
+}) {
   const [copied, setCopied] = useState(false);
 
   if (!description) {
-    return <span className="italic text-muted-foreground/50 normal-case text-xs">No description provided</span>;
+    return (
+      <span className="italic text-muted-foreground/50 normal-case text-xs">
+        No description provided
+      </span>
+    );
   }
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(description);
     setCopied(true);
-    toast.success('Description copied to clipboard');
+    toast.success("Description copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -141,10 +155,11 @@ export function ProjectList({
 
   const initialClients = initialClientsProp || clientsProp || [];
 
-  const [projects, setProjects] = useState<ProjectWithRelations[]>(initialProjects);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [clientFilter, setClientFilter] = useState('all');
+  const [projects, setProjects] =
+    useState<ProjectWithRelations[]>(initialProjects);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [clientFilter, setClientFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,7 +172,7 @@ export function ProjectList({
       search?: string,
       page: number = 1,
       status?: string,
-      clientId?: string
+      clientId?: string,
     ) => {
       setIsLoading(true);
       try {
@@ -166,29 +181,29 @@ export function ProjectList({
           search,
           page,
           itemsPerPage,
-          status === 'all' ? undefined : status,
-          clientId === 'all' ? undefined : clientId
+          status === "all" ? undefined : status,
+          clientId === "all" ? undefined : clientId,
         );
         setProjects(result.projects as ProjectWithRelations[]);
         setTotalCount(result.totalCount);
         setCurrentPage(result.currentPage);
       } catch (error) {
-        console.error('Error fetching projects:', error);
-        toast.error('Failed to load projects. Please try again.');
+        console.error("Error fetching projects:", error);
+        toast.error("Failed to load projects. Please try again.");
       } finally {
         setIsLoading(false);
       }
     },
-    [organizationId]
+    [organizationId],
   );
 
   useEffect(() => {
-    setSearchQuery('');
-    setStatusFilter('all');
-    setClientFilter('all');
+    setSearchQuery("");
+    setStatusFilter("all");
+    setClientFilter("all");
     setCurrentPage(1);
     if (organizationId) {
-      fetchProjects('', 1, 'all', 'all');
+      fetchProjects("", 1, "all", "all");
     }
   }, [organizationId, fetchProjects]);
 
@@ -224,42 +239,47 @@ export function ProjectList({
       const result = await deleteProject(organizationId, deleteProjectId);
       if (result.success) {
         fetchProjects(searchQuery, currentPage, statusFilter, clientFilter);
-        toast.success('Project deleted successfully');
+        toast.success("Project deleted successfully");
       } else {
-        toast.error(result.error || 'Failed to delete project');
+        toast.error(result.error || "Failed to delete project");
       }
       setDeleteProjectId(null);
     });
   };
 
   const activeFilterChips = useMemo(() => {
-    const chips: Array<{ key: string; label: string; value: string; onRemove: () => void }> = [];
-    if (statusFilter !== 'all') {
-      const tab = PROJECT_TABS.find(t => t.id === statusFilter);
+    const chips: Array<{
+      key: string;
+      label: string;
+      value: string;
+      onRemove: () => void;
+    }> = [];
+    if (statusFilter !== "all") {
+      const tab = PROJECT_TABS.find((t) => t.id === statusFilter);
       chips.push({
-        key: 'status',
-        label: 'Status',
+        key: "status",
+        label: "Status",
         value: tab?.label || statusFilter,
-        onRemove: () => handleStatusFilter('all'),
+        onRemove: () => handleStatusFilter("all"),
       });
     }
-    if (clientFilter !== 'all') {
-      const client = initialClients.find(c => c.id === clientFilter);
+    if (clientFilter !== "all") {
+      const client = initialClients.find((c) => c.id === clientFilter);
       chips.push({
-        key: 'client',
-        label: 'Client',
+        key: "client",
+        label: "Client",
         value: client ? formatClientName(client.name) : clientFilter,
-        onRemove: () => handleClientFilter('all'),
+        onRemove: () => handleClientFilter("all"),
       });
     }
     if (searchQuery) {
       chips.push({
-        key: 'search',
-        label: 'Search',
+        key: "search",
+        label: "Search",
         value: `"${searchQuery}"`,
         onRemove: () => {
-          setSearchQuery('');
-          fetchProjects('', 1, statusFilter, clientFilter);
+          setSearchQuery("");
+          fetchProjects("", 1, statusFilter, clientFilter);
         },
       });
     }
@@ -268,7 +288,7 @@ export function ProjectList({
 
   const clientOptions = useMemo(() => {
     return [
-      { value: 'all', label: 'All Clients' },
+      { value: "all", label: "All Clients" },
       ...initialClients.map((c) => ({
         value: c.id,
         label: formatClientName(c.name),
@@ -288,21 +308,21 @@ export function ProjectList({
         searchPlaceholder="Search projects by number or description..."
         facetedFilters={[
           {
-            id: 'client',
-            placeholder: 'All Clients',
+            id: "client",
+            placeholder: "All Clients",
             icon: Building2,
             options: clientOptions,
             value: clientFilter,
             onChange: handleClientFilter,
-            width: 'w-[190px]',
+            width: "w-[190px]",
           },
         ]}
         activeFilters={activeFilterChips}
         onClearAllFilters={() => {
-          setSearchQuery('');
-          setStatusFilter('all');
-          setClientFilter('all');
-          fetchProjects('', 1, 'all', 'all');
+          setSearchQuery("");
+          setStatusFilter("all");
+          setClientFilter("all");
+          fetchProjects("", 1, "all", "all");
         }}
         mobileDrawerTitle="Filter Projects"
       />
@@ -316,50 +336,91 @@ export function ProjectList({
         dataLength={projects.length}
         isLoading={isLoading}
         emptyState={{
-          type: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? 'no-results' : 'empty',
-          icon: 'file',
-          title: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? 'No projects found' : 'No projects yet',
-          description: searchQuery || statusFilter !== 'all' || clientFilter !== 'all'
-            ? 'No projects match your filter criteria.'
-            : 'Get started by creating your first project.',
-          actionLabel: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? undefined : 'Add Project',
-          actionHref: searchQuery || statusFilter !== 'all' || clientFilter !== 'all' ? undefined : '/projects/create',
+          type:
+            searchQuery || statusFilter !== "all" || clientFilter !== "all"
+              ? "no-results"
+              : "empty",
+          icon: "file",
+          title:
+            searchQuery || statusFilter !== "all" || clientFilter !== "all"
+              ? "No projects found"
+              : "No projects yet",
+          description:
+            searchQuery || statusFilter !== "all" || clientFilter !== "all"
+              ? "No projects match your filter criteria."
+              : "Get started by creating your first project.",
+          actionLabel:
+            searchQuery || statusFilter !== "all" || clientFilter !== "all"
+              ? undefined
+              : "Add Project",
+          actionHref:
+            searchQuery || statusFilter !== "all" || clientFilter !== "all"
+              ? undefined
+              : "/projects/create",
         }}
         mobileContent={
           <MobileCardList>
             {projects.map((project) => {
               const actions = [
-                { label: 'View Details' as const, onClick: () => router.push(`/projects/${project.id}`) },
-                { label: 'Edit Project' as const, onClick: () => router.push(`/projects/${project.id}/edit`) },
-                { label: 'Delete Project' as const, onClick: () => setDeleteProjectId(project.id), variant: 'destructive' as const },
+                {
+                  label: "View Details" as const,
+                  onClick: () => router.push(`/projects/${project.id}`),
+                },
+                {
+                  label: "Edit Project" as const,
+                  onClick: () => router.push(`/projects/${project.id}/edit`),
+                },
+                {
+                  label: "Delete Project" as const,
+                  onClick: () => setDeleteProjectId(project.id),
+                  variant: "destructive" as const,
+                },
               ];
 
               return (
-                <MobileCard key={project.id} onClick={() => router.push(`/projects/${project.id}`)}>
+                <MobileCard
+                  key={project.id}
+                  onClick={() => router.push(`/projects/${project.id}`)}
+                >
                   <MobileCardHeader
                     identifier={project.projectNumber.toUpperCase()}
-                    badge={<StatusBadge status={project.status} domain="project" />}
+                    badge={
+                      <StatusBadge status={project.status} domain="project" />
+                    }
                     actions={actions}
                   />
                   <MobileCardBody>
                     <h3 className="font-semibold text-foreground text-sm tracking-wide">
-                      {formatClientName(project.client?.name) || 'No Client'}
+                      {formatClientName(project.client?.name) || "No Client"}
                     </h3>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>Delivery Progress</span>
-                        <span className="font-semibold font-mono tabular-nums text-foreground">{project.completionPercentage || 0}%</span>
+                        <span className="font-semibold font-mono tabular-nums text-foreground">
+                          {project.completionPercentage || 0}%
+                        </span>
                       </div>
                       <div className="relative w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
-                        <div className="absolute left-0 top-0 h-full bg-blue-500 rounded-full" style={{ width: `${project.completionPercentage || 0}%` }} />
+                        <div
+                          className="absolute left-0 top-0 h-full bg-blue-500 rounded-full"
+                          style={{
+                            width: `${project.completionPercentage || 0}%`,
+                          }}
+                        />
                       </div>
                     </div>
                     {project.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mt-1">{toTitleCase(project.description)}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mt-1">
+                        {toTitleCase(project.description)}
+                      </p>
                     )}
                     <MobileCardGrid>
-                      <MobileCardField label="Tender">{project.tender?.tenderNumber.toUpperCase() || 'None'}</MobileCardField>
-                      <MobileCardField label="Created">{formatDate(project.createdAt)}</MobileCardField>
+                      <MobileCardField label="Tender">
+                        {project.tender?.tenderNumber.toUpperCase() || "None"}
+                      </MobileCardField>
+                      <MobileCardField label="Created">
+                        {formatDate(project.createdAt)}
+                      </MobileCardField>
                     </MobileCardGrid>
                   </MobileCardBody>
                 </MobileCard>
@@ -394,7 +455,7 @@ export function ProjectList({
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0">
                       <div className="font-bold text-foreground text-xs truncate tracking-tight">
-                        {formatClientName(project.client?.name) || 'No Client'}
+                        {formatClientName(project.client?.name) || "No Client"}
                       </div>
                       <Link
                         href={`/projects/${project.id}`}
@@ -423,10 +484,14 @@ export function ProjectList({
                     <div className="relative w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden border border-white/5 shrink-0">
                       <div
                         className="absolute left-0 top-0 h-full bg-blue-500 rounded-full"
-                        style={{ width: `${project.completionPercentage || 0}%` }}
+                        style={{
+                          width: `${project.completionPercentage || 0}%`,
+                        }}
                       />
                     </div>
-                    <span className="text-xs font-mono font-bold tabular-nums text-foreground">{project.completionPercentage || 0}%</span>
+                    <span className="text-xs font-mono font-bold tabular-nums text-foreground">
+                      {project.completionPercentage || 0}%
+                    </span>
                   </div>
                 </TableCell>
 
@@ -454,18 +519,26 @@ export function ProjectList({
       </DataTableShell>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteProjectId} onOpenChange={(open) => !open && setDeleteProjectId(null)}>
+      <AlertDialog
+        open={!!deleteProjectId}
+        onOpenChange={(open) => !open && setDeleteProjectId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this project? This action cannot be undone.
+              Are you sure you want to delete this project? This action cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteProject} disabled={isPending} className="bg-red-600 hover:bg-red-700">
-              {isPending ? 'Deleting...' : 'Delete'}
+            <AlertDialogAction
+              onClick={confirmDeleteProject}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { useActionState, useRef, useTransition } from 'react';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useActionState, useRef, useTransition } from "react";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,31 +13,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { submitWaitlistForm } from './action';
-import { formSchema } from './schema';
-import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+} from "@/components/ui/card";
+import { submitWaitlistForm } from "./action";
+import { formSchema } from "./schema";
+import { Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function WaitlistForm() {
   const [state, formAction] = useActionState(submitWaitlistForm, {
-    message: '',
+    message: "",
   });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      companyName: '',
+      email: "",
+      companyName: "",
     },
   });
 
@@ -74,8 +74,8 @@ export function WaitlistForm() {
           <div
             className={`flex items-center gap-2 p-4 rounded-lg border ${
               state.success
-                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                : 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20'
+                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                : "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20"
             }`}
           >
             {state.success ? (
@@ -100,7 +100,7 @@ export function WaitlistForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Company Name{' '}
+                    Company Name{" "}
                     <span className="text-muted-foreground font-normal text-xs ml-1">
                       (Optional)
                     </span>
@@ -109,7 +109,7 @@ export function WaitlistForm() {
                     <Input
                       placeholder="Acme Corp"
                       {...field}
-                      value={field.value ?? ''}
+                      value={field.value ?? ""}
                       className="bg-background/50"
                     />
                   </FormControl>
@@ -142,7 +142,7 @@ export function WaitlistForm() {
               className="w-full bg-primary cursor-pointer hover:bg-primary/90 text-primary-foreground font-semibold h-11"
               disabled={isPending}
             >
-              {isPending ? 'Joining...' : 'Join the Waitlist'}
+              {isPending ? "Joining..." : "Join the Waitlist"}
             </Button>
           </form>
         </Form>

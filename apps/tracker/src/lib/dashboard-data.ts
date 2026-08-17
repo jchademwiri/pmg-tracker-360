@@ -2,29 +2,29 @@ import {
   getTenderStats,
   getRecentActivity,
   getUpcomingDeadlines,
-} from '@/server/tenders';
-import { getClientStats } from '@/server/clients';
-import { getProjectStats } from '@/server/projects';
+} from "@/server/tenders";
+import { getClientStats } from "@/server/clients";
+import { getProjectStats } from "@/server/projects";
 
 export interface ActivityItem {
   id: string;
-  type: 'tender_created' | 'status_updated';
+  type: "tender_created" | "status_updated";
   description: string;
   timestamp: Date;
 }
 
 export interface DashboardData {
-  tenderStats: Awaited<ReturnType<typeof getTenderStats>>['stats'];
-  clientStats: Awaited<ReturnType<typeof getClientStats>>['stats'];
-  projectStats: Awaited<ReturnType<typeof getProjectStats>>['stats'];
+  tenderStats: Awaited<ReturnType<typeof getTenderStats>>["stats"];
+  clientStats: Awaited<ReturnType<typeof getClientStats>>["stats"];
+  projectStats: Awaited<ReturnType<typeof getProjectStats>>["stats"];
   recentActivity: ActivityItem[];
   upcomingDeadlines: Awaited<
     ReturnType<typeof getUpcomingDeadlines>
-  >['deadlines'];
+  >["deadlines"];
 }
 
 export async function getDashboardData(
-  organizationId: string
+  organizationId: string,
 ): Promise<DashboardData> {
   try {
     const [
@@ -45,13 +45,13 @@ export async function getDashboardData(
     const recentActivity: ActivityItem[] = [
       ...activityData.recentTenders.map((t) => ({
         id: `create-${t.id}`,
-        type: 'tender_created' as const,
+        type: "tender_created" as const,
         description: `New tender ${t.tenderNumber.toUpperCase()}`,
         timestamp: t.createdAt,
       })),
       ...activityData.recentChanges.map((t) => ({
         id: `update-${t.id}`,
-        type: 'status_updated' as const,
+        type: "status_updated" as const,
         description: `Tender ${t.tenderNumber.toUpperCase()} updated to ${t.status}`,
         timestamp: t.updatedAt || t.createdAt,
       })),
@@ -67,29 +67,37 @@ export async function getDashboardData(
       upcomingDeadlines: upcomingDeadlinesResult.deadlines,
     };
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    throw new Error('Failed to fetch dashboard data');
+    console.error("Error fetching dashboard data:", error);
+    throw new Error("Failed to fetch dashboard data");
   }
 }
 
 // Re-export formatters for backward compatibility
-export * from '@/lib/format';
+export * from "@/lib/format";
 
 // Chart data formatters
 export function getTenderStatusChartData(
-  tenderStats: DashboardData['tenderStats']
+  tenderStats: DashboardData["tenderStats"],
 ) {
   return [
-    { name: 'Open', value: tenderStats.statusCounts.open, fill: '#10b981' }, // green
-    { name: 'Closed', value: tenderStats.statusCounts.closed, fill: '#6b7280' }, // gray
-    { name: 'Evaluation', value: tenderStats.statusCounts.evaluation, fill: '#3b82f6' }, // blue
-    { name: 'Awarded', value: tenderStats.statusCounts.awarded, fill: '#f59e0b' }, // amber
-    { name: 'Lost', value: tenderStats.statusCounts.lost, fill: '#ef4444' }, // red
+    { name: "Open", value: tenderStats.statusCounts.open, fill: "#10b981" }, // green
+    { name: "Closed", value: tenderStats.statusCounts.closed, fill: "#6b7280" }, // gray
+    {
+      name: "Evaluation",
+      value: tenderStats.statusCounts.evaluation,
+      fill: "#3b82f6",
+    }, // blue
+    {
+      name: "Awarded",
+      value: tenderStats.statusCounts.awarded,
+      fill: "#f59e0b",
+    }, // amber
+    { name: "Lost", value: tenderStats.statusCounts.lost, fill: "#ef4444" }, // red
   ].filter((item) => item.value > 0);
 }
 
 export function getMonthlyTrendsData(
-  tenderStats: DashboardData['tenderStats']
+  tenderStats: DashboardData["tenderStats"],
 ) {
   // This would typically fetch historical data from the database
   // For now, we'll create sample data based on current stats
@@ -100,7 +108,7 @@ export function getMonthlyTrendsData(
     const date = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth() - i,
-      1
+      1,
     );
     // Sample data removed for production readiness
     // months.push({

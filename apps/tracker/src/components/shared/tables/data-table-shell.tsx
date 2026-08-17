@@ -1,14 +1,21 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Search, Plus, FileText, User, Package, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ListPagination } from '@/components/shared/pagination';
-import { Skeleton } from '@/components/ui/skeleton';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { ReactNode } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Search,
+  Plus,
+  FileText,
+  User,
+  Package,
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ListPagination } from "@/components/shared/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 /* ──────────────────────────────────────────────
    DataTableShell — shared wrapper for list pages
@@ -19,9 +26,9 @@ import { cn } from '@/lib/utils';
 
 export type EmptyStateConfig = {
   /** 'empty' = no records at all, 'no-results' = search returned nothing */
-  type: 'empty' | 'no-results';
+  type: "empty" | "no-results";
   /** Icon variant */
-  icon?: 'file' | 'user' | 'package' | 'alert';
+  icon?: "file" | "user" | "package" | "alert";
   /** Heading text */
   title: string;
   /** Subtitle / description */
@@ -95,8 +102,8 @@ export function DataTableShell({
   actionLabel,
   actionHref,
   onAction,
-  searchPlaceholder = 'Search...',
-  searchValue = '',
+  searchPlaceholder = "Search...",
+  searchValue = "",
   onSearchChange,
   activeFilters,
   onRemoveFilter,
@@ -119,21 +126,21 @@ export function DataTableShell({
   const showEmpty = !isLoading && dataLength === 0 && emptyState;
   const showLoading = isLoading;
 
-  const itemsPerPage = totalCount > 0 && currentPage > 0
-    ? Math.ceil(totalCount / totalPages)
-    : 10;
+  const itemsPerPage =
+    totalCount > 0 && currentPage > 0 ? Math.ceil(totalCount / totalPages) : 10;
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalCount);
   const hasActiveFilters = activeFilters && activeFilters.length > 0;
 
   return (
-    <Card className={cn('rounded-lg shadow-sm', className)}>
+    <Card className={cn("rounded-lg shadow-sm", className)}>
       <CardHeader className="space-y-4">
         {/* Header row */}
         <div className="flex items-center justify-between">
           <CardTitle>{title}</CardTitle>
-          {(actionLabel) && (actionHref || onAction) && (
-            actionHref ? (
+          {actionLabel &&
+            (actionHref || onAction) &&
+            (actionHref ? (
               <Button asChild size="sm">
                 <Link href={actionHref}>
                   <Plus className="h-4 w-4 mr-2" />
@@ -145,8 +152,7 @@ export function DataTableShell({
                 <Plus className="h-4 w-4 mr-2" />
                 {actionLabel}
               </Button>
-            )
-          )}
+            ))}
         </div>
 
         {/* Search */}
@@ -173,7 +179,7 @@ export function DataTableShell({
                 key={filter.key}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium"
               >
-                <span className="font-semibold">{filter.label}:</span>{' '}
+                <span className="font-semibold">{filter.label}:</span>{" "}
                 {filter.value}
                 {onRemoveFilter && (
                   <button
@@ -205,9 +211,7 @@ export function DataTableShell({
         )}
 
         {/* Mobile filter bar */}
-        {mobileFilterBar && (
-          <div className="md:hidden">{mobileFilterBar}</div>
-        )}
+        {mobileFilterBar && <div className="md:hidden">{mobileFilterBar}</div>}
 
         {/* Result count */}
         {showContent && totalCount > 0 && (
@@ -231,7 +235,7 @@ export function DataTableShell({
         {showEmpty && emptyState && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             {(() => {
-              const Icon = EMPTY_ICONS[emptyState.icon || 'file'];
+              const Icon = EMPTY_ICONS[emptyState.icon || "file"];
               return <Icon className="h-12 w-12 text-muted-foreground mb-4" />;
             })()}
             <h3 className="text-lg font-medium text-foreground mb-2">
@@ -255,15 +259,11 @@ export function DataTableShell({
         {showContent && (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block">
-              {children}
-            </div>
+            <div className="hidden md:block">{children}</div>
 
             {/* Mobile cards */}
             {mobileContent && (
-              <div className="md:hidden space-y-4">
-                {mobileContent}
-              </div>
+              <div className="md:hidden space-y-4">{mobileContent}</div>
             )}
 
             {/* Pagination */}

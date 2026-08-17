@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Select,
@@ -6,13 +6,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { authClient } from '@/lib/auth-client';
-import { useTransition, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { switchOrganization } from '@/lib/organization-utils';
-import type { OrganizationWithStats } from '@/server/organizations';
+} from "@/components/ui/select";
+import { authClient } from "@/lib/auth-client";
+import { useTransition, useState } from "react";
+import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
+import { switchOrganization } from "@/lib/organization-utils";
+import type { OrganizationWithStats } from "@/server/organizations";
 
 interface OrganizationSwitcherProps {
   organizations: OrganizationWithStats[];
@@ -45,7 +45,7 @@ function OrganizationSwitcherClient({
       // Handle URL navigation based on current page
       const newUrl = getUpdatedUrl(
         pathname,
-        selectedOrg.slug || selectedOrg.id
+        selectedOrg.slug || selectedOrg.id,
       );
 
       const result = await switchOrganization({
@@ -71,26 +71,29 @@ function OrganizationSwitcherClient({
     // switch the slug in the URL to keep the page in context.
     const orgPageMatch = currentPath.match(/^\/organization\/([^/]+)(\/.*)?$/);
     if (orgPageMatch) {
-      return `/organization/${_orgSlug}${orgPageMatch[2] || ''}`;
+      return `/organization/${_orgSlug}${orgPageMatch[2] || ""}`;
     }
 
     // Dashboard and everything else renders for the active organization
     // from the session, so just return there.
     if (
-      currentPath.startsWith('/dashboard') ||
-      currentPath === '/' ||
-      currentPath === '/organization'
+      currentPath.startsWith("/dashboard") ||
+      currentPath === "/" ||
+      currentPath === "/organization"
     ) {
-      return '/dashboard';
+      return "/dashboard";
     }
 
     // Profile/settings pages are not organization-scoped: stay put, the
     // session context is updated by the switch.
-    if (currentPath.startsWith('/profile') || currentPath.startsWith('/settings')) {
+    if (
+      currentPath.startsWith("/profile") ||
+      currentPath.startsWith("/settings")
+    ) {
       return currentPath;
     }
 
-    return '/dashboard';
+    return "/dashboard";
   };
 
   return (
@@ -101,7 +104,7 @@ function OrganizationSwitcherClient({
     >
       <SelectTrigger className="min-w-[180px]">
         <SelectValue
-          placeholder={isPending ? 'Switching...' : 'Organization'}
+          placeholder={isPending ? "Switching..." : "Organization"}
         />
       </SelectTrigger>
       <SelectContent>
@@ -127,5 +130,5 @@ export const OrganizationSwitcher = dynamic(
         </SelectTrigger>
       </Select>
     ),
-  }
+  },
 );

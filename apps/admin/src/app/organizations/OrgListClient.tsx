@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import DataTable, { type Column } from '@/components/DataTable';
-import StatusBadge from '@/components/StatusBadge';
-import type { OrgWithCounts } from '@/lib/admin-queries';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import { bulkSuspendOrgs, bulkRestoreOrgs, bulkPurgeOrgs } from './actions';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { CheckSquare, ShieldAlert, RotateCcw, Trash2, X } from 'lucide-react';
+import { useState } from "react";
+import DataTable, { type Column } from "@/components/DataTable";
+import StatusBadge from "@/components/StatusBadge";
+import type { OrgWithCounts } from "@/lib/admin-queries";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { bulkSuspendOrgs, bulkRestoreOrgs, bulkPurgeOrgs } from "./actions";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { CheckSquare, ShieldAlert, RotateCcw, Trash2, X } from "lucide-react";
 
 /* ─── Pure helper — exported for Property 15 PBT test ──────────────────── */
 
@@ -20,11 +20,11 @@ export function isPurgeImminent(purgeDate: Date | null, now: Date): boolean {
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 
 function formatDate(date: Date | null): string {
-  if (!date) return '—';
-  return new Date(date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 }
 
@@ -32,8 +32,8 @@ function formatDate(date: Date | null): string {
 
 const columns: Column<OrgWithCounts>[] = [
   {
-    key: 'name',
-    header: 'Organisation',
+    key: "name",
+    header: "Organisation",
     render: (org) => (
       <div>
         <Link
@@ -49,62 +49,57 @@ const columns: Column<OrgWithCounts>[] = [
     ),
   },
   {
-    key: 'slug',
-    header: 'Slug',
+    key: "slug",
+    header: "Slug",
+    render: (org) => <span className="text-zinc-300">{org.slug ?? "—"}</span>,
+  },
+  {
+    key: "members",
+    header: "Members",
+    render: (org) => <span className="tabular-nums">{org.memberCount}</span>,
+  },
+  {
+    key: "tenders",
+    header: "Tenders",
+    render: (org) => <span className="tabular-nums">{org.tenderCount}</span>,
+  },
+  {
+    key: "projects",
+    header: "Projects",
+    render: (org) => <span className="tabular-nums">{org.projectCount}</span>,
+  },
+  {
+    key: "pos",
+    header: "POs",
+    render: (org) => <span className="tabular-nums">{org.poCount}</span>,
+  },
+  {
+    key: "status",
+    header: "Status",
     render: (org) => (
-      <span className="text-zinc-300">{org.slug ?? '—'}</span>
+      <StatusBadge status={org.deletedAt ? "deleted" : "active"} />
     ),
   },
   {
-    key: 'members',
-    header: 'Members',
-    render: (org) => (
-      <span className="tabular-nums">{org.memberCount}</span>
-    ),
-  },
-  {
-    key: 'tenders',
-    header: 'Tenders',
-    render: (org) => (
-      <span className="tabular-nums">{org.tenderCount}</span>
-    ),
-  },
-  {
-    key: 'projects',
-    header: 'Projects',
-    render: (org) => (
-      <span className="tabular-nums">{org.projectCount}</span>
-    ),
-  },
-  {
-    key: 'pos',
-    header: 'POs',
-    render: (org) => (
-      <span className="tabular-nums">{org.poCount}</span>
-    ),
-  },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (org) => (
-      <StatusBadge status={org.deletedAt ? 'deleted' : 'active'} />
-    ),
-  },
-  {
-    key: 'purgeDate',
-    header: 'Purge Date',
+    key: "purgeDate",
+    header: "Purge Date",
     render: (org) => {
-      const imminent = isPurgeImminent(org.permanentDeletionScheduledAt, new Date());
+      const imminent = isPurgeImminent(
+        org.permanentDeletionScheduledAt,
+        new Date(),
+      );
       return (
-        <span className={imminent ? 'text-red-400 font-semibold' : 'text-zinc-400'}>
+        <span
+          className={imminent ? "text-red-400 font-semibold" : "text-zinc-400"}
+        >
           {formatDate(org.permanentDeletionScheduledAt)}
         </span>
       );
     },
   },
   {
-    key: 'created',
-    header: 'Created',
+    key: "created",
+    header: "Created",
     render: (org) => (
       <span className="text-zinc-400">{formatDate(org.createdAt)}</span>
     ),
@@ -121,8 +116,8 @@ type OrgListClientProps = {
 
 export default function OrgListClient({ orgs }: OrgListClientProps) {
   const router = useRouter();
-  const [filter, setFilter] = useState<'active' | 'deleted' | 'all'>('active');
-  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<"active" | "deleted" | "all">("active");
+  const [search, setSearch] = useState("");
   const [selectedOrgIds, setSelectedOrgIds] = useState<Set<string>>(new Set());
 
   // Confirm dialog state
@@ -131,31 +126,31 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
     title: string;
     description: string;
     confirmText: string;
-    variant: 'danger' | 'warning' | 'info';
+    variant: "danger" | "warning" | "info";
     requireValue?: string;
     action: () => Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    description: '',
-    confirmText: 'Confirm',
-    variant: 'danger',
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
     action: async () => {},
   });
   const [actionLoading, setActionLoading] = useState(false);
 
   const filtered = orgs
     .filter((o) =>
-      filter === 'active'
+      filter === "active"
         ? o.deletedAt === null
-        : filter === 'deleted'
-        ? o.deletedAt !== null
-        : true
+        : filter === "deleted"
+          ? o.deletedAt !== null
+          : true,
     )
     .filter((o) =>
-      search.trim() === ''
+      search.trim() === ""
         ? true
-        : o.name.toLowerCase().includes(search.toLowerCase())
+        : o.name.toLowerCase().includes(search.toLowerCase()),
     );
 
   // Bulk actions handlers
@@ -205,10 +200,10 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
               onClick={() =>
                 setDialogState({
                   isOpen: true,
-                  title: 'Bulk Suspend Organisations',
+                  title: "Bulk Suspend Organisations",
                   description: `Soft-delete and schedule 72h permanent deletion for ${selectedOrgIds.size} selected organisation(s)?`,
-                  confirmText: 'Suspend Selected',
-                  variant: 'warning',
+                  confirmText: "Suspend Selected",
+                  variant: "warning",
                   action: handleBulkSuspend,
                 })
               }
@@ -223,10 +218,10 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
               onClick={() =>
                 setDialogState({
                   isOpen: true,
-                  title: 'Bulk Restore Organisations',
+                  title: "Bulk Restore Organisations",
                   description: `Re-activate ${selectedOrgIds.size} selected organisation(s) and cancel scheduled deletion?`,
-                  confirmText: 'Restore Selected',
-                  variant: 'info',
+                  confirmText: "Restore Selected",
+                  variant: "info",
                   action: handleBulkRestore,
                 })
               }
@@ -241,11 +236,11 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
               onClick={() =>
                 setDialogState({
                   isOpen: true,
-                  title: 'Bulk Purge Organisations',
+                  title: "Bulk Purge Organisations",
                   description: `PERMANENTLY delete ${selectedOrgIds.size} selected organisation(s) and all their memberships? This action cannot be undone.`,
-                  confirmText: 'Purge Selected',
-                  variant: 'danger',
-                  requireValue: 'PURGE',
+                  confirmText: "Purge Selected",
+                  variant: "danger",
+                  requireValue: "PURGE",
                   action: handleBulkPurge,
                 })
               }
@@ -271,9 +266,9 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
         <div className="flex items-center gap-1 p-1 rounded-lg bg-zinc-900 border border-zinc-800">
           {(
             [
-              { value: 'active', label: 'Active Only' },
-              { value: 'deleted', label: 'Deleted' },
-              { value: 'all', label: 'All' },
+              { value: "active", label: "Active Only" },
+              { value: "deleted", label: "Deleted" },
+              { value: "all", label: "All" },
             ] as const
           ).map(({ value, label }) => (
             <button
@@ -282,8 +277,8 @@ export default function OrgListClient({ orgs }: OrgListClientProps) {
               onClick={() => setFilter(value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 filter === value
-                  ? 'bg-zinc-700 text-white'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? "bg-zinc-700 text-white"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
               {label}

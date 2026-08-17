@@ -6,17 +6,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Member } from '@pmg/db/schema';
-import MembersTableAction from '@/components/members-table-action';
-import { UserPlus, AlertCircle, RefreshCw } from 'lucide-react';
-import { formatDate } from '@/lib/format';
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Member } from "@pmg/db/schema";
+import MembersTableAction from "@/components/members-table-action";
+import { UserPlus, AlertCircle, RefreshCw } from "lucide-react";
+import { formatDate } from "@/lib/format";
 
 interface MembersTableProps {
   members: Member[];
@@ -29,44 +29,44 @@ interface MembersTableProps {
 }
 
 // Helper function to get member status
-function getMemberStatus(): 'active' | 'inactive' {
+function getMemberStatus(): "active" | "inactive" {
   // For now, we'll consider all members as active
   // This can be enhanced based on additional logic like last login, etc.
-  return 'active';
+  return "active";
 }
 
 // Helper function to get status badge variant
-function getStatusBadgeVariant(status: 'active' | 'inactive') {
+function getStatusBadgeVariant(status: "active" | "inactive") {
   switch (status) {
-    case 'active':
-      return 'default';
-    case 'inactive':
-      return 'secondary';
+    case "active":
+      return "default";
+    case "inactive":
+      return "secondary";
     default:
-      return 'secondary';
+      return "secondary";
   }
 }
 
 // Helper function to get role badge variant
 function getRoleBadgeVariant(role: string) {
   switch (role.toLowerCase()) {
-    case 'owner':
-      return 'destructive';
-    case 'admin':
-      return 'default';
-    case 'member':
-      return 'secondary';
+    case "owner":
+      return "destructive";
+    case "admin":
+      return "default";
+    case "member":
+      return "secondary";
     default:
-      return 'outline';
+      return "outline";
   }
 }
 
 // Helper function to get user initials
 function getUserInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((word) => word.charAt(0))
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -231,7 +231,7 @@ export function MembersTable({
               checked={isAllSelected}
               onCheckedChange={handleSelectAll}
               aria-label="Select all members"
-              {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+              {...(isIndeterminate && { "data-state": "indeterminate" })}
             />
           </TableHead>
           <TableHead>Member</TableHead>
@@ -249,7 +249,7 @@ export function MembersTable({
           return (
             <TableRow
               key={member.id}
-              className={isSelected ? 'bg-muted/50' : ''}
+              className={isSelected ? "bg-muted/50" : ""}
             >
               <TableCell>
                 <Checkbox

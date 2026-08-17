@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Clock, FileText, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, FileText, TrendingUp } from "lucide-react";
 
 interface RecentTender {
   id: string;
@@ -24,34 +24,34 @@ interface RecentActivityProps {
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'open':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-    case 'closed':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    case 'evaluation':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-    case 'awarded':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
-    case 'lost':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+    case "open":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+    case "closed":
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+    case "evaluation":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    case "awarded":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300";
+    case "lost":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
     // Backwards compatibility mappings
-    case 'submitted':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+    case "submitted":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   }
 }
 
 function formatTimeAgo(date: Date): string {
   const now = new Date();
   const diffInHours = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60),
   );
 
   if (diffInHours < 1) {
-    return 'Just now';
+    return "Just now";
   } else if (diffInHours < 24) {
     return `${diffInHours}h ago`;
   } else {
@@ -60,20 +60,20 @@ function formatTimeAgo(date: Date): string {
   }
 }
 
-type ActivityItem = RecentTender & { type: 'new' | 'change' };
+type ActivityItem = RecentTender & { type: "new" | "change" };
 
 export function RecentActivity({
   recentTenders,
   recentChanges,
-  className = '',
+  className = "",
 }: RecentActivityProps) {
   const combined: ActivityItem[] = [
-    ...recentTenders.map((t) => ({ ...t, type: 'new' as const })),
-    ...recentChanges.map((t) => ({ ...t, type: 'change' as const })),
+    ...recentTenders.map((t) => ({ ...t, type: "new" as const })),
+    ...recentChanges.map((t) => ({ ...t, type: "change" as const })),
   ]
     .sort((a, b) => {
-      const dateA = a.type === 'new' ? a.createdAt : a.updatedAt;
-      const dateB = b.type === 'new' ? b.createdAt : b.updatedAt;
+      const dateA = a.type === "new" ? a.createdAt : a.updatedAt;
+      const dateB = b.type === "new" ? b.createdAt : b.updatedAt;
       return dateB.getTime() - dateA.getTime();
     })
     .slice(0, 3);
@@ -108,12 +108,12 @@ export function RecentActivity({
         <div className="space-y-3">
           {combined.map((item) => {
             const icon =
-              item.type === 'new' ? (
+              item.type === "new" ? (
                 <FileText className="h-3 w-3" />
               ) : (
                 <TrendingUp className="h-3 w-3" />
               );
-            const time = item.type === 'new' ? item.createdAt : item.updatedAt;
+            const time = item.type === "new" ? item.createdAt : item.updatedAt;
             return (
               <div
                 key={`${item.id}-${item.type}`}
@@ -130,10 +130,10 @@ export function RecentActivity({
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
-                    {item.description || 'No description'}
+                    {item.description || "No description"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {item.client?.name || 'Unknown Client'}
+                    {item.client?.name || "Unknown Client"}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground ml-2">

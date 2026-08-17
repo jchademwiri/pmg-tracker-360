@@ -1,62 +1,62 @@
-import { SAST_TIMEZONE } from './timezone';
+import { SAST_TIMEZONE } from "./timezone";
 
 const KNOWN_UPPERCASE_ACRONYMS = new Set([
-  'SOC',
-  'LTD',
-  'PTY',
-  'NPC',
-  'JV',
-  'CC',
-  'CO',
-  'RF',
-  'SOE',
-  'DWS',
-  'PRASA',
-  'SANRAL',
-  'SARS',
-  'SABC',
-  'PMG',
-  'CSIR',
-  'SITA',
-  'SAPO',
-  'SAPS',
+  "SOC",
+  "LTD",
+  "PTY",
+  "NPC",
+  "JV",
+  "CC",
+  "CO",
+  "RF",
+  "SOE",
+  "DWS",
+  "PRASA",
+  "SANRAL",
+  "SARS",
+  "SABC",
+  "PMG",
+  "CSIR",
+  "SITA",
+  "SAPO",
+  "SAPS",
 ]);
 
 const LOWERCASE_WORDS = new Set([
   // Articles
-  'a',
-  'an',
-  'the',
+  "a",
+  "an",
+  "the",
   // Conjunctions
-  'and',
-  'but',
-  'for',
-  'nor',
-  'or',
-  'so',
-  'yet',
+  "and",
+  "but",
+  "for",
+  "nor",
+  "or",
+  "so",
+  "yet",
   // Short Prepositions & Particles
-  'of',
-  'off',
-  'in',
-  'on',
-  'at',
-  'to',
-  'by',
-  'with',
-  'from',
-  'into',
-  'onto',
-  'per',
-  'via',
-  'as',
-  'up',
-  'out',
-  're',
-  'vs',
+  "of",
+  "off",
+  "in",
+  "on",
+  "at",
+  "to",
+  "by",
+  "with",
+  "from",
+  "into",
+  "onto",
+  "per",
+  "via",
+  "as",
+  "up",
+  "out",
+  "re",
+  "vs",
   // Pronouns / Small connecting words
-  'it',
-  'its',
+  "it",
+  "its",
 ]);
 
 /**
@@ -66,11 +66,11 @@ const LOWERCASE_WORDS = new Set([
  * e.g. "CITY OF TSHWANE" -> "City of Tshwane"
  */
 export function formatClientName(value: string | null | undefined): string {
-  if (!value) return '';
+  if (!value) return "";
   const words = value.trim().split(/\s+/).filter(Boolean);
   return words
     .map((word, index) => {
-      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
       if (KNOWN_UPPERCASE_ACRONYMS.has(cleanWord)) {
         return word.toUpperCase();
       }
@@ -80,7 +80,7 @@ export function formatClientName(value: string | null | undefined): string {
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
-    .join(' ');
+    .join(" ");
 }
 
 /**
@@ -91,11 +91,11 @@ export function formatClientName(value: string | null | undefined): string {
  * e.g. "SWITCH OFF POWER AT SUBSTATION" -> "Switch off Power at Substation"
  */
 export function toTitleCase(value: string | null | undefined): string {
-  if (!value) return '';
+  if (!value) return "";
   const words = value.trim().split(/\s+/).filter(Boolean);
   return words
     .map((word, index) => {
-      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+      const cleanWord = word.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
       if (KNOWN_UPPERCASE_ACRONYMS.has(cleanWord)) {
         return word.toUpperCase();
       }
@@ -105,7 +105,7 @@ export function toTitleCase(value: string | null | undefined): string {
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
-    .join(' ');
+    .join(" ");
 }
 
 /**
@@ -114,13 +114,13 @@ export function toTitleCase(value: string | null | undefined): string {
  */
 export function formatDate(
   date: Date | string | null | undefined,
-  fallback = '-'
+  fallback = "-",
 ): string {
   if (!date) return fallback;
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
     timeZone: SAST_TIMEZONE,
   }).format(new Date(date));
 }
@@ -131,15 +131,15 @@ export function formatDate(
  */
 export function formatDateTime(
   date: Date | string | null | undefined,
-  fallback = '-'
+  fallback = "-",
 ): string {
   if (!date) return fallback;
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
     timeZone: SAST_TIMEZONE,
   }).format(new Date(date));
 }
@@ -158,44 +158,45 @@ export function formatDateTime(
  */
 export function formatCurrency(
   amount: number | string | null | undefined,
-  options: Intl.NumberFormatOptions = {}
+  options: Intl.NumberFormatOptions = {},
 ): string {
-  if (amount === null || amount === undefined || amount === '') return 'R 0';
+  if (amount === null || amount === undefined || amount === "") return "R 0";
 
   const numericAmount =
-    typeof amount === 'string'
-      ? parseFloat(amount.replace(/[Rr\s,]/g, ''))
+    typeof amount === "string"
+      ? parseFloat(amount.replace(/[Rr\s,]/g, ""))
       : amount;
 
-  if (isNaN(numericAmount)) return 'R 0';
+  if (isNaN(numericAmount)) return "R 0";
 
   const minimumFractionDigits = options.minimumFractionDigits ?? 0;
-  const maximumFractionDigits = options.maximumFractionDigits ?? minimumFractionDigits;
+  const maximumFractionDigits =
+    options.maximumFractionDigits ?? minimumFractionDigits;
 
-  const formatted = new Intl.NumberFormat('en-US', {
+  const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits,
     maximumFractionDigits,
   }).format(Math.abs(numericAmount));
 
-  const sign = numericAmount < 0 ? '-' : '';
+  const sign = numericAmount < 0 ? "-" : "";
   return `${sign}R ${formatted}`;
 }
 
 export function formatNumber(
   amount: number,
-  options: Intl.NumberFormatOptions = {}
+  options: Intl.NumberFormatOptions = {},
 ): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat("en-US", {
     ...options,
   }).format(amount);
 }
 
 export function formatPercentage(
   value: number,
-  options: Intl.NumberFormatOptions = {}
+  options: Intl.NumberFormatOptions = {},
 ): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'percent',
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
     ...options,
@@ -210,23 +211,23 @@ export function formatPercentage(
  * e.g. "+27 (0) 82 123 4567" -> "+27 82 123 4567"
  */
 export function formatPhoneNumber(value: string | null | undefined): string {
-  if (!value) return '';
+  if (!value) return "";
   const trimmed = value.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return "";
 
   // Remove parentheses around (0) in international formats: "+27 (0) 11" -> "+27 11"
-  const cleanParentheses = trimmed.replace(/\(\s*0\s*\)/g, '');
+  const cleanParentheses = trimmed.replace(/\(\s*0\s*\)/g, "");
 
-  const hasPlus = cleanParentheses.startsWith('+');
-  const digitsOnly = cleanParentheses.replace(/\D/g, '');
+  const hasPlus = cleanParentheses.startsWith("+");
+  const digitsOnly = cleanParentheses.replace(/\D/g, "");
 
   // South African 10-digit standard: 0XX XXX XXXX (e.g. 0118002000, 0821234567)
-  if (!hasPlus && digitsOnly.length === 10 && digitsOnly.startsWith('0')) {
+  if (!hasPlus && digitsOnly.length === 10 && digitsOnly.startsWith("0")) {
     return `${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3, 6)} ${digitsOnly.slice(6)}`;
   }
 
   // South African international 11-digit standard: 27XX XXX XXXX (e.g. +27118002000)
-  if (hasPlus && digitsOnly.startsWith('27') && digitsOnly.length === 11) {
+  if (hasPlus && digitsOnly.startsWith("27") && digitsOnly.length === 11) {
     return `+27 ${digitsOnly.slice(2, 4)} ${digitsOnly.slice(4, 7)} ${digitsOnly.slice(7)}`;
   }
 
@@ -237,7 +238,7 @@ export function formatPhoneNumber(value: string | null | undefined): string {
 
   // Fallback: chunk digits cleanly in 3s/4s or return clean formatted string
   if (digitsOnly.length > 6) {
-    const prefix = hasPlus ? '+' : '';
+    const prefix = hasPlus ? "+" : "";
     if (digitsOnly.length <= 10) {
       return `${prefix}${digitsOnly.slice(0, 3)} ${digitsOnly.slice(3, 6)} ${digitsOnly.slice(6)}`.trim();
     }
@@ -252,9 +253,9 @@ export function formatPhoneNumber(value: string | null | undefined): string {
  * e.g. 1024 → "1 KB", 1048576 → "1 MB"
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }

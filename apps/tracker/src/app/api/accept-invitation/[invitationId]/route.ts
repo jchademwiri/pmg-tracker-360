@@ -1,14 +1,14 @@
-import { auth, getServerSession } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@pmg/db';
-import { invitation } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
-import { rememberActiveOrganization } from '@/server/organizations';
+import { auth, getServerSession } from "@/lib/auth";
+import { headers } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@pmg/db";
+import { invitation } from "@pmg/db/schema";
+import { eq } from "drizzle-orm";
+import { rememberActiveOrganization } from "@/server/organizations";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ invitationId: string }> }
+  { params }: { params: Promise<{ invitationId: string }> },
 ) {
   const { invitationId } = await params;
 
@@ -19,7 +19,7 @@ export async function GET(
     if (!session) {
       // If not logged in, redirect directly to the public invitation acceptance page
       return NextResponse.redirect(
-        new URL(`/invite/accept/${invitationId}`, request.url)
+        new URL(`/invite/accept/${invitationId}`, request.url),
       );
     }
 
@@ -27,7 +27,7 @@ export async function GET(
     // page, which prompts them to verify before trying again.
     if (!session.user.emailVerified) {
       return NextResponse.redirect(
-        new URL(`/invite/accept/${invitationId}`, request.url)
+        new URL(`/invite/accept/${invitationId}`, request.url),
       );
     }
 
@@ -52,13 +52,13 @@ export async function GET(
     }
 
     return NextResponse.redirect(
-      new URL(`/dashboard?invitationId=${invitationId}`, request.url)
+      new URL(`/dashboard?invitationId=${invitationId}`, request.url),
     );
   } catch (error) {
-    console.error('Failed to accept invitation:', error);
+    console.error("Failed to accept invitation:", error);
     // If accept fails, redirect to the public invite accept page so the recipient can sign in or sign up
     return NextResponse.redirect(
-      new URL(`/invite/accept/${invitationId}`, request.url)
+      new URL(`/invite/accept/${invitationId}`, request.url),
     );
   }
 }

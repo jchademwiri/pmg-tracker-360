@@ -5,7 +5,7 @@
  * don't duplicate the same chain.
  */
 
-export const ADMIN_PRODUCTION_URL = 'https://admin.tendertrack360.co.za';
+export const ADMIN_PRODUCTION_URL = "https://admin.tendertrack360.co.za";
 
 /* ------------------------------------------------------------------ */
 /*  Pure helpers                                                       */
@@ -16,7 +16,7 @@ export function getOrigin(value?: string): string | null {
 
   try {
     const url = new URL(
-      value.startsWith('http://') || value.startsWith('https://')
+      value.startsWith("http://") || value.startsWith("https://")
         ? value
         : `https://${value}`,
     );
@@ -31,7 +31,7 @@ export function getAdminOrigin(value?: string): string | null {
   const origin = getOrigin(value);
   if (!origin) return null;
 
-  return new URL(origin).hostname.startsWith('admin.') ? origin : null;
+  return new URL(origin).hostname.startsWith("admin.") ? origin : null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -57,7 +57,7 @@ export function getAdminBaseURL(): string {
   if (configured) return configured;
 
   // 2. Production — hardcoded URL
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === "production") {
     return ADMIN_PRODUCTION_URL;
   }
 
@@ -67,6 +67,6 @@ export function getAdminBaseURL(): string {
     getAdminOrigin(process.env.BETTER_AUTH_URL) ||
     getAdminOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
     getAdminOrigin(process.env.VERCEL_URL) ||
-    'http://localhost:3001'
+    "http://localhost:3001"
   );
 }

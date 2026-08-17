@@ -1,27 +1,27 @@
-import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { Plus, ChevronDown } from 'lucide-react';
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Plus, ChevronDown } from "lucide-react";
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { checkUserSession } from '@/lib/session-check';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { checkUserSession } from "@/lib/session-check";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
-import { AdminView } from '@/components/dashboard/admin-view';
-import { SpecialistView } from '@/components/dashboard/specialist-view';
-import { DashboardUrgencyBanner } from '@/components/dashboard/dashboard-urgency-banner';
-import { validateSessionAndOrg } from '@/server/utils';
+import { AdminView } from "@/components/dashboard/admin-view";
+import { SpecialistView } from "@/components/dashboard/specialist-view";
+import { DashboardUrgencyBanner } from "@/components/dashboard/dashboard-urgency-banner";
+import { validateSessionAndOrg } from "@/server/utils";
 
 // Force dynamic rendering
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 function DashboardSkeleton() {
   return (
@@ -48,31 +48,31 @@ export default async function DashboardPage() {
   const sessionCheck = await checkUserSession();
 
   if (!sessionCheck.hasSession) {
-    redirect('/login');
+    redirect("/login");
   }
 
   if (!sessionCheck.hasOrganization) {
     if (sessionCheck.organizationCount && sessionCheck.organizationCount > 0) {
-      redirect('/organization/select');
+      redirect("/organization/select");
     }
 
-    redirect('/onboarding');
+    redirect("/onboarding");
   }
 
   const organizationId = sessionCheck.activeOrganizationId!;
 
   // Fetch membership role
-  let role = 'member';
-  let memberName = 'there';
+  let role = "member";
+  let memberName = "there";
   try {
     const sessionDetails = await validateSessionAndOrg(organizationId);
     role = sessionDetails.role;
-    memberName = sessionDetails.session?.user?.name || 'there';
+    memberName = sessionDetails.session?.user?.name || "there";
   } catch (error) {
-    console.error('Failed to validate session role:', error);
+    console.error("Failed to validate session role:", error);
   }
 
-  const isAdmin = role === 'owner' || role === 'admin' || role === 'manager';
+  const isAdmin = role === "owner" || role === "admin" || role === "manager";
 
   // Check permissions for create actions
   const [hasPOCreate, hasProjectCreate] = await Promise.all([
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
       headers: headersList,
       body: {
         permissions: {
-          purchase_order: ['create'],
+          purchase_order: ["create"],
         },
       },
     }),
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
       headers: headersList,
       body: {
         permissions: {
-          project: ['create'],
+          project: ["create"],
         },
       },
     }),
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {memberName}!{' '}
+            Welcome back, {memberName}!{" "}
             {isAdmin
               ? "Here's an overview of your organization's procurement pipeline."
               : "Here's your operational checklist and bidding activity overview."}
@@ -140,7 +140,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* Urgency Action Queue */}
-      <Suspense fallback={<div className="h-12 rounded-xl bg-muted/30 animate-pulse" />}>
+      <Suspense
+        fallback={<div className="h-12 rounded-xl bg-muted/30 animate-pulse" />}
+      >
         <DashboardUrgencyBanner organizationId={organizationId} />
       </Suspense>
 

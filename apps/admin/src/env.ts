@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Server environment validation for the admin app.
@@ -15,7 +15,7 @@ import { z } from 'zod';
 const serverSchema = z.object({
   RESEND_API_KEY: z
     .string()
-    .min(1, { message: 'RESEND_API_KEY is required to send admin email' }),
+    .min(1, { message: "RESEND_API_KEY is required to send admin email" }),
   SENDER_NAME: z.string().optional(),
   SENDER_EMAIL: z.string().optional(),
   REPLY_TO_EMAIL: z.string().optional(),
@@ -39,8 +39,8 @@ function loadEnv(): ServerEnv {
 
   if (!parsed.success) {
     const issues = parsed.error.issues
-      .map((i) => `  ${i.path.join('.')}: ${i.message}`)
-      .join('\n');
+      .map((i) => `  ${i.path.join(".")}: ${i.message}`)
+      .join("\n");
     throw new Error(`Invalid admin environment variables:\n${issues}`);
   }
 

@@ -1,4 +1,4 @@
-import { verifyBotProtection } from '@/lib/bot-protection';
+import { verifyBotProtection } from "@/lib/bot-protection";
 
 /**
  * The subset of Better Auth's hook context this guard depends on.
@@ -10,7 +10,7 @@ export type SignUpGuardContext = {
 };
 
 /** Better Auth's endpoint path for email/password registration. */
-export const SIGN_UP_EMAIL_PATH = '/sign-up/email';
+export const SIGN_UP_EMAIL_PATH = "/sign-up/email";
 
 /**
  * Bot-protects the public `POST /api/auth/sign-up/email` endpoint.
@@ -30,7 +30,7 @@ export const SIGN_UP_EMAIL_PATH = '/sign-up/email';
  * `null`. Throwing the framework error is left to the caller in `auth.ts`.
  */
 export async function checkDirectSignUp(
-  ctx: SignUpGuardContext
+  ctx: SignUpGuardContext,
 ): Promise<string | null> {
   if (ctx.path !== SIGN_UP_EMAIL_PATH) return null;
   if (!ctx.request) return null;
@@ -41,7 +41,7 @@ export async function checkDirectSignUp(
   });
 
   if (botCheck.isBot) {
-    return botCheck.reason || 'Account creation rejected by security rules.';
+    return botCheck.reason || "Account creation rejected by security rules.";
   }
 
   return null;

@@ -1,15 +1,15 @@
-import { getCurrentUser } from '@/server';
-import { getPurchaseOrderById } from '@/server/purchase-orders';
-import { POForm } from '@/components/purchase-orders/po-form';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { getPurchaseOrderById } from "@/server/purchase-orders";
+import { POForm } from "@/components/purchase-orders/po-form";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 interface EditPurchaseOrderPageProps {
   params: Promise<{ id: string }>;
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function EditPurchaseOrderPage({
   params,
@@ -22,13 +22,13 @@ export default async function EditPurchaseOrderPage({
     headers: await headers(),
     body: {
       permissions: {
-        purchase_order: ['update'], // Must have update permission to access edit page
+        purchase_order: ["update"], // Must have update permission to access edit page
       },
     },
   });
 
   if (!hasPermission) {
-    redirect('/dashboard');
+    redirect("/dashboard");
   }
 
   if (!session.activeOrganizationId) {
@@ -82,22 +82,30 @@ export default async function EditPurchaseOrderPage({
         initialData={{
           id: po.id,
           poNumber: po.poNumber,
-          projectId: po.project?.id || '',
+          projectId: po.project?.id || "",
           supplierName: po.supplierName || undefined,
           description: po.description,
           totalAmount: po.totalAmount,
-          status: po.status as 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed',
+          status: po.status as
+            | "open"
+            | "sent"
+            | "partially_delivered"
+            | "delivered"
+            | "completed"
+            | "cancelled"
+            | "disputed",
           poDate: po.poDate || undefined,
           expectedDeliveryDate: po.expectedDeliveryDate || undefined,
           deliveryAddress: po.deliveryAddress || undefined,
-          lineItems: po.lineItems?.map((item: any) => ({
-            id: item.id,
-            projectLineItemId: item.projectLineItemId || '',
-            description: item.description,
-            unit: item.unit || 'unit',
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          })) || [],
+          lineItems:
+            po.lineItems?.map((item: any) => ({
+              id: item.id,
+              projectLineItemId: item.projectLineItemId || "",
+              description: item.description,
+              unit: item.unit || "unit",
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })) || [],
         }}
       />
     </div>

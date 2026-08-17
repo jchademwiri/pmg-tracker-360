@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus } from 'lucide-react';
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Plus } from "lucide-react";
 
 import {
   Dialog,
@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,14 +21,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { createClient } from '@/server/clients';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/server/clients";
 import {
   ClientCreateSchema,
   type ClientCreateInput,
-} from '@/lib/validations/client';
+} from "@/lib/validations/client";
 
 interface ClientCreateDialogProps {
   organizationId: string;
@@ -54,11 +54,11 @@ export function ClientCreateDialog({
   const form = useForm<ClientCreateInput>({
     resolver: zodResolver(ClientCreateSchema),
     defaultValues: {
-      name: '',
-      contactName: '',
-      contactEmail: '',
-      contactPhone: '',
-      notes: '',
+      name: "",
+      contactName: "",
+      contactEmail: "",
+      contactPhone: "",
+      notes: "",
     },
   });
 
@@ -86,11 +86,11 @@ export function ClientCreateDialog({
           });
           handleOpenChange(false);
         } else {
-          setError(result.error || 'Failed to create client');
+          setError(result.error || "Failed to create client");
         }
       } catch (err) {
-        setError('An unexpected error occurred');
-        console.error('Client creation error:', err);
+        setError("An unexpected error occurred");
+        console.error("Client creation error:", err);
       }
     });
   }

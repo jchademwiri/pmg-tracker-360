@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useMemo } from 'react';
+import * as React from "react";
+import { useMemo } from "react";
 
 import {
   Sidebar,
@@ -9,15 +9,15 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from '@/components/ui/sidebar';
-import type { OrganizationWithStats } from '@/server/organizations';
-import type { User } from '@pmg/db/schema';
-import { dashboadLinks } from '@/data/dashboad-links';
+} from "@/components/ui/sidebar";
+import type { OrganizationWithStats } from "@/server/organizations";
+import type { User } from "@pmg/db/schema";
+import { dashboadLinks } from "@/data/dashboad-links";
 
-import { NavUser } from './nav-user';
-import { TeamSwitcher } from './team-switcher';
-import { NavMain } from './nav-main';
-import { WorkflowShortcuts } from './workflow-shortcuts';
+import { NavUser } from "./nav-user";
+import { TeamSwitcher } from "./team-switcher";
+import { NavMain } from "./nav-main";
+import { WorkflowShortcuts } from "./workflow-shortcuts";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   organizations: OrganizationWithStats[];
@@ -36,7 +36,7 @@ export function AppSidebar({
   // Filter operations links based on role permissions
   const operationsItems = useMemo(() => {
     return dashboadLinks.operations.filter((item) => {
-      if (item.minRole === 'manager' && userRole === 'member') {
+      if (item.minRole === "manager" && userRole === "member") {
         return false;
       }
       return true;
@@ -72,4 +72,3 @@ export function AppSidebar({
     </Sidebar>
   );
 }
-

@@ -1,30 +1,37 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Input } from '@/components/ui/input';
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   MobileFilterDrawer,
   MobileFilterField,
-} from '@/components/ui/mobile-filter-drawer';
-import { X, Search, Building2, ArrowUpDown, RotateCcw, AlertTriangle } from 'lucide-react';
-import { formatClientName } from '@/lib/format';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/mobile-filter-drawer";
+import {
+  X,
+  Search,
+  Building2,
+  ArrowUpDown,
+  RotateCcw,
+  AlertTriangle,
+} from "lucide-react";
+import { formatClientName } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export interface TenderFilters {
   search: string;
   status: string;
   clientId: string;
-  sortBy: 'tenderNumber' | 'createdAt' | 'submissionDate' | 'status';
-  sortOrder: 'asc' | 'desc';
+  sortBy: "tenderNumber" | "createdAt" | "submissionDate" | "status";
+  sortOrder: "asc" | "desc";
 }
 
 export interface TendersSearchFiltersProps {
@@ -35,59 +42,97 @@ export interface TendersSearchFiltersProps {
 }
 
 const QUICK_VIEWS = [
-  { value: 'all', label: 'All' },
-  { value: 'closing_soon', label: 'Closing Soon' },
-  { value: 'under_preparation', label: 'Under Preparation' },
-  { value: 'awaiting_results', label: 'Awaiting Results' },
+  { value: "all", label: "All" },
+  { value: "closing_soon", label: "Closing Soon" },
+  { value: "under_preparation", label: "Under Preparation" },
+  { value: "awaiting_results", label: "Awaiting Results" },
   {
-    value: 'validity_expired_uncontacted',
-    label: 'Needs Follow-up',
+    value: "validity_expired_uncontacted",
+    label: "Needs Follow-up",
     icon: AlertTriangle,
     isAlert: true,
   },
-  { value: 'awarded', label: 'Awarded to Convert' },
-  { value: 'lost', label: 'Lost / Rejected' },
+  { value: "awarded", label: "Awarded to Convert" },
+  { value: "lost", label: "Lost / Rejected" },
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'closing_soon', label: 'Closing Soon' },
-  { value: 'under_preparation', label: 'Under Preparation' },
-  { value: 'awaiting_results', label: 'Awaiting Results' },
-  { value: 'validity_expired_uncontacted', label: 'Needs Follow-up (Expired Validity)' },
-  { value: 'open', label: 'Open' },
-  { value: 'evaluation', label: 'Evaluation' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'awarded', label: 'Awarded to Convert' },
-  { value: 'lost', label: 'Lost / Rejected' },
+  { value: "all", label: "All Statuses" },
+  { value: "closing_soon", label: "Closing Soon" },
+  { value: "under_preparation", label: "Under Preparation" },
+  { value: "awaiting_results", label: "Awaiting Results" },
+  {
+    value: "validity_expired_uncontacted",
+    label: "Needs Follow-up (Expired Validity)",
+  },
+  { value: "open", label: "Open" },
+  { value: "evaluation", label: "Evaluation" },
+  { value: "closed", label: "Closed" },
+  { value: "awarded", label: "Awarded to Convert" },
+  { value: "lost", label: "Lost / Rejected" },
 ];
 
 const SORT_PRESETS = [
-  { value: 'submissionDate:asc', label: 'Closing Date (Soonest first)', sortBy: 'submissionDate', sortOrder: 'asc' },
-  { value: 'submissionDate:desc', label: 'Closing Date (Latest first)', sortBy: 'submissionDate', sortOrder: 'desc' },
-  { value: 'createdAt:desc', label: 'Date Created (Newest first)', sortBy: 'createdAt', sortOrder: 'desc' },
-  { value: 'createdAt:asc', label: 'Date Created (Oldest first)', sortBy: 'createdAt', sortOrder: 'asc' },
-  { value: 'tenderNumber:asc', label: 'Tender Number (A-Z)', sortBy: 'tenderNumber', sortOrder: 'asc' },
-  { value: 'tenderNumber:desc', label: 'Tender Number (Z-A)', sortBy: 'tenderNumber', sortOrder: 'desc' },
-  { value: 'status:asc', label: 'Status (A-Z)', sortBy: 'status', sortOrder: 'asc' },
+  {
+    value: "submissionDate:asc",
+    label: "Closing Date (Soonest first)",
+    sortBy: "submissionDate",
+    sortOrder: "asc",
+  },
+  {
+    value: "submissionDate:desc",
+    label: "Closing Date (Latest first)",
+    sortBy: "submissionDate",
+    sortOrder: "desc",
+  },
+  {
+    value: "createdAt:desc",
+    label: "Date Created (Newest first)",
+    sortBy: "createdAt",
+    sortOrder: "desc",
+  },
+  {
+    value: "createdAt:asc",
+    label: "Date Created (Oldest first)",
+    sortBy: "createdAt",
+    sortOrder: "asc",
+  },
+  {
+    value: "tenderNumber:asc",
+    label: "Tender Number (A-Z)",
+    sortBy: "tenderNumber",
+    sortOrder: "asc",
+  },
+  {
+    value: "tenderNumber:desc",
+    label: "Tender Number (Z-A)",
+    sortBy: "tenderNumber",
+    sortOrder: "desc",
+  },
+  {
+    value: "status:asc",
+    label: "Status (A-Z)",
+    sortBy: "status",
+    sortOrder: "asc",
+  },
 ] as const;
 
 export function TendersSearchFilters({
   filters: controlledFilters,
   onFiltersChange,
   clients = [],
-  className = '',
+  className = "",
 }: TendersSearchFiltersProps) {
   const [internalFilters, setInternalFilters] = useState<TenderFilters>({
-    search: '',
-    status: 'all',
-    clientId: 'all',
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
+    search: "",
+    status: "all",
+    clientId: "all",
+    sortBy: "createdAt",
+    sortOrder: "desc",
   });
   const [draftMobileFilters, setDraftMobileFilters] =
     useState<TenderFilters | null>(null);
-  
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filters = controlledFilters ?? internalFilters;
   const mobileFilters = draftMobileFilters ?? filters;
@@ -95,13 +140,13 @@ export function TendersSearchFilters({
   // Keyboard shortcut (Cmd+K / Ctrl+K or /) to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const handleFilterChange = useCallback(
@@ -110,28 +155,28 @@ export function TendersSearchFilters({
       setInternalFilters(updatedFilters);
       onFiltersChange(updatedFilters);
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   const handleSearchChange = useCallback(
     (value: string) => {
       handleFilterChange({ search: value });
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const handleStatusChange = useCallback(
     (value: string) => {
       handleFilterChange({ status: value });
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const handleClientChange = useCallback(
     (value: string) => {
       handleFilterChange({ clientId: value });
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const handleCombinedSortChange = useCallback(
@@ -139,23 +184,23 @@ export function TendersSearchFilters({
       const matched = SORT_PRESETS.find((s) => s.value === sortKey);
       if (matched) {
         handleFilterChange({
-          sortBy: matched.sortBy as TenderFilters['sortBy'],
-          sortOrder: matched.sortOrder as TenderFilters['sortOrder'],
+          sortBy: matched.sortBy as TenderFilters["sortBy"],
+          sortOrder: matched.sortOrder as TenderFilters["sortOrder"],
         });
       }
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const currentSortValue = `${filters.sortBy}:${filters.sortOrder}`;
 
   const clearFilters = useCallback(() => {
     const clearedFilters: TenderFilters = {
-      search: '',
-      status: 'all',
-      clientId: 'all',
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
+      search: "",
+      status: "all",
+      clientId: "all",
+      sortBy: "createdAt",
+      sortOrder: "desc",
     };
     setInternalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
@@ -166,26 +211,28 @@ export function TendersSearchFilters({
 
     if (filters.search) {
       active.push({
-        key: 'search',
-        label: 'Search',
+        key: "search",
+        label: "Search",
         value: `"${filters.search}"`,
       });
     }
 
-    if (filters.status !== 'all') {
-      const statusOption = STATUS_OPTIONS.find((opt) => opt.value === filters.status);
+    if (filters.status !== "all") {
+      const statusOption = STATUS_OPTIONS.find(
+        (opt) => opt.value === filters.status,
+      );
       active.push({
-        key: 'status',
-        label: 'Status',
+        key: "status",
+        label: "Status",
         value: statusOption?.label || filters.status,
       });
     }
 
-    if (filters.clientId !== 'all') {
+    if (filters.clientId !== "all") {
       const client = clients.find((c) => c.id === filters.clientId);
       active.push({
-        key: 'client',
-        label: 'Client',
+        key: "client",
+        label: "Client",
         value: client ? formatClientName(client.name) : filters.clientId,
       });
     }
@@ -197,7 +244,7 @@ export function TendersSearchFilters({
   const activeFilterCount = activeFilters.length;
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Level 1: Compact Segmented Status Tabs */}
       <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 scrollbar-none">
         <nav
@@ -214,15 +261,17 @@ export function TendersSearchFilters({
                 type="button"
                 onClick={() => handleStatusChange(view.value)}
                 className={cn(
-                  'px-3 py-1.5 rounded-md font-medium transition-all duration-150 text-xs whitespace-nowrap cursor-pointer flex items-center gap-1.5',
+                  "px-3 py-1.5 rounded-md font-medium transition-all duration-150 text-xs whitespace-nowrap cursor-pointer flex items-center gap-1.5",
                   isActive
-                    ? 'bg-background text-foreground shadow-xs font-semibold border border-border/70 dark:border-border/60'
+                    ? "bg-background text-foreground shadow-xs font-semibold border border-border/70 dark:border-border/60"
                     : isAlert
-                      ? 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      ? "text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                 )}
               >
-                {ViewIcon && <ViewIcon className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                {ViewIcon && (
+                  <ViewIcon className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                )}
                 <span>{view.label}</span>
               </button>
             );
@@ -245,7 +294,7 @@ export function TendersSearchFilters({
           {filters.search ? (
             <button
               type="button"
-              onClick={() => handleSearchChange('')}
+              onClick={() => handleSearchChange("")}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-sm transition-colors cursor-pointer"
               aria-label="Clear search"
             >
@@ -271,7 +320,11 @@ export function TendersSearchFilters({
                 All Clients
               </SelectItem>
               {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id} className="text-xs">
+                <SelectItem
+                  key={client.id}
+                  value={client.id}
+                  className="text-xs"
+                >
                   {formatClientName(client.name)}
                 </SelectItem>
               ))}
@@ -279,14 +332,21 @@ export function TendersSearchFilters({
           </Select>
 
           {/* Consolidated Sort */}
-          <Select value={currentSortValue} onValueChange={handleCombinedSortChange}>
+          <Select
+            value={currentSortValue}
+            onValueChange={handleCombinedSortChange}
+          >
             <SelectTrigger className="h-9 w-[210px] text-xs bg-muted/20 border-border/60 hover:border-border">
               <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground shrink-0" />
               <SelectValue placeholder="Sort order" />
             </SelectTrigger>
             <SelectContent>
               {SORT_PRESETS.map((preset) => (
-                <SelectItem key={preset.value} value={preset.value} className="text-xs">
+                <SelectItem
+                  key={preset.value}
+                  value={preset.value}
+                  className="text-xs"
+                >
                   {preset.label}
                 </SelectItem>
               ))}
@@ -307,10 +367,10 @@ export function TendersSearchFilters({
             onClear={() => {
               const clearedFilters: TenderFilters = {
                 search: filters.search,
-                status: 'all',
-                clientId: 'all',
-                sortBy: 'createdAt',
-                sortOrder: 'desc',
+                status: "all",
+                clientId: "all",
+                sortBy: "createdAt",
+                sortOrder: "desc",
               };
               setDraftMobileFilters(clearedFilters);
               handleFilterChange(clearedFilters);
@@ -365,8 +425,9 @@ export function TendersSearchFilters({
                   if (matched) {
                     setDraftMobileFilters({
                       ...mobileFilters,
-                      sortBy: matched.sortBy as TenderFilters['sortBy'],
-                      sortOrder: matched.sortOrder as TenderFilters['sortOrder'],
+                      sortBy: matched.sortBy as TenderFilters["sortBy"],
+                      sortOrder:
+                        matched.sortOrder as TenderFilters["sortOrder"],
                     });
                   }
                 }}
@@ -421,12 +482,12 @@ export function TendersSearchFilters({
                 type="button"
                 className="hover:text-destructive focus:outline-none cursor-pointer rounded-full p-0.5"
                 onClick={() => {
-                  if (filter.key === 'search') {
-                    handleFilterChange({ search: '' });
-                  } else if (filter.key === 'status') {
-                    handleFilterChange({ status: 'all' });
-                  } else if (filter.key === 'client') {
-                    handleFilterChange({ clientId: 'all' });
+                  if (filter.key === "search") {
+                    handleFilterChange({ search: "" });
+                  } else if (filter.key === "status") {
+                    handleFilterChange({ status: "all" });
+                  } else if (filter.key === "client") {
+                    handleFilterChange({ clientId: "all" });
                   }
                 }}
                 aria-label={`Remove ${filter.label} filter`}

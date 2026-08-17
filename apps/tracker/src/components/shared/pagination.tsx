@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Pagination,
@@ -8,7 +8,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
+} from "@/components/ui/pagination";
 
 interface ListPaginationProps {
   currentPage: number;
@@ -23,7 +23,7 @@ export function ListPagination({
   totalPages,
   onPageChange,
   isLoading = false,
-  className = '',
+  className = "",
 }: ListPaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -60,12 +60,12 @@ export function ListPagination({
     } else {
       // Always show first, last, current, and surrounding pages
       pages.push(1);
-      
+
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
 
       if (start > 2) {
-        pages.push('ellipsis-start');
+        pages.push("ellipsis-start");
       }
 
       for (let i = start; i <= end; i++) {
@@ -73,7 +73,7 @@ export function ListPagination({
       }
 
       if (end < totalPages - 1) {
-        pages.push('ellipsis-end');
+        pages.push("ellipsis-end");
       }
 
       pages.push(totalPages);
@@ -88,12 +88,16 @@ export function ListPagination({
           <PaginationPrevious
             href="#"
             onClick={handlePrev}
-            className={currentPage === 1 || isLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            className={
+              currentPage === 1 || isLoading
+                ? "pointer-events-none opacity-50"
+                : "cursor-pointer"
+            }
           />
         </PaginationItem>
 
         {getPageNumbers().map((p) => {
-          if (typeof p === 'string') {
+          if (typeof p === "string") {
             return (
               <PaginationItem key={p}>
                 <PaginationEllipsis />
@@ -107,7 +111,11 @@ export function ListPagination({
                 href="#"
                 isActive={p === currentPage}
                 onClick={handlePageClick(p)}
-                className={isLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                className={
+                  isLoading
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
               >
                 {p}
               </PaginationLink>
@@ -119,7 +127,11 @@ export function ListPagination({
           <PaginationNext
             href="#"
             onClick={handleNext}
-            className={currentPage === totalPages || isLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+            className={
+              currentPage === totalPages || isLoading
+                ? "pointer-events-none opacity-50"
+                : "cursor-pointer"
+            }
           />
         </PaginationItem>
       </PaginationContent>

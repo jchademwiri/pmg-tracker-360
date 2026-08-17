@@ -1,6 +1,6 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 /**
  * Standard page-level guard for the admin console: redirects to /login if
@@ -14,12 +14,12 @@ import { redirect } from 'next/navigation';
 export async function requireAdminPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
-  if (!session || (session.user as any).role !== 'admin') {
-    redirect('/login');
+  if (!session || (session.user as any).role !== "admin") {
+    redirect("/login");
   }
 
   if ((session.user as any).mustSetPassword) {
-    redirect('/set-password');
+    redirect("/set-password");
   }
 
   return session;

@@ -4,12 +4,18 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Calendar, MapPin, Video, AlertCircle, CheckCircle } from 'lucide-react';
-import { getUpcomingBriefings } from '@/server/tenders';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import Link from 'next/link';
+} from "@/components/ui/card";
+import {
+  Calendar,
+  MapPin,
+  Video,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
+import { getUpcomingBriefings } from "@/server/tenders";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
 
 interface DashboardBriefingsProps {
   organizationId: string;
@@ -21,13 +27,13 @@ export async function DashboardBriefings({
   const { briefings } = await getUpcomingBriefings(organizationId, 10);
 
   const formatDate = (date: Date | null) => {
-    if (!date) return '-';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    if (!date) return "-";
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(new Date(date));
   };
 
@@ -39,7 +45,8 @@ export async function DashboardBriefings({
           Clarification Meetings & Briefings
         </CardTitle>
         <CardDescription>
-          Upcoming briefing sessions and clarification meetings in the next 30 days
+          Upcoming briefing sessions and clarification meetings in the next 30
+          days
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -52,10 +59,11 @@ export async function DashboardBriefings({
           <ScrollArea className="h-[280px] pr-4">
             <div className="space-y-4">
               {briefings.map((briefing) => {
-                const isOnline = briefing.briefingLocation?.toLowerCase().includes('http') || 
-                                 briefing.briefingLocation?.toLowerCase().includes('teams') || 
-                                 briefing.briefingLocation?.toLowerCase().includes('zoom');
-                
+                const isOnline =
+                  briefing.briefingLocation?.toLowerCase().includes("http") ||
+                  briefing.briefingLocation?.toLowerCase().includes("teams") ||
+                  briefing.briefingLocation?.toLowerCase().includes("zoom");
+
                 return (
                   <div
                     key={briefing.id}
@@ -70,12 +78,15 @@ export async function DashboardBriefings({
                           {briefing.tenderNumber.toUpperCase()}
                         </Link>
                         <p className="text-xs text-muted-foreground">
-                          {briefing.client?.name || 'Unknown Client'}
+                          {briefing.client?.name || "Unknown Client"}
                         </p>
                       </div>
                       <div className="flex gap-1.5">
                         {briefing.isBriefingMandatory && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5 font-semibold uppercase animate-pulse">
+                          <Badge
+                            variant="destructive"
+                            className="text-[10px] px-1.5 py-0 h-5 font-semibold uppercase animate-pulse"
+                          >
                             Mandatory
                           </Badge>
                         )}
@@ -85,13 +96,16 @@ export async function DashboardBriefings({
                             Attended
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground"
+                          >
                             Pending
                           </Badge>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground border-t pt-2 mt-1">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-indigo-500/80" />
@@ -101,7 +115,7 @@ export async function DashboardBriefings({
                         {isOnline ? (
                           <>
                             <Video className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                            {briefing.briefingLocation?.startsWith('http') ? (
+                            {briefing.briefingLocation?.startsWith("http") ? (
                               <a
                                 href={briefing.briefingLocation}
                                 target="_blank"
@@ -111,14 +125,20 @@ export async function DashboardBriefings({
                                 Join Online Meeting
                               </a>
                             ) : (
-                              <span className="truncate">{briefing.briefingLocation}</span>
+                              <span className="truncate">
+                                {briefing.briefingLocation}
+                              </span>
                             )}
                           </>
                         ) : (
                           <>
                             <MapPin className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                            <span className="truncate" title={briefing.briefingLocation || ''}>
-                              {briefing.briefingLocation || 'No venue specified'}
+                            <span
+                              className="truncate"
+                              title={briefing.briefingLocation || ""}
+                            >
+                              {briefing.briefingLocation ||
+                                "No venue specified"}
                             </span>
                           </>
                         )}

@@ -1,14 +1,13 @@
-import { getCurrentUser } from '@/server';
-import { getTendersOverview } from '@/server/tenders';
-import { getClients } from '@/server/clients';
-import { Plus } from 'lucide-react';
-import { TendersOverviewClient } from './overview/client-wrapper';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { NoOrganizationState } from '@/components/shared/empty-states';
+import { getCurrentUser } from "@/server";
+import { getTendersOverview } from "@/server/tenders";
+import { getClients } from "@/server/clients";
+import { Plus } from "lucide-react";
+import { TendersOverviewClient } from "./overview/client-wrapper";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { NoOrganizationState } from "@/components/shared/empty-states";
 
-export const dynamic = 'force-dynamic';
-
+export const dynamic = "force-dynamic";
 
 type SearchParams = {
   search?: string;
@@ -21,35 +20,40 @@ type SearchParams = {
   filter?: string;
 };
 
-const validSortBy = ['tenderNumber', 'createdAt', 'submissionDate', 'status'] as const;
-const validSortOrder = ['asc', 'desc'] as const;
+const validSortBy = [
+  "tenderNumber",
+  "createdAt",
+  "submissionDate",
+  "status",
+] as const;
+const validSortOrder = ["asc", "desc"] as const;
 
 function parseTenderFilters(searchParams: SearchParams) {
   const isExpiredValidity =
-    searchParams.filter === 'validity-expired-uncontacted' ||
-    searchParams.status === 'validity_expired_uncontacted';
+    searchParams.filter === "validity-expired-uncontacted" ||
+    searchParams.status === "validity_expired_uncontacted";
   const status = isExpiredValidity
-    ? 'validity_expired_uncontacted'
-    : searchParams.status || 'all';
+    ? "validity_expired_uncontacted"
+    : searchParams.status || "all";
   const submitted = searchParams.submitted;
   const filter = searchParams.filter;
   const sortBy = validSortBy.includes(searchParams.sortBy as any)
     ? (searchParams.sortBy as (typeof validSortBy)[number])
-    : isExpiredValidity || status === 'open' || status === 'all'
-      ? 'submissionDate'
-      : 'createdAt';
+    : isExpiredValidity || status === "open" || status === "all"
+      ? "submissionDate"
+      : "createdAt";
   const sortOrder = validSortOrder.includes(searchParams.sortOrder as any)
     ? (searchParams.sortOrder as (typeof validSortOrder)[number])
-    : isExpiredValidity || status === 'open' || status === 'all'
-      ? 'asc'
-      : 'desc';
-  const page = Math.max(Number(searchParams.page || '1') || 1, 1);
+    : isExpiredValidity || status === "open" || status === "all"
+      ? "asc"
+      : "desc";
+  const page = Math.max(Number(searchParams.page || "1") || 1, 1);
 
   return {
     filters: {
-      search: searchParams.search || '',
+      search: searchParams.search || "",
       status,
-      clientId: searchParams.clientId || 'all',
+      clientId: searchParams.clientId || "all",
       sortBy,
       sortOrder,
       submitted,
@@ -59,75 +63,87 @@ function parseTenderFilters(searchParams: SearchParams) {
   };
 }
 
-function getRegisterCopy(filters: { status: string; submitted?: string; filter?: string }) {
+function getRegisterCopy(filters: {
+  status: string;
+  submitted?: string;
+  filter?: string;
+}) {
   if (
-    filters.filter === 'validity-expired-uncontacted' ||
-    filters.status === 'validity_expired_uncontacted'
+    filters.filter === "validity-expired-uncontacted" ||
+    filters.status === "validity_expired_uncontacted"
   ) {
     return {
-      title: 'Needs Follow-up (Expired Validity)',
+      title: "Needs Follow-up (Expired Validity)",
       description:
-        'Tenders whose validity period has expired without any recorded follow-up inquiries or extensions.',
+        "Tenders whose validity period has expired without any recorded follow-up inquiries or extensions.",
     };
   }
-  if (filters.submitted === 'this-month' || filters.submitted === 'month') {
+  if (filters.submitted === "this-month" || filters.submitted === "month") {
     return {
-      title: 'Tenders Submitted This Month (MTD)',
-      description: 'Tenders submitted from the 1st of the current month up to today.',
+      title: "Tenders Submitted This Month (MTD)",
+      description:
+        "Tenders submitted from the 1st of the current month up to today.",
     };
   }
-  if (filters.submitted === 'this-year' || filters.submitted === 'year') {
+  if (filters.submitted === "this-year" || filters.submitted === "year") {
     return {
-      title: 'Tenders Submitted This Year (YTD)',
-      description: 'All tenders submitted in the current calendar year to date.',
+      title: "Tenders Submitted This Year (YTD)",
+      description:
+        "All tenders submitted in the current calendar year to date.",
     };
   }
 
   switch (filters.status) {
-    case 'closing_soon':
+    case "closing_soon":
       return {
-        title: 'Closing Soon',
-        description: 'Track active tender opportunities closing in the next 14 days.',
+        title: "Closing Soon",
+        description:
+          "Track active tender opportunities closing in the next 14 days.",
       };
-    case 'under_preparation':
+    case "under_preparation":
       return {
-        title: 'Under Preparation',
-        description: 'Monitor tenders currently being compiled and prepared for submission.',
+        title: "Under Preparation",
+        description:
+          "Monitor tenders currently being compiled and prepared for submission.",
       };
-    case 'awaiting_results':
+    case "awaiting_results":
       return {
-        title: 'Awaiting Results',
-        description: 'Review submitted tenders currently under evaluation or awaiting outcomes.',
+        title: "Awaiting Results",
+        description:
+          "Review submitted tenders currently under evaluation or awaiting outcomes.",
       };
-    case 'open':
+    case "open":
       return {
-        title: 'Open Tenders',
-        description: 'Track tender opportunities that are still open for submission.',
+        title: "Open Tenders",
+        description:
+          "Track tender opportunities that are still open for submission.",
       };
-    case 'evaluation':
+    case "evaluation":
       return {
-        title: 'Under Evaluation',
-        description: 'Monitor submitted tenders that are currently under evaluation.',
+        title: "Under Evaluation",
+        description:
+          "Monitor submitted tenders that are currently under evaluation.",
       };
-    case 'closed':
+    case "closed":
       return {
-        title: 'Closed Tenders',
-        description: 'Review tenders marked as closed.',
+        title: "Closed Tenders",
+        description: "Review tenders marked as closed.",
       };
-    case 'awarded':
+    case "awarded":
       return {
-        title: 'Awarded Tenders',
-        description: 'Review successful tenders and appointed work.',
+        title: "Awarded Tenders",
+        description: "Review successful tenders and appointed work.",
       };
-    case 'lost':
+    case "lost":
       return {
-        title: 'Lost / Rejected Tenders',
-        description: 'Review unsuccessful tender outcomes.',
+        title: "Lost / Rejected Tenders",
+        description: "Review unsuccessful tender outcomes.",
       };
     default:
       return {
-        title: 'Tender Register',
-        description: 'Search, filter, and manage all tender records from one place.',
+        title: "Tender Register",
+        description:
+          "Search, filter, and manage all tender records from one place.",
       };
   }
 }
@@ -176,7 +192,11 @@ export default async function TendersRegisterPage({
             {registerCopy.description}
           </p>
         </div>
-        <Button asChild size="sm" className="h-9 font-medium shadow-xs shrink-0 self-start sm:self-auto">
+        <Button
+          asChild
+          size="sm"
+          className="h-9 font-medium shadow-xs shrink-0 self-start sm:self-auto"
+        >
           <Link href="/tenders/create">
             <Plus className="h-4 w-4 mr-1.5" />
             Add Tender

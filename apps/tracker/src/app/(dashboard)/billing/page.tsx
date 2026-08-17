@@ -1,16 +1,16 @@
-import { getCurrentUser } from '@/server';
-import { getUserUsageStats } from '@/server/billing';
-import { getSubscriptionPlans } from '@pmg/db';
-import { redirect } from 'next/navigation';
-import BillingClient from './billing-client';
+import { getCurrentUser } from "@/server";
+import { getUserUsageStats } from "@/server/billing";
+import { getSubscriptionPlans } from "@pmg/db";
+import { redirect } from "next/navigation";
+import BillingClient from "./billing-client";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
   const { currentUser } = await getCurrentUser();
 
   if (!currentUser?.id) {
-    redirect('/login');
+    redirect("/login");
   }
 
   const [usageResult, plans] = await Promise.all([
@@ -20,7 +20,7 @@ export default async function BillingPage() {
 
   return (
     <BillingClient
-      currentPlan={usageResult.plan || 'free'}
+      currentPlan={usageResult.plan || "free"}
       userUpdatedAt={usageResult.userUpdatedAt}
       usage={usageResult.usage}
       invoices={usageResult.invoices || []}
@@ -28,4 +28,3 @@ export default async function BillingPage() {
     />
   );
 }
-

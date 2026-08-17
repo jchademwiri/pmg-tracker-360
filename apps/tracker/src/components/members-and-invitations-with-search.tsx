@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
 // useState removed as it's not used in this component
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -12,16 +12,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
-import { useSearchAndFilter } from '@/hooks/use-search-and-filter';
-import { getInvitationDisplayStatus } from '@/lib/filter-utils';
-import type { MemberWithUser } from '@/lib/filter-utils';
-import type { PendingInvitation } from '@/server/organizations';
-import { MoreHorizontal, Mail, UserPlus } from 'lucide-react';
-import { NoResults } from '@/components/shared/empty-states';
-import { SearchAndFilters } from './shared/search';
+import { useSearchAndFilter } from "@/hooks/use-search-and-filter";
+import { getInvitationDisplayStatus } from "@/lib/filter-utils";
+import type { MemberWithUser } from "@/lib/filter-utils";
+import type { PendingInvitation } from "@/server/organizations";
+import { MoreHorizontal, Mail, UserPlus } from "lucide-react";
+import { NoResults } from "@/components/shared/empty-states";
+import { SearchAndFilters } from "./shared/search";
 
 export interface MembersAndInvitationsWithSearchProps {
   members: MemberWithUser[];
@@ -34,29 +34,29 @@ export interface MembersAndInvitationsWithSearchProps {
 
 function getRoleColor(role: string): string {
   switch (role) {
-    case 'owner':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-    case 'admin':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-    case 'member':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+    case "owner":
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+    case "admin":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+    case "member":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   }
 }
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'active':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-    case 'expired':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-    case 'inactive':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+    case "active":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+    case "expired":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+    case "inactive":
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
   }
 }
 
@@ -66,7 +66,7 @@ export function MembersAndInvitationsWithSearch({
   onInviteMember,
   onMemberAction,
   onInvitationAction,
-  className = '',
+  className = "",
 }: MembersAndInvitationsWithSearchProps) {
   const {
     setFilters,
@@ -105,14 +105,14 @@ export function MembersAndInvitationsWithSearch({
       {/* Results Summary */}
       {hasActiveFilters && (
         <div className="text-sm text-muted-foreground">
-          Showing {totalResults} result{totalResults !== 1 ? 's' : ''}
+          Showing {totalResults} result{totalResults !== 1 ? "s" : ""}
           {hasMembers && hasInvitations && (
             <span>
-              {' '}
+              {" "}
               ({filteredMembers.length} member
-              {filteredMembers.length !== 1 ? 's' : ''},{' '}
+              {filteredMembers.length !== 1 ? "s" : ""},{" "}
               {filteredInvitations.length} invitation
-              {filteredInvitations.length !== 1 ? 's' : ''})
+              {filteredInvitations.length !== 1 ? "s" : ""})
             </span>
           )}
         </div>
@@ -122,16 +122,16 @@ export function MembersAndInvitationsWithSearch({
       {!hasAnyResults && (
         <NoResults
           title={
-            hasActiveFilters ? 'No results found' : 'No members or invitations'
+            hasActiveFilters ? "No results found" : "No members or invitations"
           }
           message={noResultsMessage}
           actionLabel={
             !hasActiveFilters && onInviteMember
-              ? 'Invite First Member'
+              ? "Invite First Member"
               : undefined
           }
           onAction={!hasActiveFilters ? onInviteMember : undefined}
-          icon={hasActiveFilters ? 'search' : 'users'}
+          icon={hasActiveFilters ? "search" : "users"}
         />
       )}
 
@@ -181,22 +181,30 @@ export function MembersAndInvitationsWithSearch({
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={getStatusColor(member.status || 'active')}
+                        className={getStatusColor(member.status || "active")}
                       >
-                        {member.status || 'active'}
+                        {member.status || "active"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {member.joinedAt
-                        ? member.joinedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                        : member.createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        ? member.joinedAt.toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : member.createdAt.toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
                     </TableCell>
                     <TableCell>
                       {onMemberAction && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onMemberAction(member.id, 'menu')}
+                          onClick={() => onMemberAction(member.id, "menu")}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -266,7 +274,11 @@ export function MembersAndInvitationsWithSearch({
                         {invitation.inviterName}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {invitation.expiresAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {invitation.expiresAt.toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
                       </TableCell>
                       <TableCell>
                         {onInvitationAction && (
@@ -274,7 +286,7 @@ export function MembersAndInvitationsWithSearch({
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              onInvitationAction(invitation.id, 'menu')
+                              onInvitationAction(invitation.id, "menu")
                             }
                           >
                             <MoreHorizontal className="h-4 w-4" />

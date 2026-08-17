@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface OrganizationCardSkeletonProps {
   className?: string;
@@ -13,7 +13,7 @@ export function OrganizationCardSkeleton({
 }: OrganizationCardSkeletonProps) {
   return (
     <Card
-      className={cn('group relative overflow-hidden animate-pulse', className)}
+      className={cn("group relative overflow-hidden animate-pulse", className)}
     >
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">

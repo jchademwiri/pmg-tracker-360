@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback } from 'react';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
+import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import {
   Camera,
   Upload,
@@ -22,9 +22,9 @@ import {
   Trash2,
   UploadCloud,
   ImageIcon,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface AvatarUploadProps {
   currentImage?: string | null;
@@ -33,8 +33,13 @@ interface AvatarUploadProps {
   onImageRemove: () => void;
   disabled?: boolean;
   uploadAction: (
-    file: File
-  ) => Promise<{ success: boolean; imageUrl?: string; key?: string; error?: string }>;
+    file: File,
+  ) => Promise<{
+    success: boolean;
+    imageUrl?: string;
+    key?: string;
+    error?: string;
+  }>;
   entityName?: string; // e.g. "Profile picture" or "Organization logo"
 }
 
@@ -45,7 +50,7 @@ export function AvatarUpload({
   onImageRemove,
   disabled = false,
   uploadAction,
-  entityName = 'Profile picture',
+  entityName = "Profile picture",
 }: AvatarUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -56,11 +61,11 @@ export function AvatarUpload({
 
   // Get user initials for avatar fallback
   const getInitials = (name: string) => {
-    return (name || 'User')
-      .split(' ')
+    return (name || "User")
+      .split(" ")
       .filter(Boolean)
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -68,23 +73,23 @@ export function AvatarUpload({
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   }, []);
 
   const handleFileSelect = useCallback((file: File) => {
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file (PNG, JPG, WebP, GIF)');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file (PNG, JPG, WebP, GIF)");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
+      toast.error("Image size must be less than 5MB");
       return;
     }
 
@@ -110,7 +115,7 @@ export function AvatarUpload({
         handleFileSelect(files[0]);
       }
     },
-    [disabled, handleFileSelect]
+    [disabled, handleFileSelect],
   );
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,13 +152,13 @@ export function AvatarUpload({
         toast.success(`${entityName} updated successfully`);
       } else {
         toast.error(
-          result.error || `Failed to update ${entityName.toLowerCase()}`
+          result.error || `Failed to update ${entityName.toLowerCase()}`,
         );
       }
     } catch (error) {
       setIsUploading(false);
       toast.error(`Failed to upload ${entityName.toLowerCase()}`);
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
     }
   };
 
@@ -166,7 +171,7 @@ export function AvatarUpload({
     setShowUploadDialog(false);
     setPreviewImage(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -198,8 +203,8 @@ export function AvatarUpload({
           disabled={disabled}
           aria-label={`Change ${entityName.toLowerCase()}`}
           className={cn(
-            'absolute bottom-0 right-0 p-2 rounded-full border border-border/80 bg-background/95 backdrop-blur-sm shadow-md text-foreground hover:text-primary hover:bg-muted transition-all duration-150',
-            disabled && 'opacity-50 cursor-not-allowed'
+            "absolute bottom-0 right-0 p-2 rounded-full border border-border/80 bg-background/95 backdrop-blur-sm shadow-md text-foreground hover:text-primary hover:bg-muted transition-all duration-150",
+            disabled && "opacity-50 cursor-not-allowed",
           )}
         >
           <Camera className="h-4 w-4" />
@@ -216,7 +221,9 @@ export function AvatarUpload({
           className="h-8 text-xs gap-1.5 shadow-sm"
         >
           <Upload className="h-3.5 w-3.5" />
-          <span>Change {entityName === 'Profile picture' ? 'Photo' : 'Logo'}</span>
+          <span>
+            Change {entityName === "Profile picture" ? "Photo" : "Logo"}
+          </span>
         </Button>
 
         {currentImage && (
@@ -249,7 +256,8 @@ export function AvatarUpload({
           <DialogHeader>
             <DialogTitle>Upload {entityName}</DialogTitle>
             <DialogDescription>
-              Preview how your {entityName.toLowerCase()} will appear across the workspace.
+              Preview how your {entityName.toLowerCase()} will appear across the
+              workspace.
             </DialogDescription>
           </DialogHeader>
 
@@ -265,7 +273,9 @@ export function AvatarUpload({
                     className="object-cover"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Square preview format</p>
+                <p className="text-xs text-muted-foreground">
+                  Square preview format
+                </p>
               </div>
             )}
 
@@ -277,7 +287,9 @@ export function AvatarUpload({
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Uploading...
                   </span>
-                  <span className="font-mono">{Math.round(uploadProgress)}%</span>
+                  <span className="font-mono">
+                    {Math.round(uploadProgress)}%
+                  </span>
                 </div>
                 <Progress value={uploadProgress} className="h-1.5" />
               </div>
@@ -286,10 +298,10 @@ export function AvatarUpload({
             {/* Drag and Drop Area inside Dialog */}
             <div
               className={cn(
-                'border-2 border-dashed rounded-xl p-5 text-center transition-all duration-200',
+                "border-2 border-dashed rounded-xl p-5 text-center transition-all duration-200",
                 dragActive
-                  ? 'border-primary bg-primary/10 scale-[0.99] ring-2 ring-primary/20'
-                  : 'border-border/60 hover:border-primary/40 bg-muted/5'
+                  ? "border-primary bg-primary/10 scale-[0.99] ring-2 ring-primary/20"
+                  : "border-border/60 hover:border-primary/40 bg-muted/5",
               )}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -298,7 +310,7 @@ export function AvatarUpload({
             >
               <UploadCloud className="h-6 w-6 mx-auto mb-1.5 text-muted-foreground" />
               <p className="text-xs font-medium text-foreground">
-                Drag a new image here, or{' '}
+                Drag a new image here, or{" "}
                 <button
                   type="button"
                   className="text-primary hover:underline font-semibold"

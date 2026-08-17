@@ -1,29 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ShieldOff, X, CheckSquare, Send, Loader } from 'lucide-react';
-import type { UserWithMemberships } from '@/lib/admin-queries';
-import { organisationRoles } from '@/lib/user-scopes';
-import DataTable, { type Column } from '@/components/DataTable';
-import StatusBadge from '@/components/StatusBadge';
-import UserDrawer from '@/components/UserDrawer';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import { bulkUpdateUserRole } from '../users/actions';
-import { resendAdminInvitation } from '../actions';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ShieldOff, X, CheckSquare, Send, Loader } from "lucide-react";
+import type { UserWithMemberships } from "@/lib/admin-queries";
+import { organisationRoles } from "@/lib/user-scopes";
+import DataTable, { type Column } from "@/components/DataTable";
+import StatusBadge from "@/components/StatusBadge";
+import UserDrawer from "@/components/UserDrawer";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { bulkUpdateUserRole } from "../users/actions";
+import { resendAdminInvitation } from "../actions";
 
 /**
  * Pure search filter — exported for unit testing.
  */
 export function applyAdminSearch(
   admins: UserWithMemberships[],
-  search: string
+  search: string,
 ): UserWithMemberships[] {
   const term = search.trim().toLowerCase();
-  if (term === '') return admins;
+  if (term === "") return admins;
   return admins.filter(
     (a) =>
-      a.name.toLowerCase().includes(term) || a.email.toLowerCase().includes(term)
+      a.name.toLowerCase().includes(term) ||
+      a.email.toLowerCase().includes(term),
   );
 }
 
@@ -33,11 +34,16 @@ type Props = {
   currentUserId: string;
 };
 
-export default function SystemAdminListClient({ admins, currentUserId }: Props) {
+export default function SystemAdminListClient({
+  admins,
+  currentUserId,
+}: Props) {
   const router = useRouter();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -51,13 +57,13 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
   // The server action also refuses self-demotion; mirroring it here keeps the
   // count in the dialog honest.
   const revocableIds = Array.from(selectedUserIds).filter(
-    (id) => id !== currentUserId
+    (id) => id !== currentUserId,
   );
 
   const columns: Column<UserWithMemberships>[] = [
     {
-      key: 'user',
-      header: 'Admin',
+      key: "user",
+      header: "Admin",
       render: (u) => (
         <div>
           <div className="font-medium text-white">
@@ -73,27 +79,25 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
       ),
     },
     {
-      key: 'systemRole',
-      header: 'System Role',
+      key: "systemRole",
+      header: "System Role",
       render: (u) => <StatusBadge status={u.role} />,
     },
     {
-      key: 'verified',
-      header: 'Verified',
+      key: "verified",
+      header: "Verified",
       render: (u) => (
-        <StatusBadge status={u.emailVerified ? 'verified' : 'unverified'} />
+        <StatusBadge status={u.emailVerified ? "verified" : "unverified"} />
       ),
     },
     {
-      key: 'orgs',
-      header: 'Organisation Roles',
+      key: "orgs",
+      header: "Organisation Roles",
       render: (u) => {
         const memberships = organisationRoles(u);
         if (memberships.length === 0) {
           return (
-            <span className="text-zinc-600 text-xs italic">
-              Platform only
-            </span>
+            <span className="text-zinc-600 text-xs italic">Platform only</span>
           );
         }
         return (
@@ -111,30 +115,30 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
       },
     },
     {
-      key: 'provider',
-      header: 'Provider',
+      key: "provider",
+      header: "Provider",
       render: (u) => (
         <span className="text-zinc-400 text-sm">
-          {u.providerId === 'credential' ? 'Password' : u.providerId ?? '—'}
+          {u.providerId === "credential" ? "Password" : (u.providerId ?? "—")}
         </span>
       ),
     },
     {
-      key: 'registered',
-      header: 'Registered',
+      key: "registered",
+      header: "Registered",
       render: (u) => (
         <span className="text-zinc-400 text-xs">
-          {new Date(u.createdAt).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+          {new Date(u.createdAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           })}
         </span>
       ),
     },
     {
-      key: 'actions',
-      header: '',
+      key: "actions",
+      header: "",
       render: (u) => (
         <button
           type="button"
@@ -171,7 +175,7 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
 
   async function handleRevokeAdmin() {
     setActionLoading(true);
-    await bulkUpdateUserRole(revocableIds, 'user');
+    await bulkUpdateUserRole(revocableIds, "user");
     setActionLoading(false);
     setSelectedUserIds(new Set());
     setConfirmOpen(false);
@@ -184,8 +188,8 @@ export default function SystemAdminListClient({ admins, currentUserId }: Props) 
         <div
           className={`p-3 rounded-xl border text-xs flex items-start justify-between gap-3 animate-in fade-in duration-200 ${
             resendResult.ok
-              ? 'bg-emerald-950/40 border-emerald-900/60 text-emerald-200'
-              : 'bg-red-950/40 border-red-900/60 text-red-200'
+              ? "bg-emerald-950/40 border-emerald-900/60 text-emerald-200"
+              : "bg-red-950/40 border-red-900/60 text-red-200"
           }`}
         >
           <span>{resendResult.message}</span>

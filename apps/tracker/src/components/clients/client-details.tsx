@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Edit,
@@ -16,19 +16,19 @@ import {
   FolderKanban,
   Plus,
   ExternalLink,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { deleteClient } from '@/server';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu";
+import { deleteClient } from "@/server";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,10 +38,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import type { Client } from '@pmg/db/schema';
-import Link from 'next/link';
-import { formatDate, formatDateTime, formatCurrency, formatClientName } from '@/lib/format';
+} from "@/components/ui/alert-dialog";
+import type { Client } from "@pmg/db/schema";
+import Link from "next/link";
+import {
+  formatDate,
+  formatDateTime,
+  formatCurrency,
+  formatClientName,
+} from "@/lib/format";
 
 interface ClientDetailsProps {
   client: Client;
@@ -68,32 +73,35 @@ interface ClientDetailsProps {
   purchaseOrderCount?: number;
 }
 
-const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  open: 'default',
-  awarded: 'secondary',
-  evaluation: 'outline',
-  lost: 'destructive',
-  closed: 'outline',
-  cancelled: 'destructive',
-  active: 'default',
-  completed: 'secondary',
+const statusVariant: Record<
+  string,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  open: "default",
+  awarded: "secondary",
+  evaluation: "outline",
+  lost: "destructive",
+  closed: "outline",
+  cancelled: "destructive",
+  active: "default",
+  completed: "secondary",
 };
 
 const statusLabels: Record<string, string> = {
-  open: 'Open',
-  new: 'New',
-  review: 'Review',
-  approved_to_prepare: 'Approved to Prepare',
-  preparation: 'Preparation',
-  ready: 'Ready',
-  submitted: 'Submitted',
-  evaluation: 'Evaluation',
-  awarded: 'Awarded',
-  lost: 'Lost',
-  closed: 'Closed',
-  cancelled: 'Cancelled',
-  active: 'Active',
-  completed: 'Completed',
+  open: "Open",
+  new: "New",
+  review: "Review",
+  approved_to_prepare: "Approved to Prepare",
+  preparation: "Preparation",
+  ready: "Ready",
+  submitted: "Submitted",
+  evaluation: "Evaluation",
+  awarded: "Awarded",
+  lost: "Lost",
+  closed: "Closed",
+  cancelled: "Cancelled",
+  active: "Active",
+  completed: "Completed",
 };
 
 export function ClientDetails({
@@ -116,25 +124,24 @@ export function ClientDetails({
     startTransition(async () => {
       const result = await deleteClient(organizationId, client.id);
       if (result.success) {
-        toast.success('Client deleted successfully');
-        router.push('/clients');
+        toast.success("Client deleted successfully");
+        router.push("/clients");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to delete client');
+        toast.error(result.error || "Failed to delete client");
       }
       setShowDeleteDialog(false);
     });
   };
 
   const handleBack = () => {
-    router.push('/clients');
+    router.push("/clients");
   };
 
   const hasContactInfo =
     client.contactName || client.contactEmail || client.contactPhone;
 
-  const totalRelatedRecords =
-    relatedTenders.length + relatedProjects.length;
+  const totalRelatedRecords = relatedTenders.length + relatedProjects.length;
 
   return (
     <div className="w-full space-y-6">
@@ -203,7 +210,9 @@ export function ClientDetails({
                 <label className="text-sm font-medium text-muted-foreground">
                   Client Name
                 </label>
-                <p className="text-lg font-medium">{formatClientName(client.name)}</p>
+                <p className="text-lg font-medium">
+                  {formatClientName(client.name)}
+                </p>
               </div>
 
               {client.notes ? (
@@ -341,7 +350,7 @@ export function ClientDetails({
                             </span>
                             <Badge
                               variant={
-                                statusVariant[tender.status] || 'secondary'
+                                statusVariant[tender.status] || "secondary"
                               }
                               className="text-xs"
                             >
@@ -355,14 +364,11 @@ export function ClientDetails({
                           )}
                           <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                             {tender.value && (
-                              <span>
-                                Value: {formatCurrency(tender.value)}
-                              </span>
+                              <span>Value: {formatCurrency(tender.value)}</span>
                             )}
                             {tender.submissionDate && (
                               <span>
-                                Submission:{' '}
-                                {formatDate(tender.submissionDate)}
+                                Submission: {formatDate(tender.submissionDate)}
                               </span>
                             )}
                           </div>
@@ -401,7 +407,8 @@ export function ClientDetails({
               </CardTitle>
               {relatedProjects.length > 0 && (
                 <span className="text-xs text-muted-foreground">
-                  {purchaseOrderCount} Purchase Order{purchaseOrderCount !== 1 ? 's' : ''}
+                  {purchaseOrderCount} Purchase Order
+                  {purchaseOrderCount !== 1 ? "s" : ""}
                 </span>
               )}
             </CardHeader>
@@ -422,7 +429,7 @@ export function ClientDetails({
                             </span>
                             <Badge
                               variant={
-                                statusVariant[proj.status] || 'secondary'
+                                statusVariant[proj.status] || "secondary"
                               }
                               className="text-xs"
                             >
@@ -487,8 +494,8 @@ export function ClientDetails({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Contact</span>
-                <Badge variant={hasContactInfo ? 'default' : 'secondary'}>
-                  {hasContactInfo ? 'Complete' : 'Incomplete'}
+                <Badge variant={hasContactInfo ? "default" : "secondary"}>
+                  {hasContactInfo ? "Complete" : "Incomplete"}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
@@ -545,7 +552,7 @@ export function ClientDetails({
                   variant="outline"
                   className="w-full justify-start cursor-pointer"
                   onClick={() =>
-                    window.open(`mailto:${client.contactEmail}`, '_blank')
+                    window.open(`mailto:${client.contactEmail}`, "_blank")
                   }
                 >
                   <Mail className="h-4 w-4 mr-2" />
@@ -557,7 +564,7 @@ export function ClientDetails({
                   variant="outline"
                   className="w-full justify-start cursor-pointer"
                   onClick={() =>
-                    window.open(`tel:${client.contactPhone}`, '_blank')
+                    window.open(`tel:${client.contactPhone}`, "_blank")
                   }
                 >
                   <Phone className="h-4 w-4 mr-2" />
@@ -607,7 +614,7 @@ export function ClientDetails({
               {totalRelatedRecords > 0 && (
                 <span className="block mt-2 text-amber-600">
                   This client has {totalRelatedRecords} related record
-                  {totalRelatedRecords !== 1 ? 's' : ''}. You may need to
+                  {totalRelatedRecords !== 1 ? "s" : ""}. You may need to
                   reassign them first.
                 </span>
               )}
@@ -620,7 +627,7 @@ export function ClientDetails({
               disabled={isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isPending ? 'Deleting...' : 'Delete'}
+              {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,6 @@
-import { HomeAuthenticatedUserDashboardProps } from '@/types/home-page';
-import { Button } from '../ui';
-import Link from 'next/link';
+import { HomeAuthenticatedUserDashboardProps } from "@/types/home-page";
+import { Button } from "../ui";
+import Link from "next/link";
 
 export function HomeAuthenticatedUserDashboard({
   user,
@@ -57,13 +57,11 @@ export function HomeAuthenticatedUserDashboard({
             <Button>
               <Link href="/dashboard">View Dashboard</Link>
             </Button>
-            <Button variant={'outline'} asChild>
+            <Button variant={"outline"} asChild>
               <Link href="/tenders">View Tenders</Link>
             </Button>
-            <Button variant={'outline'} asChild>
-              <Link href="/projects/purchase-orders">
-                View Purchase Orders
-              </Link>
+            <Button variant={"outline"} asChild>
+              <Link href="/projects/purchase-orders">View Purchase Orders</Link>
             </Button>
           </div>
 
@@ -77,7 +75,7 @@ export function HomeAuthenticatedUserDashboard({
                   </div>
                   <div className="text-sm text-muted-foreground">
                     You have {recentActivity.upcomingDeadlines} tender
-                    {recentActivity.upcomingDeadlines > 1 ? 's' : ''} with
+                    {recentActivity.upcomingDeadlines > 1 ? "s" : ""} with
                     deadlines in the next 7 days
                   </div>
                 </div>

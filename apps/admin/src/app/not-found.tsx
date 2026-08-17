@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ShieldAlert, ArrowLeft, Home, Terminal } from 'lucide-react';
+import Link from "next/link";
+import { ShieldAlert, ArrowLeft, Home, Terminal } from "lucide-react";
 
 export default function AdminNotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-100 px-4 font-sans select-none">
       <div className="w-full max-w-md bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-8 shadow-2xl backdrop-blur-sm text-center space-y-8 animate-in fade-in duration-500">
-        
         {/* Authoritative Admin Visual Header */}
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 bg-amber-500/10 rounded-full blur-2xl h-20 w-20 mx-auto" />
@@ -18,10 +17,15 @@ export default function AdminNotFound() {
 
         {/* Title and Message */}
         <div className="space-y-3">
-          <h1 className="text-4xl font-extrabold tracking-tight text-white">404</h1>
-          <h2 className="text-xl font-bold text-zinc-200">Terminal Route Not Found</h2>
+          <h1 className="text-4xl font-extrabold tracking-tight text-white">
+            404
+          </h1>
+          <h2 className="text-xl font-bold text-zinc-200">
+            Terminal Route Not Found
+          </h2>
           <p className="text-zinc-400 text-sm leading-relaxed max-w-[90%] mx-auto">
-            The database control route or management table you are attempting to query does not exist.
+            The database control route or management table you are attempting to
+            query does not exist.
           </p>
         </div>
 

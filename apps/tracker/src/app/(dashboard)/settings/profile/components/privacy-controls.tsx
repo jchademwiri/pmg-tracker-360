@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Eye,
   Download,
@@ -30,15 +30,15 @@ import {
   Mail,
   Calendar,
   Settings,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface PrivacySetting {
   id: string;
   name: string;
   description: string;
   enabled: boolean;
-  category: 'profile' | 'activity' | 'data' | 'security';
+  category: "profile" | "activity" | "data" | "security";
   icon: React.ReactNode;
 }
 
@@ -47,8 +47,8 @@ interface DataExport {
   name: string;
   description: string;
   size: string;
-  format: 'json' | 'csv' | 'pdf';
-  status: 'available' | 'processing' | 'expired';
+  format: "json" | "csv" | "pdf";
+  status: "available" | "processing" | "expired";
   createdAt: Date;
   expiresAt: Date;
 }
@@ -56,66 +56,66 @@ interface DataExport {
 export function PrivacyControls() {
   const [privacySettings, setPrivacySettings] = useState<PrivacySetting[]>([
     {
-      id: 'profile-visibility',
-      name: 'Profile Visibility',
-      description: 'Allow other users to see your profile information',
+      id: "profile-visibility",
+      name: "Profile Visibility",
+      description: "Allow other users to see your profile information",
       enabled: false,
-      category: 'profile',
+      category: "profile",
       icon: <User className="h-4 w-4" />,
     },
     {
-      id: 'activity-tracking',
-      name: 'Activity Tracking',
-      description: 'Track your activity for analytics and improvements',
+      id: "activity-tracking",
+      name: "Activity Tracking",
+      description: "Track your activity for analytics and improvements",
       enabled: true,
-      category: 'activity',
+      category: "activity",
       icon: <Calendar className="h-4 w-4" />,
     },
     {
-      id: 'data-analytics',
-      name: 'Data Analytics',
-      description: 'Use your data for product analytics and research',
+      id: "data-analytics",
+      name: "Data Analytics",
+      description: "Use your data for product analytics and research",
       enabled: false,
-      category: 'data',
+      category: "data",
       icon: <Database className="h-4 w-4" />,
     },
     {
-      id: 'marketing-emails',
-      name: 'Marketing Communications',
-      description: 'Receive promotional emails and product updates',
+      id: "marketing-emails",
+      name: "Marketing Communications",
+      description: "Receive promotional emails and product updates",
       enabled: false,
-      category: 'data',
+      category: "data",
       icon: <Mail className="h-4 w-4" />,
     },
     {
-      id: 'location-tracking',
-      name: 'Location Tracking',
-      description: 'Allow location-based features and security monitoring',
+      id: "location-tracking",
+      name: "Location Tracking",
+      description: "Allow location-based features and security monitoring",
       enabled: true,
-      category: 'security',
+      category: "security",
       icon: <Shield className="h-4 w-4" />,
     },
   ]);
 
   const [dataExports, setDataExports] = useState<DataExport[]>([
     {
-      id: '1',
-      name: 'Complete Account Data',
+      id: "1",
+      name: "Complete Account Data",
       description:
-        'All your account information, settings, and activity history',
-      size: '2.4 MB',
-      format: 'json',
-      status: 'available',
+        "All your account information, settings, and activity history",
+      size: "2.4 MB",
+      format: "json",
+      status: "available",
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
     },
     {
-      id: '2',
-      name: 'Activity Report',
-      description: 'Your login history and account activity timeline',
-      size: '856 KB',
-      format: 'csv',
-      status: 'processing',
+      id: "2",
+      name: "Activity Report",
+      description: "Your login history and account activity timeline",
+      size: "856 KB",
+      format: "csv",
+      status: "processing",
       createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
       expiresAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
     },
@@ -128,13 +128,13 @@ export function PrivacyControls() {
   const updatePrivacySetting = (id: string, enabled: boolean) => {
     setPrivacySettings((prev) =>
       prev.map((setting) =>
-        setting.id === id ? { ...setting, enabled } : setting
-      )
+        setting.id === id ? { ...setting, enabled } : setting,
+      ),
     );
-    toast.success('Privacy setting updated');
+    toast.success("Privacy setting updated");
   };
 
-  const handleDataExport = async (format: 'json' | 'csv' | 'pdf') => {
+  const handleDataExport = async (format: "json" | "csv" | "pdf") => {
     setIsExporting(true);
     setExportProgress(0);
 
@@ -148,17 +148,17 @@ export function PrivacyControls() {
           // Add new export to list
           const newExport: DataExport = {
             id: Date.now().toString(),
-            name: `Account Data Export - ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`,
+            name: `Account Data Export - ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`,
             description: `Complete account data export in ${format.toUpperCase()} format`,
-            size: '2.1 MB',
+            size: "2.1 MB",
             format,
-            status: 'available',
+            status: "available",
             createdAt: new Date(),
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           };
 
           setDataExports((prev) => [newExport, ...prev]);
-          toast.success('Data export completed successfully!');
+          toast.success("Data export completed successfully!");
           return 100;
         }
         return prev + Math.random() * 15;
@@ -169,20 +169,20 @@ export function PrivacyControls() {
   const handleDeleteAccount = () => {
     // This would trigger the actual account deletion process
     toast.error(
-      'Account deletion initiated. You will receive a confirmation email.'
+      "Account deletion initiated. You will receive a confirmation email.",
     );
     setShowDeleteDialog(false);
   };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'profile':
+      case "profile":
         return <User className="h-4 w-4" />;
-      case 'activity':
+      case "activity":
         return <Calendar className="h-4 w-4" />;
-      case 'data':
+      case "data":
         return <Database className="h-4 w-4" />;
-      case 'security':
+      case "security":
         return <Shield className="h-4 w-4" />;
       default:
         return <Settings className="h-4 w-4" />;
@@ -191,19 +191,19 @@ export function PrivacyControls() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'available':
+      case "available":
         return (
           <Badge variant="default" className="text-xs">
             Available
           </Badge>
         );
-      case 'processing':
+      case "processing":
         return (
           <Badge variant="secondary" className="text-xs">
             Processing
           </Badge>
         );
-      case 'expired':
+      case "expired":
         return (
           <Badge variant="destructive" className="text-xs">
             Expired
@@ -223,18 +223,18 @@ export function PrivacyControls() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getDaysUntilExpiry = (date: Date) => {
     const days = Math.ceil(
-      (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      (date.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     return days;
   };
@@ -250,7 +250,7 @@ export function PrivacyControls() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {['profile', 'activity', 'data', 'security'].map((category) => (
+          {["profile", "activity", "data", "security"].map((category) => (
             <div key={category} className="space-y-4">
               <div className="flex items-center space-x-2">
                 {getCategoryIcon(category)}
@@ -313,7 +313,7 @@ export function PrivacyControls() {
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
-                onClick={() => handleDataExport('json')}
+                onClick={() => handleDataExport("json")}
                 disabled={isExporting}
                 className="flex items-center space-x-2"
               >
@@ -326,7 +326,7 @@ export function PrivacyControls() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => handleDataExport('csv')}
+                onClick={() => handleDataExport("csv")}
                 disabled={isExporting}
                 className="flex items-center space-x-2"
               >
@@ -339,7 +339,7 @@ export function PrivacyControls() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => handleDataExport('pdf')}
+                onClick={() => handleDataExport("pdf")}
                 disabled={isExporting}
                 className="flex items-center space-x-2"
               >
@@ -396,7 +396,7 @@ export function PrivacyControls() {
                           <span>Created {formatDate(export_.createdAt)}</span>
                           <span>•</span>
                           <span>
-                            Expires in {getDaysUntilExpiry(export_.expiresAt)}{' '}
+                            Expires in {getDaysUntilExpiry(export_.expiresAt)}{" "}
                             days
                           </span>
                         </div>
@@ -404,7 +404,7 @@ export function PrivacyControls() {
                     </div>
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(export_.status)}
-                      {export_.status === 'available' && (
+                      {export_.status === "available" && (
                         <Button variant="outline" size="sm">
                           <Download className="h-4 w-4" />
                         </Button>

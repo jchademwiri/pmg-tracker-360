@@ -1,23 +1,23 @@
-import { getCurrentUser } from '@/server';
-import { getUserOrganizationMembership } from '@/server/organizations';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { ProfileTabsWrapper } from './components/profile-tabs-wrapper';
-import { ProfileSidebar } from './components/profile-sidebar';
+import { getCurrentUser } from "@/server";
+import { getUserOrganizationMembership } from "@/server/organizations";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ProfileTabsWrapper } from "./components/profile-tabs-wrapper";
+import { ProfileSidebar } from "./components/profile-sidebar";
 import {
   updateProfile,
   resendVerificationEmail,
   changePassword,
   getUserSessions,
   SessionInfo,
-} from './actions';
+} from "./actions";
 
-import { CalendarDays, Mail } from 'lucide-react';
-import { SkipNavigation } from '@/components/skip-navigation';
+import { CalendarDays, Mail } from "lucide-react";
+import { SkipNavigation } from "@/components/skip-navigation";
 
 // Force dynamic rendering since we use headers() in server functions
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ProfileSettingsPage() {
   const { session, currentUser } = await getCurrentUser();
@@ -26,7 +26,7 @@ export default async function ProfileSettingsPage() {
   const organizationMembership = session.activeOrganizationId
     ? (await getUserOrganizationMembership(
         currentUser.id,
-        session.activeOrganizationId
+        session.activeOrganizationId,
       )) || null
     : null;
 
@@ -38,7 +38,7 @@ export default async function ProfileSettingsPage() {
 
   // Server action wrapper that handles the ActionResult
   async function handleResendVerification(): Promise<void> {
-    'use server';
+    "use server";
     const result = await resendVerificationEmail();
     if (!result.success) {
       throw new Error(result.message);
@@ -46,8 +46,8 @@ export default async function ProfileSettingsPage() {
   }
 
   const skipSections = [
-    { id: 'profile-sidebar', label: 'User Identity' },
-    { id: 'profile-main', label: 'Settings & Preferences' },
+    { id: "profile-sidebar", label: "User Identity" },
+    { id: "profile-main", label: "Settings & Preferences" },
   ];
 
   return (

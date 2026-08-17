@@ -1,5 +1,5 @@
-import { getRecentActivities } from '@/server/activity';
-import { RecentActivitySection } from './recent-activity-section';
+import { getRecentActivities } from "@/server/activity";
+import { RecentActivitySection } from "./recent-activity-section";
 
 interface RecentActivityWrapperProps {
   limit?: number;
@@ -21,7 +21,7 @@ export async function RecentActivityWrapper({
       />
     );
   } catch (error) {
-    console.error('Error loading recent activities:', error);
+    console.error("Error loading recent activities:", error);
 
     // Return empty state on error
     return <RecentActivitySection activities={[]} className={className} />;

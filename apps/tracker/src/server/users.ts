@@ -1,28 +1,28 @@
-'use server';
-import { db } from '@pmg/db';
-import { member, user, verification } from '@pmg/db/schema';
-import { auth, getServerSession } from '@/lib/auth';
-import { eq, inArray, not } from 'drizzle-orm';
-import { redirect } from 'next/navigation';
-import { StorageService } from '@/lib/storage';
-import { revalidatePath } from 'next/cache';
-import { validateSessionAndOrg } from './utils';
-import { verifyBotProtection } from '@/lib/bot-protection';
+"use server";
+import { db } from "@pmg/db";
+import { member, user, verification } from "@pmg/db/schema";
+import { auth, getServerSession } from "@/lib/auth";
+import { eq, inArray, not } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { StorageService } from "@/lib/storage";
+import { revalidatePath } from "next/cache";
+import { validateSessionAndOrg } from "./utils";
+import { verifyBotProtection } from "@/lib/bot-protection";
 
 export const getCurrentUser = async () => {
   const session = await getServerSession();
   if (!session) {
-    redirect('/login');
+    redirect("/login");
   }
   const currentUser = await db.query.user.findFirst({
     where: eq(user.id, session.user.id),
   });
   if (!currentUser) {
-    redirect('/login');
+    redirect("/login");
   }
 
   // Generate signed URL for avatar if it exists and looks like a storage key (not an external URL like Google Auth)
-  if (currentUser.image && !currentUser.image.startsWith('http')) {
+  if (currentUser.image && !currentUser.image.startsWith("http")) {
     currentUser.image = await StorageService.getSignedUrl(currentUser.image);
   }
 
@@ -42,20 +42,20 @@ export const signIn = async (email: string, password: string) => {
     });
     return {
       success: true,
-      message: 'User signed in successfully',
+      message: "User signed in successfully",
     };
   } catch (error) {
     const e = error as Error;
-    if (e.message === 'Email not verified') {
+    if (e.message === "Email not verified") {
       await sendVerificationEmail(email);
       return {
         success: false,
-        message: 'Email not verified. A new verification email has been sent.',
+        message: "Email not verified. A new verification email has been sent.",
       };
     }
     return {
       success: false,
-      message: e.message || 'An unknown error occurred',
+      message: e.message || "An unknown error occurred",
     };
   }
 };
@@ -66,7 +66,7 @@ export const signUp = async (
   password: string,
   honeypot?: string,
   formMountedAt?: number,
-  turnstileToken?: string
+  turnstileToken?: string,
 ) => {
   try {
     const botCheck = await verifyBotProtection({
@@ -80,7 +80,7 @@ export const signUp = async (
     if (botCheck.isBot) {
       return {
         success: false,
-        message: botCheck.reason || 'Account creation rejected.',
+        message: botCheck.reason || "Account creation rejected.",
       };
     }
 
@@ -93,13 +93,13 @@ export const signUp = async (
     });
     return {
       success: true,
-      message: 'User signed up successfully',
+      message: "User signed up successfully",
     };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: e.message || 'An unknown error occurred',
+      message: e.message || "An unknown error occurred",
     };
   }
 };
@@ -113,13 +113,13 @@ export const sendVerificationEmail = async (email: string) => {
     });
     return {
       success: true,
-      message: 'Verification email sent successfully',
+      message: "Verification email sent successfully",
     };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: e.message || 'Failed to send verification email',
+      message: e.message || "Failed to send verification email",
     };
   }
 };
@@ -135,13 +135,13 @@ export const verifyOTPAndGetToken = async (email: string, otp: string) => {
     });
 
     if (!record) {
-      return { success: false, error: 'Invalid or expired verification code.' };
+      return { success: false, error: "Invalid or expired verification code." };
     }
 
     if (new Date() > record.expiresAt) {
       // Cleanup expired record
       await db.delete(verification).where(eq(verification.id, record.id));
-      return { success: false, error: 'Verification code has expired.' };
+      return { success: false, error: "Verification code has expired." };
     }
 
     // Delete record immediately to prevent replay attacks
@@ -153,8 +153,8 @@ export const verifyOTPAndGetToken = async (email: string, otp: string) => {
     };
   } catch (error) {
     const e = error as Error;
-    console.error('Error in verifyOTPAndGetToken:', e);
-    return { success: false, error: e.message || 'Verification failed.' };
+    console.error("Error in verifyOTPAndGetToken:", e);
+    return { success: false, error: e.message || "Verification failed." };
   }
 };
 
@@ -162,7 +162,7 @@ export const getAllUsers = async (organizationId: string) => {
   try {
     const { role } = await validateSessionAndOrg(organizationId);
 
-    if (!['owner', 'admin'].includes(role)) {
+    if (!["owner", "admin"].includes(role)) {
       return [];
     }
 
@@ -180,7 +180,7 @@ export const getAllUsers = async (organizationId: string) => {
     });
     return users;
   } catch (error) {
-    console.error('Error fetching all users:', error);
+    console.error("Error fetching all users:", error);
     return [];
   }
 };
@@ -190,32 +190,32 @@ export const updateUserImage = async (formData: FormData) => {
     const session = await getServerSession();
 
     if (!session) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
-    const file = formData.get('file') as File;
+    const file = formData.get("file") as File;
     if (!file) {
-      return { success: false, error: 'No file provided' };
+      return { success: false, error: "No file provided" };
     }
 
     // specific validation for images
-    if (!file.type.startsWith('image/')) {
-      return { success: false, error: 'File must be an image' };
+    if (!file.type.startsWith("image/")) {
+      return { success: false, error: "File must be an image" };
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      return { success: false, error: 'File size must be less than 5MB' };
+      return { success: false, error: "File size must be less than 5MB" };
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const fileExtension = file.name.split(".").pop() || "jpg";
 
     // Sanitize user name for folder path
     // Sanitize user name for folder path (fallback to 'user' if name is somehow missing or weird)
     const safeName = session.user.name
-      ? session.user.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
-      : 'user';
+      ? session.user.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()
+      : "user";
     const timestamp = Date.now();
     // Explicitly using forward slashes for S3-style folders
     const uniqueKey = `users/${safeName}-${session.user.id}/profile-${timestamp}.${fileExtension}`;
@@ -229,7 +229,7 @@ export const updateUserImage = async (formData: FormData) => {
     const storageKey = await StorageService.uploadFile(
       buffer,
       uniqueKey,
-      file.type
+      file.type,
     );
 
     // Update user record
@@ -239,16 +239,16 @@ export const updateUserImage = async (formData: FormData) => {
       .where(eq(user.id, session.user.id));
 
     // Cleanup: Delete old image if it exists (perform AFTER successful upload and DB update)
-    if (currentUser?.image && !currentUser.image.startsWith('http')) {
+    if (currentUser?.image && !currentUser.image.startsWith("http")) {
       try {
         await StorageService.deleteFile(currentUser.image);
       } catch (e) {
-        console.error('Failed to delete old user image:', e);
+        console.error("Failed to delete old user image:", e);
         // Do not fail the request if cleanup fails
       }
     }
 
-    revalidatePath('/settings/profile');
+    revalidatePath("/settings/profile");
 
     // Return signed URL for immediate display plus the durable storage key.
     // Only the key is persisted in the DB — the signed URL expires after 1h.
@@ -256,8 +256,8 @@ export const updateUserImage = async (formData: FormData) => {
 
     return { success: true, imageUrl: signedUrl, key: storageKey };
   } catch (error) {
-    console.error('Error updating user image:', error);
-    return { success: false, error: 'Failed to update profile picture' };
+    console.error("Error updating user image:", error);
+    return { success: false, error: "Failed to update profile picture" };
   }
 };
 
@@ -270,7 +270,7 @@ export const removeUserImage = async () => {
     const session = await getServerSession();
 
     if (!session) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     const currentUser = await db.query.user.findFirst({
@@ -279,11 +279,11 @@ export const removeUserImage = async () => {
     });
 
     // Delete the stored object (only if it's a storage key, not a legacy URL)
-    if (currentUser?.image && !currentUser.image.startsWith('http')) {
+    if (currentUser?.image && !currentUser.image.startsWith("http")) {
       try {
         await StorageService.deleteFile(currentUser.image);
       } catch (e) {
-        console.error('Failed to delete old user image:', e);
+        console.error("Failed to delete old user image:", e);
       }
     }
 
@@ -292,11 +292,11 @@ export const removeUserImage = async () => {
       .set({ image: null })
       .where(eq(user.id, session.user.id));
 
-    revalidatePath('/settings/profile');
+    revalidatePath("/settings/profile");
 
     return { success: true };
   } catch (error) {
-    console.error('Error removing user image:', error);
-    return { success: false, error: 'Failed to remove profile picture' };
+    console.error("Error removing user image:", error);
+    return { success: false, error: "Failed to remove profile picture" };
   }
 };

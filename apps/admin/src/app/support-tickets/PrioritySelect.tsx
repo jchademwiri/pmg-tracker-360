@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Flame } from 'lucide-react';
+import * as React from "react";
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, Check, Flame } from "lucide-react";
 
-export type PriorityValue = 'low' | 'medium' | 'high' | 'urgent';
+export type PriorityValue = "low" | "medium" | "high" | "urgent";
 
 export const PRIORITY_OPTIONS = [
   {
-    value: 'low',
-    label: 'Low Priority',
-    dotColor: 'bg-emerald-400',
-    glowColor: 'shadow-[0_0_8px_rgba(52,211,153,0.6)]',
+    value: "low",
+    label: "Low Priority",
+    dotColor: "bg-emerald-400",
+    glowColor: "shadow-[0_0_8px_rgba(52,211,153,0.6)]",
   },
   {
-    value: 'medium',
-    label: 'Medium Priority',
-    dotColor: 'bg-sky-400',
-    glowColor: 'shadow-[0_0_8px_rgba(56,189,248,0.6)]',
+    value: "medium",
+    label: "Medium Priority",
+    dotColor: "bg-sky-400",
+    glowColor: "shadow-[0_0_8px_rgba(56,189,248,0.6)]",
   },
   {
-    value: 'high',
-    label: 'High Priority',
-    dotColor: 'bg-amber-400',
-    glowColor: 'shadow-[0_0_8px_rgba(251,191,36,0.6)]',
+    value: "high",
+    label: "High Priority",
+    dotColor: "bg-amber-400",
+    glowColor: "shadow-[0_0_8px_rgba(251,191,36,0.6)]",
   },
   {
-    value: 'urgent',
-    label: 'Urgent / Critical',
-    dotColor: 'bg-rose-500',
-    glowColor: 'shadow-[0_0_10px_rgba(244,63,94,0.8)]',
+    value: "urgent",
+    label: "Urgent / Critical",
+    dotColor: "bg-rose-500",
+    glowColor: "shadow-[0_0_10px_rgba(244,63,94,0.8)]",
     icon: <Flame className="h-3.5 w-3.5 text-rose-400 fill-rose-400" />,
   },
 ];
@@ -44,7 +44,7 @@ interface PrioritySelectProps {
 export function PrioritySelect({
   value,
   onValueChange,
-  className = '',
+  className = "",
   disabled = false,
 }: PrioritySelectProps) {
   const [open, setOpen] = useState(false);
@@ -64,10 +64,10 @@ export function PrioritySelect({
     }
 
     if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [open]);
 
@@ -90,7 +90,7 @@ export function PrioritySelect({
         </div>
         <ChevronDown
           className={`h-3.5 w-3.5 text-zinc-400 opacity-70 transition-transform duration-200 ${
-            open ? 'rotate-180' : ''
+            open ? "rotate-180" : ""
           }`}
         />
       </button>
@@ -109,14 +109,14 @@ export function PrioritySelect({
                   }}
                   className={`relative flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md cursor-pointer transition-all duration-150 outline-none select-none ${
                     isSelected
-                      ? 'bg-amber-500/20 text-white font-semibold border border-amber-500/30'
-                      : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                      ? "bg-amber-500/20 text-white font-semibold border border-amber-500/30"
+                      : "text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <span
                       className={`h-2 w-2 rounded-full ${opt.dotColor} ${
-                        isSelected ? opt.glowColor : ''
+                        isSelected ? opt.glowColor : ""
                       }`}
                     />
                     <span className="flex items-center gap-1">
@@ -125,7 +125,9 @@ export function PrioritySelect({
                     </span>
                   </div>
 
-                  {isSelected && <Check className="h-3.5 w-3.5 text-amber-400" />}
+                  {isSelected && (
+                    <Check className="h-3.5 w-3.5 text-amber-400" />
+                  )}
                 </div>
               );
             })}

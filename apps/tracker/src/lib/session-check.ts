@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import { getServerSession } from '@/lib/auth';
-import { db } from '@pmg/db';
-import { member, organization } from '@pmg/db/schema';
-import { and, eq, isNull } from 'drizzle-orm';
+import { getServerSession } from "@/lib/auth";
+import { db } from "@pmg/db";
+import { member, organization } from "@pmg/db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 export async function checkUserSession() {
   try {
@@ -18,10 +18,7 @@ export async function checkUserSession() {
       .from(member)
       .innerJoin(organization, eq(member.organizationId, organization.id))
       .where(
-        and(
-          eq(member.userId, session.user.id),
-          isNull(organization.deletedAt)
-        )
+        and(eq(member.userId, session.user.id), isNull(organization.deletedAt)),
       );
 
     const hasOrganization = !!session.session.activeOrganizationId;
@@ -33,7 +30,7 @@ export async function checkUserSession() {
       organizationCount: memberships.length,
     };
   } catch (error) {
-    console.error('Session check error:', error);
+    console.error("Session check error:", error);
     return { hasSession: false, hasOrganization: false };
   }
 }

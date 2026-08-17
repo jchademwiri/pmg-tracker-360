@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 /* ──────────────────────────────────────────────
    MobileActionBar — sticky bottom bar for detail pages on mobile
@@ -14,7 +14,7 @@ interface MobileActionBarAction {
   label: string;
   onClick?: () => void;
   icon?: ReactNode;
-  variant?: 'default' | 'outline' | 'ghost' | 'destructive';
+  variant?: "default" | "outline" | "ghost" | "destructive";
   disabled?: boolean;
 }
 
@@ -23,7 +23,10 @@ interface MobileActionBarProps {
   className?: string;
 }
 
-export function MobileActionBar({ actions, className = '' }: MobileActionBarProps) {
+export function MobileActionBar({
+  actions,
+  className = "",
+}: MobileActionBarProps) {
   if (actions.length === 0) return null;
 
   return (
@@ -34,7 +37,7 @@ export function MobileActionBar({ actions, className = '' }: MobileActionBarProp
         {actions.map((action) => (
           <Button
             key={action.label}
-            variant={action.variant ?? 'outline'}
+            variant={action.variant ?? "outline"}
             size="sm"
             className="flex-1 text-xs h-9 cursor-pointer gap-1.5 min-w-0"
             onClick={action.onClick}

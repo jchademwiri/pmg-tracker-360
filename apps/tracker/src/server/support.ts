@@ -1,24 +1,39 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { supportTickets, supportTicketMessages, user as userTable } from '@pmg/db/schema';
-import { eq, and, sql, desc, asc, isNull, count } from 'drizzle-orm';
-import { z } from 'zod';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
-import { checkRateLimit, getClientIp, verifyBotProtection } from '@/lib/bot-protection';
+import { db } from "@pmg/db";
+import {
+  supportTickets,
+  supportTicketMessages,
+  user as userTable,
+} from "@pmg/db/schema";
+import { eq, and, sql, desc, asc, isNull, count } from "drizzle-orm";
+import { z } from "zod";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import {
+  checkRateLimit,
+  getClientIp,
+  verifyBotProtection,
+} from "@/lib/bot-protection";
 
-import { formatTicketCode } from '@/lib/support-utils';
+import { formatTicketCode } from "@/lib/support-utils";
 
 const supportTicketSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  subject: z.string().max(150, 'Subject is too long').optional().default('General Inquiry'),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']).optional().default('medium'),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  subject: z
+    .string()
+    .max(150, "Subject is too long")
+    .optional()
+    .default("General Inquiry"),
+  priority: z
+    .enum(["low", "medium", "high", "urgent"])
+    .optional()
+    .default("medium"),
   message: z
     .string()
-    .min(1, 'Message is required')
-    .max(2000, 'Message is too long'),
+    .min(1, "Message is required")
+    .max(2000, "Message is too long"),
   userId: z.string().optional(),
   honeypot: z.string().optional(),
   formMountedAt: z.number().optional(),
@@ -31,7 +46,11 @@ export async function createSupportTicket(input: SupportTicketInput) {
     const validated = supportTicketSchema.parse(input);
 
     // Verify session if available
-    let sessionUser: { id: string; name?: string | null; email?: string | null } | null = null;
+    let sessionUser: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+    } | null = null;
     try {
       const headerList = await headers();
       const session = await auth.api.getSession({ headers: headerList });
@@ -43,7 +62,8 @@ export async function createSupportTicket(input: SupportTicketInput) {
     }
 
     // Look up registered user if available
-    let linkedUserId: string | null = sessionUser?.id || validated.userId || null;
+    let linkedUserId: string | null =
+      sessionUser?.id || validated.userId || null;
     const effectiveName = sessionUser?.name || validated.name;
     const effectiveEmail = sessionUser?.email || validated.email;
 
@@ -99,11 +119,11 @@ export async function createSupportTicket(input: SupportTicketInput) {
         id: ticketId,
         name: effectiveName,
         email: effectiveEmail,
-        subject: validated.subject || 'Support Request',
+        subject: validated.subject || "Support Request",
         message: validated.message,
         userId: linkedUserId,
-        status: 'open',
-        priority: validated.priority || 'medium',
+        status: "open",
+        priority: validated.priority || "medium",
         createdAt: now,
         updatedAt: now,
       })
@@ -119,7 +139,7 @@ export async function createSupportTicket(input: SupportTicketInput) {
       id: crypto.randomUUID(),
       ticketId,
       senderId: linkedUserId,
-      senderType: 'user',
+      senderType: "user",
       senderName: effectiveName,
       senderEmail: effectiveEmail,
       message: validated.message,
@@ -129,34 +149,42 @@ export async function createSupportTicket(input: SupportTicketInput) {
 
     const escapeHtml = (unsafe: string) =>
       unsafe
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
-    const safeSubject = escapeHtml(validated.subject || 'Support Request');
-    const safeMessage = escapeHtml(validated.message).replace(/\n/g, '<br>');
+    const safeSubject = escapeHtml(validated.subject || "Support Request");
+    const safeMessage = escapeHtml(validated.message).replace(/\n/g, "<br>");
     const safeName = escapeHtml(effectiveName);
     const safeEmail = escapeHtml(effectiveEmail);
-    const safePriority = (validated.priority || 'medium').toUpperCase();
-    const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
-    const adminUrl = process.env.ADMIN_APP_URL || 'https://admin.tendertrack360.co.za/support-tickets';
+    const safePriority = (validated.priority || "medium").toUpperCase();
+    const senderEmail =
+      process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+    const adminUrl =
+      process.env.ADMIN_APP_URL ||
+      "https://admin.tendertrack360.co.za/support-tickets";
 
     // 3. Send email notifications ONLY on new ticket creation
     try {
       if (process.env.RESEND_API_KEY) {
-        const { Resend } = await import('resend');
+        const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         // Fetch admin emails
         const adminUsers = await db
           .select({ email: userTable.email })
           .from(userTable)
-          .where(eq(userTable.role, 'admin'));
+          .where(eq(userTable.role, "admin"));
 
-        const adminEmails = adminUsers.map((a) => a.email).filter(Boolean) as string[];
-        const recipients = adminEmails.length > 0 ? adminEmails : ['info@contact.tendertrack360.co.za'];
+        const adminEmails = adminUsers
+          .map((a) => a.email)
+          .filter(Boolean) as string[];
+        const recipients =
+          adminEmails.length > 0
+            ? adminEmails
+            : ["info@contact.tendertrack360.co.za"];
 
         // Alert Admins of new ticket
         await resend.emails.send({
@@ -214,16 +242,27 @@ export async function createSupportTicket(input: SupportTicketInput) {
         });
       }
     } catch (emailErr) {
-      console.error('Failed to send support notification emails:', emailErr);
+      console.error("Failed to send support notification emails:", emailErr);
     }
 
-    return { success: true, ticketId, ticketNumber: insertedTicket?.ticketNumber, ticketCode };
+    return {
+      success: true,
+      ticketId,
+      ticketNumber: insertedTicket?.ticketNumber,
+      ticketCode,
+    };
   } catch (error: any) {
-    console.error('Failed to create support ticket:', error);
+    console.error("Failed to create support ticket:", error);
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.issues[0]?.message || 'Invalid input data' };
+      return {
+        success: false,
+        error: error.issues[0]?.message || "Invalid input data",
+      };
     }
-    return { success: false, error: error?.message || 'Failed to submit support request' };
+    return {
+      success: false,
+      error: error?.message || "Failed to submit support request",
+    };
   }
 }
 
@@ -238,7 +277,7 @@ export async function getUserSupportTickets() {
     }
 
     const userId = session.user.id;
-    const userEmail = session.user.email?.toLowerCase() || '';
+    const userEmail = session.user.email?.toLowerCase() || "";
 
     const tickets = await db
       .select({
@@ -256,9 +295,12 @@ export async function getUserSupportTickets() {
         unreadAdminCount: sql<number>`count(*) filter (where ${supportTicketMessages.senderType} = 'admin' and ${supportTicketMessages.readAt} is null and ${supportTicketMessages.isInternal} = false)`,
       })
       .from(supportTickets)
-      .leftJoin(supportTicketMessages, eq(supportTickets.id, supportTicketMessages.ticketId))
+      .leftJoin(
+        supportTicketMessages,
+        eq(supportTickets.id, supportTicketMessages.ticketId),
+      )
       .where(
-        sql`${supportTickets.userId} = ${userId} OR lower(${supportTickets.email}) = ${userEmail}`
+        sql`${supportTickets.userId} = ${userId} OR lower(${supportTickets.email}) = ${userEmail}`,
       )
       .groupBy(supportTickets.id)
       .orderBy(desc(supportTickets.updatedAt));
@@ -275,10 +317,10 @@ export async function getUserSupportTickets() {
         ticketCode: formatTicketCode(t.ticketNumber, t.id),
         name: t.name,
         email: t.email,
-        subject: t.subject || 'Support Request',
+        subject: t.subject || "Support Request",
         message: t.message,
         status: t.status,
-        priority: t.priority || 'medium',
+        priority: t.priority || "medium",
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
         messageCount: Number(t.messageCount) || 1,
@@ -292,7 +334,7 @@ export async function getUserSupportTickets() {
       unreadTotal,
     };
   } catch (err: any) {
-    console.error('Error fetching user tickets:', err);
+    console.error("Error fetching user tickets:", err);
     return { success: false, tickets: [], unreadTotal: 0 };
   }
 }
@@ -312,7 +354,7 @@ export async function getUserTicketThread(ticketId: string) {
       .where(eq(supportTickets.id, ticketId));
 
     if (!ticket) {
-      return { success: false, error: 'Ticket not found.' };
+      return { success: false, error: "Ticket not found." };
     }
 
     // Permission check: must belong to user or match email
@@ -321,7 +363,7 @@ export async function getUserTicketThread(ticketId: string) {
       ticket.userId !== userId &&
       ticket.email.toLowerCase() !== userEmail
     ) {
-      return { success: false, error: 'Unauthorized.' };
+      return { success: false, error: "Unauthorized." };
     }
 
     // Fetch non-internal messages
@@ -331,8 +373,8 @@ export async function getUserTicketThread(ticketId: string) {
       .where(
         and(
           eq(supportTicketMessages.ticketId, ticketId),
-          eq(supportTicketMessages.isInternal, false)
-        )
+          eq(supportTicketMessages.isInternal, false),
+        ),
       )
       .orderBy(asc(supportTicketMessages.createdAt));
 
@@ -343,9 +385,9 @@ export async function getUserTicketThread(ticketId: string) {
       .where(
         and(
           eq(supportTicketMessages.ticketId, ticketId),
-          eq(supportTicketMessages.senderType, 'admin'),
-          isNull(supportTicketMessages.readAt)
-        )
+          eq(supportTicketMessages.senderType, "admin"),
+          isNull(supportTicketMessages.readAt),
+        ),
       );
 
     const ticketCode = formatTicketCode(ticket.ticketNumber, ticket.id);
@@ -355,14 +397,14 @@ export async function getUserTicketThread(ticketId: string) {
       ticket: {
         ...ticket,
         ticketCode,
-        subject: ticket.subject || 'Support Request',
-        priority: ticket.priority || 'medium',
+        subject: ticket.subject || "Support Request",
+        priority: ticket.priority || "medium",
       },
       messages,
     };
   } catch (err: any) {
-    console.error('Error fetching user ticket thread:', err);
-    return { success: false, error: err.message || 'Failed to fetch thread.' };
+    console.error("Error fetching user ticket thread:", err);
+    return { success: false, error: err.message || "Failed to fetch thread." };
   }
 }
 
@@ -373,7 +415,7 @@ export async function sendUserTicketMessage(ticketId: string, message: string) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!message || !message.trim()) {
-      return { success: false, error: 'Message cannot be empty.' };
+      return { success: false, error: "Message cannot be empty." };
     }
 
     const [ticket] = await db
@@ -381,7 +423,7 @@ export async function sendUserTicketMessage(ticketId: string, message: string) {
       .from(supportTickets)
       .where(eq(supportTickets.id, ticketId));
 
-    if (!ticket) return { success: false, error: 'Ticket not found.' };
+    if (!ticket) return { success: false, error: "Ticket not found." };
 
     const senderName = session?.user?.name || ticket.name;
     const senderEmail = session?.user?.email || ticket.email;
@@ -392,7 +434,7 @@ export async function sendUserTicketMessage(ticketId: string, message: string) {
       id: crypto.randomUUID(),
       ticketId,
       senderId: session?.user?.id || null,
-      senderType: 'user',
+      senderType: "user",
       senderName,
       senderEmail,
       message: message.trim(),
@@ -401,7 +443,10 @@ export async function sendUserTicketMessage(ticketId: string, message: string) {
     });
 
     // 2. Update ticket updated_at and reopen if closed
-    const newStatus = ticket.status === 'closed' || ticket.status === 'resolved' ? 'open' : ticket.status;
+    const newStatus =
+      ticket.status === "closed" || ticket.status === "resolved"
+        ? "open"
+        : ticket.status;
     await db
       .update(supportTickets)
       .set({
@@ -412,8 +457,8 @@ export async function sendUserTicketMessage(ticketId: string, message: string) {
 
     return { success: true };
   } catch (err: any) {
-    console.error('Error sending user message:', err);
-    return { success: false, error: err.message || 'Failed to send message.' };
+    console.error("Error sending user message:", err);
+    return { success: false, error: err.message || "Failed to send message." };
   }
 }
 
@@ -428,10 +473,10 @@ export async function emailUserTicketTranscript(ticketId: string) {
       .from(supportTickets)
       .where(eq(supportTickets.id, ticketId));
 
-    if (!ticket) return { success: false, error: 'Ticket not found.' };
+    if (!ticket) return { success: false, error: "Ticket not found." };
 
     const targetEmail = session?.user?.email || ticket.email;
-    if (!targetEmail) return { success: false, error: 'No email found.' };
+    if (!targetEmail) return { success: false, error: "No email found." };
 
     const ticketCode = formatTicketCode(ticket.ticketNumber, ticket.id);
 
@@ -441,26 +486,26 @@ export async function emailUserTicketTranscript(ticketId: string) {
       .where(
         and(
           eq(supportTicketMessages.ticketId, ticketId),
-          eq(supportTicketMessages.isInternal, false)
-        )
+          eq(supportTicketMessages.isInternal, false),
+        ),
       )
       .orderBy(asc(supportTicketMessages.createdAt));
 
     const escapeHtml = (str: string) =>
       str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
     const messagesHtml = messages
       .map((m) => {
-        const isAdmin = m.senderType === 'admin';
-        const bg = isAdmin ? '#f0fdf4' : '#f8fafc';
-        const borderColor = isAdmin ? '#16a34a' : '#0284c7';
-        const senderBadge = isAdmin ? 'Support Team' : 'You';
-        const dateStr = new Date(m.createdAt).toLocaleString('en-GB');
+        const isAdmin = m.senderType === "admin";
+        const bg = isAdmin ? "#f0fdf4" : "#f8fafc";
+        const borderColor = isAdmin ? "#16a34a" : "#0284c7";
+        const senderBadge = isAdmin ? "Support Team" : "You";
+        const dateStr = new Date(m.createdAt).toLocaleString("en-GB");
 
         return `
           <div style="background-color: ${bg}; border-left: 4px solid ${borderColor}; padding: 12px 16px; margin-bottom: 12px; border-radius: 4px;">
@@ -469,33 +514,34 @@ export async function emailUserTicketTranscript(ticketId: string) {
               <span>${dateStr}</span>
             </div>
             <div style="font-size: 14px; line-height: 1.5; color: #1e293b;">
-              ${escapeHtml(m.message).replace(/\n/g, '<br>')}
+              ${escapeHtml(m.message).replace(/\n/g, "<br>")}
             </div>
           </div>
         `;
       })
-      .join('');
+      .join("");
 
-    const senderEmailAddr = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
+    const senderEmailAddr =
+      process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
 
     if (process.env.RESEND_API_KEY) {
-      const { Resend } = await import('resend');
+      const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       await resend.emails.send({
         from: `Tender Track 360 Support <${senderEmailAddr}>`,
         to: [targetEmail],
-        subject: `Support Conversation Transcript: ${ticket.subject || 'Support Request'} (#${ticketCode})`,
+        subject: `Support Conversation Transcript: ${ticket.subject || "Support Request"} (#${ticketCode})`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 24px; color: #1e293b; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="border-bottom: 2px solid #d4af37; padding-bottom: 16px; margin-bottom: 20px;">
               <h2 style="color: #0f172a; margin: 0; font-size: 20px;">Support Conversation Transcript</h2>
-              <p style="color: #64748b; margin: 4px 0 0 0; font-size: 13px;">Subject: <strong>${escapeHtml(ticket.subject || 'Support Request')}</strong> | Ticket Reference: #${ticketCode} | Status: ${ticket.status.toUpperCase()}</p>
+              <p style="color: #64748b; margin: 4px 0 0 0; font-size: 13px;">Subject: <strong>${escapeHtml(ticket.subject || "Support Request")}</strong> | Ticket Reference: #${ticketCode} | Status: ${ticket.status.toUpperCase()}</p>
             </div>
 
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 13px;">
               <p style="margin: 0 0 4px 0;"><strong>User:</strong> ${escapeHtml(ticket.name)}</p>
-              <p style="margin: 0;"><strong>Date Opened:</strong> ${new Date(ticket.createdAt).toLocaleString('en-GB')}</p>
+              <p style="margin: 0;"><strong>Date Opened:</strong> ${new Date(ticket.createdAt).toLocaleString("en-GB")}</p>
             </div>
 
             <h3 style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 12px;">Conversation History:</h3>
@@ -511,15 +557,21 @@ export async function emailUserTicketTranscript(ticketId: string) {
 
     return { success: true, message: `Transcript sent to ${targetEmail}!` };
   } catch (err: any) {
-    console.error('Error sending transcript to user:', err);
-    return { success: false, error: err.message || 'Failed to email transcript.' };
+    console.error("Error sending transcript to user:", err);
+    return {
+      success: false,
+      error: err.message || "Failed to email transcript.",
+    };
   }
 }
 
 /**
  * Returns the count of DISTINCT support tickets that have unread responses from admin for the current user.
  */
-export async function getUnreadTicketCount(): Promise<{ success: boolean; count: number }> {
+export async function getUnreadTicketCount(): Promise<{
+  success: boolean;
+  count: number;
+}> {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -527,21 +579,24 @@ export async function getUnreadTicketCount(): Promise<{ success: boolean; count:
     }
 
     const userId = session.user.id;
-    const userEmail = session.user.email?.toLowerCase() || '';
+    const userEmail = session.user.email?.toLowerCase() || "";
 
     const [result] = await db
       .select({
         count: sql<number>`count(distinct ${supportTickets.id})`,
       })
       .from(supportTickets)
-      .innerJoin(supportTicketMessages, eq(supportTickets.id, supportTicketMessages.ticketId))
+      .innerJoin(
+        supportTicketMessages,
+        eq(supportTickets.id, supportTicketMessages.ticketId),
+      )
       .where(
         and(
           sql`(${supportTickets.userId} = ${userId} OR lower(${supportTickets.email}) = ${userEmail})`,
-          eq(supportTicketMessages.senderType, 'admin'),
+          eq(supportTicketMessages.senderType, "admin"),
           isNull(supportTicketMessages.readAt),
-          eq(supportTicketMessages.isInternal, false)
-        )
+          eq(supportTicketMessages.isInternal, false),
+        ),
       );
 
     return {
@@ -549,7 +604,7 @@ export async function getUnreadTicketCount(): Promise<{ success: boolean; count:
       count: Number(result?.count) || 0,
     };
   } catch (err) {
-    console.error('Error fetching unread ticket count for user:', err);
+    console.error("Error fetching unread ticket count for user:", err);
     return { success: false, count: 0 };
   }
 }

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import type { FeedbackWithUser } from '@/lib/admin-queries';
-import DataTable, { type Column } from '@/components/DataTable';
-import StatusBadge from '@/components/StatusBadge';
-import { FeedbackDetailDrawer } from './FeedbackDetailDrawer';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import type { FeedbackWithUser } from "@/lib/admin-queries";
+import DataTable, { type Column } from "@/components/DataTable";
+import StatusBadge from "@/components/StatusBadge";
+import { FeedbackDetailDrawer } from "./FeedbackDetailDrawer";
 import {
   MessageSquare,
   Search,
@@ -14,31 +14,32 @@ import {
   Mail,
   Send,
   User,
-} from 'lucide-react';
+} from "lucide-react";
 
 type Props = {
   feedback: FeedbackWithUser[];
   viewMode: string;
 };
 
-type FilterValue = 'all' | 'bug' | 'feature' | 'other';
+type FilterValue = "all" | "bug" | "feature" | "other";
 
 const FILTERS: { label: string; value: FilterValue }[] = [
-  { label: 'All Feedback', value: 'all' },
-  { label: 'Bug Reports', value: 'bug' },
-  { label: 'Feature Requests', value: 'feature' },
-  { label: 'General Feedback', value: 'other' },
+  { label: "All Feedback", value: "all" },
+  { label: "Bug Reports", value: "bug" },
+  { label: "Feature Requests", value: "feature" },
+  { label: "General Feedback", value: "other" },
 ];
 
 export default function FeedbackListClient({ feedback, viewMode }: Props) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFeedback, setSelectedFeedback] = useState<FeedbackWithUser | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFeedback, setSelectedFeedback] =
+    useState<FeedbackWithUser | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   function navigate(value: FilterValue) {
-    if (value === 'all') {
-      router.push('/feedback');
+    if (value === "all") {
+      router.push("/feedback");
     } else {
       router.push(`/feedback?type=${value}`);
     }
@@ -51,7 +52,7 @@ export default function FeedbackListClient({ feedback, viewMode }: Props) {
 
   // 1. Filter by type
   const typeFiltered =
-    viewMode === 'all'
+    viewMode === "all"
       ? feedback
       : feedback.filter((entry) => entry.type === viewMode);
 
@@ -70,63 +71,66 @@ export default function FeedbackListClient({ feedback, viewMode }: Props) {
 
   const columns: Column<FeedbackWithUser>[] = [
     {
-      key: 'type',
-      header: 'Type',
+      key: "type",
+      header: "Type",
       render: (entry) => <StatusBadge status={entry.type} />,
     },
     {
-      key: 'submitter',
-      header: 'Submitter',
+      key: "submitter",
+      header: "Submitter",
       render: (entry) => (
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-zinc-200">
-            {entry.name || entry.userName || 'Anonymous'}
+            {entry.name || entry.userName || "Anonymous"}
           </span>
           <span className="text-xs text-zinc-500 flex items-center gap-1">
             <Mail className="h-3 w-3" />
-            {entry.email ?? 'No email'}
+            {entry.email ?? "No email"}
           </span>
         </div>
       ),
     },
     {
-      key: 'message',
-      header: 'Feedback Summary',
+      key: "message",
+      header: "Feedback Summary",
       render: (entry) => (
         <span className="text-zinc-300 text-sm line-clamp-2 leading-relaxed">
           {entry.message}
         </span>
       ),
-      className: 'max-w-md',
+      className: "max-w-md",
     },
     {
-      key: 'url',
-      header: 'Source Page',
+      key: "url",
+      header: "Source Page",
       render: (entry) =>
         entry.url ? (
-          <span className="text-xs text-indigo-400 truncate max-w-[140px] block" title={entry.url}>
-            {entry.url.replace(/^https?:\/\/[^/]+/, '') || '/'}
+          <span
+            className="text-xs text-indigo-400 truncate max-w-[140px] block"
+            title={entry.url}
+          >
+            {entry.url.replace(/^https?:\/\/[^/]+/, "") || "/"}
           </span>
         ) : (
           <span className="text-xs text-zinc-600">—</span>
         ),
     },
     {
-      key: 'submitted',
-      header: 'Received',
+      key: "submitted",
+      header: "Received",
       render: (entry) => (
         <span className="text-xs text-zinc-400 whitespace-nowrap">
-          {new Date(entry.createdAt).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+          {new Date(entry.createdAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           })}
         </span>
       ),
     },
     {
-      key: 'actions',
-      header: 'Actions',
+      key: "actions",
+      header: "Actions",
       render: (entry) => (
         <button
           type="button"
@@ -140,7 +144,7 @@ export default function FeedbackListClient({ feedback, viewMode }: Props) {
           <ChevronRight className="h-3 w-3" />
         </button>
       ),
-      className: 'text-right',
+      className: "text-right",
     },
   ];
 
@@ -153,7 +157,7 @@ export default function FeedbackListClient({ feedback, viewMode }: Props) {
           {FILTERS.map(({ label, value }) => {
             const isActive = viewMode === value;
             const count =
-              value === 'all'
+              value === "all"
                 ? feedback.length
                 : feedback.filter((e) => e.type === value).length;
 
@@ -164,14 +168,16 @@ export default function FeedbackListClient({ feedback, viewMode }: Props) {
                 onClick={() => navigate(value)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-amber-600 border-amber-500 text-white font-semibold shadow-xs'
-                    : 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                    ? "bg-amber-600 border-amber-500 text-white font-semibold shadow-xs"
+                    : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
                 }`}
               >
                 <span>{label}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isActive ? 'bg-amber-700 text-white' : 'bg-zinc-800 text-zinc-400'
+                    isActive
+                      ? "bg-amber-700 text-white"
+                      : "bg-zinc-800 text-zinc-400"
                   }`}
                 >
                   {count}

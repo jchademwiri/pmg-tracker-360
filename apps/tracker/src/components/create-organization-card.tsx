@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CreateOrganizationCardProps {
   onClick?: () => void;
@@ -24,9 +24,9 @@ export function CreateOrganizationCard({
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden transition-all duration-300 ease-out hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.03] hover:-translate-y-1 cursor-pointer border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 bg-muted/20 hover:bg-muted/40',
-        'before:absolute before:inset-0 before:bg-linear-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100',
-        className
+        "group relative overflow-hidden transition-all duration-300 ease-out hover:shadow-xl hover:shadow-primary/10 hover:scale-[1.03] hover:-translate-y-1 cursor-pointer border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 bg-muted/20 hover:bg-muted/40",
+        "before:absolute before:inset-0 before:bg-linear-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100",
+        className,
       )}
       onClick={handleClick}
     >

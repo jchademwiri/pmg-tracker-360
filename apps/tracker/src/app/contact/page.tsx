@@ -1,5 +1,5 @@
-import { ContactForm } from './form';
-import type { Metadata } from 'next';
+import { ContactForm } from "./form";
+import type { Metadata } from "next";
 import {
   Mail,
   Phone,
@@ -8,36 +8,36 @@ import {
   Github,
   MessageCircle,
   Share2,
-} from 'lucide-react';
-import { FaXTwitter } from 'react-icons/fa6';
-import { CONTACT_INFO } from '@/lib/constants';
+} from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
+import { CONTACT_INFO } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: 'Contact Us',
+  title: "Contact Us",
   description:
-    'Get in touch with the Tender Track 360 team for support, sales inquiries, or assistance with our tender management platform.',
+    "Get in touch with the Tender Track 360 team for support, sales inquiries, or assistance with our tender management platform.",
 };
 
 const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'ContactPage',
-  name: 'Contact Us | Tender Track 360',
-  description: 'Get in touch with the Tender Track 360 team.',
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  name: "Contact Us | Tender Track 360",
+  description: "Get in touch with the Tender Track 360 team.",
   mainEntity: {
-    '@type': 'Organization',
-    name: 'Tender Track 360',
+    "@type": "Organization",
+    name: "Tender Track 360",
     contactPoint: [
       {
-        '@type': 'ContactPoint',
+        "@type": "ContactPoint",
         telephone: CONTACT_INFO.phone,
-        contactType: 'customer service',
-        areaServed: 'ZA',
-        availableLanguage: 'English',
+        contactType: "customer service",
+        areaServed: "ZA",
+        availableLanguage: "English",
       },
       {
-        '@type': 'ContactPoint',
+        "@type": "ContactPoint",
         email: CONTACT_INFO.email,
-        contactType: 'customer service',
+        contactType: "customer service",
       },
     ],
   },
@@ -93,7 +93,7 @@ export default function Page() {
               <div>
                 <h3 className="font-semibold mb-1">Call Us</h3>
                 <a
-                  href={`tel:${CONTACT_INFO.phone.replace(/\s/g, '')}`}
+                  href={`tel:${CONTACT_INFO.phone.replace(/\s/g, "")}`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   {CONTACT_INFO.phone}
@@ -109,8 +109,8 @@ export default function Page() {
                 <h3 className="font-semibold mb-1">WhatsApp</h3>
                 <a
                   href={`https://wa.me/${CONTACT_INFO.whatsapp
-                    .replace(/\s/g, '')
-                    .replace('+', '')}`}
+                    .replace(/\s/g, "")
+                    .replace("+", "")}`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"

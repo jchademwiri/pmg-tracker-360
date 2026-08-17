@@ -1,17 +1,17 @@
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency } from "@/lib/format";
 import {
   AGEING_BUCKETS,
   type StatementAgeingSummary,
   hasStatementAgeingBalance,
-} from '@/lib/statements/ageing';
-import { cn } from '@/lib/utils';
+} from "@/lib/statements/ageing";
+import { cn } from "@/lib/utils";
 
 const AGEING_LABELS: Record<(typeof AGEING_BUCKETS)[number], string> = {
-  current: 'Current',
-  days1To30: '1-30 Days',
-  days31To60: '31-60 Days',
-  days61To90: '61-90 Days',
-  days90Plus: '90+ Days',
+  current: "Current",
+  days1To30: "1-30 Days",
+  days31To60: "31-60 Days",
+  days61To90: "61-90 Days",
+  days90Plus: "90+ Days",
 };
 
 type AgeingSummaryTableProps = {
@@ -37,9 +37,15 @@ export function AgeingSummaryTable({
   }
 
   return (
-    <section className={cn('space-y-2', className)} aria-labelledby="ageing-summary-heading">
+    <section
+      className={cn("space-y-2", className)}
+      aria-labelledby="ageing-summary-heading"
+    >
       <div>
-        <h2 id="ageing-summary-heading" className="text-sm font-semibold text-foreground">
+        <h2
+          id="ageing-summary-heading"
+          className="text-sm font-semibold text-foreground"
+        >
           Ageing Summary
         </h2>
         <p className="text-xs text-muted-foreground">
@@ -51,7 +57,10 @@ export function AgeingSummaryTable({
           <thead>
             <tr className="bg-muted/30 text-muted-foreground">
               {AGEING_BUCKETS.map((bucket) => (
-                <th key={bucket} className="whitespace-nowrap p-2 text-right font-medium">
+                <th
+                  key={bucket}
+                  className="whitespace-nowrap p-2 text-right font-medium"
+                >
                   {AGEING_LABELS[bucket]}
                 </th>
               ))}
@@ -63,7 +72,10 @@ export function AgeingSummaryTable({
           <tbody>
             <tr>
               {AGEING_BUCKETS.map((bucket) => (
-                <td key={bucket} className="whitespace-nowrap p-2 text-right tabular-nums">
+                <td
+                  key={bucket}
+                  className="whitespace-nowrap p-2 text-right tabular-nums"
+                >
                   {formatStatementAmount(summary[bucket])}
                 </td>
               ))}

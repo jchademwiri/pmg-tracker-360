@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import {
   Crown,
   ArrowLeft,
@@ -11,21 +11,21 @@ import {
   Shield,
   Clock,
   Building2,
-} from 'lucide-react';
-import { useState, useEffect } from 'react';
+} from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { formatCurrency } from '@/lib/format';
-import { toast } from 'sonner';
-import { updateUserPlan } from '@/server/billing';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { formatCurrency } from "@/lib/format";
+import { toast } from "sonner";
+import { updateUserPlan } from "@/server/billing";
 
 // Enhanced TypeScript interfaces
 interface PricingTier {
@@ -46,7 +46,10 @@ interface Testimonial {
   rating: number;
 }
 
-import { DEFAULT_SUBSCRIPTION_PLANS, type SubscriptionPlan } from '@pmg/db/plans-constants';
+import {
+  DEFAULT_SUBSCRIPTION_PLANS,
+  type SubscriptionPlan,
+} from "@pmg/db/plans-constants";
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -55,7 +58,7 @@ interface UpgradeDialogProps {
   maxCount: number;
   userName?: string;
   organizationName?: string;
-  usageContext?: 'organizations' | 'tenders' | 'members' | 'storage';
+  usageContext?: "organizations" | "tenders" | "members" | "storage";
   plans?: SubscriptionPlan[];
 }
 
@@ -64,7 +67,7 @@ export function UpgradeDialog({
   onOpenChange,
   currentCount,
   maxCount,
-  usageContext = 'organizations',
+  usageContext = "organizations",
   plans = DEFAULT_SUBSCRIPTION_PLANS,
 }: UpgradeDialogProps) {
   const router = useRouter();
@@ -98,19 +101,19 @@ export function UpgradeDialog({
 
   const testimonials: Testimonial[] = [
     {
-      name: 'Sarah Johnson',
-      role: 'Procurement Director',
-      company: 'TechCorp',
+      name: "Sarah Johnson",
+      role: "Procurement Director",
+      company: "TechCorp",
       content:
         "The upgrade to Pro has transformed our tender management process. We've seen a 40% increase in efficiency.",
       rating: 5,
     },
     {
-      name: 'Michael Chen',
-      role: 'Operations Manager',
-      company: 'Global Industries',
+      name: "Michael Chen",
+      role: "Operations Manager",
+      company: "Global Industries",
       content:
-        'The advanced analytics and unlimited organizations feature is exactly what our growing team needed.',
+        "The advanced analytics and unlimited organizations feature is exactly what our growing team needed.",
       rating: 5,
     },
   ];
@@ -118,21 +121,21 @@ export function UpgradeDialog({
   const getContextualMessage = () => {
     const usagePercentage = (currentCount / maxCount) * 100;
 
-    if (usageContext === 'organizations') {
+    if (usageContext === "organizations") {
       if (usagePercentage >= 100) {
         return {
-          title: 'Organization Limit Reached',
+          title: "Organization Limit Reached",
           description: `You've reached the maximum of ${maxCount} organizations on your current plan. Upgrade to create unlimited organizations and unlock powerful features.`,
         };
       } else if (usagePercentage >= 80) {
         return {
-          title: 'Approaching Organization Limit',
+          title: "Approaching Organization Limit",
           description: `You're using ${currentCount} of ${maxCount} organizations. Consider upgrading to Pro for unlimited organizations and advanced features.`,
         };
       }
     }
 
-    if (usageContext === 'tenders') {
+    if (usageContext === "tenders") {
       return {
         title: `Monthly Tender Limit Reached (${currentCount}/${maxCount})`,
         description: `You have reached your Free Tier monthly limit of ${maxCount} tenders. Upgrade to Starter or Pro for unlimited tender tracking.`,
@@ -140,38 +143,41 @@ export function UpgradeDialog({
     }
 
     return {
-      title: 'Unlock More Potential',
+      title: "Unlock More Potential",
       description:
-        'Upgrade to access advanced features and remove limitations on your account.',
+        "Upgrade to access advanced features and remove limitations on your account.",
     };
   };
 
   const handleGoToDashboard = () => {
     onOpenChange(false);
-    router.push('/dashboard');
+    router.push("/dashboard");
   };
 
-  const handleUpgradePlan = async (targetPlan: 'starter' | 'pro') => {
+  const handleUpgradePlan = async (targetPlan: "starter" | "pro") => {
     setIsUpgrading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       const result = await updateUserPlan(targetPlan);
       if (result.success) {
-        toast.success(`Successfully upgraded to ${targetPlan.toUpperCase()} Plan!`, {
-          description:
-            targetPlan === 'pro'
-              ? 'Your monthly tender limit has been upgraded to Unlimited Tenders.'
-              : 'Your monthly tender limit has been upgraded to 20 tenders / month.',
-        });
+        toast.success(
+          `Successfully upgraded to ${targetPlan.toUpperCase()} Plan!`,
+          {
+            description:
+              targetPlan === "pro"
+                ? "Your monthly tender limit has been upgraded to Unlimited Tenders."
+                : "Your monthly tender limit has been upgraded to 20 tenders / month.",
+          },
+        );
         onOpenChange(false);
         window.location.reload();
       } else {
-        toast.error(result.error || 'Failed to update subscription plan.');
+        toast.error(result.error || "Failed to update subscription plan.");
       }
     } catch (error) {
-      console.error('Upgrade failed:', error);
-      toast.error('An unexpected error occurred during your upgrade.');
+      console.error("Upgrade failed:", error);
+      toast.error("An unexpected error occurred during your upgrade.");
     } finally {
       setIsUpgrading(false);
     }
@@ -185,10 +191,10 @@ export function UpgradeDialog({
 
       // Open email client or redirect to contact form
       window.location.href =
-        'mailto:sales@tendertrack360.co.za?subject=Enterprise%20Plan%20Inquiry';
+        "mailto:sales@tendertrack360.co.za?subject=Enterprise%20Plan%20Inquiry";
       onOpenChange(false);
     } catch (error) {
-      console.error('Contact sales failed:', error);
+      console.error("Contact sales failed:", error);
     } finally {
       setIsContactingSales(false);
     }
@@ -202,19 +208,19 @@ export function UpgradeDialog({
         <DialogHeader className="text-center space-y-4">
           {/* Animated Icon */}
           <div
-            className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/30 dark:via-orange-900/30 dark:to-yellow-900/30 transition-all duration-500 ${animateItems ? 'scale-100 rotate-0' : 'scale-0 rotate-180'}`}
+            className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/30 dark:via-orange-900/30 dark:to-yellow-900/30 transition-all duration-500 ${animateItems ? "scale-100 rotate-0" : "scale-0 rotate-180"}`}
           >
             <Crown className="h-10 w-10 text-amber-600 dark:text-amber-400" />
           </div>
 
           <div className="space-y-2">
             <DialogTitle
-              className={`text-2xl font-bold transition-all duration-500 delay-100 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+              className={`text-2xl font-bold transition-all duration-500 delay-100 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             >
               {contextualMessage.title}
             </DialogTitle>
             <DialogDescription
-              className={`text-center text-base transition-all duration-500 delay-200 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+              className={`text-center text-base transition-all duration-500 delay-200 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
             >
               {contextualMessage.description}
             </DialogDescription>
@@ -223,7 +229,7 @@ export function UpgradeDialog({
 
         {/* Enhanced Usage Badge with Animation */}
         <div
-          className={`flex items-center justify-center gap-3 transition-all duration-500 delay-300 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+          className={`flex items-center justify-center gap-3 transition-all duration-500 delay-300 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
         >
           <Badge
             variant="secondary"
@@ -245,14 +251,14 @@ export function UpgradeDialog({
         </div>
 
         <div
-          className={`space-y-6 pt-6 transition-all duration-500 delay-400 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+          className={`space-y-6 pt-6 transition-all duration-500 delay-400 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}
         >
           {/* Pricing Tiers */}
           <div className="grid gap-4 md:grid-cols-3">
             {pricingTiers.map((tier, index) => (
               <div
                 key={tier.name}
-                className={`relative rounded-xl border-2 p-6 transition-all duration-500 hover:shadow-lg ${tier.popular ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30' : 'border-gray-200 dark:border-gray-700'} ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+                className={`relative rounded-xl border-2 p-6 transition-all duration-500 hover:shadow-lg ${tier.popular ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30" : "border-gray-200 dark:border-gray-700"} ${animateItems ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
                 style={{ transitionDelay: `${500 + index * 100}ms` }}
               >
                 {tier.popular && (
@@ -272,7 +278,7 @@ export function UpgradeDialog({
                   <div className="space-y-1">
                     <div className="flex items-baseline justify-center gap-1">
                       <span className="text-3xl font-bold">
-                        {typeof tier.price === 'number'
+                        {typeof tier.price === "number"
                           ? formatCurrency(tier.price)
                           : tier.price}
                       </span>
@@ -300,7 +306,7 @@ export function UpgradeDialog({
 
           {/* Social Proof Section */}
           <div
-            className={`space-y-4 transition-all duration-500 delay-700 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+            className={`space-y-4 transition-all duration-500 delay-700 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
           >
             <div className="text-center">
               <Button
@@ -310,7 +316,7 @@ export function UpgradeDialog({
                 className="text-sm"
               >
                 <Users className="h-4 w-4 mr-2" />
-                {showTestimonials ? 'Hide' : 'Show'} Success Stories
+                {showTestimonials ? "Hide" : "Show"} Success Stories
               </Button>
             </div>
 
@@ -333,7 +339,7 @@ export function UpgradeDialog({
                     <div className="text-xs text-muted-foreground">
                       <span className="font-medium">{testimonial.name}</span>
                       <span>
-                        {' '}
+                        {" "}
                         • {testimonial.role} at {testimonial.company}
                       </span>
                     </div>
@@ -347,11 +353,11 @@ export function UpgradeDialog({
 
           {/* Enhanced Action Buttons */}
           <div
-            className={`space-y-3 transition-all duration-500 delay-800 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+            className={`space-y-3 transition-all duration-500 delay-800 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
           >
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
-                onClick={() => handleUpgradePlan('starter')}
+                onClick={() => handleUpgradePlan("starter")}
                 disabled={isUpgrading}
                 className="h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-semibold cursor-pointer"
               >
@@ -369,7 +375,7 @@ export function UpgradeDialog({
               </Button>
 
               <Button
-                onClick={() => handleUpgradePlan('pro')}
+                onClick={() => handleUpgradePlan("pro")}
                 disabled={isUpgrading}
                 className="h-12 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-sm font-semibold cursor-pointer"
               >
@@ -405,7 +411,7 @@ export function UpgradeDialog({
                   size="sm"
                   onClick={() => {
                     onOpenChange(false);
-                    window.location.href = '/dashboard';
+                    window.location.href = "/dashboard";
                   }}
                   className="text-sm text-muted-foreground hover:text-foreground cursor-pointer"
                 >
@@ -418,7 +424,7 @@ export function UpgradeDialog({
 
           {/* Trust Indicators */}
           <div
-            className={`flex items-center justify-center gap-6 text-xs text-muted-foreground transition-all duration-500 delay-900 ${animateItems ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+            className={`flex items-center justify-center gap-6 text-xs text-muted-foreground transition-all duration-500 delay-900 ${animateItems ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
           >
             <div className="flex items-center gap-1">
               <Shield className="h-3 w-3" />

@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles } from "lucide-react";
 
 export function BetaLabel() {
   return (
@@ -22,4 +22,3 @@ export function BetaLabel() {
     </aside>
   );
 }
-

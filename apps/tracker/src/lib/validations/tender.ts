@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { sanitizeTenderNumber } from '@/lib/tender-utils';
+import { z } from "zod";
+import { sanitizeTenderNumber } from "@/lib/tender-utils";
 
 const optionalText = z
   .string()
@@ -9,28 +9,47 @@ const optionalText = z
   .nullable();
 
 const optionalEmail = z
-  .union([z.string().trim().email('Enter a valid email address'), z.literal('')])
+  .union([
+    z.string().trim().email("Enter a valid email address"),
+    z.literal(""),
+  ])
   .transform((value) => value || null)
   .optional()
   .nullable();
 
 export const TenderCreateSchema = z.object({
-  tenderNumber: z.string().min(1, 'Tender number is required').transform((val) => sanitizeTenderNumber(val)),
+  tenderNumber: z
+    .string()
+    .min(1, "Tender number is required")
+    .transform((val) => sanitizeTenderNumber(val)),
   description: z.string().optional(),
-  clientId: z.string().min(1, 'Client is required'),
+  clientId: z.string().min(1, "Client is required"),
   submissionDate: z.coerce.date().optional().nullable(),
   value: z
     .string()
     .optional()
     .nullable()
     .transform((val) => {
-      if (!val || val.trim() === '') return null;
-      const cleaned = val.replace(/[^0-9.]/g, '');
+      if (!val || val.trim() === "") return null;
+      const cleaned = val.replace(/[^0-9.]/g, "");
       const num = parseFloat(cleaned);
       if (isNaN(num)) return null;
       return cleaned;
     }),
-  status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']),
+  status: z.enum([
+    "new",
+    "review",
+    "approved_to_prepare",
+    "preparation",
+    "ready",
+    "submitted",
+    "evaluation",
+    "awarded",
+    "lost",
+    "cancelled",
+    "closed",
+    "open",
+  ]),
   validityDays: z.number().int().nonnegative().nullable().optional(),
   validityDate: z.coerce.date().optional().nullable(),
   contactName: optionalText,
@@ -43,24 +62,43 @@ export const TenderCreateSchema = z.object({
 });
 
 export const TenderUpdateSchema = TenderCreateSchema.partial().extend({
-  tenderNumber: z.string().min(1, 'Tender number is required').optional().transform((val) => val ? sanitizeTenderNumber(val) : undefined),
+  tenderNumber: z
+    .string()
+    .min(1, "Tender number is required")
+    .optional()
+    .transform((val) => (val ? sanitizeTenderNumber(val) : undefined)),
 });
 
 /**
  * Standalone schema for sanitizing a tender number string.
  * Useful in server actions or utilities that receive raw tender number input.
  */
-export const TenderNumberSchema = z.string().transform((val) => sanitizeTenderNumber(val));
+export const TenderNumberSchema = z
+  .string()
+  .transform((val) => sanitizeTenderNumber(val));
 
 export const TenderStatusUpdateSchema = z.object({
-  status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']),
+  status: z.enum([
+    "new",
+    "review",
+    "approved_to_prepare",
+    "preparation",
+    "ready",
+    "submitted",
+    "evaluation",
+    "awarded",
+    "lost",
+    "cancelled",
+    "closed",
+    "open",
+  ]),
   awardValue: z
     .string()
     .optional()
     .nullable()
     .transform((val) => {
-      if (!val || val.trim() === '') return null;
-      const cleaned = val.replace(/[^0-9.]/g, '');
+      if (!val || val.trim() === "") return null;
+      const cleaned = val.replace(/[^0-9.]/g, "");
       const num = parseFloat(cleaned);
       if (isNaN(num)) return null;
       return cleaned;
@@ -75,7 +113,22 @@ export const TenderStatusUpdateSchema = z.object({
 
 export const TenderSearchSchema = z.object({
   query: z.string().optional(),
-  status: z.enum(['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted', 'evaluation', 'awarded', 'lost', 'cancelled', 'closed', 'open']).optional(),
+  status: z
+    .enum([
+      "new",
+      "review",
+      "approved_to_prepare",
+      "preparation",
+      "ready",
+      "submitted",
+      "evaluation",
+      "awarded",
+      "lost",
+      "cancelled",
+      "closed",
+      "open",
+    ])
+    .optional(),
   clientId: z.string().optional(),
   dateFrom: z.date().optional(),
   dateTo: z.date().optional(),

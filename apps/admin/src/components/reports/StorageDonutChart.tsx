@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   PieChart,
@@ -7,14 +7,14 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import type { StorageCategoryBreakdown } from '@/lib/reports-queries';
+} from "recharts";
+import type { StorageCategoryBreakdown } from "@/lib/reports-queries";
 
 type Props = {
   data: StorageCategoryBreakdown[];
 };
 
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#64748b'];
+const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#64748b"];
 
 export function StorageDonutChart({ data }: Props) {
   const chartData = data
@@ -61,18 +61,22 @@ export function StorageDonutChart({ data }: Props) {
               name,
             ]}
             contentStyle={{
-              backgroundColor: '#0f172a',
-              borderColor: 'rgba(255,255,255,0.15)',
-              borderRadius: '8px',
-              color: '#f8fafc',
-              fontSize: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              backgroundColor: "#0f172a",
+              borderColor: "rgba(255,255,255,0.15)",
+              borderRadius: "8px",
+              color: "#f8fafc",
+              fontSize: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
             }}
           />
           <Legend
             verticalAlign="bottom"
             height={48}
-            wrapperStyle={{ fontSize: '11px', color: '#cbd5e1', paddingTop: '8px' }}
+            wrapperStyle={{
+              fontSize: "11px",
+              color: "#cbd5e1",
+              paddingTop: "8px",
+            }}
           />
         </PieChart>
       </ResponsiveContainer>

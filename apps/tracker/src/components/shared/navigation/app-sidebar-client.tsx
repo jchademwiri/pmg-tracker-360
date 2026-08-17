@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { AppSidebar } from './app-sidebar';
-import type { OrganizationWithStats } from '@/server/organizations';
-import type { User } from '@pmg/db/schema';
-import type { ComponentProps } from 'react';
+import React from "react";
+import { AppSidebar } from "./app-sidebar";
+import type { OrganizationWithStats } from "@/server/organizations";
+import type { User } from "@pmg/db/schema";
+import type { ComponentProps } from "react";
 
 interface AppSidebarClientProps extends Omit<
   ComponentProps<typeof AppSidebar>,
-  'organizations' | 'user'
+  "organizations" | "user"
 > {
   initialOrganizations: OrganizationWithStats[];
   initialUser: User;

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ShieldAlert } from 'lucide-react';
-import type { Role } from '@pmg/db/schema';
-import { DangerZone } from '@/components/organization/danger-zone';
+import { ShieldAlert } from "lucide-react";
+import type { Role } from "@pmg/db/schema";
+import { DangerZone } from "@/components/organization/danger-zone";
 
 interface SecurityTabProps {
   organization: {
@@ -20,7 +20,7 @@ interface SecurityTabProps {
 }
 
 function canAccessSecurity(role: Role): boolean {
-  return ['owner', 'admin'].includes(role);
+  return ["owner", "admin"].includes(role);
 }
 
 export function SecurityTab({

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import type { CloudflareStorageOverview } from '@/lib/cloudflare-r2';
+import { useState } from "react";
+import type { CloudflareStorageOverview } from "@/lib/cloudflare-r2";
 import {
   HardDrive,
   Cloud,
@@ -14,19 +14,19 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
+} from "lucide-react";
 
 type Props = {
   storage: CloudflareStorageOverview;
 };
 
 function formatMB(mb: number): string {
-  if (mb === 0) return '0.00 MB';
-  return `${Number(mb.toFixed(2)).toLocaleString('en-US')} MB`;
+  if (mb === 0) return "0.00 MB";
+  return `${Number(mb.toFixed(2)).toLocaleString("en-US")} MB`;
 }
 
 function formatNum(n: number): string {
-  return n.toLocaleString('en-US');
+  return n.toLocaleString("en-US");
 }
 
 export function S3CapacityMeter({ storage }: Props) {
@@ -50,21 +50,21 @@ export function S3CapacityMeter({ storage }: Props) {
   } = storage;
 
   // Determine colors based on warningStatus
-  let barColor = 'bg-gradient-to-r from-emerald-500 to-teal-400';
-  let badgeBg = 'bg-emerald-950/70 border-emerald-800/80 text-emerald-300';
+  let barColor = "bg-gradient-to-r from-emerald-500 to-teal-400";
+  let badgeBg = "bg-emerald-950/70 border-emerald-800/80 text-emerald-300";
   let statusIcon = <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
-  let statusTitle = 'Cloudflare R2 Free Tier Healthy';
+  let statusTitle = "Cloudflare R2 Free Tier Healthy";
 
-  if (warningStatus === 'critical') {
-    barColor = 'bg-gradient-to-r from-rose-500 to-red-600';
-    badgeBg = 'bg-rose-950/70 border-rose-800/80 text-rose-300';
+  if (warningStatus === "critical") {
+    barColor = "bg-gradient-to-r from-rose-500 to-red-600";
+    badgeBg = "bg-rose-950/70 border-rose-800/80 text-rose-300";
     statusIcon = <AlertCircle className="h-4 w-4 text-rose-400" />;
-    statusTitle = 'Storage Capacity Critical (≥ 90%)';
-  } else if (warningStatus === 'warning') {
-    barColor = 'bg-gradient-to-r from-amber-500 to-orange-400';
-    badgeBg = 'bg-amber-950/70 border-amber-800/80 text-amber-300';
+    statusTitle = "Storage Capacity Critical (≥ 90%)";
+  } else if (warningStatus === "warning") {
+    barColor = "bg-gradient-to-r from-amber-500 to-orange-400";
+    badgeBg = "bg-amber-950/70 border-amber-800/80 text-amber-300";
     statusIcon = <AlertTriangle className="h-4 w-4 text-amber-400" />;
-    statusTitle = 'Approaching Free Tier Limit (≥ 75%)';
+    statusTitle = "Approaching Free Tier Limit (≥ 75%)";
   }
 
   return (
@@ -92,12 +92,15 @@ export function S3CapacityMeter({ storage }: Props) {
               )}
             </div>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Account-wide object storage footprint across all buckets vs provisioned capacity.
+              Account-wide object storage footprint across all buckets vs
+              provisioned capacity.
             </p>
           </div>
         </div>
 
-        <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${badgeBg}`}>
+        <div
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${badgeBg}`}
+        >
           {statusIcon}
           <span>{statusTitle}</span>
         </div>
@@ -111,11 +114,16 @@ export function S3CapacityMeter({ storage }: Props) {
               {totalUsedGB >= 1 ? `${totalUsedGB} GB` : formatMB(totalUsedMB)}
             </span>
             <span className="text-zinc-500">used of</span>
-            <span className="text-zinc-200 font-bold text-sm">{totalCapacityGB} GB</span>
+            <span className="text-zinc-200 font-bold text-sm">
+              {totalCapacityGB} GB
+            </span>
             <span className="text-zinc-500">({utilizationPct}% utilized)</span>
           </div>
           <div className="text-zinc-400 text-xs">
-            <span className="font-semibold text-emerald-400">{availableStorageGB} GB</span> available
+            <span className="font-semibold text-emerald-400">
+              {availableStorageGB} GB
+            </span>{" "}
+            available
           </div>
         </div>
 
@@ -124,12 +132,12 @@ export function S3CapacityMeter({ storage }: Props) {
           {/* Threshold markers */}
           <div
             className="absolute top-0 bottom-0 w-[1px] bg-amber-500/40 z-10"
-            style={{ left: '75%' }}
+            style={{ left: "75%" }}
             title="Warning Threshold (75% / 7.5 GB)"
           />
           <div
             className="absolute top-0 bottom-0 w-[1px] bg-rose-500/40 z-10"
-            style={{ left: '90%' }}
+            style={{ left: "90%" }}
             title="Critical Threshold (90% / 9.0 GB)"
           />
 
@@ -157,7 +165,9 @@ export function S3CapacityMeter({ storage }: Props) {
             <HardDrive className="h-3.5 w-3.5 text-indigo-400" />
             Total Tier Limit
           </div>
-          <div className="text-base font-bold text-white">{totalCapacityGB}.00 GB</div>
+          <div className="text-base font-bold text-white">
+            {totalCapacityGB}.00 GB
+          </div>
           <div className="text-[10px] text-zinc-500">Cloudflare Free Tier</div>
         </div>
 
@@ -169,7 +179,9 @@ export function S3CapacityMeter({ storage }: Props) {
           <div className="text-base font-bold text-amber-400">
             {formatMB(totalUsedMB)}
           </div>
-          <div className="text-[10px] text-zinc-500">{totalUsedGB} GB across all buckets</div>
+          <div className="text-[10px] text-zinc-500">
+            {totalUsedGB} GB across all buckets
+          </div>
         </div>
 
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl space-y-1">
@@ -180,7 +192,9 @@ export function S3CapacityMeter({ storage }: Props) {
           <div className="text-base font-bold text-emerald-400">
             {availableStorageGB} GB
           </div>
-          <div className="text-[10px] text-zinc-500">{formatMB(availableStorageMB)} remaining</div>
+          <div className="text-[10px] text-zinc-500">
+            {formatMB(availableStorageMB)} remaining
+          </div>
         </div>
 
         <div className="p-3 bg-zinc-950/60 border border-zinc-800/80 rounded-xl space-y-1">
@@ -191,7 +205,9 @@ export function S3CapacityMeter({ storage }: Props) {
           <div className="text-base font-bold text-blue-400">
             {formatMB(pmgStorageMB)}
           </div>
-          <div className="text-[10px] text-zinc-500">{formatNum(pmgDocumentCount)} documents</div>
+          <div className="text-[10px] text-zinc-500">
+            {formatNum(pmgDocumentCount)} documents
+          </div>
         </div>
       </div>
 
@@ -213,7 +229,11 @@ export function S3CapacityMeter({ storage }: Props) {
           </button>
           {!connectedLiveApi && (
             <span className="text-[11px] text-zinc-500">
-              Set <code className="text-zinc-400 bg-zinc-800 px-1 py-0.5 rounded">CLOUDFLARE_API_TOKEN</code> for live multi-app discovery
+              Set{" "}
+              <code className="text-zinc-400 bg-zinc-800 px-1 py-0.5 rounded">
+                CLOUDFLARE_API_TOKEN
+              </code>{" "}
+              for live multi-app discovery
             </span>
           )}
         </div>
@@ -236,7 +256,7 @@ export function S3CapacityMeter({ storage }: Props) {
                   <tr
                     key={b.name}
                     className={`hover:bg-zinc-900/50 transition-colors ${
-                      b.isCurrentApp ? 'bg-indigo-950/20' : ''
+                      b.isCurrentApp ? "bg-indigo-950/20" : ""
                     }`}
                   >
                     <td className="px-4 py-2.5 font-sans font-medium text-zinc-200 flex items-center gap-2">

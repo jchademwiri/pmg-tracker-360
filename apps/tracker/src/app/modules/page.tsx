@@ -9,106 +9,132 @@ import {
   Key,
   MessageSquare,
   File,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { getAccent } from '../../lib/module-accents';
-import type { Metadata } from 'next';
+import { getAccent } from "../../lib/module-accents";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'System Architecture & Modules',
+  title: "System Architecture & Modules",
   description:
-    'Explore the modular architecture of Tender Track 360. Understanding our system modules and data relationships.',
+    "Explore the modular architecture of Tender Track 360. Understanding our system modules and data relationships.",
 };
 
 export default function ModuleDiagram() {
   // Toggle between 'system' and 'premium' palettes here.
   // For production, you may want to wire this to an env var or user/organization setting.
-  const THEME_VARIANT: 'system' | 'premium' = 'premium';
+  const THEME_VARIANT: "system" | "premium" = "premium";
 
   const modules = [
     {
-      name: 'Authentication & Accounts',
+      name: "Authentication & Accounts",
       icon: Key,
-      accent: 'auth',
-      features: ['Secure Sign-In', 'Session Lifecycles', 'OAuth Integrations', 'Email Verification'],
-      description: 'Auth, sessions, OAuth',
+      accent: "auth",
+      features: [
+        "Secure Sign-In",
+        "Session Lifecycles",
+        "OAuth Integrations",
+        "Email Verification",
+      ],
+      description: "Auth, sessions, OAuth",
     },
     {
-      name: 'Organization & Membership',
+      name: "Organization & Membership",
       icon: Users,
-      accent: 'organization',
-      features: ['Tenant Scoping', 'Role Permissions', 'Team Invitations'],
-      description: 'Teams, roles, invitations',
+      accent: "organization",
+      features: ["Tenant Scoping", "Role Permissions", "Team Invitations"],
+      description: "Teams, roles, invitations",
     },
     {
-      name: 'Notifications & Preferences',
+      name: "Notifications & Preferences",
       icon: Bell,
-      accent: 'notifications',
-      features: ['User Alerts', 'Reminder Rules', 'Preferences Dashboard'],
-      description: 'User notifications',
+      accent: "notifications",
+      features: ["User Alerts", "Reminder Rules", "Preferences Dashboard"],
+      description: "User notifications",
     },
     {
-      name: 'Ownership Transfer',
+      name: "Ownership Transfer",
       icon: Users,
-      accent: 'ownership',
-      features: ['Secure Delegation', 'Transfer Keys', 'Approval Logs'],
-      description: 'Organization ownership',
+      accent: "ownership",
+      features: ["Secure Delegation", "Transfer Keys", "Approval Logs"],
+      description: "Organization ownership",
     },
     {
-      name: 'Security & Audit',
+      name: "Security & Audit",
       icon: Shield,
-      accent: 'security',
-      features: ['Activity Monitoring', 'IP & Device Logs', 'Compliance Auditing'],
-      description: 'Audit logs, tracking',
+      accent: "security",
+      features: [
+        "Activity Monitoring",
+        "IP & Device Logs",
+        "Compliance Auditing",
+      ],
+      description: "Audit logs, tracking",
     },
     {
-      name: 'Client Management',
+      name: "Client Management",
       icon: Briefcase,
-      accent: 'client',
-      features: ['Client Profiles', 'Contact Details', 'Engagement Tracking'],
-      description: 'Client records',
+      accent: "client",
+      features: ["Client Profiles", "Contact Details", "Engagement Tracking"],
+      description: "Client records",
     },
     {
-      name: 'Tender Management',
+      name: "Tender Management",
       icon: FileText,
-      accent: 'tender',
-      features: ['Bid Trackers', 'Timeline Extensions', 'Automatic Closing Date Statuses'],
-      description: 'Dynamic statuses (open, closed, evaluation, awarded, lost) & auto-project creation',
+      accent: "tender",
+      features: [
+        "Bid Trackers",
+        "Timeline Extensions",
+        "Automatic Closing Date Statuses",
+      ],
+      description:
+        "Dynamic statuses (open, closed, evaluation, awarded, lost) & auto-project creation",
     },
     {
-      name: 'Project Management',
+      name: "Project Management",
       icon: FolderOpen,
-      accent: 'project',
-      features: ['Auto-created Projects', 'Timeline Editors', 'Purchase Orders'],
-      description: 'Auto-created projects, details editor, purchase orders',
+      accent: "project",
+      features: [
+        "Auto-created Projects",
+        "Timeline Editors",
+        "Purchase Orders",
+      ],
+      description: "Auto-created projects, details editor, purchase orders",
     },
     {
-      name: 'Support & Feedback',
+      name: "Support & Feedback",
       icon: MessageSquare,
-      accent: 'support',
-      features: ['Support Ticketing', 'User Feedback Channels', 'Administrative Tools'],
-      description: 'User support & feedback',
+      accent: "support",
+      features: [
+        "Support Ticketing",
+        "User Feedback Channels",
+        "Administrative Tools",
+      ],
+      description: "User support & feedback",
     },
     {
-      name: 'Document Management',
+      name: "Document Management",
       icon: File,
-      accent: 'document',
-      features: ['Presigned Secure Access', 'Cloudflare R2 Isolation', 'Centralized Spec Storage'],
-      description: 'Centralized file storage',
+      accent: "document",
+      features: [
+        "Presigned Secure Access",
+        "Cloudflare R2 Isolation",
+        "Centralized Spec Storage",
+      ],
+      description: "Centralized file storage",
     },
   ];
 
   const connections = [
-    { from: 0, to: 1, label: 'User → Org' },
-    { from: 1, to: 2, label: 'User prefs' },
-    { from: 1, to: 3, label: 'Ownership' },
-    { from: 1, to: 4, label: 'Audit logs' },
-    { from: 1, to: 5, label: 'Org → Client' },
-    { from: 1, to: 6, label: 'Org → Tender' },
-    { from: 1, to: 7, label: 'Org → Project' },
-    { from: 5, to: 6, label: 'Client → Tender' },
-    { from: 6, to: 7, label: 'Tender → Project' },
-    { from: 7, to: 7, label: 'Project → PO' },
+    { from: 0, to: 1, label: "User → Org" },
+    { from: 1, to: 2, label: "User prefs" },
+    { from: 1, to: 3, label: "Ownership" },
+    { from: 1, to: 4, label: "Audit logs" },
+    { from: 1, to: 5, label: "Org → Client" },
+    { from: 1, to: 6, label: "Org → Tender" },
+    { from: 1, to: 7, label: "Org → Project" },
+    { from: 5, to: 6, label: "Client → Tender" },
+    { from: 6, to: 7, label: "Tender → Project" },
+    { from: 7, to: 7, label: "Project → PO" },
   ];
 
   return (
@@ -133,7 +159,7 @@ export default function ModuleDiagram() {
             return (
               <div
                 key={idx}
-                className={`${accent.bg} rounded-lg p-6 shadow-sm hover:shadow transition-shadow duration-300 border ${accent.bg.includes('border-') ? '' : 'border-border'}`}
+                className={`${accent.bg} rounded-lg p-6 shadow-sm hover:shadow transition-shadow duration-300 border ${accent.bg.includes("border-") ? "" : "border-border"}`}
               >
                 <div className="flex items-start gap-3 mb-4">
                   <Icon className="w-6 h-6 shrink-0 mt-1 text-muted-foreground" />
@@ -178,25 +204,25 @@ export default function ModuleDiagram() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('auth', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("auth", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
-                      <strong>Auth</strong> → <strong>Organization</strong>{' '}
+                      <strong>Auth</strong> → <strong>Organization</strong>{" "}
                       (Users belong to orgs)
                     </span>
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('organization', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("organization", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
-                      <strong>Organization</strong> →{' '}
+                      <strong>Organization</strong> →{" "}
                       <strong>All Business Modules</strong> (Org-scoped data)
                     </span>
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('client', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("client", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
                       <strong>Client</strong> → <strong>Tender</strong> (Clients
@@ -205,19 +231,19 @@ export default function ModuleDiagram() {
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('tender', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("tender", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
-                      <strong>Tender</strong> → <strong>Project</strong>{' '}
+                      <strong>Tender</strong> → <strong>Project</strong>{" "}
                       (Tenders become projects)
                     </span>
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('project', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("project", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
-                      <strong>Project</strong> →{' '}
+                      <strong>Project</strong> →{" "}
                       <strong>Purchase Orders</strong> (Projects have POs)
                     </span>
                   </div>
@@ -231,7 +257,7 @@ export default function ModuleDiagram() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('notifications', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("notifications", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
                       <strong>Notifications</strong> monitors all modules
@@ -239,7 +265,7 @@ export default function ModuleDiagram() {
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('security', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("security", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
                       <strong>Security & Audit</strong> logs all actions
@@ -247,7 +273,7 @@ export default function ModuleDiagram() {
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('ownership', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("ownership", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
                       <strong>Ownership Transfer</strong> manages org
@@ -256,7 +282,7 @@ export default function ModuleDiagram() {
                   </div>
                   <div className="flex items-center gap-2 p-2 bg-muted/50 rounded">
                     <div
-                      className={`w-2 h-2 ${getAccent('document', THEME_VARIANT).dot} rounded-full`}
+                      className={`w-2 h-2 ${getAccent("document", THEME_VARIANT).dot} rounded-full`}
                     ></div>
                     <span>
                       <strong>Documents</strong> linked to Tender, Project, PO,
@@ -310,7 +336,9 @@ export default function ModuleDiagram() {
             <li className="flex items-start gap-2">
               <span className="text-green-400 font-bold">✓</span>
               <span>
-                <strong>Tendering Pipeline:</strong> Automated closing-date checks, evaluation lockdowns, and instant project auto-generation upon bid award
+                <strong>Tendering Pipeline:</strong> Automated closing-date
+                checks, evaluation lockdowns, and instant project
+                auto-generation upon bid award
               </span>
             </li>
           </ul>

@@ -1,17 +1,17 @@
-import { LoginForm } from '@/components/forms';
-import { getServerSession } from '@/lib/auth';
-import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { LoginForm } from "@/components/forms";
+import { getServerSession } from "@/lib/auth";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: 'Login to your Account',
+  title: "Login to your Account",
 };
 
 export default async function LoginPage() {
   const session = await getServerSession();
 
   if (session) {
-    redirect('/dashboard');
+    redirect("/dashboard");
   }
 
   return (

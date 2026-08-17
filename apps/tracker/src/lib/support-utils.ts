@@ -1,6 +1,6 @@
 export function formatTicketCode(
   ticketNumber?: number | null,
-  fallbackId?: string
+  fallbackId?: string,
 ): string {
   if (ticketNumber) {
     return `TICK-${ticketNumber}`;
@@ -8,5 +8,5 @@ export function formatTicketCode(
   if (fallbackId) {
     return `TICK-${fallbackId.slice(0, 8).toUpperCase()}`;
   }
-  return 'TICK-NEW';
+  return "TICK-NEW";
 }

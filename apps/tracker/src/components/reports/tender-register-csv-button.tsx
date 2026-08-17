@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
 export function TenderRegisterCsvButton() {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
     setIsExporting(true);
-    const toastId = toast.loading('Preparing CSV...');
+    const toastId = toast.loading("Preparing CSV...");
     try {
-      const response = await fetch('/api/reports/tenders/register/csv');
-      if (!response.ok) throw new Error('CSV export failed');
+      const response = await fetch("/api/reports/tenders/register/csv");
+      if (!response.ok) throw new Error("CSV export failed");
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `tender-register-${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `tender-register-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -28,10 +28,10 @@ export function TenderRegisterCsvButton() {
       // and will cancel the download if the URL is revoked synchronously.
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      toast.success('CSV downloaded successfully', { id: toastId });
+      toast.success("CSV downloaded successfully", { id: toastId });
     } catch (error) {
-      console.error('Tender register CSV export failed:', error);
-      toast.error('Failed to export CSV. Please try again.', { id: toastId });
+      console.error("Tender register CSV export failed:", error);
+      toast.error("Failed to export CSV. Please try again.", { id: toastId });
     } finally {
       setIsExporting(false);
     }
@@ -49,7 +49,7 @@ export function TenderRegisterCsvButton() {
       ) : (
         <Download className="h-4 w-4 mr-2" />
       )}
-      {isExporting ? 'Preparing...' : 'Download CSV'}
+      {isExporting ? "Preparing..." : "Download CSV"}
     </Button>
   );
 }

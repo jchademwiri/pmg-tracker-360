@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Mail,
   RefreshCw,
@@ -23,22 +23,22 @@ import {
   UserCheck,
   UserCog,
   User,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import type { Role } from '@pmg/db/schema';
+} from "lucide-react";
+import { toast } from "sonner";
+import type { Role } from "@pmg/db/schema";
 import {
   getPendingInvitations,
   type PendingInvitation,
-} from '@/server/organizations';
+} from "@/server/organizations";
 import {
   cancelInvitation,
   resendInvitation,
   bulkCancelInvitations,
-} from '@/server/invitations';
+} from "@/server/invitations";
 import {
   ConfirmationDialog,
   CancelInvitationConfirmationDialog,
-} from '@/components/ui/confirmation-dialog';
+} from "@/components/ui/confirmation-dialog";
 
 interface InvitationsTabProps {
   organization: {
@@ -56,37 +56,37 @@ interface InvitationsTabProps {
 // Helper function to get role display info
 function getRoleDisplay(role: Role) {
   switch (role) {
-    case 'owner':
+    case "owner":
       return {
         color:
-          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
         icon: Crown,
-        label: 'Owner',
+        label: "Owner",
       };
-    case 'admin':
+    case "admin":
       return {
-        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
         icon: UserCheck,
-        label: 'Admin',
+        label: "Admin",
       };
-    case 'manager':
+    case "manager":
       return {
         color:
-          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         icon: UserCog,
-        label: 'Manager',
+        label: "Manager",
       };
-    case 'member':
+    case "member":
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: User,
-        label: 'Member',
+        label: "Member",
       };
     default:
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: User,
-        label: 'Member',
+        label: "Member",
       };
   }
 }
@@ -94,44 +94,44 @@ function getRoleDisplay(role: Role) {
 // Helper function to get status display info
 function getStatusDisplay(status: string) {
   switch (status) {
-    case 'pending':
+    case "pending":
       return {
         color:
-          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
         icon: Clock,
-        label: 'Pending',
+        label: "Pending",
       };
-    case 'accepted':
+    case "accepted":
       return {
         color:
-          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         icon: CheckCircle,
-        label: 'Accepted',
+        label: "Accepted",
       };
-    case 'declined':
+    case "declined":
       return {
-        color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
         icon: XCircle,
-        label: 'Declined',
+        label: "Declined",
       };
-    case 'expired':
+    case "expired":
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: XCircle,
-        label: 'Expired',
+        label: "Expired",
       };
     default:
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: Clock,
-        label: 'Unknown',
+        label: "Unknown",
       };
   }
 }
 
 // Helper function to check if user can manage invitations
 function canManageInvitations(role: Role): boolean {
-  return ['owner', 'admin', 'manager'].includes(role);
+  return ["owner", "admin", "manager"].includes(role);
 }
 
 export function InvitationsTab({
@@ -156,8 +156,8 @@ export function InvitationsTab({
         const pendingInvitations = await getPendingInvitations(organization.id);
         setInvitations(pendingInvitations);
       } catch (error) {
-        console.error('Error fetching invitations:', error);
-        toast.error('Failed to load pending invitations');
+        console.error("Error fetching invitations:", error);
+        toast.error("Failed to load pending invitations");
       } finally {
         setIsLoading(false);
       }
@@ -175,13 +175,13 @@ export function InvitationsTab({
         const updatedInvitations = await getPendingInvitations(organization.id);
         setInvitations(updatedInvitations);
 
-        toast.success('Invitation resent successfully');
+        toast.success("Invitation resent successfully");
       } else {
-        toast.error(result.error?.message || 'Failed to resend invitation');
+        toast.error(result.error?.message || "Failed to resend invitation");
       }
     } catch (error) {
-      console.error('Error resending invitation:', error);
-      toast.error('Failed to resend invitation');
+      console.error("Error resending invitation:", error);
+      toast.error("Failed to resend invitation");
     }
   };
 
@@ -192,13 +192,13 @@ export function InvitationsTab({
       if (result.success) {
         // Update local state optimistically
         setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
-        toast.success('Invitation cancelled successfully');
+        toast.success("Invitation cancelled successfully");
       } else {
-        toast.error(result.error?.message || 'Failed to cancel invitation');
+        toast.error(result.error?.message || "Failed to cancel invitation");
       }
     } catch (error) {
-      console.error('Error cancelling invitation:', error);
-      toast.error('Failed to cancel invitation');
+      console.error("Error cancelling invitation:", error);
+      toast.error("Failed to cancel invitation");
     }
   };
 
@@ -211,18 +211,18 @@ export function InvitationsTab({
       if (result.success) {
         // Update local state optimistically
         setInvitations((prev) =>
-          prev.filter((inv) => !selectedInvitations.includes(inv.id))
+          prev.filter((inv) => !selectedInvitations.includes(inv.id)),
         );
         setSelectedInvitations([]);
         toast.success(
-          `${selectedInvitations.length} invitations cancelled successfully`
+          `${selectedInvitations.length} invitations cancelled successfully`,
         );
       } else {
-        toast.error(result.error?.message || 'Failed to cancel invitations');
+        toast.error(result.error?.message || "Failed to cancel invitations");
       }
     } catch (error) {
-      console.error('Error bulk cancelling invitations:', error);
-      toast.error('Failed to cancel invitations');
+      console.error("Error bulk cancelling invitations:", error);
+      toast.error("Failed to cancel invitations");
     }
   };
 
@@ -230,13 +230,13 @@ export function InvitationsTab({
     setSelectedInvitations((prev) =>
       prev.includes(invitationId)
         ? prev.filter((id) => id !== invitationId)
-        : [...prev, invitationId]
+        : [...prev, invitationId],
     );
   };
 
   const selectAllInvitations = () => {
     const selectableInvitations = invitations.filter(
-      (inv) => inv.status === 'pending'
+      (inv) => inv.status === "pending",
     );
     setSelectedInvitations(selectableInvitations.map((inv) => inv.id));
   };
@@ -309,8 +309,8 @@ export function InvitationsTab({
               <h3 className="text-lg font-semibold mb-2">No Invitations</h3>
               <p className="text-muted-foreground">
                 {canManage
-                  ? 'Invite members from the Members tab to add people to your organization.'
-                  : 'No pending invitations at this time.'}
+                  ? "Invite members from the Members tab to add people to your organization."
+                  : "No pending invitations at this time."}
               </p>
             </div>
           ) : (
@@ -320,7 +320,7 @@ export function InvitationsTab({
                   <Checkbox
                     checked={
                       selectedInvitations.length ===
-                      invitations.filter((inv) => inv.status === 'pending')
+                      invitations.filter((inv) => inv.status === "pending")
                         .length
                     }
                     onCheckedChange={(checked) => {
@@ -345,14 +345,14 @@ export function InvitationsTab({
                   const StatusIcon = statusDisplay.icon;
                   const isExpired = invitation.expiresAt < new Date();
                   const canResend =
-                    invitation.status === 'pending' || isExpired;
+                    invitation.status === "pending" || isExpired;
 
                   return (
                     <div
                       key={invitation.id}
                       className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      {canManage && invitation.status === 'pending' && (
+                      {canManage && invitation.status === "pending" && (
                         <Checkbox
                           checked={selectedInvitations.includes(invitation.id)}
                           onCheckedChange={() =>
@@ -374,18 +374,18 @@ export function InvitationsTab({
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>Invited by {invitation.inviterName}</span>
                           <span>
-                            {new Intl.DateTimeFormat('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
+                            {new Intl.DateTimeFormat("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
                             }).format(invitation.invitedAt)}
                           </span>
                           <span>
-                            Expires{' '}
-                            {new Intl.DateTimeFormat('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
+                            Expires{" "}
+                            {new Intl.DateTimeFormat("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
                             }).format(invitation.expiresAt)}
                           </span>
                         </div>
@@ -411,7 +411,7 @@ export function InvitationsTab({
                             </Button>
                           )}
 
-                          {invitation.status === 'pending' && (
+                          {invitation.status === "pending" && (
                             <Button
                               type="button"
                               variant="ghost"
@@ -449,7 +449,7 @@ export function InvitationsTab({
             setInvitationToCancel(null);
           }
         }}
-        email={invitationToCancel?.email || ''}
+        email={invitationToCancel?.email || ""}
       />
 
       <ConfirmationDialog

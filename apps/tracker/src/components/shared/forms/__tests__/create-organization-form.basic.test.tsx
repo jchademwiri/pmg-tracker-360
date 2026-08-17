@@ -8,63 +8,62 @@
  * without complex mocking of external dependencies
  */
 
-import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { CreateOrganizationForm } from '../create-organization-form';
+import React from "react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { CreateOrganizationForm } from "../create-organization-form";
 
 // Mock the external dependencies with simple implementations
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     refresh: jest.fn(),
   }),
 }));
 
-jest.mock('sonner', () => ({
+jest.mock("sonner", () => ({
   toast: {
     success: jest.fn(),
     error: jest.fn(),
   },
 }));
 
-jest.mock('@/lib/auth-client', () => ({
+jest.mock("@/lib/auth-client", () => ({
   authClient: {
     organization: {
-      create: jest.fn().mockResolvedValue({ data: { id: 'org-1' } }),
-      setActive: jest.fn().mockResolvedValue({ data: { id: 'org-1' } }),
+      create: jest.fn().mockResolvedValue({ data: { id: "org-1" } }),
+      setActive: jest.fn().mockResolvedValue({ data: { id: "org-1" } }),
     },
   },
 }));
 
-jest.mock('@/server/organizations', () => ({
+jest.mock("@/server/organizations", () => ({
   checkOrganizationSlugAvailability: jest
     .fn()
     .mockResolvedValue({ available: true }),
-  rememberActiveOrganization: jest
-    .fn()
-    .mockResolvedValue({ success: true }),
+  rememberActiveOrganization: jest.fn().mockResolvedValue({ success: true }),
 }));
 
-describe('CreateorganizationForm - Basic Functionality', () => {
+describe("CreateorganizationForm - Basic Functionality", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const { authClient } = require('@/lib/auth-client');
-    authClient.organization.create.mockResolvedValue({ data: { id: 'org-1' } });
+    const { authClient } = require("@/lib/auth-client");
+    authClient.organization.create.mockResolvedValue({ data: { id: "org-1" } });
     authClient.organization.setActive.mockResolvedValue({
-      data: { id: 'org-1' },
+      data: { id: "org-1" },
     });
 
-    const { checkOrganizationSlugAvailability, rememberActiveOrganization } = require(
-      '@/server/organizations'
-    );
+    const {
+      checkOrganizationSlugAvailability,
+      rememberActiveOrganization,
+    } = require("@/server/organizations");
     checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
     rememberActiveOrganization.mockResolvedValue({ success: true });
   });
 
-  describe('Form Rendering', () => {
-    it('renders all required form fields', () => {
+  describe("Form Rendering", () => {
+    it("renders all required form fields", () => {
       render(<CreateOrganizationForm />);
 
       // Check for form fields
@@ -74,171 +73,173 @@ describe('CreateorganizationForm - Basic Functionality', () => {
 
       // Check for submit button
       expect(
-        screen.getByRole('button', { name: /create organization/i })
+        screen.getByRole("button", { name: /create organization/i }),
       ).toBeInTheDocument();
     });
 
-    it('shows proper placeholders', () => {
+    it("shows proper placeholders", () => {
       render(<CreateOrganizationForm />);
 
       expect(
-        screen.getByPlaceholderText(/enter your organization name/i)
+        screen.getByPlaceholderText(/enter your organization name/i),
       ).toBeInTheDocument();
       expect(
-        screen.getByPlaceholderText(/organization-slug/i)
+        screen.getByPlaceholderText(/organization-slug/i),
       ).toBeInTheDocument();
       expect(
-        screen.getByPlaceholderText(/https:\/\/example\.com\/logo\.png/i)
+        screen.getByPlaceholderText(/https:\/\/example\.com\/logo\.png/i),
       ).toBeInTheDocument();
     });
 
-    it('shows form descriptions', () => {
+    it("shows form descriptions", () => {
       render(<CreateOrganizationForm />);
 
       expect(
-        screen.getByText(/this will be the display name for your organization/i)
+        screen.getByText(
+          /this will be the display name for your organization/i,
+        ),
       ).toBeInTheDocument();
       expect(
         screen.getByText(
-          /only lowercase letters, numbers, and hyphens allowed/i
-        )
+          /only lowercase letters, numbers, and hyphens allowed/i,
+        ),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/provide a url to your organization's logo image/i)
+        screen.getByText(/provide a url to your organization's logo image/i),
       ).toBeInTheDocument();
     });
 
-    it('disables submit button initially', () => {
+    it("disables submit button initially", () => {
       render(<CreateOrganizationForm />);
 
-      const submitButton = screen.getByRole('button', {
+      const submitButton = screen.getByRole("button", {
         name: /create organization/i,
       });
       expect(submitButton).toBeDisabled();
     });
   });
 
-  describe('Slug Generation', () => {
-    it('auto-generates slug from organization name', async () => {
+  describe("Slug Generation", () => {
+    it("auto-generates slug from organization name", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
       const slugInput = screen.getByLabelText(/organization slug/i);
 
-      await user.type(nameInput, 'My Test Organization');
+      await user.type(nameInput, "My Test Organization");
 
       // The slug should be auto-generated
       await waitFor(() => {
-        expect(slugInput).toHaveValue('my-test-organization');
+        expect(slugInput).toHaveValue("my-test-organization");
       });
     });
 
-    it('handles special characters in name correctly', async () => {
+    it("handles special characters in name correctly", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
       const slugInput = screen.getByLabelText(/organization slug/i);
 
-      await user.type(nameInput, 'Test & Organisation @ 2024!');
+      await user.type(nameInput, "Test & Organisation @ 2024!");
 
       // Special characters should be converted to hyphens
       await waitFor(() => {
-        expect(slugInput).toHaveValue('test-organisation-2024');
+        expect(slugInput).toHaveValue("test-organisation-2024");
       });
     });
 
-    it('shows URL preview when slug is entered', async () => {
+    it("shows URL preview when slug is entered", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
-      await user.type(nameInput, 'Test Org');
+      await user.type(nameInput, "Test Org");
 
       // Should show URL preview
       await waitFor(() => {
         expect(
-          screen.getByText('/dashboard/organization/test-org')
+          screen.getByText("/dashboard/organization/test-org"),
         ).toBeInTheDocument();
       });
     });
 
-    it('allows manual slug editing', async () => {
+    it("allows manual slug editing", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
-      const editButton = screen.getByRole('button', { name: /edit/i });
+      const editButton = screen.getByRole("button", { name: /edit/i });
 
-      await user.type(nameInput, 'Test Organization');
+      await user.type(nameInput, "Test Organization");
       await user.click(editButton);
 
       const slugInput = screen.getByLabelText(/organization slug/i);
       expect(slugInput).not.toBeDisabled();
 
-      fireEvent.change(slugInput, { target: { value: 'custom-slug' } });
+      fireEvent.change(slugInput, { target: { value: "custom-slug" } });
 
-      expect(slugInput).toHaveValue('custom-slug');
+      expect(slugInput).toHaveValue("custom-slug");
     });
   });
 
-  describe('Form Validation', () => {
-    it('shows validation error for short organization name', async () => {
+  describe("Form Validation", () => {
+    it("shows validation error for short organization name", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
 
-      await user.type(nameInput, 'A');
+      await user.type(nameInput, "A");
       await user.tab();
 
       // Wait for validation to trigger on change
       await waitFor(() => {
         expect(
-          screen.getByText(/organization name must be at least 2 characters/i)
+          screen.getByText(/organization name must be at least 2 characters/i),
         ).toBeInTheDocument();
       });
     });
 
-    it('shows validation error for invalid characters in name', async () => {
+    it("shows validation error for invalid characters in name", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
 
-      await user.type(nameInput, 'Test@#$%');
+      await user.type(nameInput, "Test@#$%");
       await user.tab();
 
       // Wait for validation to trigger on change
       await waitFor(() => {
         expect(
           screen.getByText(
-            /can only contain letters, numbers, spaces, hyphens, and underscores/i
-          )
+            /can only contain letters, numbers, spaces, hyphens, and underscores/i,
+          ),
         ).toBeInTheDocument();
       });
     });
 
-    it('shows validation error for invalid logo URL', async () => {
+    it("shows validation error for invalid logo URL", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
       const logoInput = screen.getByLabelText(/logo url/i);
 
-      await user.type(nameInput, 'Logo Validation Org');
+      await user.type(nameInput, "Logo Validation Org");
       await waitFor(() => {
         expect(screen.getByLabelText(/organization slug/i)).toHaveValue(
-          'logo-validation-org'
+          "logo-validation-org",
         );
       });
 
       // Clear the default logo value first
       await user.clear(logoInput);
-      await user.type(logoInput, 'invalid-url');
+      await user.type(logoInput, "invalid-url");
 
-      const submitButton = screen.getByRole('button', {
+      const submitButton = screen.getByRole("button", {
         name: /create organization/i,
       });
       await user.click(submitButton);
@@ -246,29 +247,29 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       // Logo validation runs on submit.
       await waitFor(() => {
         expect(
-          screen.getByText(/logo must be a valid url/i)
+          screen.getByText(/logo must be a valid url/i),
         ).toBeInTheDocument();
       });
     });
 
-    it('accepts valid logo URL', async () => {
+    it("accepts valid logo URL", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
       const logoInput = screen.getByLabelText(/logo url/i);
 
-      await user.type(logoInput, 'https://example.com/logo.png');
+      await user.type(logoInput, "https://example.com/logo.png");
       await user.tab();
 
       // Should not show validation error
       expect(
-        screen.queryByText(/logo must be a valid url/i)
+        screen.queryByText(/logo must be a valid url/i),
       ).not.toBeInTheDocument();
     });
   });
 
-  describe('User Interactions', () => {
-    it('supports keyboard navigation', async () => {
+  describe("User Interactions", () => {
+    it("supports keyboard navigation", async () => {
       const user = userEvent.setup();
       render(<CreateOrganizationForm />);
 
@@ -278,35 +279,35 @@ describe('CreateorganizationForm - Basic Functionality', () => {
 
       await user.tab();
       // The slug input is disabled by default, so focus goes to the edit button
-      expect(screen.getByRole('button', { name: /edit/i })).toHaveFocus();
+      expect(screen.getByRole("button", { name: /edit/i })).toHaveFocus();
 
       await user.tab();
       expect(screen.getByLabelText(/logo url/i)).toHaveFocus();
     });
 
-    it('shows loading state when form is being submitted', async () => {
+    it("shows loading state when form is being submitted", async () => {
       const user = userEvent.setup();
 
       // Mock a slow API call
-      const { authClient } = require('@/lib/auth-client');
+      const { authClient } = require("@/lib/auth-client");
       authClient.organization.create.mockImplementation(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { id: 'org-1' } }), 1000)
-          )
+            setTimeout(() => resolve({ data: { id: "org-1" } }), 1000),
+          ),
       );
 
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
-      await user.type(nameInput, 'Test Organization');
+      await user.type(nameInput, "Test Organization");
       await waitFor(() => {
         expect(screen.getByLabelText(/organization slug/i)).toHaveValue(
-          'test-organization'
+          "test-organization",
         );
       });
 
-      const submitButton = screen.getByRole('button', {
+      const submitButton = screen.getByRole("button", {
         name: /create organization/i,
       });
       await user.click(submitButton);
@@ -316,67 +317,67 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       expect(submitButton).toBeDisabled();
     });
 
-    it('does not mark unavailable slug checks as taken unless our slug lookup finds a conflict', async () => {
+    it("does not mark unavailable slug checks as taken unless our slug lookup finds a conflict", async () => {
       const user = userEvent.setup();
-      const { checkOrganizationSlugAvailability } = require(
-        '@/server/organizations'
-      );
+      const {
+        checkOrganizationSlugAvailability,
+      } = require("@/server/organizations");
       checkOrganizationSlugAvailability.mockResolvedValue({
         available: false,
-        error: 'Unable to check slug availability right now.',
+        error: "Unable to check slug availability right now.",
       });
 
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
-      await user.type(nameInput, 'Network Error Org');
+      await user.type(nameInput, "Network Error Org");
 
       await waitFor(
         () => {
           expect(
-            screen.getByText(/unable to check availability right now/i)
+            screen.getByText(/unable to check availability right now/i),
           ).toBeInTheDocument();
         },
-        { timeout: 2500 }
+        { timeout: 2500 },
       );
 
       expect(
-        screen.queryByText(/slug is already taken/i)
+        screen.queryByText(/slug is already taken/i),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByRole('button', { name: /create organization/i })
+        screen.getByRole("button", { name: /create organization/i }),
       ).not.toBeDisabled();
     });
 
-    it('shows a new database-backed slug as available', async () => {
+    it("shows a new database-backed slug as available", async () => {
       const user = userEvent.setup();
-      const { checkOrganizationSlugAvailability } = require(
-        '@/server/organizations'
-      );
+      const {
+        checkOrganizationSlugAvailability,
+      } = require("@/server/organizations");
       checkOrganizationSlugAvailability.mockResolvedValue({ available: true });
 
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
-      await user.type(nameInput, 'Livhu and Musa Enterprise');
+      await user.type(nameInput, "Livhu and Musa Enterprise");
 
       await waitFor(
         () => {
           expect(
-            screen.getByText(/this slug is available/i)
+            screen.getByText(/this slug is available/i),
           ).toBeInTheDocument();
         },
-        { timeout: 2500 }
+        { timeout: 2500 },
       );
 
       expect(
-        screen.queryByText(/slug is already taken/i)
+        screen.queryByText(/slug is already taken/i),
       ).not.toBeInTheDocument();
     });
   });
 
-  describe('Accessibility', () => {
-    it('has proper ARIA labels', () => {
+  describe("Accessibility", () => {
+    it("has proper ARIA labels", () => {
       render(<CreateOrganizationForm />);
 
       const nameInput = screen.getByLabelText(/organization name/i);
@@ -388,18 +389,18 @@ describe('CreateorganizationForm - Basic Functionality', () => {
       expect(logoInput).toBeInTheDocument();
     });
 
-    it('provides helpful descriptions for form fields', () => {
+    it("provides helpful descriptions for form fields", () => {
       render(<CreateOrganizationForm />);
 
       // Check that form descriptions are present
       expect(
-        screen.getByText(/this will be the display name/i)
+        screen.getByText(/this will be the display name/i),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/this will be used in your organization's url/i)
+        screen.getByText(/this will be used in your organization's url/i),
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/provide a url to your organization's logo/i)
+        screen.getByText(/provide a url to your organization's logo/i),
       ).toBeInTheDocument();
     });
   });

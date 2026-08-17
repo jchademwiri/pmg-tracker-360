@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Breakpoints matching Tailwind CSS defaults
 const BREAKPOINTS = {
@@ -8,7 +8,7 @@ const BREAKPOINTS = {
   md: 768,
   lg: 1024,
   xl: 1280,
-  '2xl': 1536,
+  "2xl": 1536,
 } as const;
 
 type Breakpoint = keyof typeof BREAKPOINTS;
@@ -17,7 +17,7 @@ export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const media = window.matchMedia(query);
     setMatches(media.matches);
@@ -26,8 +26,8 @@ export function useMediaQuery(query: string): boolean {
       setMatches(event.matches);
     };
 
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
   }, [query]);
 
   return matches;
@@ -42,23 +42,23 @@ export function useMobile(): boolean {
 }
 
 export function useTablet(): boolean {
-  const isMd = useBreakpoint('md');
-  const isLg = useBreakpoint('lg');
+  const isMd = useBreakpoint("md");
+  const isLg = useBreakpoint("lg");
   return isMd && !isLg;
 }
 
 export function useDesktop(): boolean {
-  return useBreakpoint('lg');
+  return useBreakpoint("lg");
 }
 
 // Get current screen size category
-export function useScreenSize(): 'mobile' | 'tablet' | 'desktop' {
+export function useScreenSize(): "mobile" | "tablet" | "desktop" {
   const isMobile = useMobile();
   const isTablet = useTablet();
 
-  if (isMobile) return 'mobile';
-  if (isTablet) return 'tablet';
-  return 'desktop';
+  if (isMobile) return "mobile";
+  if (isTablet) return "tablet";
+  return "desktop";
 }
 
 // Get window dimensions
@@ -69,7 +69,7 @@ export function useWindowSize(): { width: number; height: number } {
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     function handleResize() {
       setWindowSize({
@@ -79,8 +79,8 @@ export function useWindowSize(): { width: number; height: number } {
     }
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return windowSize;
@@ -91,14 +91,14 @@ export function useTouchDevice(): boolean {
   const [isTouch, setIsTouch] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const checkTouch = () => {
       setIsTouch(
-        'ontouchstart' in window ||
+        "ontouchstart" in window ||
           navigator.maxTouchPoints > 0 ||
           (navigator as unknown as { msMaxTouchPoints: number })
-            .msMaxTouchPoints > 0
+            .msMaxTouchPoints > 0,
       );
     };
 
@@ -109,23 +109,23 @@ export function useTouchDevice(): boolean {
 }
 
 // Detect device orientation
-export function useOrientation(): 'portrait' | 'landscape' {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(
-    'portrait'
+export function useOrientation(): "portrait" | "landscape" {
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
+    "portrait",
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const handleOrientationChange = () => {
       setOrientation(
-        window.innerHeight > window.innerWidth ? 'portrait' : 'landscape'
+        window.innerHeight > window.innerWidth ? "portrait" : "landscape",
       );
     };
 
     handleOrientationChange();
-    window.addEventListener('resize', handleOrientationChange);
-    return () => window.removeEventListener('resize', handleOrientationChange);
+    window.addEventListener("resize", handleOrientationChange);
+    return () => window.removeEventListener("resize", handleOrientationChange);
   }, []);
 
   return orientation;
@@ -140,11 +140,11 @@ export function useResponsiveValue<T>(values: {
   const screenSize = useScreenSize();
 
   switch (screenSize) {
-    case 'mobile':
+    case "mobile":
       return values.mobile;
-    case 'tablet':
+    case "tablet":
       return values.tablet ?? values.mobile;
-    case 'desktop':
+    case "desktop":
       return values.desktop ?? values.tablet ?? values.mobile;
     default:
       return values.mobile;

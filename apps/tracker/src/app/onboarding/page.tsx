@@ -1,13 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreateOrganizationForm } from '@/components/shared/forms/create-organization-form';
-import { SessionUserSync } from '@/components/shared/session-user-sync';
-import { getCurrentUser } from '@/server';
-import { db } from '@pmg/db';
-import { invitation, member } from '@pmg/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { redirect } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateOrganizationForm } from "@/components/shared/forms/create-organization-form";
+import { SessionUserSync } from "@/components/shared/session-user-sync";
+import { getCurrentUser } from "@/server";
+import { db } from "@pmg/db";
+import { invitation, member } from "@pmg/db/schema";
+import { eq, and, sql } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
   const { currentUser } = await getCurrentUser();
@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
   const pendingInvite = await db.query.invitation.findFirst({
     where: and(
       eq(sql`lower(${invitation.email})`, currentUser.email.toLowerCase()),
-      eq(invitation.status, 'pending')
+      eq(invitation.status, "pending"),
     ),
   });
 
@@ -50,7 +50,9 @@ export default async function OnboardingPage() {
             </p>
           </CardHeader>
           <CardContent className="space-y-6">
-            <CreateOrganizationForm currentOrganizationCount={userMemberships.length} />
+            <CreateOrganizationForm
+              currentOrganizationCount={userMemberships.length}
+            />
           </CardContent>
         </Card>
       </div>

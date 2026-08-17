@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { inviteSystemAdmin } from '../../actions';
-import { Shield, Plus, X, Loader, ShieldCheck, Mail, User } from 'lucide-react';
+import React, { useState } from "react";
+import { inviteSystemAdmin } from "../../actions";
+import { Shield, Plus, X, Loader, ShieldCheck, Mail, User } from "lucide-react";
 
 export function InviteAdminModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleOpen = () => {
-    setName('');
-    setEmail('');
+    setName("");
+    setEmail("");
     setError(null);
     setSuccess(null);
     setIsOpen(true);
@@ -42,7 +42,7 @@ export function InviteAdminModal() {
         setError(res.error);
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -166,7 +166,7 @@ export function InviteAdminModal() {
                   {loading ? (
                     <Loader className="h-4 w-4 animate-spin text-black" />
                   ) : (
-                    'INVITE'
+                    "INVITE"
                   )}
                 </button>
               </div>

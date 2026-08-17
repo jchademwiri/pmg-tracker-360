@@ -1,14 +1,14 @@
-'use client';
-import { User } from '@pmg/db/schema';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+"use client";
+import { User } from "@pmg/db/schema";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 // addMember import removed as it's not used in this component
-import { useState } from 'react';
-import { Loader, AlertCircle, RefreshCw, Users, UserPlus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
-import { handleError, handleSuccess } from '@/lib/error-handler';
+import { useState } from "react";
+import { Loader, AlertCircle, RefreshCw, Users, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { handleError, handleSuccess } from "@/lib/error-handler";
 
 interface AllUsersProps {
   users: User[];
@@ -120,8 +120,8 @@ export function AllUsers({
 
   const handleInviteMember = async (user: User) => {
     if (!organizationId || !user.id) {
-      handleError('Missing organization ID or user ID', {
-        title: 'Invitation Failed',
+      handleError("Missing organization ID or user ID", {
+        title: "Invitation Failed",
       });
       return;
     }
@@ -131,27 +131,27 @@ export function AllUsers({
 
       const { error } = await authClient.organization.inviteMember({
         email: user.email,
-        role: 'member',
+        role: "member",
         organizationId,
         resend: true,
       });
 
       if (error) {
-        handleError(error.message || 'Unknown error occurred', {
-          title: 'Invitation Failed',
+        handleError(error.message || "Unknown error occurred", {
+          title: "Invitation Failed",
         });
         return;
       }
 
-      handleSuccess('User invited successfully!', {
+      handleSuccess("User invited successfully!", {
         description: `${user.name} has been invited to join the organization`,
       });
 
       router.refresh();
     } catch (error) {
       handleError(error as Error, {
-        title: 'Invitation Failed',
-        fallbackMessage: 'Failed to invite user to organization',
+        title: "Invitation Failed",
+        fallbackMessage: "Failed to invite user to organization",
       });
     } finally {
       setProcessingUserId(null);
@@ -165,7 +165,7 @@ export function AllUsers({
           <Users className="h-5 w-5" />
           All Users
           <span className="ml-auto text-sm font-normal text-muted-foreground">
-            {users.length} user{users.length === 1 ? '' : 's'}
+            {users.length} user{users.length === 1 ? "" : "s"}
           </span>
         </CardTitle>
       </CardHeader>

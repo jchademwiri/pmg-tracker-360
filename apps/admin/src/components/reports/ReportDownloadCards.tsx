@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   FileSpreadsheet,
   FileText,
@@ -10,8 +10,8 @@ import {
   Building2,
   HardDrive,
   ShieldCheck,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ReportCardConfig = {
   id: string;
@@ -35,17 +35,17 @@ export function ReportDownloadCards() {
   const handleDownload = async (
     reportKey: string,
     endpoint: string,
-    filename: string
+    filename: string,
   ) => {
     try {
       setDownloading(reportKey);
       const res = await fetch(endpoint);
       if (!res.ok) {
-        throw new Error('Failed to generate report');
+        throw new Error("Failed to generate report");
       }
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -54,74 +54,74 @@ export function ReportDownloadCards() {
       document.body.removeChild(a);
     } catch (err) {
       console.error(err);
-      alert('Failed to download report. Please try again.');
+      alert("Failed to download report. Please try again.");
     } finally {
       setDownloading(null);
     }
   };
 
-  const dateStr = new Date().toISOString().split('T')[0];
+  const dateStr = new Date().toISOString().split("T")[0];
 
   const reports: ReportCardConfig[] = [
     {
-      id: 'platform-master',
-      title: 'Platform Master Portfolio',
-      badge: 'Portfolio & Tenants',
-      badgeColor: 'text-indigo-400',
+      id: "platform-master",
+      title: "Platform Master Portfolio",
+      badge: "Portfolio & Tenants",
+      badgeColor: "text-indigo-400",
       icon: Building2,
-      iconBg: 'bg-indigo-950/80 border-indigo-800/60',
-      iconColor: 'text-indigo-400',
+      iconBg: "bg-indigo-950/80 border-indigo-800/60",
+      iconColor: "text-indigo-400",
       description:
-        'Executive platform intelligence across all tenants, user growth trajectories, commercial pipeline sums, and active project counts.',
+        "Executive platform intelligence across all tenants, user growth trajectories, commercial pipeline sums, and active project counts.",
       bullets: [
-        'Complete tenant roster & status indicators',
-        'Commercial pipeline & tender conversion sums',
-        'User verification rates & plan distribution',
+        "Complete tenant roster & status indicators",
+        "Commercial pipeline & tender conversion sums",
+        "User verification rates & plan distribution",
       ],
-      excelEndpoint: '/api/reports/platform/xlsx',
-      pdfEndpoint: '/api/reports/platform/pdf',
-      excelFilenamePrefix: 'pmg-platform-master',
-      pdfFilenamePrefix: 'pmg-executive-platform-report',
+      excelEndpoint: "/api/reports/platform/xlsx",
+      pdfEndpoint: "/api/reports/platform/pdf",
+      excelFilenamePrefix: "pmg-platform-master",
+      pdfFilenamePrefix: "pmg-executive-platform-report",
     },
     {
-      id: 'storage-audit',
-      title: 'Storage & S3 Infrastructure',
-      badge: 'Resource Quota',
-      badgeColor: 'text-amber-400',
+      id: "storage-audit",
+      title: "Storage & S3 Infrastructure",
+      badge: "Resource Quota",
+      badgeColor: "text-amber-400",
       icon: HardDrive,
-      iconBg: 'bg-amber-950/80 border-amber-800/60',
-      iconColor: 'text-amber-400',
+      iconBg: "bg-amber-950/80 border-amber-800/60",
+      iconColor: "text-amber-400",
       description:
-        'Detailed AWS S3 storage footprint breakdown by document attachment categories (Tenders, POs, Contracts, PODs) and top consuming tenants.',
+        "Detailed AWS S3 storage footprint breakdown by document attachment categories (Tenders, POs, Contracts, PODs) and top consuming tenants.",
       bullets: [
-        'S3 megabytes consumed by document category',
-        'Ranked tenant storage quota consumption',
-        'Lifetime file count & storage capacity audit',
+        "S3 megabytes consumed by document category",
+        "Ranked tenant storage quota consumption",
+        "Lifetime file count & storage capacity audit",
       ],
-      excelEndpoint: '/api/reports/storage/xlsx',
-      pdfEndpoint: '/api/reports/storage/pdf',
-      excelFilenamePrefix: 'pmg-storage-audit',
-      pdfFilenamePrefix: 'pmg-storage-audit',
+      excelEndpoint: "/api/reports/storage/xlsx",
+      pdfEndpoint: "/api/reports/storage/pdf",
+      excelFilenamePrefix: "pmg-storage-audit",
+      pdfFilenamePrefix: "pmg-storage-audit",
     },
     {
-      id: 'security-audit',
-      title: 'Security & Compliance Trail',
-      badge: 'Audit & Access',
-      badgeColor: 'text-emerald-400',
+      id: "security-audit",
+      title: "Security & Compliance Trail",
+      badge: "Audit & Access",
+      badgeColor: "text-emerald-400",
       icon: ShieldCheck,
-      iconBg: 'bg-emerald-950/80 border-emerald-800/60',
-      iconColor: 'text-emerald-400',
+      iconBg: "bg-emerald-950/80 border-emerald-800/60",
+      iconColor: "text-emerald-400",
       description:
-        'Comprehensive security audit event log, suspicious IP/session origin flags, admin privilege transitions, and ownership transfer records.',
+        "Comprehensive security audit event log, suspicious IP/session origin flags, admin privilege transitions, and ownership transfer records.",
       bullets: [
-        'Critical, warning, and info security event trail',
-        'Suspicious session tracking & IP detection',
-        'Immutable admin actions & compliance record',
+        "Critical, warning, and info security event trail",
+        "Suspicious session tracking & IP detection",
+        "Immutable admin actions & compliance record",
       ],
-      excelEndpoint: '/api/reports/security/xlsx',
-      pdfEndpoint: '/api/reports/security/pdf',
-      excelFilenamePrefix: 'pmg-security-audit',
-      pdfFilenamePrefix: 'pmg-security-audit',
+      excelEndpoint: "/api/reports/security/xlsx",
+      pdfEndpoint: "/api/reports/security/pdf",
+      excelFilenamePrefix: "pmg-security-audit",
+      pdfFilenamePrefix: "pmg-security-audit",
     },
   ];
 
@@ -180,7 +180,7 @@ export function ReportDownloadCards() {
                     handleDownload(
                       excelKey,
                       r.excelEndpoint,
-                      `${r.excelFilenamePrefix}-${dateStr}.xlsx`
+                      `${r.excelFilenamePrefix}-${dateStr}.xlsx`,
                     )
                   }
                   disabled={downloading !== null}
@@ -205,7 +205,7 @@ export function ReportDownloadCards() {
                     handleDownload(
                       pdfKey,
                       r.pdfEndpoint,
-                      `${r.pdfFilenamePrefix}-${dateStr}.pdf`
+                      `${r.pdfFilenamePrefix}-${dateStr}.pdf`,
                     )
                   }
                   disabled={downloading !== null}

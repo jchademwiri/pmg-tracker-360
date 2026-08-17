@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { OrganizationCard } from './organization-card';
-import { CreateOrganizationCard } from './create-organization-card';
+import { OrganizationCard } from "./organization-card";
+import { CreateOrganizationCard } from "./create-organization-card";
 
-import { cn } from '@/lib/utils';
-import type { OrganizationWithStats } from '@/server/organizations';
-import { EmptyOrganizationsState } from './shared/empty-states';
+import { cn } from "@/lib/utils";
+import type { OrganizationWithStats } from "@/server/organizations";
+import { EmptyOrganizationsState } from "./shared/empty-states";
 
 interface OrganizationGridProps {
   organizations: OrganizationWithStats[];
@@ -34,18 +34,18 @@ export function OrganizationGrid({
     <div
       className={cn(
         // Base grid layout
-        'grid gap-6',
+        "grid gap-6",
         // Mobile: 1 column (default)
-        'grid-cols-1',
+        "grid-cols-1",
         // Tablet: 2 columns
-        'sm:grid-cols-2',
+        "sm:grid-cols-2",
         // Desktop: Auto-fit with minimum 320px width
-        'lg:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]',
+        "lg:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]",
         // Extra large screens: Maximum 4 columns
-        'xl:grid-cols-[repeat(auto-fit,minmax(320px,1fr))] xl:max-w-[1400px]',
+        "xl:grid-cols-[repeat(auto-fit,minmax(320px,1fr))] xl:max-w-[1400px]",
         // Responsive padding and margins
-        'w-full mx-auto',
-        className
+        "w-full mx-auto",
+        className,
       )}
       role="region"
       aria-label="Organizations"

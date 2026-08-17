@@ -1,18 +1,18 @@
-import { getCurrentUser } from '@/server';
-import { getProjects } from '@/server/projects';
-import { getClientsList } from '@/server/clients';
-import { ProjectList } from '@/components/projects/project-list';
-import { Button } from '@/components/ui';
-import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { NoOrganizationState } from '@/components/shared/empty-states';
+import { getCurrentUser } from "@/server";
+import { getProjects } from "@/server/projects";
+import { getClientsList } from "@/server/clients";
+import { ProjectList } from "@/components/projects/project-list";
+import { Button } from "@/components/ui";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { NoOrganizationState } from "@/components/shared/empty-states";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const { session } = await getCurrentUser();
-  const { auth } = await import('@/lib/auth');
-  const { headers } = await import('next/headers');
+  const { auth } = await import("@/lib/auth");
+  const { headers } = await import("next/headers");
   const headersList = await headers();
 
   if (!session.activeOrganizationId) {
@@ -21,7 +21,7 @@ export default async function ProjectsPage() {
 
   // Fetch initial projects and clients list in parallel
   const [result, clientsResult] = await Promise.all([
-    getProjects(session.activeOrganizationId, '', 1, 10),
+    getProjects(session.activeOrganizationId, "", 1, 10),
     getClientsList(session.activeOrganizationId),
   ]);
 
@@ -44,7 +44,7 @@ export default async function ProjectsPage() {
               headers: headersList,
               body: {
                 permissions: {
-                  project: ['create'],
+                  project: ["create"],
                 },
               },
             })
@@ -62,12 +62,17 @@ export default async function ProjectsPage() {
               headers: headersList,
               body: {
                 permissions: {
-                  purchase_order: ['create'],
+                  purchase_order: ["create"],
                 },
               },
             })
           ).success && (
-            <Button asChild variant="outline" size="sm" className="h-9 font-medium shadow-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-9 font-medium shadow-xs"
+            >
               <Link href="/projects/purchase-orders/create">
                 <Plus className="h-4 w-4 mr-1.5" />
                 Add Purchase Order

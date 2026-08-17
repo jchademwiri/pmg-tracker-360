@@ -1,7 +1,7 @@
-'use server';
+"use server";
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export const checkIfAdmin = async () => {
   try {
@@ -9,7 +9,7 @@ export const checkIfAdmin = async () => {
       headers: await headers(),
       body: {
         permissions: {
-          project: ['create', 'delete', 'update'],
+          project: ["create", "delete", "update"],
         },
       },
     });
@@ -17,7 +17,7 @@ export const checkIfAdmin = async () => {
     if (error) {
       return {
         success: false,
-        error: error || 'Failed to check permissions',
+        error: error || "Failed to check permissions",
       };
     }
 
@@ -25,7 +25,7 @@ export const checkIfAdmin = async () => {
   } catch (error) {
     return {
       success: false,
-      error: error || 'Failed to check permissions',
+      error: error || "Failed to check permissions",
     };
   }
 };

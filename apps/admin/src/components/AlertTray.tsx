@@ -1,10 +1,10 @@
-import { AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Info } from "lucide-react";
 
 export type Alert = {
   id: string;
   label: string;
   count: number;
-  severity: 'critical' | 'high' | 'medium' | 'low';
+  severity: "critical" | "high" | "medium" | "low";
   href: string;
 };
 
@@ -18,30 +18,30 @@ type SeverityClasses = {
   text: string;
 };
 
-const SEVERITY_MAP: Record<Alert['severity'], SeverityClasses> = {
+const SEVERITY_MAP: Record<Alert["severity"], SeverityClasses> = {
   critical: {
-    bg: 'bg-red-950/60',
-    border: 'border-red-800/60',
-    text: 'text-red-400',
+    bg: "bg-red-950/60",
+    border: "border-red-800/60",
+    text: "text-red-400",
   },
   high: {
-    bg: 'bg-orange-950/60',
-    border: 'border-orange-800/60',
-    text: 'text-orange-400',
+    bg: "bg-orange-950/60",
+    border: "border-orange-800/60",
+    text: "text-orange-400",
   },
   medium: {
-    bg: 'bg-yellow-950/60',
-    border: 'border-yellow-800/60',
-    text: 'text-yellow-400',
+    bg: "bg-yellow-950/60",
+    border: "border-yellow-800/60",
+    text: "text-yellow-400",
   },
   low: {
-    bg: 'bg-blue-950/60',
-    border: 'border-blue-800/60',
-    text: 'text-blue-400',
+    bg: "bg-blue-950/60",
+    border: "border-blue-800/60",
+    text: "text-blue-400",
   },
 };
 
-const SEVERITY_ORDER: Record<Alert['severity'], number> = {
+const SEVERITY_ORDER: Record<Alert["severity"], number> = {
   critical: 0,
   high: 1,
   medium: 2,
@@ -62,13 +62,13 @@ function SeverityIcon({
   severity,
   className,
 }: {
-  severity: Alert['severity'];
+  severity: Alert["severity"];
   className?: string;
 }) {
-  if (severity === 'critical' || severity === 'high') {
+  if (severity === "critical" || severity === "high") {
     return <AlertTriangle size={16} className={className} />;
   }
-  if (severity === 'medium') {
+  if (severity === "medium") {
     return <AlertCircle size={16} className={className} />;
   }
   return <Info size={16} className={className} />;

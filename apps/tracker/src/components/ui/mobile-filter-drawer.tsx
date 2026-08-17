@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, ReactNode } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, ReactNode } from "react";
+import { SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -10,7 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 
 /* ──────────────────────────────────────────────
    MobileFilterDrawer — bottom sheet for mobile filters
@@ -39,8 +39,8 @@ export function MobileFilterDrawer({
   children,
   onApply,
   onClear,
-  title = 'Filters',
-  className = '',
+  title = "Filters",
+  className = "",
 }: MobileFilterDrawerProps) {
   const [open, setOpen] = useState(false);
 
@@ -115,7 +115,11 @@ interface MobileFilterFieldProps {
   className?: string;
 }
 
-export function MobileFilterField({ label, children, className = '' }: MobileFilterFieldProps) {
+export function MobileFilterField({
+  label,
+  children,
+  className = "",
+}: MobileFilterFieldProps) {
   return (
     <div className={`space-y-1.5 ${className}`}>
       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -125,5 +129,3 @@ export function MobileFilterField({ label, children, className = '' }: MobileFil
     </div>
   );
 }
-
-

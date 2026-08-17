@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { organization } from '@pmg/db/schema';
-import { cn } from '@/lib/utils';
+import { organization } from "@pmg/db/schema";
+import { cn } from "@/lib/utils";
 
 interface OrganizationPageHeaderProps {
   organizationCount: number;
@@ -15,14 +15,14 @@ export function OrganizationPageHeader({
   className,
 }: OrganizationPageHeaderProps) {
   return (
-    <div className={cn('text-center space-y-4', className)}>
+    <div className={cn("text-center space-y-4", className)}>
       <div>
         <h1 className="text-4xl font-bold tracking-tight">Tender Track 360</h1>
         <p className="text-lg text-muted-foreground mt-2">
           {organizationCount === 0
-            ? 'Create your first organization to get started'
+            ? "Create your first organization to get started"
             : organizationCount === 1
-              ? 'Manage your organization'
+              ? "Manage your organization"
               : `Choose from ${organizationCount} organizations`}
         </p>
       </div>

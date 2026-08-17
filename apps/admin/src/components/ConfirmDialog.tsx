@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { ShieldAlert, Trash2, AlertTriangle, Info, X, Loader } from 'lucide-react';
+import { useEffect, useState } from "react";
+import {
+  ShieldAlert,
+  Trash2,
+  AlertTriangle,
+  Info,
+  X,
+  Loader,
+} from "lucide-react";
 
 export type ConfirmDialogProps = {
   isOpen: boolean;
@@ -9,7 +16,7 @@ export type ConfirmDialogProps = {
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: "danger" | "warning" | "info";
   requireConfirmationValue?: string; // If set, user must type this exact string to enable confirm
   loading?: boolean;
   onConfirm: () => void;
@@ -20,46 +27,47 @@ export default function ConfirmDialog({
   isOpen,
   title,
   description,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'danger',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  variant = "danger",
   requireConfirmationValue,
   loading = false,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
-  const [typedValue, setTypedValue] = useState('');
+  const [typedValue, setTypedValue] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      setTypedValue('');
+      setTypedValue("");
     }
   }, [isOpen]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !loading) {
+      if (e.key === "Escape" && !loading) {
         onClose();
       }
     }
     if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
     }
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, loading, onClose]);
 
   if (!isOpen) return null;
 
   const isConfirmationValid =
     !requireConfirmationValue ||
-    typedValue.trim().toLowerCase() === requireConfirmationValue.trim().toLowerCase();
+    typedValue.trim().toLowerCase() ===
+      requireConfirmationValue.trim().toLowerCase();
 
   const icon =
-    variant === 'danger' ? (
+    variant === "danger" ? (
       <div className="h-10 w-10 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/20 shrink-0">
         <Trash2 className="h-5 w-5" />
       </div>
-    ) : variant === 'warning' ? (
+    ) : variant === "warning" ? (
       <div className="h-10 w-10 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shrink-0">
         <AlertTriangle className="h-5 w-5" />
       </div>
@@ -70,11 +78,11 @@ export default function ConfirmDialog({
     );
 
   const confirmBtnClass =
-    variant === 'danger'
-      ? 'bg-red-600 hover:bg-red-500 text-white'
-      : variant === 'warning'
-      ? 'bg-amber-600 hover:bg-amber-500 text-white'
-      : 'bg-white hover:bg-zinc-200 text-black';
+    variant === "danger"
+      ? "bg-red-600 hover:bg-red-500 text-white"
+      : variant === "warning"
+        ? "bg-amber-600 hover:bg-amber-500 text-white"
+        : "bg-white hover:bg-zinc-200 text-black";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -99,15 +107,23 @@ export default function ConfirmDialog({
         <div className="flex items-start gap-4">
           {icon}
           <div className="space-y-1 pr-6">
-            <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
-            <p className="text-sm text-zinc-400 leading-relaxed">{description}</p>
+            <h3 className="text-lg font-bold text-white tracking-tight">
+              {title}
+            </h3>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              {description}
+            </p>
           </div>
         </div>
 
         {requireConfirmationValue && (
           <div className="space-y-2 pt-1">
             <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-              Type <span className="text-white font-mono">{requireConfirmationValue}</span> to confirm
+              Type{" "}
+              <span className="text-white font-mono">
+                {requireConfirmationValue}
+              </span>{" "}
+              to confirm
             </label>
             <input
               type="text"

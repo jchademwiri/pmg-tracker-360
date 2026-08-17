@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import * as SelectPrimitive from '@radix-ui/react-select';
-import { ChevronDown, Check, Flame, Clock, ShieldAlert, Sparkles } from 'lucide-react';
+import * as React from "react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import {
+  ChevronDown,
+  Check,
+  Flame,
+  Clock,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
 
-export type PriorityValue = 'low' | 'medium' | 'high' | 'urgent';
+export type PriorityValue = "low" | "medium" | "high" | "urgent";
 
 interface PriorityOption {
   value: PriorityValue;
@@ -19,40 +26,40 @@ interface PriorityOption {
 
 export const PRIORITY_OPTIONS: PriorityOption[] = [
   {
-    value: 'low',
-    label: 'Low Priority',
-    dotColor: 'bg-emerald-400',
-    glowColor: 'shadow-[0_0_8px_rgba(52,211,153,0.6)]',
-    badgeBg: 'bg-emerald-950/60',
-    badgeText: 'text-emerald-300',
-    badgeBorder: 'border-emerald-700/50',
+    value: "low",
+    label: "Low Priority",
+    dotColor: "bg-emerald-400",
+    glowColor: "shadow-[0_0_8px_rgba(52,211,153,0.6)]",
+    badgeBg: "bg-emerald-950/60",
+    badgeText: "text-emerald-300",
+    badgeBorder: "border-emerald-700/50",
   },
   {
-    value: 'medium',
-    label: 'Medium Priority',
-    dotColor: 'bg-sky-400',
-    glowColor: 'shadow-[0_0_8px_rgba(56,189,248,0.6)]',
-    badgeBg: 'bg-sky-950/60',
-    badgeText: 'text-sky-300',
-    badgeBorder: 'border-sky-700/50',
+    value: "medium",
+    label: "Medium Priority",
+    dotColor: "bg-sky-400",
+    glowColor: "shadow-[0_0_8px_rgba(56,189,248,0.6)]",
+    badgeBg: "bg-sky-950/60",
+    badgeText: "text-sky-300",
+    badgeBorder: "border-sky-700/50",
   },
   {
-    value: 'high',
-    label: 'High Priority',
-    dotColor: 'bg-amber-400',
-    glowColor: 'shadow-[0_0_8px_rgba(251,191,36,0.6)]',
-    badgeBg: 'bg-amber-950/60',
-    badgeText: 'text-amber-300',
-    badgeBorder: 'border-amber-700/50',
+    value: "high",
+    label: "High Priority",
+    dotColor: "bg-amber-400",
+    glowColor: "shadow-[0_0_8px_rgba(251,191,36,0.6)]",
+    badgeBg: "bg-amber-950/60",
+    badgeText: "text-amber-300",
+    badgeBorder: "border-amber-700/50",
   },
   {
-    value: 'urgent',
-    label: 'Urgent / Critical',
-    dotColor: 'bg-rose-500',
-    glowColor: 'shadow-[0_0_10px_rgba(244,63,94,0.8)]',
-    badgeBg: 'bg-rose-950/70',
-    badgeText: 'text-rose-300',
-    badgeBorder: 'border-rose-700/60',
+    value: "urgent",
+    label: "Urgent / Critical",
+    dotColor: "bg-rose-500",
+    glowColor: "shadow-[0_0_10px_rgba(244,63,94,0.8)]",
+    badgeBg: "bg-rose-950/70",
+    badgeText: "text-rose-300",
+    badgeBorder: "border-rose-700/60",
     icon: <Flame className="h-3.5 w-3.5 text-rose-400 fill-rose-400" />,
   },
 ];
@@ -66,7 +73,7 @@ interface PrioritySelectProps {
 export function PrioritySelect({
   value,
   onValueChange,
-  className = '',
+  className = "",
 }: PrioritySelectProps) {
   const currentOption =
     PRIORITY_OPTIONS.find((opt) => opt.value === value) || PRIORITY_OPTIONS[1];
@@ -108,14 +115,14 @@ export function PrioritySelect({
                   value={opt.value}
                   className={`relative flex items-center justify-between px-3 py-2.5 text-xs sm:text-sm rounded-lg cursor-pointer transition-all duration-150 outline-none select-none ${
                     isSelected
-                      ? 'bg-amber-500/15 text-foreground font-semibold border border-amber-500/30'
-                      : 'text-zinc-300 hover:bg-white/10 hover:text-white'
+                      ? "bg-amber-500/15 text-foreground font-semibold border border-amber-500/30"
+                      : "text-zinc-300 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span
                       className={`h-2.5 w-2.5 rounded-full ${opt.dotColor} ${
-                        isSelected ? opt.glowColor : ''
+                        isSelected ? opt.glowColor : ""
                       }`}
                     />
                     <span className="flex items-center gap-1.5">

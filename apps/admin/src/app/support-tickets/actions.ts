@@ -1,20 +1,28 @@
-'use server';
+"use server";
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { db } from '@pmg/db';
-import { supportTickets, supportTicketMessages, securityAuditLog, user } from '@pmg/db/schema';
-import { eq, inArray, isNull, and, asc, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { PLATFORM_ORG_ID } from '@/lib/constants';
-import { validateStatusTransition } from './ticket-utils';
-import { resend, SENDER, REPLY_TO } from '@/lib/email-config';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { db } from "@pmg/db";
+import {
+  supportTickets,
+  supportTicketMessages,
+  securityAuditLog,
+  user,
+} from "@pmg/db/schema";
+import { eq, inArray, isNull, and, asc, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { PLATFORM_ORG_ID } from "@/lib/constants";
+import { validateStatusTransition } from "./ticket-utils";
+import { resend, SENDER, REPLY_TO } from "@/lib/email-config";
 
-export async function updateTicketStatus(ticketId: string, newStatus: string): Promise<void> {
+export async function updateTicketStatus(
+  ticketId: string,
+  newStatus: string,
+): Promise<void> {
   // 1. Re-verify admin session
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    throw new Error('Unauthorized');
+  if (!session || (session.user as any).role !== "admin") {
+    throw new Error("Unauthorized");
   }
 
   // 2. Fetch current status
@@ -22,11 +30,11 @@ export async function updateTicketStatus(ticketId: string, newStatus: string): P
     .select({ status: supportTickets.status })
     .from(supportTickets)
     .where(eq(supportTickets.id, ticketId));
-  if (!ticket) throw new Error('Ticket not found');
+  if (!ticket) throw new Error("Ticket not found");
 
   // 3. Validate status transition
   if (!validateStatusTransition(ticket.status, newStatus)) {
-    throw new Error('Invalid status transition');
+    throw new Error("Invalid status transition");
   }
 
   // 4. Execute DB write
@@ -41,23 +49,29 @@ export async function updateTicketStatus(ticketId: string, newStatus: string): P
       id: crypto.randomUUID(),
       organizationId: PLATFORM_ORG_ID,
       userId: session.user.id,
-      action: 'admin.ticket.status_update',
-      resourceType: 'support_ticket',
+      action: "admin.ticket.status_update",
+      resourceType: "support_ticket",
       resourceId: ticketId,
-      severity: 'info',
+      severity: "info",
       createdAt: new Date(),
     });
   } catch (err) {
-    console.error('[audit-log] Failed to insert for ticket status update:', err);
+    console.error(
+      "[audit-log] Failed to insert for ticket status update:",
+      err,
+    );
   }
 
-  revalidatePath('/support-tickets');
+  revalidatePath("/support-tickets");
 }
 
-export async function updateTicketPriority(ticketId: string, newPriority: string): Promise<void> {
+export async function updateTicketPriority(
+  ticketId: string,
+  newPriority: string,
+): Promise<void> {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    throw new Error('Unauthorized');
+  if (!session || (session.user as any).role !== "admin") {
+    throw new Error("Unauthorized");
   }
 
   await db
@@ -65,19 +79,22 @@ export async function updateTicketPriority(ticketId: string, newPriority: string
     .set({ priority: newPriority, updatedAt: new Date() })
     .where(eq(supportTickets.id, ticketId));
 
-  revalidatePath('/support-tickets');
+  revalidatePath("/support-tickets");
 }
 
 /**
  * Bulk updates status for multiple tickets.
  */
-export async function bulkUpdateTicketStatus(ticketIds: string[], newStatus: string) {
+export async function bulkUpdateTicketStatus(
+  ticketIds: string[],
+  newStatus: string,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
   if (!ticketIds || ticketIds.length === 0) {
-    return { success: false, error: 'No tickets selected.' };
+    return { success: false, error: "No tickets selected." };
   }
 
   try {
@@ -86,11 +103,11 @@ export async function bulkUpdateTicketStatus(ticketIds: string[], newStatus: str
       .set({ status: newStatus, updatedAt: new Date() })
       .where(inArray(supportTickets.id, ticketIds));
 
-    revalidatePath('/support-tickets');
+    revalidatePath("/support-tickets");
     return { success: true, message: `Updated ${ticketIds.length} ticket(s).` };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed bulk status update.' };
+    return { success: false, error: e.message || "Failed bulk status update." };
   }
 }
 
@@ -99,20 +116,25 @@ export async function bulkUpdateTicketStatus(ticketIds: string[], newStatus: str
  */
 export async function bulkDeleteTickets(ticketIds: string[]) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
   if (!ticketIds || ticketIds.length === 0) {
-    return { success: false, error: 'No tickets selected.' };
+    return { success: false, error: "No tickets selected." };
   }
 
   try {
-    await db.delete(supportTickets).where(inArray(supportTickets.id, ticketIds));
-    revalidatePath('/support-tickets');
+    await db
+      .delete(supportTickets)
+      .where(inArray(supportTickets.id, ticketIds));
+    revalidatePath("/support-tickets");
     return { success: true, message: `Deleted ${ticketIds.length} ticket(s).` };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed bulk ticket deletion.' };
+    return {
+      success: false,
+      error: e.message || "Failed bulk ticket deletion.",
+    };
   }
 }
 
@@ -122,8 +144,8 @@ export async function bulkDeleteTickets(ticketIds: string[]) {
  */
 export async function getTicketThreadAction(ticketId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -147,7 +169,7 @@ export async function getTicketThreadAction(ticketId: string) {
       .where(eq(supportTickets.id, ticketId));
 
     if (!ticket) {
-      return { success: false, error: 'Ticket not found.' };
+      return { success: false, error: "Ticket not found." };
     }
 
     const ticketCode = ticket.ticketNumber
@@ -167,9 +189,9 @@ export async function getTicketThreadAction(ticketId: string) {
       .where(
         and(
           eq(supportTicketMessages.ticketId, ticketId),
-          eq(supportTicketMessages.senderType, 'user'),
-          isNull(supportTicketMessages.readAt)
-        )
+          eq(supportTicketMessages.senderType, "user"),
+          isNull(supportTicketMessages.readAt),
+        ),
       );
 
     return {
@@ -181,8 +203,11 @@ export async function getTicketThreadAction(ticketId: string) {
       messages,
     };
   } catch (err: any) {
-    console.error('Error fetching ticket thread:', err);
-    return { success: false, error: err.message || 'Failed to fetch ticket thread.' };
+    console.error("Error fetching ticket thread:", err);
+    return {
+      success: false,
+      error: err.message || "Failed to fetch ticket thread.",
+    };
   }
 }
 
@@ -196,16 +221,23 @@ export type SendAdminMessageInput = {
 /**
  * Sends a message from admin into the ticket conversation thread.
  */
-export async function sendAdminTicketMessageAction(input: SendAdminMessageInput) {
+export async function sendAdminTicketMessageAction(
+  input: SendAdminMessageInput,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
-  const { ticketId, message, isInternal = false, sendEmailNotification = true } = input;
+  const {
+    ticketId,
+    message,
+    isInternal = false,
+    sendEmailNotification = true,
+  } = input;
 
   if (!message || !message.trim()) {
-    return { success: false, error: 'Message cannot be empty.' };
+    return { success: false, error: "Message cannot be empty." };
   }
 
   try {
@@ -215,11 +247,12 @@ export async function sendAdminTicketMessageAction(input: SendAdminMessageInput)
       .where(eq(supportTickets.id, ticketId));
 
     if (!ticket) {
-      return { success: false, error: 'Ticket not found.' };
+      return { success: false, error: "Ticket not found." };
     }
 
-    const adminName = session.user.name || 'System Support';
-    const adminEmail = session.user.email || 'support@contact.tendertrack360.co.za';
+    const adminName = session.user.name || "System Support";
+    const adminEmail =
+      session.user.email || "support@contact.tendertrack360.co.za";
 
     // 1. Insert message
     const messageId = crypto.randomUUID();
@@ -227,7 +260,7 @@ export async function sendAdminTicketMessageAction(input: SendAdminMessageInput)
       id: messageId,
       ticketId,
       senderId: session.user.id,
-      senderType: 'admin',
+      senderType: "admin",
       senderName: adminName,
       senderEmail: adminEmail,
       message: message.trim(),
@@ -236,7 +269,7 @@ export async function sendAdminTicketMessageAction(input: SendAdminMessageInput)
     });
 
     // 2. Update ticket updated_at and advance status if currently 'open'
-    const newStatus = ticket.status === 'open' ? 'in_progress' : ticket.status;
+    const newStatus = ticket.status === "open" ? "in_progress" : ticket.status;
     await db
       .update(supportTickets)
       .set({
@@ -250,14 +283,14 @@ export async function sendAdminTicketMessageAction(input: SendAdminMessageInput)
       try {
         const escapeHtml = (str: string) =>
           str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
-        const safeMessage = escapeHtml(message.trim()).replace(/\n/g, '<br>');
-        const appUrl = process.env.APP_URL || 'https://tendertrack360.co.za';
+        const safeMessage = escapeHtml(message.trim()).replace(/\n/g, "<br>");
+        const appUrl = process.env.APP_URL || "https://tendertrack360.co.za";
 
         const ticketCode = ticket.ticketNumber
           ? `TICK-${ticket.ticketNumber}`
@@ -303,7 +336,7 @@ export async function sendAdminTicketMessageAction(input: SendAdminMessageInput)
           `,
         });
       } catch (emailErr) {
-        console.error('Failed to send email alert for ticket reply:', emailErr);
+        console.error("Failed to send email alert for ticket reply:", emailErr);
       }
     }
 
@@ -313,35 +346,40 @@ export async function sendAdminTicketMessageAction(input: SendAdminMessageInput)
         id: crypto.randomUUID(),
         organizationId: PLATFORM_ORG_ID,
         userId: session.user.id,
-        action: isInternal ? 'admin.ticket.internal_note' : 'admin.ticket.reply',
-        resourceType: 'support_ticket',
+        action: isInternal
+          ? "admin.ticket.internal_note"
+          : "admin.ticket.reply",
+        resourceType: "support_ticket",
         resourceId: ticketId,
-        severity: 'info',
+        severity: "info",
         createdAt: new Date(),
       });
     } catch (auditErr) {
-      console.error('Audit log failure for ticket reply:', auditErr);
+      console.error("Audit log failure for ticket reply:", auditErr);
     }
 
-    revalidatePath('/support-tickets');
+    revalidatePath("/support-tickets");
     return { success: true, messageId };
   } catch (err: any) {
-    console.error('Error sending admin ticket message:', err);
-    return { success: false, error: err.message || 'Failed to send message.' };
+    console.error("Error sending admin ticket message:", err);
+    return { success: false, error: err.message || "Failed to send message." };
   }
 }
 
 /**
  * Sends full conversation transcript to a designated email address.
  */
-export async function sendTicketTranscriptEmailAction(ticketId: string, toEmail: string) {
+export async function sendTicketTranscriptEmailAction(
+  ticketId: string,
+  toEmail: string,
+) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
-  if (!toEmail || !toEmail.includes('@')) {
-    return { success: false, error: 'Invalid recipient email address.' };
+  if (!toEmail || !toEmail.includes("@")) {
+    return { success: false, error: "Invalid recipient email address." };
   }
 
   try {
@@ -350,29 +388,34 @@ export async function sendTicketTranscriptEmailAction(ticketId: string, toEmail:
       .from(supportTickets)
       .where(eq(supportTickets.id, ticketId));
 
-    if (!ticket) return { success: false, error: 'Ticket not found.' };
+    if (!ticket) return { success: false, error: "Ticket not found." };
 
     const messages = await db
       .select()
       .from(supportTicketMessages)
-      .where(and(eq(supportTicketMessages.ticketId, ticketId), eq(supportTicketMessages.isInternal, false)))
+      .where(
+        and(
+          eq(supportTicketMessages.ticketId, ticketId),
+          eq(supportTicketMessages.isInternal, false),
+        ),
+      )
       .orderBy(asc(supportTicketMessages.createdAt));
 
     const escapeHtml = (str: string) =>
       str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
     const messagesHtml = messages
       .map((m) => {
-        const isAdmin = m.senderType === 'admin';
-        const bg = isAdmin ? '#f0fdf4' : '#f8fafc';
-        const borderColor = isAdmin ? '#16a34a' : '#0284c7';
-        const senderBadge = isAdmin ? 'Support Team' : 'User';
-        const dateStr = new Date(m.createdAt).toLocaleString('en-GB');
+        const isAdmin = m.senderType === "admin";
+        const bg = isAdmin ? "#f0fdf4" : "#f8fafc";
+        const borderColor = isAdmin ? "#16a34a" : "#0284c7";
+        const senderBadge = isAdmin ? "Support Team" : "User";
+        const dateStr = new Date(m.createdAt).toLocaleString("en-GB");
 
         return `
           <div style="background-color: ${bg}; border-left: 4px solid ${borderColor}; padding: 12px 16px; margin-bottom: 12px; border-radius: 4px;">
@@ -381,12 +424,12 @@ export async function sendTicketTranscriptEmailAction(ticketId: string, toEmail:
               <span>${dateStr}</span>
             </div>
             <div style="font-size: 14px; line-height: 1.5; color: #1e293b;">
-              ${escapeHtml(m.message).replace(/\n/g, '<br>')}
+              ${escapeHtml(m.message).replace(/\n/g, "<br>")}
             </div>
           </div>
         `;
       })
-      .join('');
+      .join("");
 
     await resend.emails.send({
       from: SENDER,
@@ -402,7 +445,7 @@ export async function sendTicketTranscriptEmailAction(ticketId: string, toEmail:
 
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 13px;">
             <p style="margin: 0 0 4px 0;"><strong>Submitter:</strong> ${escapeHtml(ticket.name)} &lt;${escapeHtml(ticket.email)}&gt;</p>
-            <p style="margin: 0;"><strong>Created:</strong> ${new Date(ticket.createdAt).toLocaleString('en-GB')}</p>
+            <p style="margin: 0;"><strong>Created:</strong> ${new Date(ticket.createdAt).toLocaleString("en-GB")}</p>
           </div>
 
           <h3 style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 12px;">Full Message History:</h3>
@@ -417,18 +460,24 @@ export async function sendTicketTranscriptEmailAction(ticketId: string, toEmail:
 
     return { success: true, message: `Transcript sent to ${toEmail}!` };
   } catch (err: any) {
-    console.error('Error sending transcript email:', err);
-    return { success: false, error: err.message || 'Failed to send transcript.' };
+    console.error("Error sending transcript email:", err);
+    return {
+      success: false,
+      error: err.message || "Failed to send transcript.",
+    };
   }
 }
 
 /**
  * Returns count of DISTINCT tickets with unread user messages for admin.
  */
-export async function getUnreadTicketsCountForAdminAction(): Promise<{ success: boolean; count: number }> {
+export async function getUnreadTicketsCountForAdminAction(): Promise<{
+  success: boolean;
+  count: number;
+}> {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session || (session.user as any).role !== 'admin') {
+    if (!session || (session.user as any).role !== "admin") {
       return { success: true, count: 0 };
     }
 
@@ -437,12 +486,15 @@ export async function getUnreadTicketsCountForAdminAction(): Promise<{ success: 
         count: sql<number>`count(distinct ${supportTickets.id})`,
       })
       .from(supportTickets)
-      .innerJoin(supportTicketMessages, eq(supportTickets.id, supportTicketMessages.ticketId))
+      .innerJoin(
+        supportTicketMessages,
+        eq(supportTickets.id, supportTicketMessages.ticketId),
+      )
       .where(
         and(
-          eq(supportTicketMessages.senderType, 'user'),
-          isNull(supportTicketMessages.readAt)
-        )
+          eq(supportTicketMessages.senderType, "user"),
+          isNull(supportTicketMessages.readAt),
+        ),
       );
 
     return {
@@ -450,8 +502,7 @@ export async function getUnreadTicketsCountForAdminAction(): Promise<{ success: 
       count: Number(result?.count) || 0,
     };
   } catch (err: any) {
-    console.error('Error getting unread count for admin:', err);
+    console.error("Error getting unread count for admin:", err);
     return { success: false, count: 0 };
   }
 }
-

@@ -6,81 +6,81 @@ type StatusClasses = {
 
 const STATUS_MAP: Record<string, StatusClasses> = {
   open: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
-    border: 'border-red-500/20',
+    bg: "bg-red-500/10",
+    text: "text-red-400",
+    border: "border-red-500/20",
   },
   in_progress: {
-    bg: 'bg-amber-500/10',
-    text: 'text-amber-400',
-    border: 'border-amber-500/20',
+    bg: "bg-amber-500/10",
+    text: "text-amber-400",
+    border: "border-amber-500/20",
   },
   closed: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/20',
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-400",
+    border: "border-emerald-500/20",
   },
   active: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/20',
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-400",
+    border: "border-emerald-500/20",
   },
   verified: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/20',
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-400",
+    border: "border-emerald-500/20",
   },
   unverified: {
-    bg: 'bg-amber-500/10',
-    text: 'text-amber-400',
-    border: 'border-amber-500/20',
+    bg: "bg-amber-500/10",
+    text: "text-amber-400",
+    border: "border-amber-500/20",
   },
   deleted: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
-    border: 'border-red-500/20',
+    bg: "bg-red-500/10",
+    text: "text-red-400",
+    border: "border-red-500/20",
   },
   suspicious: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
-    border: 'border-red-500/20',
+    bg: "bg-red-500/10",
+    text: "text-red-400",
+    border: "border-red-500/20",
   },
   bug: {
-    bg: 'bg-red-500/10',
-    text: 'text-red-400',
-    border: 'border-red-500/20',
+    bg: "bg-red-500/10",
+    text: "text-red-400",
+    border: "border-red-500/20",
   },
   feature: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-400',
-    border: 'border-blue-500/20',
+    bg: "bg-blue-500/10",
+    text: "text-blue-400",
+    border: "border-blue-500/20",
   },
   free: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-400',
-    border: 'border-blue-500/20',
+    bg: "bg-blue-500/10",
+    text: "text-blue-400",
+    border: "border-blue-500/20",
   },
   starter: {
-    bg: 'bg-emerald-500/10',
-    text: 'text-emerald-400',
-    border: 'border-emerald-500/20',
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-400",
+    border: "border-emerald-500/20",
   },
   pro: {
-    bg: 'bg-purple-500/10',
-    text: 'text-purple-300 font-semibold',
-    border: 'border-purple-500/30',
+    bg: "bg-purple-500/10",
+    text: "text-purple-300 font-semibold",
+    border: "border-purple-500/30",
   },
   other: {
-    bg: 'bg-zinc-800/60',
-    text: 'text-zinc-400',
-    border: 'border-zinc-700/40',
+    bg: "bg-zinc-800/60",
+    text: "text-zinc-400",
+    border: "border-zinc-700/40",
   },
 };
 
 const FALLBACK_CLASSES: StatusClasses = {
-  bg: 'bg-zinc-800/60',
-  text: 'text-zinc-400',
-  border: 'border-zinc-700/40',
+  bg: "bg-zinc-800/60",
+  text: "text-zinc-400",
+  border: "border-zinc-700/40",
 };
 
 /**
@@ -89,11 +89,13 @@ const FALLBACK_CLASSES: StatusClasses = {
  * Uses Object.hasOwn to avoid prototype-key collisions (e.g. "toString").
  */
 export function getStatusClasses(status: string): StatusClasses {
-  return Object.hasOwn(STATUS_MAP, status) ? STATUS_MAP[status]! : FALLBACK_CLASSES;
+  return Object.hasOwn(STATUS_MAP, status)
+    ? STATUS_MAP[status]!
+    : FALLBACK_CLASSES;
 }
 
 function formatStatusLabel(status: string): string {
-  return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
+  return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
 }
 
 type StatusBadgeProps = {
@@ -101,7 +103,10 @@ type StatusBadgeProps = {
   className?: string;
 };
 
-export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
+export default function StatusBadge({
+  status,
+  className = "",
+}: StatusBadgeProps) {
   const { bg, text, border } = getStatusClasses(status);
 
   return (

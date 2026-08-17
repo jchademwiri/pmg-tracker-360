@@ -1,8 +1,8 @@
-import { db } from '@pmg/db';
-import { member, invitation } from '@pmg/db/schema';
-import type { Role } from '@pmg/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
-import { auditLogger } from './audit-logger';
+import { db } from "@pmg/db";
+import { member, invitation } from "@pmg/db/schema";
+import type { Role } from "@pmg/db/schema";
+import { eq, and, inArray } from "drizzle-orm";
+import { auditLogger } from "./audit-logger";
 
 export interface BulkMemberUpdate {
   memberId: string;
@@ -42,7 +42,7 @@ class BulkOperationsManager {
     organizationId: string,
     updates: BulkMemberUpdate[],
     performingUserId: string,
-    performingUserRole: Role
+    performingUserRole: Role,
   ): Promise<BulkOperationResult> {
     const operationId = crypto.randomUUID();
     const result: BulkOperationResult = {
@@ -62,15 +62,15 @@ class BulkOperationsManager {
 
     try {
       // Validate permissions
-      if (!['owner', 'admin'].includes(performingUserRole)) {
+      if (!["owner", "admin"].includes(performingUserRole)) {
         return {
           success: false,
           processed: 0,
           failed: updates.length,
           errors: [
             {
-              id: 'permission',
-              error: 'Insufficient permissions for bulk role updates',
+              id: "permission",
+              error: "Insufficient permissions for bulk role updates",
             },
           ],
         };
@@ -81,7 +81,7 @@ class BulkOperationsManager {
       const members = await db.query.member.findMany({
         where: and(
           eq(member.organizationId, organizationId),
-          inArray(member.id, memberIds)
+          inArray(member.id, memberIds),
         ),
         with: {
           user: true,
@@ -95,7 +95,7 @@ class BulkOperationsManager {
       for (const update of updates) {
         this.updateProgress(
           operationId,
-          `Updating role for member ${update.memberId}`
+          `Updating role for member ${update.memberId}`,
         );
 
         try {
@@ -104,7 +104,7 @@ class BulkOperationsManager {
           if (!targetMember) {
             result.errors.push({
               id: update.memberId,
-              error: 'Member not found',
+              error: "Member not found",
             });
             result.failed++;
             continue;
@@ -115,7 +115,7 @@ class BulkOperationsManager {
             performingUserRole,
             targetMember.role,
             update.newRole,
-            targetMember.userId === performingUserId
+            targetMember.userId === performingUserId,
           );
 
           if (validationError) {
@@ -151,7 +151,7 @@ class BulkOperationsManager {
               bulkOperation: true,
               targetUserName: targetMember.user.name,
               targetUserEmail: targetMember.user.email,
-            }
+            },
           );
 
           result.processed++;
@@ -159,7 +159,7 @@ class BulkOperationsManager {
           console.error(`Error updating member ${update.memberId}:`, error);
           result.errors.push({
             id: update.memberId,
-            error: 'Failed to update member role',
+            error: "Failed to update member role",
           });
           result.failed++;
         }
@@ -176,7 +176,7 @@ class BulkOperationsManager {
       if (rollbackData.length > 0) {
         result.rollbackToken = await this.storeRollbackData(
           operationId,
-          rollbackData
+          rollbackData,
         );
       }
 
@@ -185,30 +185,30 @@ class BulkOperationsManager {
         organizationId,
         performingUserId,
         {
-          operation: 'bulk_role_update',
+          operation: "bulk_role_update",
           totalUpdates: updates.length,
           successful: result.processed,
           failed: result.failed,
           errors: result.errors,
-        }
+        },
       );
 
       // Mark operation as complete
       const progress = this.progressTrackers.get(operationId);
       if (progress) {
         progress.isComplete = true;
-        progress.currentOperation = 'Complete';
+        progress.currentOperation = "Complete";
       }
 
       result.success = result.failed === 0;
       return result;
     } catch (error) {
-      console.error('Error in bulk member role update:', error);
+      console.error("Error in bulk member role update:", error);
       return {
         success: false,
         processed: result.processed,
         failed: updates.length - result.processed,
-        errors: [{ id: 'system', error: 'Bulk operation failed' }],
+        errors: [{ id: "system", error: "Bulk operation failed" }],
       };
     }
   }
@@ -218,7 +218,7 @@ class BulkOperationsManager {
     memberIds: string[],
     performingUserId: string,
     performingUserRole: Role,
-    reason?: string
+    reason?: string,
   ): Promise<BulkOperationResult> {
     const operationId = crypto.randomUUID();
     const result: BulkOperationResult = {
@@ -238,15 +238,15 @@ class BulkOperationsManager {
 
     try {
       // Validate permissions
-      if (!['owner', 'admin', 'manager'].includes(performingUserRole)) {
+      if (!["owner", "admin", "manager"].includes(performingUserRole)) {
         return {
           success: false,
           processed: 0,
           failed: memberIds.length,
           errors: [
             {
-              id: 'permission',
-              error: 'Insufficient permissions for bulk member removal',
+              id: "permission",
+              error: "Insufficient permissions for bulk member removal",
             },
           ],
         };
@@ -256,7 +256,7 @@ class BulkOperationsManager {
       const members = await db.query.member.findMany({
         where: and(
           eq(member.organizationId, organizationId),
-          inArray(member.id, memberIds)
+          inArray(member.id, memberIds),
         ),
         with: {
           user: true,
@@ -276,7 +276,7 @@ class BulkOperationsManager {
           if (!targetMember) {
             result.errors.push({
               id: memberId,
-              error: 'Member not found',
+              error: "Member not found",
             });
             result.failed++;
             continue;
@@ -286,7 +286,7 @@ class BulkOperationsManager {
           const validationError = this.validateMemberRemoval(
             performingUserRole,
             targetMember.role,
-            targetMember.userId === performingUserId
+            targetMember.userId === performingUserId,
           );
 
           if (validationError) {
@@ -318,7 +318,7 @@ class BulkOperationsManager {
               removedUserRole: targetMember.role,
               reason,
               bulkOperation: true,
-            }
+            },
           );
 
           result.processed++;
@@ -326,7 +326,7 @@ class BulkOperationsManager {
           console.error(`Error removing member ${memberId}:`, error);
           result.errors.push({
             id: memberId,
-            error: 'Failed to remove member',
+            error: "Failed to remove member",
           });
           result.failed++;
         }
@@ -343,7 +343,7 @@ class BulkOperationsManager {
       if (rollbackData.length > 0) {
         result.rollbackToken = await this.storeRollbackData(
           operationId,
-          rollbackData
+          rollbackData,
         );
       }
 
@@ -352,31 +352,31 @@ class BulkOperationsManager {
         organizationId,
         performingUserId,
         {
-          operation: 'bulk_member_removal',
+          operation: "bulk_member_removal",
           totalRemovals: memberIds.length,
           successful: result.processed,
           failed: result.failed,
           reason,
           errors: result.errors,
-        }
+        },
       );
 
       // Mark operation as complete
       const progress = this.progressTrackers.get(operationId);
       if (progress) {
         progress.isComplete = true;
-        progress.currentOperation = 'Complete';
+        progress.currentOperation = "Complete";
       }
 
       result.success = result.failed === 0;
       return result;
     } catch (error) {
-      console.error('Error in bulk member removal:', error);
+      console.error("Error in bulk member removal:", error);
       return {
         success: false,
         processed: result.processed,
         failed: memberIds.length - result.processed,
-        errors: [{ id: 'system', error: 'Bulk removal operation failed' }],
+        errors: [{ id: "system", error: "Bulk removal operation failed" }],
       };
     }
   }
@@ -385,7 +385,7 @@ class BulkOperationsManager {
     organizationId: string,
     invitations: BulkInvitation[],
     performingUserId: string,
-    performingUserRole: Role
+    performingUserRole: Role,
   ): Promise<BulkOperationResult> {
     const operationId = crypto.randomUUID();
     const result: BulkOperationResult = {
@@ -405,15 +405,15 @@ class BulkOperationsManager {
 
     try {
       // Validate permissions
-      if (!['owner', 'admin', 'manager'].includes(performingUserRole)) {
+      if (!["owner", "admin", "manager"].includes(performingUserRole)) {
         return {
           success: false,
           processed: 0,
           failed: invitations.length,
           errors: [
             {
-              id: 'permission',
-              error: 'Insufficient permissions for bulk invitations',
+              id: "permission",
+              error: "Insufficient permissions for bulk invitations",
             },
           ],
         };
@@ -440,7 +440,7 @@ class BulkOperationsManager {
       for (const invite of invitations) {
         this.updateProgress(
           operationId,
-          `Sending invitation to ${invite.email}`
+          `Sending invitation to ${invite.email}`,
         );
 
         try {
@@ -448,7 +448,7 @@ class BulkOperationsManager {
           if (!this.isValidEmail(invite.email)) {
             result.errors.push({
               id: invite.email,
-              error: 'Invalid email format',
+              error: "Invalid email format",
             });
             result.failed++;
             continue;
@@ -458,7 +458,7 @@ class BulkOperationsManager {
           if (existingEmails.has(invite.email.toLowerCase())) {
             result.errors.push({
               id: invite.email,
-              error: 'User already invited or is a member',
+              error: "User already invited or is a member",
             });
             result.failed++;
             continue;
@@ -467,7 +467,7 @@ class BulkOperationsManager {
           // Validate role assignment permissions
           const roleValidationError = this.validateRoleAssignment(
             performingUserRole,
-            invite.role
+            invite.role,
           );
           if (roleValidationError) {
             result.errors.push({
@@ -487,7 +487,7 @@ class BulkOperationsManager {
             organizationId,
             email: invite.email,
             role: invite.role,
-            status: 'pending',
+            status: "pending",
             expiresAt,
             inviterId: performingUserId,
           });
@@ -502,8 +502,8 @@ class BulkOperationsManager {
           await auditLogger.log({
             organizationId,
             userId: performingUserId,
-            action: 'member_removed', // Using existing action, in production add 'member_invited'
-            resourceType: 'invitation',
+            action: "member_removed", // Using existing action, in production add 'member_invited'
+            resourceType: "invitation",
             resourceId: invitationId,
             details: {
               invitedEmail: invite.email,
@@ -511,7 +511,7 @@ class BulkOperationsManager {
               message: invite.message,
               bulkOperation: true,
             },
-            severity: 'info',
+            severity: "info",
           });
 
           result.processed++;
@@ -519,7 +519,7 @@ class BulkOperationsManager {
           console.error(`Error inviting ${invite.email}:`, error);
           result.errors.push({
             id: invite.email,
-            error: 'Failed to send invitation',
+            error: "Failed to send invitation",
           });
           result.failed++;
         }
@@ -537,30 +537,30 @@ class BulkOperationsManager {
         organizationId,
         performingUserId,
         {
-          operation: 'bulk_invitations',
+          operation: "bulk_invitations",
           totalInvitations: invitations.length,
           successful: result.processed,
           failed: result.failed,
           errors: result.errors,
-        }
+        },
       );
 
       // Mark operation as complete
       const progress = this.progressTrackers.get(operationId);
       if (progress) {
         progress.isComplete = true;
-        progress.currentOperation = 'Complete';
+        progress.currentOperation = "Complete";
       }
 
       result.success = result.failed === 0;
       return result;
     } catch (error) {
-      console.error('Error in bulk invitations:', error);
+      console.error("Error in bulk invitations:", error);
       return {
         success: false,
         processed: result.processed,
         failed: invitations.length - result.processed,
-        errors: [{ id: 'system', error: 'Bulk invitation operation failed' }],
+        errors: [{ id: "system", error: "Bulk invitation operation failed" }],
       };
     }
   }
@@ -569,29 +569,29 @@ class BulkOperationsManager {
     performingUserRole: Role,
     currentRole: Role,
     newRole: Role,
-    isSelfUpdate: boolean
+    isSelfUpdate: boolean,
   ): string | null {
     // Cannot change own role
     if (isSelfUpdate) {
-      return 'Cannot change your own role';
+      return "Cannot change your own role";
     }
 
     // Cannot change owner role unless performer is owner
-    if (currentRole === 'owner' && performingUserRole !== 'owner') {
-      return 'Only owners can change owner roles';
+    if (currentRole === "owner" && performingUserRole !== "owner") {
+      return "Only owners can change owner roles";
     }
 
     // Cannot assign owner role unless performer is owner
-    if (newRole === 'owner' && performingUserRole !== 'owner') {
-      return 'Only owners can assign owner role';
+    if (newRole === "owner" && performingUserRole !== "owner") {
+      return "Only owners can assign owner role";
     }
 
     // Admins cannot change other admin or manager roles
     if (
-      performingUserRole === 'admin' &&
-      ['admin', 'manager'].includes(currentRole)
+      performingUserRole === "admin" &&
+      ["admin", "manager"].includes(currentRole)
     ) {
-      return 'Admins cannot change admin or manager roles';
+      return "Admins cannot change admin or manager roles";
     }
 
     return null;
@@ -600,24 +600,24 @@ class BulkOperationsManager {
   private validateMemberRemoval(
     performingUserRole: Role,
     targetRole: Role,
-    isSelfRemoval: boolean
+    isSelfRemoval: boolean,
   ): string | null {
     // Cannot remove self
     if (isSelfRemoval) {
-      return 'Cannot remove yourself from the organization';
+      return "Cannot remove yourself from the organization";
     }
 
     // Cannot remove owner
-    if (targetRole === 'owner') {
-      return 'Cannot remove organization owner';
+    if (targetRole === "owner") {
+      return "Cannot remove organization owner";
     }
 
     // Managers can only remove members
     if (
-      performingUserRole === 'manager' &&
-      ['admin', 'manager'].includes(targetRole)
+      performingUserRole === "manager" &&
+      ["admin", "manager"].includes(targetRole)
     ) {
-      return 'Managers can only remove members';
+      return "Managers can only remove members";
     }
 
     return null;
@@ -625,19 +625,19 @@ class BulkOperationsManager {
 
   private validateRoleAssignment(
     performingUserRole: Role,
-    assignedRole: Role
+    assignedRole: Role,
   ): string | null {
     // Only owners can assign owner role
-    if (assignedRole === 'owner' && performingUserRole !== 'owner') {
-      return 'Only owners can assign owner role';
+    if (assignedRole === "owner" && performingUserRole !== "owner") {
+      return "Only owners can assign owner role";
     }
 
     // Managers cannot assign admin or manager roles
     if (
-      performingUserRole === 'manager' &&
-      ['admin', 'manager'].includes(assignedRole)
+      performingUserRole === "manager" &&
+      ["admin", "manager"].includes(assignedRole)
     ) {
-      return 'Managers cannot assign admin or manager roles';
+      return "Managers cannot assign admin or manager roles";
     }
 
     return null;
@@ -652,7 +652,7 @@ class BulkOperationsManager {
 
   private async storeRollbackData(
     operationId: string,
-    rollbackData: unknown[]
+    rollbackData: unknown[],
   ): Promise<string> {
     // In a real implementation, store rollback data in a secure location
     // For now, we'll just return a token
@@ -661,7 +661,7 @@ class BulkOperationsManager {
     // Store rollback data (in production, use Redis or database)
     console.log(
       `Storing rollback data for operation ${operationId}:`,
-      rollbackData
+      rollbackData,
     );
 
     return rollbackToken;
@@ -674,10 +674,10 @@ class BulkOperationsManager {
 
   private async sendInvitationEmail(
     invitationId: string,
-    invite: BulkInvitation
+    invite: BulkInvitation,
   ): Promise<void> {
     // In a real implementation, integrate with your email service
-    console.log('Sending invitation email:', {
+    console.log("Sending invitation email:", {
       invitationId,
       to: invite.email,
       role: invite.role,
@@ -692,7 +692,7 @@ class BulkOperationsManager {
 
   async rollbackOperation(
     _rollbackToken: string,
-    _performingUserId: string
+    _performingUserId: string,
   ): Promise<BulkOperationResult> {
     // In a real implementation, retrieve and apply rollback data
     // For now, return a placeholder result
@@ -701,7 +701,7 @@ class BulkOperationsManager {
       processed: 0,
       failed: 0,
       errors: [
-        { id: 'rollback', error: 'Rollback functionality not yet implemented' },
+        { id: "rollback", error: "Rollback functionality not yet implemented" },
       ],
     };
   }

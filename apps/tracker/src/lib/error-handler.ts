@@ -1,21 +1,21 @@
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 // Error types for better categorization
 export enum ErrorType {
-  VALIDATION = 'validation',
-  PERMISSION = 'permission',
-  NOT_FOUND = 'not_found',
-  NETWORK = 'network',
-  SERVER = 'server',
-  UNKNOWN = 'unknown',
+  VALIDATION = "validation",
+  PERMISSION = "permission",
+  NOT_FOUND = "not_found",
+  NETWORK = "network",
+  SERVER = "server",
+  UNKNOWN = "unknown",
 }
 
 // Error severity levels
 export enum ErrorSeverity {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical',
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  CRITICAL = "critical",
 }
 
 // Structured error interface
@@ -37,7 +37,7 @@ const ERROR_MESSAGES: Record<
 > = {
   // Authentication & Authorization
   UNAUTHORIZED: {
-    message: 'You need to be logged in to perform this action.',
+    message: "You need to be logged in to perform this action.",
     type: ErrorType.PERMISSION,
     severity: ErrorSeverity.MEDIUM,
   },
@@ -54,34 +54,34 @@ const ERROR_MESSAGES: Record<
 
   // Validation Errors
   INVALID_EMAIL: {
-    message: 'Please enter a valid email address.',
+    message: "Please enter a valid email address.",
     type: ErrorType.VALIDATION,
     severity: ErrorSeverity.LOW,
   },
   INVALID_ROLE: {
-    message: 'Please select a valid role.',
+    message: "Please select a valid role.",
     type: ErrorType.VALIDATION,
     severity: ErrorSeverity.LOW,
   },
   REQUIRED_FIELD: {
-    message: 'This field is required.',
+    message: "This field is required.",
     type: ErrorType.VALIDATION,
     severity: ErrorSeverity.LOW,
   },
 
   // Business Logic Errors
   ALREADY_MEMBER: {
-    message: 'This user is already a member of the organization.',
+    message: "This user is already a member of the organization.",
     type: ErrorType.VALIDATION,
     severity: ErrorSeverity.LOW,
   },
   INVITATION_EXISTS: {
-    message: 'An invitation has already been sent to this email address.',
+    message: "An invitation has already been sent to this email address.",
     type: ErrorType.VALIDATION,
     severity: ErrorSeverity.LOW,
   },
   INVITATION_EXPIRED: {
-    message: 'This invitation has expired. Please request a new one.',
+    message: "This invitation has expired. Please request a new one.",
     type: ErrorType.VALIDATION,
     severity: ErrorSeverity.MEDIUM,
   },
@@ -100,22 +100,22 @@ const ERROR_MESSAGES: Record<
   // Network & Server Errors
   NETWORK_ERROR: {
     message:
-      'Network connection failed. Please check your internet connection and try again.',
+      "Network connection failed. Please check your internet connection and try again.",
     type: ErrorType.NETWORK,
     severity: ErrorSeverity.MEDIUM,
   },
   SERVER_ERROR: {
-    message: 'A server error occurred. Please try again later.',
+    message: "A server error occurred. Please try again later.",
     type: ErrorType.SERVER,
     severity: ErrorSeverity.HIGH,
   },
   RATE_LIMIT_EXCEEDED: {
-    message: 'Too many requests. Please wait a moment before trying again.',
+    message: "Too many requests. Please wait a moment before trying again.",
     type: ErrorType.SERVER,
     severity: ErrorSeverity.MEDIUM,
   },
   SERVICE_UNAVAILABLE: {
-    message: 'The service is temporarily unavailable. Please try again later.',
+    message: "The service is temporarily unavailable. Please try again later.",
     type: ErrorType.SERVER,
     severity: ErrorSeverity.HIGH,
   },
@@ -124,10 +124,10 @@ const ERROR_MESSAGES: Record<
 // Create structured error from various input types
 export function createAppError(
   input: string | Error | { code?: string; message?: string; type?: ErrorType },
-  fallbackMessage = 'An unexpected error occurred'
+  fallbackMessage = "An unexpected error occurred",
 ): AppError {
   // Handle string input
-  if (typeof input === 'string') {
+  if (typeof input === "string") {
     const errorConfig = ERROR_MESSAGES[input];
     if (errorConfig) {
       return {
@@ -157,15 +157,15 @@ export function createAppError(
   if (input instanceof Error) {
     // Check if it's a network error
     if (
-      input.message.toLowerCase().includes('network') ||
-      input.message.toLowerCase().includes('fetch')
+      input.message.toLowerCase().includes("network") ||
+      input.message.toLowerCase().includes("fetch")
     ) {
       return {
         type: ErrorType.NETWORK,
         severity: ErrorSeverity.MEDIUM,
         message: input.message,
         userMessage:
-          'Network connection failed. Please check your internet connection and try again.',
+          "Network connection failed. Please check your internet connection and try again.",
         actionable: true,
         retryable: true,
       };
@@ -182,7 +182,7 @@ export function createAppError(
   }
 
   // Handle object input (like server action results)
-  if (typeof input === 'object' && input !== null) {
+  if (typeof input === "object" && input !== null) {
     const code = input.code;
     const message = input.message || fallbackMessage;
 
@@ -230,11 +230,11 @@ export function handleError(
     fallbackMessage?: string;
     showToast?: boolean;
     logError?: boolean;
-  } = {}
+  } = {},
 ) {
   const {
     title,
-    fallbackMessage = 'An unexpected error occurred',
+    fallbackMessage = "An unexpected error occurred",
     showToast = true,
     logError = true,
   } = options;
@@ -243,7 +243,7 @@ export function handleError(
 
   // Log error for debugging
   if (logError) {
-    console.error('Error handled:', {
+    console.error("Error handled:", {
       error,
       appError,
       timestamp: new Date().toISOString(),
@@ -281,22 +281,22 @@ export function handleError(
 // Get appropriate error title based on type and severity
 function getErrorTitle(type: ErrorType, severity: ErrorSeverity): string {
   if (severity === ErrorSeverity.CRITICAL) {
-    return 'Critical Error';
+    return "Critical Error";
   }
 
   switch (type) {
     case ErrorType.VALIDATION:
-      return 'Validation Error';
+      return "Validation Error";
     case ErrorType.PERMISSION:
-      return 'Permission Denied';
+      return "Permission Denied";
     case ErrorType.NOT_FOUND:
-      return 'Not Found';
+      return "Not Found";
     case ErrorType.NETWORK:
-      return 'Connection Error';
+      return "Connection Error";
     case ErrorType.SERVER:
-      return 'Server Error';
+      return "Server Error";
     default:
-      return 'Error';
+      return "Error";
   }
 }
 
@@ -307,9 +307,9 @@ export function handleSuccess(
     title?: string;
     description?: string;
     duration?: number;
-  } = {}
+  } = {},
 ) {
-  const { title = 'Success', description, duration = 4000 } = options;
+  const { title = "Success", description, duration = 4000 } = options;
 
   toast.success(title, {
     description: description || message,
@@ -324,9 +324,9 @@ export function handleInfo(
     title?: string;
     description?: string;
     duration?: number;
-  } = {}
+  } = {},
 ) {
-  const { title = 'Information', description, duration = 4000 } = options;
+  const { title = "Information", description, duration = 4000 } = options;
 
   toast.info(title, {
     description: description || message,
@@ -341,9 +341,9 @@ export function handleWarning(
     title?: string;
     description?: string;
     duration?: number;
-  } = {}
+  } = {},
 ) {
-  const { title = 'Warning', description, duration = 5000 } = options;
+  const { title = "Warning", description, duration = 5000 } = options;
 
   toast.warning(title, {
     description: description || message,

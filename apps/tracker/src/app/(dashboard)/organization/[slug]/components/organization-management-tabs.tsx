@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useCallback, useMemo } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Building2,
   Users,
@@ -15,13 +15,13 @@ import {
   UserCheck,
   UserCog,
   User,
-} from 'lucide-react';
-import type { Role } from '@pmg/db/schema';
-import { GeneralTab } from './general-tab';
-import { MembersTab } from './members-tab';
-import { InvitationsTab } from './invitations-tab';
-import { SettingsTab } from './settings-tab';
-import { SecurityTab } from './security-tab';
+} from "lucide-react";
+import type { Role } from "@pmg/db/schema";
+import { GeneralTab } from "./general-tab";
+import { MembersTab } from "./members-tab";
+import { InvitationsTab } from "./invitations-tab";
+import { SettingsTab } from "./settings-tab";
+import { SecurityTab } from "./security-tab";
 
 interface OrganizationManagementTabsProps {
   organization: {
@@ -46,37 +46,37 @@ interface OrganizationManagementTabsProps {
 // Helper function to get role badge color and icon
 function getRoleDisplay(role: Role) {
   switch (role) {
-    case 'owner':
+    case "owner":
       return {
         color:
-          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
         icon: Crown,
-        label: 'Owner',
+        label: "Owner",
       };
-    case 'admin':
+    case "admin":
       return {
-        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
         icon: UserCheck,
-        label: 'Admin',
+        label: "Admin",
       };
-    case 'manager':
+    case "manager":
       return {
         color:
-          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         icon: UserCog,
-        label: 'Manager',
+        label: "Manager",
       };
-    case 'member':
+    case "member":
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: User,
-        label: 'Member',
+        label: "Member",
       };
     default:
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: User,
-        label: 'Member',
+        label: "Member",
       };
   }
 }
@@ -84,26 +84,26 @@ function getRoleDisplay(role: Role) {
 // Helper function to get organization initials
 function getOrganizationInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((word) => word[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
 
 // Helper function to determine which tabs are accessible based on role
 function getAccessibleTabs(role: Role) {
-  const baseTabs = ['general', 'members', 'invitations'];
+  const baseTabs = ["general", "members", "invitations"];
 
   switch (role) {
-    case 'owner':
-      return [...baseTabs, 'settings', 'security'];
-    case 'admin':
-      return [...baseTabs, 'settings', 'security'];
-    case 'manager':
+    case "owner":
+      return [...baseTabs, "settings", "security"];
+    case "admin":
+      return [...baseTabs, "settings", "security"];
+    case "manager":
       return baseTabs;
     default:
-      return ['general']; // Members should be redirected, but just in case
+      return ["general"]; // Members should be redirected, but just in case
   }
 }
 
@@ -119,20 +119,22 @@ export function OrganizationManagementTabs({
   const RoleIcon = roleDisplay.icon;
   const accessibleTabs = getAccessibleTabs(userRole);
 
-  const tabFromUrl = searchParams.get('tab');
+  const tabFromUrl = searchParams.get("tab");
   const activeTab = useMemo(
     () =>
-      tabFromUrl && accessibleTabs.includes(tabFromUrl) ? tabFromUrl : 'general',
-    [tabFromUrl, accessibleTabs]
+      tabFromUrl && accessibleTabs.includes(tabFromUrl)
+        ? tabFromUrl
+        : "general",
+    [tabFromUrl, accessibleTabs],
   );
 
   const setActiveTab = useCallback(
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set('tab', value);
+      params.set("tab", value);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [pathname, router, searchParams]
+    [pathname, router, searchParams],
   );
 
   return (
@@ -142,7 +144,7 @@ export function OrganizationManagementTabs({
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             <AvatarImage
-              src={organization.logo || ''}
+              src={organization.logo || ""}
               alt={`${organization.name} logo`}
             />
             <AvatarFallback className="bg-primary/10 text-lg">
@@ -165,11 +167,11 @@ export function OrganizationManagementTabs({
               <div className="flex items-center gap-1">
                 <Building2 className="h-4 w-4" />
                 <span>
-                  Created{' '}
-                  {new Intl.DateTimeFormat('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
+                  Created{" "}
+                  {new Intl.DateTimeFormat("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
                   }).format(organization.createdAt)}
                 </span>
               </div>
@@ -185,7 +187,7 @@ export function OrganizationManagementTabs({
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 h-12">
-          {accessibleTabs.includes('general') && (
+          {accessibleTabs.includes("general") && (
             <TabsTrigger
               value="general"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -195,7 +197,7 @@ export function OrganizationManagementTabs({
             </TabsTrigger>
           )}
 
-          {accessibleTabs.includes('members') && (
+          {accessibleTabs.includes("members") && (
             <TabsTrigger
               value="members"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -205,7 +207,7 @@ export function OrganizationManagementTabs({
             </TabsTrigger>
           )}
 
-          {accessibleTabs.includes('invitations') && (
+          {accessibleTabs.includes("invitations") && (
             <TabsTrigger
               value="invitations"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -215,7 +217,7 @@ export function OrganizationManagementTabs({
             </TabsTrigger>
           )}
 
-          {accessibleTabs.includes('settings') && (
+          {accessibleTabs.includes("settings") && (
             <TabsTrigger
               value="settings"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -225,7 +227,7 @@ export function OrganizationManagementTabs({
             </TabsTrigger>
           )}
 
-          {accessibleTabs.includes('security') && (
+          {accessibleTabs.includes("security") && (
             <TabsTrigger
               value="security"
               className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"

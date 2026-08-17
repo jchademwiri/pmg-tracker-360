@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 import {
   Dialog,
@@ -12,8 +12,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,19 +21,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
 const LostDetailsSchema = z.object({
-  lossReason: z.string().min(1, 'Reason for loss is required'),
+  lossReason: z.string().min(1, "Reason for loss is required"),
   lossDetails: z.string().optional().nullable(),
   evaluationNotes: z.string().optional().nullable(),
 });
@@ -61,9 +61,9 @@ export function TenderLostDialog({
   const form = useForm<LostDetailsInput>({
     resolver: zodResolver(LostDetailsSchema),
     defaultValues: {
-      lossReason: '',
-      lossDetails: '',
-      evaluationNotes: '',
+      lossReason: "",
+      lossDetails: "",
+      evaluationNotes: "",
     },
   });
 
@@ -74,11 +74,14 @@ export function TenderLostDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      if (!isPending) {
-        onOpenChange(val);
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!isPending) {
+          onOpenChange(val);
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2 text-red-600">
@@ -86,7 +89,11 @@ export function TenderLostDialog({
             Tender Outcome: Lost
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Provide details about the outcome of Tender <span className="font-semibold text-foreground">{tenderNumber.toUpperCase()}</span>.
+            Provide details about the outcome of Tender{" "}
+            <span className="font-semibold text-foreground">
+              {tenderNumber.toUpperCase()}
+            </span>
+            .
           </DialogDescription>
         </DialogHeader>
 
@@ -103,7 +110,9 @@ export function TenderLostDialog({
               name="lossReason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold">Primary Reason for Loss</FormLabel>
+                  <FormLabel className="text-sm font-semibold">
+                    Primary Reason for Loss
+                  </FormLabel>
                   <Select
                     disabled={isPending}
                     onValueChange={field.onChange}
@@ -115,11 +124,21 @@ export function TenderLostDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="price">Pricing too high / Competitor cheaper</SelectItem>
-                      <SelectItem value="compliance">Compliance failure / Documentation issue</SelectItem>
-                      <SelectItem value="specs">Technical specs mismatch</SelectItem>
-                      <SelectItem value="experience">Lacked required experience/references</SelectItem>
-                      <SelectItem value="cancelled">Tender cancelled by client</SelectItem>
+                      <SelectItem value="price">
+                        Pricing too high / Competitor cheaper
+                      </SelectItem>
+                      <SelectItem value="compliance">
+                        Compliance failure / Documentation issue
+                      </SelectItem>
+                      <SelectItem value="specs">
+                        Technical specs mismatch
+                      </SelectItem>
+                      <SelectItem value="experience">
+                        Lacked required experience/references
+                      </SelectItem>
+                      <SelectItem value="cancelled">
+                        Tender cancelled by client
+                      </SelectItem>
                       <SelectItem value="other">Other reason</SelectItem>
                     </SelectContent>
                   </Select>
@@ -133,13 +152,15 @@ export function TenderLostDialog({
               name="lossDetails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold">Additional Details / Competitor Info</FormLabel>
+                  <FormLabel className="text-sm font-semibold">
+                    Additional Details / Competitor Info
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g. Competitor name or award value if known"
                       disabled={isPending}
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -152,14 +173,16 @@ export function TenderLostDialog({
               name="evaluationNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold">Evaluation Notes</FormLabel>
+                  <FormLabel className="text-sm font-semibold">
+                    Evaluation Notes
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Enter feedback received, scorecard metrics, or general notes from the evaluation process."
                       className="min-h-[100px]"
                       disabled={isPending}
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />

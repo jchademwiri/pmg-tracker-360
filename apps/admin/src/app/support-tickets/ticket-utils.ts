@@ -7,8 +7,8 @@
  */
 
 const TRANSITIONS: Record<string, string> = {
-  open: 'in_progress',
-  in_progress: 'closed',
+  open: "in_progress",
+  in_progress: "closed",
 };
 
 /**
@@ -20,6 +20,9 @@ const TRANSITIONS: Record<string, string> = {
  *
  * Exported for property-based testing (Property 5).
  */
-export function validateStatusTransition(current: string, requested: string): boolean {
+export function validateStatusTransition(
+  current: string,
+  requested: string,
+): boolean {
   return TRANSITIONS[current] === requested;
 }

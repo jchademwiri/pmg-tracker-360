@@ -1,15 +1,15 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { tender, purchaseOrder, client } from '@pmg/db/schema';
-import { and, eq, gte, isNull, lte, inArray } from 'drizzle-orm';
-import { getServerSession } from '@/lib/auth';
-import { getUserOrganizationMembership } from '@/server/organizations';
+import { db } from "@pmg/db";
+import { tender, purchaseOrder, client } from "@pmg/db/schema";
+import { and, eq, gte, isNull, lte, inArray } from "drizzle-orm";
+import { getServerSession } from "@/lib/auth";
+import { getUserOrganizationMembership } from "@/server/organizations";
 
 type CalendarEventType =
-  | 'tender_submission'
-  | 'po_expected_delivery'
-  | 'po_delivered';
+  | "tender_submission"
+  | "po_expected_delivery"
+  | "po_delivered";
 
 export interface GetCalendarEventsParams {
   start: string; // ISO string UTC
@@ -29,9 +29,9 @@ export interface CalendarEventItem {
 }
 
 const EVENT_TYPE_TO_COLOR: Record<CalendarEventType, string> = {
-  tender_submission: 'primary',
-  po_expected_delivery: 'warning',
-  po_delivered: 'success',
+  tender_submission: "primary",
+  po_expected_delivery: "warning",
+  po_delivered: "success",
 };
 
 function clampRange(start: Date, end: Date) {
@@ -45,7 +45,7 @@ function clampRange(start: Date, end: Date) {
 }
 
 export async function getCalendarEvents(
-  params: GetCalendarEventsParams
+  params: GetCalendarEventsParams,
 ): Promise<CalendarEventItem[]> {
   const session = await getServerSession();
   if (!session?.user) {
@@ -54,7 +54,7 @@ export async function getCalendarEvents(
 
   const membership = await getUserOrganizationMembership(
     session.user.id,
-    session.session.activeOrganizationId as string
+    session.session.activeOrganizationId as string,
   );
   if (!membership) {
     return [];
@@ -68,9 +68,9 @@ export async function getCalendarEvents(
     params.types && params.types.length > 0
       ? params.types
       : ([
-          'tender_submission',
-          'po_expected_delivery',
-          'po_delivered',
+          "tender_submission",
+          "po_expected_delivery",
+          "po_delivered",
         ] as CalendarEventType[]);
 
   const statusFilter =
@@ -80,14 +80,14 @@ export async function getCalendarEvents(
   const events: CalendarEventItem[] = [];
 
   // Tenders: submission dates
-  if (typeFilter.includes('tender_submission')) {
+  if (typeFilter.includes("tender_submission")) {
     const tenderWhere = and(
       eq(tender.organizationId, membership.organizationId),
       isNull(tender.deletedAt),
       gte(tender.submissionDate, start),
       lte(tender.submissionDate, end),
       clientId ? eq(tender.clientId, clientId) : undefined,
-      statusFilter ? inArray(tender.status, statusFilter as any[]) : undefined
+      statusFilter ? inArray(tender.status, statusFilter as any[]) : undefined,
     );
 
     const tenderRows = await db
@@ -106,7 +106,7 @@ export async function getCalendarEvents(
       if (!row.submissionDate) continue;
       events.push({
         id: row.id,
-        type: 'tender_submission',
+        type: "tender_submission",
         title: `${row.tenderNumber.toUpperCase()} submission`,
         date: row.submissionDate.toISOString(),
         color: EVENT_TYPE_TO_COLOR.tender_submission,
@@ -120,13 +120,15 @@ export async function getCalendarEvents(
   }
 
   // POs: expected delivery
-  if (typeFilter.includes('po_expected_delivery')) {
+  if (typeFilter.includes("po_expected_delivery")) {
     const poExpectedWhere = and(
       eq(purchaseOrder.organizationId, membership.organizationId),
       isNull(purchaseOrder.deletedAt),
       gte(purchaseOrder.expectedDeliveryDate, start),
       lte(purchaseOrder.expectedDeliveryDate, end),
-      statusFilter ? inArray(purchaseOrder.status, statusFilter as any[]) : undefined
+      statusFilter
+        ? inArray(purchaseOrder.status, statusFilter as any[])
+        : undefined,
     );
 
     const poExpectedRows = await db
@@ -143,7 +145,7 @@ export async function getCalendarEvents(
       if (!row.expectedDeliveryDate) continue;
       events.push({
         id: row.id,
-        type: 'po_expected_delivery',
+        type: "po_expected_delivery",
         title: `PO expected: ${row.description}`,
         date: row.expectedDeliveryDate.toISOString(),
         color: EVENT_TYPE_TO_COLOR.po_expected_delivery,
@@ -156,13 +158,15 @@ export async function getCalendarEvents(
   }
 
   // POs: delivered
-  if (typeFilter.includes('po_delivered')) {
+  if (typeFilter.includes("po_delivered")) {
     const poDeliveredWhere = and(
       eq(purchaseOrder.organizationId, membership.organizationId),
       isNull(purchaseOrder.deletedAt),
       gte(purchaseOrder.deliveredAt, start),
       lte(purchaseOrder.deliveredAt, end),
-      statusFilter ? inArray(purchaseOrder.status, statusFilter as any[]) : undefined
+      statusFilter
+        ? inArray(purchaseOrder.status, statusFilter as any[])
+        : undefined,
     );
 
     const poDeliveredRows = await db
@@ -179,7 +183,7 @@ export async function getCalendarEvents(
       if (!row.deliveredAt) continue;
       events.push({
         id: row.id,
-        type: 'po_delivered',
+        type: "po_delivered",
         title: `PO delivered: ${row.description}`,
         date: row.deliveredAt.toISOString(),
         color: EVENT_TYPE_TO_COLOR.po_delivered,

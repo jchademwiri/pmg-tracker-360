@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   AlertTriangle,
   Trash2,
@@ -19,7 +19,7 @@ import {
   Loader,
   CheckCircle,
   AlertCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -29,8 +29,8 @@ export interface ConfirmationDialogProps {
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'destructive' | 'default';
-  icon?: 'warning' | 'delete' | 'remove' | 'cancel' | 'custom';
+  variant?: "destructive" | "default";
+  icon?: "warning" | "delete" | "remove" | "cancel" | "custom";
   customIcon?: React.ReactNode;
   showProgress?: boolean;
   disabled?: boolean;
@@ -60,10 +60,10 @@ export function ConfirmationDialog({
   onConfirm,
   title,
   description,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'default',
-  icon = 'warning',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  variant = "default",
+  icon = "warning",
   customIcon,
   showProgress = false,
   disabled = false,
@@ -71,7 +71,7 @@ export function ConfirmationDialog({
   const [operationState, setOperationState] = useState<OperationState>({
     isProcessing: false,
     progress: 0,
-    currentOperation: '',
+    currentOperation: "",
   });
 
   const handleConfirm = async () => {
@@ -80,7 +80,7 @@ export function ConfirmationDialog({
         setOperationState({
           isProcessing: true,
           progress: 0,
-          currentOperation: 'Processing...',
+          currentOperation: "Processing...",
         });
 
         // Removed simulated progress; run the operation and mark complete
@@ -89,10 +89,10 @@ export function ConfirmationDialog({
         setOperationState((prev) => ({
           ...prev,
           progress: 100,
-          currentOperation: 'Completed',
+          currentOperation: "Completed",
           results: {
             success: true,
-            message: 'Operation completed successfully',
+            message: "Operation completed successfully",
           },
         }));
 
@@ -102,19 +102,19 @@ export function ConfirmationDialog({
         setOperationState({
           isProcessing: true,
           progress: 0,
-          currentOperation: '',
+          currentOperation: "",
         });
         await onConfirm();
         handleClose();
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'An unexpected error occurred';
+        error instanceof Error ? error.message : "An unexpected error occurred";
 
       setOperationState((prev) => ({
         ...prev,
         progress: 100,
-        currentOperation: 'Failed',
+        currentOperation: "Failed",
         results: {
           success: false,
           message: errorMessage,
@@ -138,7 +138,7 @@ export function ConfirmationDialog({
     setOperationState({
       isProcessing: false,
       progress: 0,
-      currentOperation: '',
+      currentOperation: "",
     });
     onClose();
   };
@@ -157,9 +157,9 @@ export function ConfirmationDialog({
             ) : IconComponent ? (
               <div
                 className={`flex-shrink-0 p-2 rounded-full ${
-                  variant === 'destructive'
-                    ? 'bg-destructive/10 text-destructive'
-                    : 'bg-muted text-muted-foreground'
+                  variant === "destructive"
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 <IconComponent className="h-5 w-5" />
@@ -211,7 +211,7 @@ export function ConfirmationDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={!canClose}>
-            {operationState.results ? 'Close' : cancelText}
+            {operationState.results ? "Close" : cancelText}
           </Button>
           {!operationState.results && (
             <Button
@@ -250,7 +250,7 @@ export function DeleteConfirmationDialog({
   onClose,
   onConfirm,
   itemName,
-  itemType = 'item',
+  itemType = "item",
   showProgress = false,
 }: DeleteConfirmationProps) {
   return (
@@ -292,13 +292,13 @@ export function RemoveMemberConfirmationDialog({
       isOpen={isOpen}
       onClose={onClose}
       onConfirm={onConfirm}
-      title={`Remove ${isMultiple ? 'Members' : 'Member'}`}
+      title={`Remove ${isMultiple ? "Members" : "Member"}`}
       description={
         isMultiple
           ? `Are you sure you want to remove ${memberCount} members from the organization? They will lose access to all organization resources.`
           : `Are you sure you want to remove "${memberName}" from the organization? They will lose access to all organization resources.`
       }
-      confirmText={`Remove ${isMultiple ? `${memberCount} Members` : 'Member'}`}
+      confirmText={`Remove ${isMultiple ? `${memberCount} Members` : "Member"}`}
       variant="destructive"
       icon="remove"
       showProgress={showProgress}
@@ -330,13 +330,13 @@ export function CancelInvitationConfirmationDialog({
       isOpen={isOpen}
       onClose={onClose}
       onConfirm={onConfirm}
-      title={`Cancel ${isMultiple ? 'Invitations' : 'Invitation'}`}
+      title={`Cancel ${isMultiple ? "Invitations" : "Invitation"}`}
       description={
         isMultiple
           ? `Are you sure you want to cancel ${invitationCount} invitations? The invited users will not be able to join the organization using these invitations.`
           : `Are you sure you want to cancel the invitation for "${email}"? They will not be able to join the organization using this invitation.`
       }
-      confirmText={`Cancel ${isMultiple ? `${invitationCount} Invitations` : 'Invitation'}`}
+      confirmText={`Cancel ${isMultiple ? `${invitationCount} Invitations` : "Invitation"}`}
       variant="destructive"
       icon="cancel"
       showProgress={showProgress}

@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   Users,
   Calendar,
@@ -9,11 +9,11 @@ import {
   TrendingUp,
   AlertCircle,
   RefreshCw,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   getOrganizationStats,
   type OrganizationStats,
-} from '@/server/organizations';
+} from "@/server/organizations";
 
 interface OrganizationStatsProps {
   organizationId: string;
@@ -25,7 +25,7 @@ interface StatCardProps {
   icon: React.ReactNode;
   badge?: {
     text: string;
-    variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+    variant?: "default" | "secondary" | "destructive" | "outline";
   };
   description?: string;
 }
@@ -50,7 +50,7 @@ function StatCard({ title, value, icon, badge, description }: StatCardProps) {
             )}
           </div>
           {badge && (
-            <Badge variant={badge.variant || 'secondary'} className="ml-2">
+            <Badge variant={badge.variant || "secondary"} className="ml-2">
               {badge.text}
             </Badge>
           )}
@@ -113,21 +113,21 @@ function StatsErrorCard({ onRetry }: { onRetry?: () => void }) {
 function formatLastActivity(date: Date): string {
   const now = new Date();
   const diffInDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffInDays === 0) {
-    return 'Today';
+    return "Today";
   } else if (diffInDays === 1) {
-    return 'Yesterday';
+    return "Yesterday";
   } else if (diffInDays < 7) {
     return `${diffInDays} days ago`;
   } else if (diffInDays < 30) {
     const weeks = Math.floor(diffInDays / 7);
-    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
   } else {
     const months = Math.floor(diffInDays / 30);
-    return `${months} month${months > 1 ? 's' : ''} ago`;
+    return `${months} month${months > 1 ? "s" : ""} ago`;
   }
 }
 
@@ -161,8 +161,8 @@ export async function OrganizationStats({
           value={stats.memberCount}
           icon={<Users />}
           badge={{
-            text: stats.memberCount === 1 ? 'Member' : 'Members',
-            variant: 'secondary',
+            text: stats.memberCount === 1 ? "Member" : "Members",
+            variant: "secondary",
           }}
           description="Active organization members"
         />
@@ -172,8 +172,8 @@ export async function OrganizationStats({
           value={lastActivityText}
           icon={<Calendar />}
           badge={{
-            text: isRecentActivity ? 'Active' : 'Quiet',
-            variant: isRecentActivity ? 'default' : 'outline',
+            text: isRecentActivity ? "Active" : "Quiet",
+            variant: isRecentActivity ? "default" : "outline",
           }}
           description="Most recent organization activity"
         />
@@ -184,8 +184,8 @@ export async function OrganizationStats({
             value={stats.activeProjects}
             icon={<Activity />}
             badge={{
-              text: stats.activeProjects > 0 ? 'In Progress' : 'None',
-              variant: stats.activeProjects > 0 ? 'default' : 'outline',
+              text: stats.activeProjects > 0 ? "In Progress" : "None",
+              variant: stats.activeProjects > 0 ? "default" : "outline",
             }}
             description="Currently active projects"
           />
@@ -197,8 +197,8 @@ export async function OrganizationStats({
             value={stats.recentUpdates}
             icon={<TrendingUp />}
             badge={{
-              text: stats.recentUpdates > 0 ? 'Updates' : 'None',
-              variant: stats.recentUpdates > 0 ? 'default' : 'outline',
+              text: stats.recentUpdates > 0 ? "Updates" : "None",
+              variant: stats.recentUpdates > 0 ? "default" : "outline",
             }}
             description="Updates in the last 7 days"
           />
@@ -206,7 +206,7 @@ export async function OrganizationStats({
       </div>
     );
   } catch (error) {
-    console.error('Failed to load organization stats:', error);
+    console.error("Failed to load organization stats:", error);
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsErrorCard onRetry={() => window.location.reload()} />

@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, ArrowRight, Loader2 } from 'lucide-react';
-import { acceptOwnershipTransferByToken } from '@/server/organization-advanced-actions';
-import { toast } from 'sonner';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, XCircle, ArrowRight, Loader2 } from "lucide-react";
+import { acceptOwnershipTransferByToken } from "@/server/organization-advanced-actions";
+import { toast } from "sonner";
 
 interface TransferOwnershipClientProps {
   slug: string;
@@ -43,13 +43,13 @@ export function TransferOwnershipClient({
       } else {
         setResult({ success: false, error: response.error?.message });
         toast.error(
-          response.error?.message || 'Failed to accept ownership transfer'
+          response.error?.message || "Failed to accept ownership transfer",
         );
       }
     } catch (error) {
-      console.error('Acceptance error:', error);
-      setResult({ success: false, error: 'An unexpected error occurred' });
-      toast.error('An unexpected error occurred');
+      console.error("Acceptance error:", error);
+      setResult({ success: false, error: "An unexpected error occurred" });
+      toast.error("An unexpected error occurred");
     } finally {
       setIsAccepting(false);
     }
@@ -61,7 +61,7 @@ export function TransferOwnershipClient({
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             {result.success ||
-            result.error?.toLowerCase().includes('accepted') ? (
+            result.error?.toLowerCase().includes("accepted") ? (
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             ) : (
               <XCircle className="h-6 w-6 text-red-600" />
@@ -69,18 +69,18 @@ export function TransferOwnershipClient({
           </div>
           <CardTitle>
             {result.success
-              ? 'Ownership Transfer Complete'
-              : result.error?.toLowerCase().includes('accepted')
-                ? 'Transfer Already Accepted'
-                : 'Transfer Failed'}
+              ? "Ownership Transfer Complete"
+              : result.error?.toLowerCase().includes("accepted")
+                ? "Transfer Already Accepted"
+                : "Transfer Failed"}
           </CardTitle>
           <CardDescription>
             {result.success
               ? `You are now the owner of ${organizationName}.`
-              : result.error?.toLowerCase().includes('accepted')
+              : result.error?.toLowerCase().includes("accepted")
                 ? `You have already accepted this ownership transfer.`
                 : result.error ||
-                  'An error occurred while processing your request.'}
+                  "An error occurred while processing your request."}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
@@ -99,14 +99,14 @@ export function TransferOwnershipClient({
       <CardHeader className="text-center">
         <CardTitle>Accept Ownership Transfer</CardTitle>
         <CardDescription>
-          You have been invited to become the owner of{' '}
+          You have been invited to become the owner of{" "}
           <strong>{organizationName}</strong>.
           <br />
           This action will grant you full control over the organization.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex justify-center gap-4">
-        <Button variant="outline" onClick={() => router.push('/dashboard')}>
+        <Button variant="outline" onClick={() => router.push("/dashboard")}>
           Cancel
         </Button>
         <Button onClick={handleAccept} disabled={isAccepting}>
@@ -116,7 +116,7 @@ export function TransferOwnershipClient({
               Accepting...
             </>
           ) : (
-            'Accept Ownership'
+            "Accept Ownership"
           )}
         </Button>
       </CardContent>

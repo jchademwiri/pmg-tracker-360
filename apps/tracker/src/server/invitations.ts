@@ -1,18 +1,19 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { invitation, member, organization, user } from '@pmg/db/schema';
-import type { Role } from '@pmg/db/schema';
-import { eq, and, inArray, sql } from 'drizzle-orm';
-import { getCurrentUser } from './users';
-import { getUserOrganizationMembership } from './organizations';
-import { revalidatePath } from 'next/cache';
-import { randomUUID } from 'crypto';
-import { Resend } from 'resend';
-import OrganizationInvitation from '@/emails/organization-invitation';
+import { db } from "@pmg/db";
+import { invitation, member, organization, user } from "@pmg/db/schema";
+import type { Role } from "@pmg/db/schema";
+import { eq, and, inArray, sql } from "drizzle-orm";
+import { getCurrentUser } from "./users";
+import { getUserOrganizationMembership } from "./organizations";
+import { revalidatePath } from "next/cache";
+import { randomUUID } from "crypto";
+import { Resend } from "resend";
+import OrganizationInvitation from "@/emails/organization-invitation";
 
-const senderName = process.env.SENDER_NAME || 'Tender Track 360';
-const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
+const senderName = process.env.SENDER_NAME || "Tender Track 360";
+const senderEmail =
+  process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
 const SENDER = `${senderName} <${senderEmail}>`;
 
 // Server Action Result type for consistent error handling
@@ -35,7 +36,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export async function inviteMember(
   organizationId: string,
   email: string,
-  role: Role
+  role: Role,
 ): Promise<ServerActionResult<{ invitationId: string }>> {
   try {
     // Get current user and validate authentication
@@ -45,8 +46,8 @@ export async function inviteMember(
       return {
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'You must be logged in to invite members',
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to invite members",
         },
       };
     }
@@ -56,19 +57,19 @@ export async function inviteMember(
       return {
         success: false,
         error: {
-          code: 'INVALID_EMAIL',
-          message: 'Please provide a valid email address',
+          code: "INVALID_EMAIL",
+          message: "Please provide a valid email address",
         },
       };
     }
 
     // Validate role
-    if (!role || !['owner', 'admin', 'member'].includes(role)) {
+    if (!role || !["owner", "admin", "member"].includes(role)) {
       return {
         success: false,
         error: {
-          code: 'INVALID_ROLE',
-          message: 'Please select a valid role',
+          code: "INVALID_ROLE",
+          message: "Please select a valid role",
         },
       };
     }
@@ -76,26 +77,26 @@ export async function inviteMember(
     // Check if user has permission to invite members to this organization
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
 
     if (!userMembership) {
       return {
         success: false,
         error: {
-          code: 'FORBIDDEN',
-          message: 'You do not have access to this organization',
+          code: "FORBIDDEN",
+          message: "You do not have access to this organization",
         },
       };
     }
 
     // Only owners and admins can invite members
-    if (!['owner', 'admin'].includes(userMembership.role)) {
+    if (!["owner", "admin"].includes(userMembership.role)) {
       return {
         success: false,
         error: {
-          code: 'INSUFFICIENT_PERMISSIONS',
-          message: 'You do not have permission to invite members',
+          code: "INSUFFICIENT_PERMISSIONS",
+          message: "You do not have permission to invite members",
         },
       };
     }
@@ -109,7 +110,7 @@ export async function inviteMember(
       const existingMember = await db.query.member.findFirst({
         where: and(
           eq(member.userId, existingUser.id),
-          eq(member.organizationId, organizationId)
+          eq(member.organizationId, organizationId),
         ),
       });
 
@@ -117,8 +118,8 @@ export async function inviteMember(
         return {
           success: false,
           error: {
-            code: 'ALREADY_MEMBER',
-            message: 'This user is already a member of the organization',
+            code: "ALREADY_MEMBER",
+            message: "This user is already a member of the organization",
           },
         };
       }
@@ -129,7 +130,7 @@ export async function inviteMember(
       where: and(
         eq(invitation.email, email),
         eq(invitation.organizationId, organizationId),
-        eq(invitation.status, 'pending')
+        eq(invitation.status, "pending"),
       ),
     });
 
@@ -137,8 +138,8 @@ export async function inviteMember(
       return {
         success: false,
         error: {
-          code: 'INVITATION_EXISTS',
-          message: 'An invitation has already been sent to this email address',
+          code: "INVITATION_EXISTS",
+          message: "An invitation has already been sent to this email address",
         },
       };
     }
@@ -154,7 +155,7 @@ export async function inviteMember(
         organizationId,
         email,
         role,
-        status: 'pending',
+        status: "pending",
         expiresAt,
         inviterId: currentUser.id,
       })
@@ -164,8 +165,8 @@ export async function inviteMember(
       return {
         success: false,
         error: {
-          code: 'INVITATION_FAILED',
-          message: 'Failed to create invitation',
+          code: "INVITATION_FAILED",
+          message: "Failed to create invitation",
         },
       };
     }
@@ -176,24 +177,24 @@ export async function inviteMember(
       const base =
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXT_PUBLIC_URL ||
-        'http://localhost:3000';
+        "http://localhost:3000";
       const inviteLink = `${base}/invite/accept/${newInvitation[0].id}`;
 
       await resend.emails.send({
         from: SENDER,
         to: email,
         subject: `You're invited to join ${userMembership.organization.name}`,
-        replyTo: process.env.REPLY_TO_EMAIL || 'info@tendertrack360.co.za',
+        replyTo: process.env.REPLY_TO_EMAIL || "info@tendertrack360.co.za",
         react: OrganizationInvitation({
           email: email,
-          invitedByUsername: currentUser.name || 'Someone',
+          invitedByUsername: currentUser.name || "Someone",
           invitedByEmail: currentUser.email,
           teamName: userMembership.organization.name,
           inviteLink,
         }),
       });
     } catch (emailError) {
-      console.error('Error sending invitation email:', emailError);
+      console.error("Error sending invitation email:", emailError);
       // Don't fail the invitation creation if email fails
       // The invitation record exists and can be resent later
     }
@@ -208,13 +209,13 @@ export async function inviteMember(
       },
     };
   } catch (error) {
-    console.error('Error inviting member:', error);
+    console.error("Error inviting member:", error);
     return {
       success: false,
       error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred while sending the invitation',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while sending the invitation",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
     };
   }
@@ -224,7 +225,7 @@ export async function inviteMember(
  * Cancel a pending invitation
  */
 export async function cancelInvitation(
-  invitationId: string
+  invitationId: string,
 ): Promise<ServerActionResult<void>> {
   try {
     // Get current user and validate authentication
@@ -234,8 +235,8 @@ export async function cancelInvitation(
       return {
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'You must be logged in to cancel invitations',
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to cancel invitations",
         },
       };
     }
@@ -249,8 +250,8 @@ export async function cancelInvitation(
       return {
         success: false,
         error: {
-          code: 'INVITATION_NOT_FOUND',
-          message: 'Invitation not found',
+          code: "INVITATION_NOT_FOUND",
+          message: "Invitation not found",
         },
       };
     }
@@ -258,26 +259,26 @@ export async function cancelInvitation(
     // Check if user has permission to cancel invitations for this organization
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      invitationRecord.organizationId
+      invitationRecord.organizationId,
     );
 
     if (!userMembership) {
       return {
         success: false,
         error: {
-          code: 'FORBIDDEN',
-          message: 'You do not have access to this organization',
+          code: "FORBIDDEN",
+          message: "You do not have access to this organization",
         },
       };
     }
 
     // Only owners and admins can cancel invitations
-    if (!['owner', 'admin'].includes(userMembership.role)) {
+    if (!["owner", "admin"].includes(userMembership.role)) {
       return {
         success: false,
         error: {
-          code: 'INSUFFICIENT_PERMISSIONS',
-          message: 'You do not have permission to cancel invitations',
+          code: "INSUFFICIENT_PERMISSIONS",
+          message: "You do not have permission to cancel invitations",
         },
       };
     }
@@ -285,7 +286,7 @@ export async function cancelInvitation(
     // Cancel the invitation by updating its status
     await db
       .update(invitation)
-      .set({ status: 'cancelled' })
+      .set({ status: "cancelled" })
       .where(eq(invitation.id, invitationId));
 
     // Revalidate the organization page
@@ -295,13 +296,13 @@ export async function cancelInvitation(
       success: true,
     };
   } catch (error) {
-    console.error('Error canceling invitation:', error);
+    console.error("Error canceling invitation:", error);
     return {
       success: false,
       error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred while canceling the invitation',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while canceling the invitation",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
     };
   }
@@ -311,7 +312,7 @@ export async function cancelInvitation(
  * Resend an expired or pending invitation
  */
 export async function resendInvitation(
-  invitationId: string
+  invitationId: string,
 ): Promise<ServerActionResult<void>> {
   try {
     // Get current user and validate authentication
@@ -321,8 +322,8 @@ export async function resendInvitation(
       return {
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'You must be logged in to resend invitations',
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to resend invitations",
         },
       };
     }
@@ -336,8 +337,8 @@ export async function resendInvitation(
       return {
         success: false,
         error: {
-          code: 'INVITATION_NOT_FOUND',
-          message: 'Invitation not found',
+          code: "INVITATION_NOT_FOUND",
+          message: "Invitation not found",
         },
       };
     }
@@ -345,37 +346,37 @@ export async function resendInvitation(
     // Check if user has permission to resend invitations for this organization
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      invitationRecord.organizationId
+      invitationRecord.organizationId,
     );
 
     if (!userMembership) {
       return {
         success: false,
         error: {
-          code: 'FORBIDDEN',
-          message: 'You do not have access to this organization',
+          code: "FORBIDDEN",
+          message: "You do not have access to this organization",
         },
       };
     }
 
     // Only owners and admins can resend invitations
-    if (!['owner', 'admin'].includes(userMembership.role)) {
+    if (!["owner", "admin"].includes(userMembership.role)) {
       return {
         success: false,
         error: {
-          code: 'INSUFFICIENT_PERMISSIONS',
-          message: 'You do not have permission to resend invitations',
+          code: "INSUFFICIENT_PERMISSIONS",
+          message: "You do not have permission to resend invitations",
         },
       };
     }
 
     // Check if invitation can be resent (pending or expired)
-    if (!['pending', 'expired'].includes(invitationRecord.status)) {
+    if (!["pending", "expired"].includes(invitationRecord.status)) {
       return {
         success: false,
         error: {
-          code: 'INVALID_STATUS',
-          message: 'This invitation cannot be resent',
+          code: "INVALID_STATUS",
+          message: "This invitation cannot be resent",
         },
       };
     }
@@ -387,7 +388,7 @@ export async function resendInvitation(
     await db
       .update(invitation)
       .set({
-        status: 'pending',
+        status: "pending",
         expiresAt: newExpiresAt,
       })
       .where(eq(invitation.id, invitationId));
@@ -398,32 +399,32 @@ export async function resendInvitation(
       const base =
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXT_PUBLIC_URL ||
-        'http://localhost:3000';
+        "http://localhost:3000";
       const inviteLink = `${base}/invite/accept/${invitationId}`;
 
       await resend.emails.send({
         from: SENDER,
         to: invitationRecord.email,
         subject: `You're invited to join ${userMembership.organization.name}`,
-        replyTo: process.env.REPLY_TO_EMAIL || 'info@tendertrack360.co.za',
+        replyTo: process.env.REPLY_TO_EMAIL || "info@tendertrack360.co.za",
         react: OrganizationInvitation({
           email: invitationRecord.email,
-          invitedByUsername: currentUser.name || 'Someone',
+          invitedByUsername: currentUser.name || "Someone",
           invitedByEmail: currentUser.email,
           teamName: userMembership.organization.name,
           inviteLink,
         }),
       });
     } catch (emailError) {
-      console.error('Error sending invitation email:', emailError);
+      console.error("Error sending invitation email:", emailError);
       // Return error if email fails on resend
       return {
         success: false,
         error: {
-          code: 'EMAIL_SEND_FAILED',
-          message: 'Failed to send invitation email',
+          code: "EMAIL_SEND_FAILED",
+          message: "Failed to send invitation email",
           details:
-            emailError instanceof Error ? emailError.message : 'Unknown error',
+            emailError instanceof Error ? emailError.message : "Unknown error",
         },
       };
     }
@@ -435,13 +436,13 @@ export async function resendInvitation(
       success: true,
     };
   } catch (error) {
-    console.error('Error resending invitation:', error);
+    console.error("Error resending invitation:", error);
     return {
       success: false,
       error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred while resending the invitation',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while resending the invitation",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
     };
   }
@@ -451,7 +452,7 @@ export async function resendInvitation(
  * Cancel multiple invitations in bulk
  */
 export async function bulkCancelInvitations(
-  invitationIds: string[]
+  invitationIds: string[],
 ): Promise<ServerActionResult<{ cancelledCount: number }>> {
   try {
     // Get current user and validate authentication
@@ -461,8 +462,8 @@ export async function bulkCancelInvitations(
       return {
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'You must be logged in to cancel invitations',
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to cancel invitations",
         },
       };
     }
@@ -471,8 +472,8 @@ export async function bulkCancelInvitations(
       return {
         success: false,
         error: {
-          code: 'INVALID_INPUT',
-          message: 'No invitations selected for cancellation',
+          code: "INVALID_INPUT",
+          message: "No invitations selected for cancellation",
         },
       };
     }
@@ -486,33 +487,33 @@ export async function bulkCancelInvitations(
       return {
         success: false,
         error: {
-          code: 'INVITATIONS_NOT_FOUND',
-          message: 'No valid invitations found',
+          code: "INVITATIONS_NOT_FOUND",
+          message: "No valid invitations found",
         },
       };
     }
 
     // Check permissions for each organization
     const organizationIds = Array.from(
-      new Set(invitationRecords.map((inv) => inv.organizationId))
+      new Set(invitationRecords.map((inv) => inv.organizationId)),
     );
 
     for (const orgId of organizationIds) {
       const userMembership = await getUserOrganizationMembership(
         currentUser.id,
-        orgId
+        orgId,
       );
 
       if (
         !userMembership ||
-        !['owner', 'admin'].includes(userMembership.role)
+        !["owner", "admin"].includes(userMembership.role)
       ) {
         return {
           success: false,
           error: {
-            code: 'INSUFFICIENT_PERMISSIONS',
+            code: "INSUFFICIENT_PERMISSIONS",
             message:
-              'You do not have permission to cancel invitations in one or more organizations',
+              "You do not have permission to cancel invitations in one or more organizations",
           },
         };
       }
@@ -521,7 +522,7 @@ export async function bulkCancelInvitations(
     // Cancel all invitations
     await db
       .update(invitation)
-      .set({ status: 'cancelled' })
+      .set({ status: "cancelled" })
       .where(inArray(invitation.id, invitationIds));
 
     // Revalidate organization pages
@@ -541,13 +542,13 @@ export async function bulkCancelInvitations(
       },
     };
   } catch (error) {
-    console.error('Error bulk canceling invitations:', error);
+    console.error("Error bulk canceling invitations:", error);
     return {
       success: false,
       error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred while canceling invitations',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while canceling invitations",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
     };
   }
@@ -557,7 +558,7 @@ export async function bulkCancelInvitations(
  * Remove multiple members in bulk
  */
 export async function bulkRemoveMembers(
-  memberIds: string[]
+  memberIds: string[],
 ): Promise<ServerActionResult<{ removedCount: number }>> {
   try {
     // Get current user and validate authentication
@@ -567,8 +568,8 @@ export async function bulkRemoveMembers(
       return {
         success: false,
         error: {
-          code: 'UNAUTHORIZED',
-          message: 'You must be logged in to remove members',
+          code: "UNAUTHORIZED",
+          message: "You must be logged in to remove members",
         },
       };
     }
@@ -577,8 +578,8 @@ export async function bulkRemoveMembers(
       return {
         success: false,
         error: {
-          code: 'INVALID_INPUT',
-          message: 'No members selected for removal',
+          code: "INVALID_INPUT",
+          message: "No members selected for removal",
         },
       };
     }
@@ -595,33 +596,33 @@ export async function bulkRemoveMembers(
       return {
         success: false,
         error: {
-          code: 'MEMBERS_NOT_FOUND',
-          message: 'No valid members found',
+          code: "MEMBERS_NOT_FOUND",
+          message: "No valid members found",
         },
       };
     }
 
     // Check permissions for each organization and prevent self-removal
     const organizationIds = Array.from(
-      new Set(memberRecords.map((m) => m.organizationId))
+      new Set(memberRecords.map((m) => m.organizationId)),
     );
 
     for (const orgId of organizationIds) {
       const userMembership = await getUserOrganizationMembership(
         currentUser.id,
-        orgId
+        orgId,
       );
 
       if (
         !userMembership ||
-        !['owner', 'admin'].includes(userMembership.role)
+        !["owner", "admin"].includes(userMembership.role)
       ) {
         return {
           success: false,
           error: {
-            code: 'INSUFFICIENT_PERMISSIONS',
+            code: "INSUFFICIENT_PERMISSIONS",
             message:
-              'You do not have permission to remove members from one or more organizations',
+              "You do not have permission to remove members from one or more organizations",
           },
         };
       }
@@ -633,8 +634,8 @@ export async function bulkRemoveMembers(
       return {
         success: false,
         error: {
-          code: 'CANNOT_REMOVE_SELF',
-          message: 'You cannot remove yourself from the organization',
+          code: "CANNOT_REMOVE_SELF",
+          message: "You cannot remove yourself from the organization",
         },
       };
     }
@@ -659,13 +660,13 @@ export async function bulkRemoveMembers(
       },
     };
   } catch (error) {
-    console.error('Error bulk removing members:', error);
+    console.error("Error bulk removing members:", error);
     return {
       success: false,
       error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred while removing members',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred while removing members",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
     };
   }

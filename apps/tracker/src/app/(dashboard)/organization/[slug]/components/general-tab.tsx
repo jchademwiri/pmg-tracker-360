@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -22,13 +22,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Building2, Save } from 'lucide-react';
-import { toast } from 'sonner';
-import type { Role } from '@pmg/db/schema';
-import { updateOrganizationDetails } from '@/server/organization-members';
-import { updateOrganizationLogo } from '@/server/organizations';
-import { AvatarUpload } from '../../../settings/profile/components/avatar-upload';
+} from "@/components/ui/form";
+import { Building2, Save } from "lucide-react";
+import { toast } from "sonner";
+import type { Role } from "@pmg/db/schema";
+import { updateOrganizationDetails } from "@/server/organization-members";
+import { updateOrganizationLogo } from "@/server/organizations";
+import { AvatarUpload } from "../../../settings/profile/components/avatar-upload";
 
 interface GeneralTabProps {
   organization: {
@@ -49,10 +49,10 @@ interface GeneralTabProps {
 
 // Form schema for organization details
 const organizationSchema = z.object({
-  name: z.string().min(2, 'Organization name must be at least 2 characters'),
+  name: z.string().min(2, "Organization name must be at least 2 characters"),
   description: z.string().optional(),
-  logo: z.string().url().optional().or(z.literal('')),
-  website: z.string().url().optional().or(z.literal('')),
+  logo: z.string().url().optional().or(z.literal("")),
+  website: z.string().url().optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),
 });
@@ -61,15 +61,15 @@ type OrganizationFormData = z.infer<typeof organizationSchema>;
 
 // Helper function to check if user can edit
 function canEditOrganization(role: Role): boolean {
-  return ['owner', 'admin', 'manager'].includes(role);
+  return ["owner", "admin", "manager"].includes(role);
 }
 
 // Helper function to get organization initials
 function getOrganizationInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((word) => word[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -83,13 +83,21 @@ export function GeneralTab({
   // Preview URL for the logo avatar. The form itself stores the durable
   // storage key (or external URL) so saving details never persists a
   // short-lived signed URL.
-  const [logoPreview, setLogoPreview] = useState<string | null>(organization.logo || null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    organization.logo || null,
+  );
   const canEdit = canEditOrganization(userRole);
 
   // Parse metadata if it exists
   const metadata = organization.metadata
-    ? typeof organization.metadata === 'string'
-      ? (() => { try { return JSON.parse(organization.metadata); } catch { return {}; } })()
+    ? typeof organization.metadata === "string"
+      ? (() => {
+          try {
+            return JSON.parse(organization.metadata);
+          } catch {
+            return {};
+          }
+        })()
       : organization.metadata
     : {};
 
@@ -97,36 +105,39 @@ export function GeneralTab({
     resolver: zodResolver(organizationSchema),
     defaultValues: {
       name: organization.name,
-      description: metadata.description || '',
-      logo: organization.logo || '',
-      website: metadata.website || '',
-      phone: metadata.phone || '',
-      address: metadata.address || '',
+      description: metadata.description || "",
+      logo: organization.logo || "",
+      website: metadata.website || "",
+      phone: metadata.phone || "",
+      address: metadata.address || "",
     },
   });
 
   const handleLogoUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     return await updateOrganizationLogo(organization.id, formData);
   };
 
-  const handleLogoChange = (imageUrl: string | null, storageKey?: string | null) => {
+  const handleLogoChange = (
+    imageUrl: string | null,
+    storageKey?: string | null,
+  ) => {
     // Persist the durable key (or an external URL) in the form; the signed
     // URL is only used for immediate display.
-    const value = storageKey || imageUrl || '';
-    form.setValue('logo', value);
+    const value = storageKey || imageUrl || "";
+    form.setValue("logo", value);
     setLogoPreview(imageUrl || value);
   };
 
   const handleLogoRemove = () => {
-    form.setValue('logo', '');
+    form.setValue("logo", "");
     setLogoPreview(null);
   };
 
   const onSubmit = async (data: OrganizationFormData) => {
     if (!canEdit) {
-      toast.error('You do not have permission to edit this organization');
+      toast.error("You do not have permission to edit this organization");
       return;
     }
 
@@ -142,16 +153,16 @@ export function GeneralTab({
       });
 
       if (result.success) {
-        toast.success('Organization updated successfully', {
-          description: 'Your organization details have been saved.',
+        toast.success("Organization updated successfully", {
+          description: "Your organization details have been saved.",
         });
       } else {
-        toast.error(result.error?.message || 'Failed to update organization');
+        toast.error(result.error?.message || "Failed to update organization");
       }
     } catch (error) {
-      console.error('Error updating organization:', error);
-      toast.error('Failed to update organization', {
-        description: 'Please try again later.',
+      console.error("Error updating organization:", error);
+      toast.error("Failed to update organization", {
+        description: "Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -169,8 +180,8 @@ export function GeneralTab({
           </CardTitle>
           <CardDescription>
             {canEdit
-              ? 'Update your organization logo, information, and contact details'
-              : 'View organization information and contact details'}
+              ? "Update your organization logo, information, and contact details"
+              : "View organization information and contact details"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

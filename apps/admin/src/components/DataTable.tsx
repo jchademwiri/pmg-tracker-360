@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Suspense, type ReactNode } from 'react';
-import { TableSkeleton } from '@/components/TableSkeleton';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Suspense, type ReactNode } from "react";
+import { TableSkeleton } from "@/components/TableSkeleton";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export type Column<T> = {
   key: string;
@@ -28,7 +28,11 @@ export const PAGE_SIZE = 50;
  * Pure helper — exported for property-based testing.
  * Returns the slice of data for the given page and page size.
  */
-export function getPaginationSlice<T>(data: T[], page: number, pageSize: number): T[] {
+export function getPaginationSlice<T>(
+  data: T[],
+  page: number,
+  pageSize: number,
+): T[] {
   return data.slice((page - 1) * pageSize, page * pageSize);
 }
 
@@ -60,7 +64,7 @@ function DataTableInner<T>({
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const page = parsePage(searchParams.get('page'));
+  const page = parsePage(searchParams.get("page"));
   const totalPages = getTotalPages(data.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
 
@@ -68,7 +72,7 @@ function DataTableInner<T>({
 
   function navigate(newPage: number) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', String(newPage));
+    params.set("page", String(newPage));
     router.push(`?${params.toString()}`);
   }
 
@@ -121,7 +125,7 @@ function DataTableInner<T>({
                 <th
                   key={col.key}
                   scope="col"
-                  className={`px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide whitespace-nowrap ${col.className ?? ''}`}
+                  className={`px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide whitespace-nowrap ${col.className ?? ""}`}
                 >
                   {col.header}
                 </th>
@@ -147,8 +151,10 @@ function DataTableInner<T>({
                     key={key}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
                     className={`transition-colors ${
-                      isSelected ? 'bg-zinc-900/90' : 'bg-zinc-950 hover:bg-zinc-900'
-                    } ${onRowClick ? 'cursor-pointer' : ''}`}
+                      isSelected
+                        ? "bg-zinc-900/90"
+                        : "bg-zinc-950 hover:bg-zinc-900"
+                    } ${onRowClick ? "cursor-pointer" : ""}`}
                   >
                     {selectable && (
                       <td
@@ -165,7 +171,7 @@ function DataTableInner<T>({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-4 py-3 text-zinc-300 ${col.className ?? ''}`}
+                        className={`px-4 py-3 text-zinc-300 ${col.className ?? ""}`}
                       >
                         {col.render(row)}
                       </td>
@@ -208,9 +214,7 @@ function DataTableInner<T>({
 
 export default function DataTable<T>(props: DataTableProps<T>) {
   return (
-    <Suspense
-      fallback={<TableSkeleton columns={props.columns.length} />}
-    >
+    <Suspense fallback={<TableSkeleton columns={props.columns.length} />}>
       <DataTableInner {...props} />
     </Suspense>
   );

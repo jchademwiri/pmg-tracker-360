@@ -1,17 +1,17 @@
-'use server';
+"use server";
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { db } from '@pmg/db';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { db } from "@pmg/db";
 import {
   subscriptionPlan,
   securityAuditLog,
   type SubscriptionPlan,
-} from '@pmg/db/schema';
-import { getSubscriptionPlans, DEFAULT_SUBSCRIPTION_PLANS } from '@pmg/db';
-import { eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { PLATFORM_ORG_ID } from '@/lib/constants';
+} from "@pmg/db/schema";
+import { getSubscriptionPlans, DEFAULT_SUBSCRIPTION_PLANS } from "@pmg/db";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { PLATFORM_ORG_ID } from "@/lib/constants";
 
 export type PlanUpdatePayload = {
   name: string;
@@ -40,8 +40,12 @@ export async function getAdminSubscriptionPlans(): Promise<{
 }> {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session || (session.user as any).role !== 'admin') {
-      return { success: false, plans: DEFAULT_SUBSCRIPTION_PLANS, error: 'Unauthorized' };
+    if (!session || (session.user as any).role !== "admin") {
+      return {
+        success: false,
+        plans: DEFAULT_SUBSCRIPTION_PLANS,
+        error: "Unauthorized",
+      };
     }
 
     const plans = await getSubscriptionPlans(true);
@@ -51,7 +55,7 @@ export async function getAdminSubscriptionPlans(): Promise<{
     return {
       success: false,
       plans: DEFAULT_SUBSCRIPTION_PLANS,
-      error: e.message || 'Failed to fetch plans',
+      error: e.message || "Failed to fetch plans",
     };
   }
 }
@@ -61,24 +65,27 @@ export async function getAdminSubscriptionPlans(): Promise<{
  */
 export async function updateSubscriptionPlanAction(
   planId: string,
-  payload: PlanUpdatePayload
+  payload: PlanUpdatePayload,
 ): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session || (session.user as any).role !== 'admin') {
-      return { success: false, error: 'Unauthorized: Admin access required.' };
+    if (!session || (session.user as any).role !== "admin") {
+      return { success: false, error: "Unauthorized: Admin access required." };
     }
 
     if (!payload.name?.trim()) {
-      return { success: false, error: 'Plan name is required.' };
+      return { success: false, error: "Plan name is required." };
     }
 
     if (payload.priceZar < 0) {
-      return { success: false, error: 'Price cannot be negative.' };
+      return { success: false, error: "Price cannot be negative." };
     }
 
     if (payload.maxStorageMb < 1) {
-      return { success: false, error: 'Storage allocation must be at least 1 MB.' };
+      return {
+        success: false,
+        error: "Storage allocation must be at least 1 MB.",
+      };
     }
 
     const now = new Date();
@@ -97,7 +104,7 @@ export async function updateSubscriptionPlanAction(
           name: payload.name.trim(),
           description: payload.description.trim(),
           priceZar: Math.round(payload.priceZar),
-          period: payload.period.trim() || 'per month',
+          period: payload.period.trim() || "per month",
           maxStorageMb: Math.round(payload.maxStorageMb),
           maxTendersPerMonth: payload.maxTendersPerMonth,
           maxActiveProjects: Math.max(0, Math.round(payload.maxActiveProjects)),
@@ -106,7 +113,7 @@ export async function updateSubscriptionPlanAction(
           popular: Boolean(payload.popular),
           sortOrder: payload.sortOrder ?? existing.sortOrder,
           isActive: Boolean(payload.isActive),
-          ctaText: payload.ctaText.trim() || 'Select Plan',
+          ctaText: payload.ctaText.trim() || "Select Plan",
           badgeText: payload.badgeText?.trim() || null,
           updatedAt: now,
         })
@@ -118,7 +125,7 @@ export async function updateSubscriptionPlanAction(
         name: payload.name.trim(),
         description: payload.description.trim(),
         priceZar: Math.round(payload.priceZar),
-        period: payload.period.trim() || 'per month',
+        period: payload.period.trim() || "per month",
         maxStorageMb: Math.round(payload.maxStorageMb),
         maxTendersPerMonth: payload.maxTendersPerMonth,
         maxActiveProjects: Math.max(0, Math.round(payload.maxActiveProjects)),
@@ -127,7 +134,7 @@ export async function updateSubscriptionPlanAction(
         popular: Boolean(payload.popular),
         sortOrder: payload.sortOrder ?? 0,
         isActive: Boolean(payload.isActive),
-        ctaText: payload.ctaText.trim() || 'Select Plan',
+        ctaText: payload.ctaText.trim() || "Select Plan",
         badgeText: payload.badgeText?.trim() || null,
         createdAt: now,
         updatedAt: now,
@@ -140,8 +147,8 @@ export async function updateSubscriptionPlanAction(
         id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         organizationId: PLATFORM_ORG_ID,
         userId: session.user.id,
-        action: 'PLATFORM_PLAN_UPDATED',
-        resourceType: 'subscription_plan',
+        action: "PLATFORM_PLAN_UPDATED",
+        resourceType: "subscription_plan",
         resourceId: planId,
         details: {
           planId,
@@ -154,13 +161,16 @@ export async function updateSubscriptionPlanAction(
         createdAt: now,
       });
     } catch (auditErr) {
-      console.warn('[updateSubscriptionPlanAction] Audit logging failed:', auditErr);
+      console.warn(
+        "[updateSubscriptionPlanAction] Audit logging failed:",
+        auditErr,
+      );
     }
 
-    revalidatePath('/pricing');
-    revalidatePath('/storage');
-    revalidatePath('/reports');
-    revalidatePath('/billing');
+    revalidatePath("/pricing");
+    revalidatePath("/storage");
+    revalidatePath("/reports");
+    revalidatePath("/billing");
 
     return {
       success: true,
@@ -168,10 +178,10 @@ export async function updateSubscriptionPlanAction(
     };
   } catch (err) {
     const e = err as Error;
-    console.error('Error in updateSubscriptionPlanAction:', e);
+    console.error("Error in updateSubscriptionPlanAction:", e);
     return {
       success: false,
-      error: e.message || 'Failed to update subscription plan.',
+      error: e.message || "Failed to update subscription plan.",
     };
   }
 }
@@ -186,8 +196,8 @@ export async function resetSubscriptionPlansAction(): Promise<{
 }> {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session || (session.user as any).role !== 'admin') {
-      return { success: false, error: 'Unauthorized: Admin access required.' };
+    if (!session || (session.user as any).role !== "admin") {
+      return { success: false, error: "Unauthorized: Admin access required." };
     }
 
     for (const plan of DEFAULT_SUBSCRIPTION_PLANS) {
@@ -216,20 +226,21 @@ export async function resetSubscriptionPlansAction(): Promise<{
         });
     }
 
-    revalidatePath('/pricing');
-    revalidatePath('/storage');
-    revalidatePath('/reports');
-    revalidatePath('/billing');
+    revalidatePath("/pricing");
+    revalidatePath("/storage");
+    revalidatePath("/reports");
+    revalidatePath("/billing");
 
     return {
       success: true,
-      message: 'All subscription plans have been restored to default configurations.',
+      message:
+        "All subscription plans have been restored to default configurations.",
     };
   } catch (err) {
     const e = err as Error;
     return {
       success: false,
-      error: e.message || 'Failed to reset subscription plans.',
+      error: e.message || "Failed to reset subscription plans.",
     };
   }
 }

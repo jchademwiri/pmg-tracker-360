@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Calendar, DollarSign, FileText, Loader2 } from 'lucide-react';
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Calendar, DollarSign, FileText, Loader2 } from "lucide-react";
 
 import {
   Dialog,
@@ -12,8 +12,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,17 +21,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { toLocalDateString, fromLocalDateString } from '@/lib/tender-utils';
-import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';const ContractDetailsSchema = z.object({
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toLocalDateString, fromLocalDateString } from "@/lib/tender-utils";
+import { toSASTDateString, parseDateToUTC } from "@/lib/timezone";
+const ContractDetailsSchema = z.object({
   awardValue: z
     .string()
     .optional()
     .nullable()
     .transform((val) => {
-      if (!val || val.trim() === '') return null;
-      const cleaned = val.replace(/[^0-9.]/g, '');
+      if (!val || val.trim() === "") return null;
+      const cleaned = val.replace(/[^0-9.]/g, "");
       const num = parseFloat(cleaned);
       if (isNaN(num)) return null;
       return cleaned;
@@ -67,10 +68,10 @@ export function TenderToProjectDialog({
   const form = useForm<ContractDetailsInput>({
     resolver: zodResolver(ContractDetailsSchema),
     defaultValues: {
-      awardValue: estimatedValue || '',
+      awardValue: estimatedValue || "",
       contractStartDate: null,
       contractEndDate: null,
-      signedContractUrl: '',
+      signedContractUrl: "",
     },
   });
 
@@ -86,11 +87,14 @@ export function TenderToProjectDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      if (!isPending) {
-        onOpenChange(val);
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!isPending) {
+          onOpenChange(val);
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
@@ -98,7 +102,11 @@ export function TenderToProjectDialog({
             Contract Award Details
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Fill in the final contract details to convert Tender <span className="font-semibold text-foreground">{tenderNumber.toUpperCase()}</span> into an active Project.
+            Fill in the final contract details to convert Tender{" "}
+            <span className="font-semibold text-foreground">
+              {tenderNumber.toUpperCase()}
+            </span>{" "}
+            into an active Project.
           </DialogDescription>
         </DialogHeader>
 
@@ -115,7 +123,9 @@ export function TenderToProjectDialog({
               name="awardValue"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold">Final Award Value (ZAR)</FormLabel>
+                  <FormLabel className="text-sm font-semibold">
+                    Final Award Value (ZAR)
+                  </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm font-medium">
@@ -126,7 +136,7 @@ export function TenderToProjectDialog({
                         className="pl-8"
                         disabled={isPending}
                         {...field}
-                        value={field.value || ''}
+                        value={field.value || ""}
                       />
                     </div>
                   </FormControl>
@@ -141,7 +151,9 @@ export function TenderToProjectDialog({
                 name="contractStartDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold">Contract Start Date</FormLabel>
+                    <FormLabel className="text-sm font-semibold">
+                      Contract Start Date
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -166,7 +178,9 @@ export function TenderToProjectDialog({
                 name="contractEndDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-semibold">Contract End Date</FormLabel>
+                    <FormLabel className="text-sm font-semibold">
+                      Contract End Date
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -192,7 +206,9 @@ export function TenderToProjectDialog({
               name="signedContractUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-semibold">Signed SLA / Contract Reference</FormLabel>
+                  <FormLabel className="text-sm font-semibold">
+                    Signed SLA / Contract Reference
+                  </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -201,7 +217,7 @@ export function TenderToProjectDialog({
                         className="pl-10"
                         disabled={isPending}
                         {...field}
-                        value={field.value || ''}
+                        value={field.value || ""}
                       />
                     </div>
                   </FormControl>

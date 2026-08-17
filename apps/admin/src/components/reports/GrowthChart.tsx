@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   AreaChart,
@@ -9,8 +9,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import type { GrowthTrendItem } from '@/lib/reports-queries';
+} from "recharts";
+import type { GrowthTrendItem } from "@/lib/reports-queries";
 
 type Props = {
   data: GrowthTrendItem[];
@@ -42,35 +42,39 @@ export function GrowthChart({ data }: Props) {
               <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="rgba(255,255,255,0.08)"
+            vertical={false}
+          />
           <XAxis
             dataKey="period"
             stroke="#94a3b8"
             fontSize={12}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
           />
           <YAxis
             stroke="#94a3b8"
             fontSize={12}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#0f172a',
-              borderColor: 'rgba(255,255,255,0.15)',
-              borderRadius: '8px',
-              color: '#f8fafc',
-              fontSize: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              backgroundColor: "#0f172a",
+              borderColor: "rgba(255,255,255,0.15)",
+              borderRadius: "8px",
+              color: "#f8fafc",
+              fontSize: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
             }}
           />
           <Legend
             verticalAlign="top"
             height={36}
-            wrapperStyle={{ fontSize: '12px', color: '#cbd5e1' }}
+            wrapperStyle={{ fontSize: "12px", color: "#cbd5e1" }}
           />
           <Area
             type="monotone"

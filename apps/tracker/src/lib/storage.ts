@@ -3,8 +3,8 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
-} from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Ensure environment variables are checked (or updated in env.ts)
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -18,7 +18,7 @@ const S3_API = process.env.S3_API; // Optional custom endpoint override
 const s3Client =
   R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && (R2_ACCOUNT_ID || S3_API)
     ? new S3Client({
-        region: 'auto',
+        region: "auto",
         endpoint: S3_API || `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
         credentials: {
           accessKeyId: R2_ACCESS_KEY_ID,
@@ -38,13 +38,13 @@ export class StorageService {
   static async uploadFile(
     fileBuffer: Buffer | Uint8Array,
     key: string,
-    contentType: string
+    contentType: string,
   ): Promise<string> {
     if (!s3Client || !R2_BUCKET_NAME) {
-      console.warn('Storage not configured: R2 credentials missing');
+      console.warn("Storage not configured: R2 credentials missing");
       // For local dev without R2, we might just return a mock URL or throw
       // But for MVP if no creds, we should probably throw
-      throw new Error('Storage configuration missing');
+      throw new Error("Storage configuration missing");
     }
 
     const command = new PutObjectCommand({
@@ -79,11 +79,9 @@ export class StorageService {
         e?.message,
       ]
         .filter(Boolean)
-        .join(' - ');
-      console.error('Error uploading file to storage:', detail || error);
-      throw new Error(
-        `Failed to upload file${detail ? ` (${detail})` : ''}`
-      );
+        .join(" - ");
+      console.error("Error uploading file to storage:", detail || error);
+      throw new Error(`Failed to upload file${detail ? ` (${detail})` : ""}`);
     }
   }
 
@@ -116,7 +114,7 @@ export class StorageService {
    */
   static async deleteFile(key: string): Promise<void> {
     if (!s3Client || !R2_BUCKET_NAME) {
-      console.warn('Storage not configured: R2 credentials missing');
+      console.warn("Storage not configured: R2 credentials missing");
       return;
     }
 
@@ -128,7 +126,7 @@ export class StorageService {
     try {
       await s3Client.send(command);
     } catch (error) {
-      console.error('Error deleting file from storage:', error);
+      console.error("Error deleting file from storage:", error);
       // We don't throw here to avoid blocking DB cleanup if storage fails (soft delete logic usually)
     }
   }
@@ -139,7 +137,7 @@ export class StorageService {
    */
   static async getSignedUrl(key: string): Promise<string> {
     if (!s3Client || !R2_BUCKET_NAME) {
-      return '#storage-not-configured';
+      return "#storage-not-configured";
     }
 
     const command = new GetObjectCommand({
@@ -148,10 +146,12 @@ export class StorageService {
     });
 
     try {
-      return await getSignedUrl(s3Client as any, command as any, { expiresIn: 3600 });
+      return await getSignedUrl(s3Client as any, command as any, {
+        expiresIn: 3600,
+      });
     } catch (error) {
-      console.error('Error generating signed URL:', error);
-      return '#error-generating-url';
+      console.error("Error generating signed URL:", error);
+      return "#error-generating-url";
     }
   }
 }

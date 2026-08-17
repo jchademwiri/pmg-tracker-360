@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Calendar, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertTriangle, Calendar, Clock } from "lucide-react";
 import {
   getDeadlineUrgencyClass,
   getDeadlineUrgencyLabel,
   isUrgentDeadline,
-} from '@/lib/deadline-display';
-import { formatCurrency } from '@/lib/format';
+} from "@/lib/deadline-display";
+import { formatCurrency } from "@/lib/format";
 
 interface UpcomingDeadline {
   id: string;
@@ -36,10 +36,10 @@ function getUrgencyIcon(daysUntil: number | null) {
 
 export function UpcomingDeadlines({
   deadlines,
-  className = '',
+  className = "",
 }: UpcomingDeadlinesProps) {
   const urgentDeadlines = deadlines.filter((d) =>
-    isUrgentDeadline(d.daysUntilDeadline)
+    isUrgentDeadline(d.daysUntilDeadline),
   );
   const hasUrgent = urgentDeadlines.length > 0;
 
@@ -88,7 +88,7 @@ export function UpcomingDeadlines({
                   </span>
                   <Badge
                     className={getDeadlineUrgencyClass(
-                      deadline.daysUntilDeadline
+                      deadline.daysUntilDeadline,
                     )}
                   >
                     {getUrgencyIcon(deadline.daysUntilDeadline)}
@@ -98,11 +98,11 @@ export function UpcomingDeadlines({
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate mb-1">
-                  {deadline.description || 'No description'}
+                  {deadline.description || "No description"}
                 </p>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    {deadline.client?.name || 'Unknown Client'}
+                    {deadline.client?.name || "Unknown Client"}
                   </p>
                   {deadline.value && (
                     <p className="text-xs font-medium">
@@ -112,7 +112,12 @@ export function UpcomingDeadlines({
                 </div>
                 {deadline.submissionDate && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Due: {deadline.submissionDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    Due:{" "}
+                    {deadline.submissionDate.toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </p>
                 )}
               </div>

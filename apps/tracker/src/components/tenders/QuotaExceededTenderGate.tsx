@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Crown, Zap, ArrowLeft, ShieldAlert, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { UpgradeDialog } from '@/components/shared/dialogs/upgrade-dialog';
-import Link from 'next/link';
+import { useState } from "react";
+import { Crown, Zap, ArrowLeft, ShieldAlert, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { UpgradeDialog } from "@/components/shared/dialogs/upgrade-dialog";
+import Link from "next/link";
 
 type Props = {
   currentCount: number;
@@ -12,7 +12,11 @@ type Props = {
   plan?: string;
 };
 
-export default function QuotaExceededTenderGate({ currentCount, maxCount = 10, plan = 'free' }: Props) {
+export default function QuotaExceededTenderGate({
+  currentCount,
+  maxCount = 10,
+  plan = "free",
+}: Props) {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(true);
 
   const planName = plan.toUpperCase();
@@ -36,8 +40,9 @@ export default function QuotaExceededTenderGate({ currentCount, maxCount = 10, p
             Monthly Tender Limit Reached ({currentCount}/{maxCount})
           </h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            You have used all <strong>{maxCount} tenders</strong> allocated for this calendar month on the <strong>{planName} Plan</strong>.
-            Upgrade your subscription plan to unlock more tender tracking capacity.
+            You have used all <strong>{maxCount} tenders</strong> allocated for
+            this calendar month on the <strong>{planName} Plan</strong>. Upgrade
+            your subscription plan to unlock more tender tracking capacity.
           </p>
         </div>
 
@@ -47,9 +52,18 @@ export default function QuotaExceededTenderGate({ currentCount, maxCount = 10, p
             What happens when you upgrade:
           </div>
           <ul className="space-y-1.5 text-muted-foreground pl-5 list-disc">
-            <li><strong>Higher Tender Limits</strong> — Get up to 20 tenders / month on Starter or Unlimited tenders on Pro.</li>
-            <li><strong>Instant Plan Upgrade</strong> — Switch to Starter (R249) or Pro (R499) instantly.</li>
-            <li><strong>Active Projects & Storage</strong> — Access up to 5 active projects and 10GB storage.</li>
+            <li>
+              <strong>Higher Tender Limits</strong> — Get up to 20 tenders /
+              month on Starter or Unlimited tenders on Pro.
+            </li>
+            <li>
+              <strong>Instant Plan Upgrade</strong> — Switch to Starter (R249)
+              or Pro (R499) instantly.
+            </li>
+            <li>
+              <strong>Active Projects & Storage</strong> — Access up to 5 active
+              projects and 10GB storage.
+            </li>
           </ul>
         </div>
 
@@ -62,7 +76,12 @@ export default function QuotaExceededTenderGate({ currentCount, maxCount = 10, p
             <Crown className="h-4 w-4 mr-2" /> Upgrade Subscription Plan
           </Button>
 
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+          >
             <Link href="/tenders">View Existing Tenders</Link>
           </Button>
         </div>

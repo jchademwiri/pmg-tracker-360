@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import type { Route } from 'next';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import type { Route } from "next";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -17,9 +17,9 @@ import {
   LifeBuoy,
   Truck,
   X,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { isPathInSection } from '@/lib/nav-utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { isPathInSection } from "@/lib/nav-utils";
 
 interface NavItem {
   label: string;
@@ -28,27 +28,26 @@ interface NavItem {
 }
 
 const primaryItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Tenders', href: '/tenders', icon: ClipboardList },
-  { label: 'Projects', href: '/projects', icon: FolderKanban },
-  { label: 'Clients', href: '/clients', icon: Users },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Tenders", href: "/tenders", icon: ClipboardList },
+  { label: "Projects", href: "/projects", icon: FolderKanban },
+  { label: "Clients", href: "/clients", icon: Users },
 ];
 
 const secondaryItems: NavItem[] = [
-  { label: 'Purchase Orders', href: '/projects/purchase-orders', icon: Truck },
-  { label: 'Calendar', href: '/calendar', icon: Calendar },
-  { label: 'Reports', href: '/reports', icon: BarChart3 },
-  { label: 'Organizations', href: '/organization', icon: Building2 },
-  { label: 'Settings', href: '/settings', icon: Settings },
-  { label: 'Support', href: '/support', icon: LifeBuoy },
+  { label: "Purchase Orders", href: "/projects/purchase-orders", icon: Truck },
+  { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Reports", href: "/reports", icon: BarChart3 },
+  { label: "Organizations", href: "/organization", icon: Building2 },
+  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Support", href: "/support", icon: LifeBuoy },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isActive = (item: NavItem) =>
-    isPathInSection(pathname, item.href);
+  const isActive = (item: NavItem) => isPathInSection(pathname, item.href);
 
   return (
     <>
@@ -86,10 +85,10 @@ export function MobileBottomNav() {
                   href={item.href as Route}
                   onClick={() => setMenuOpen(false)}
                   className={cn(
-                    'flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-colors',
+                    "flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-colors",
                     active
-                      ? 'bg-white/10 text-white'
-                      : 'text-zinc-400 hover:bg-white/5 hover:text-white'
+                      ? "bg-white/10 text-white"
+                      : "text-zinc-400 hover:bg-white/5 hover:text-white",
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -115,16 +114,14 @@ export function MobileBottomNav() {
                 key={item.href}
                 href={item.href as Route}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-center transition-colors min-w-[60px]',
-                  active
-                    ? 'text-white'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                  "flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-center transition-colors min-w-[60px]",
+                  active ? "text-white" : "text-zinc-500 hover:text-zinc-300",
                 )}
               >
                 <div
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
-                    active && 'bg-white/10'
+                    "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                    active && "bg-white/10",
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -139,16 +136,14 @@ export function MobileBottomNav() {
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
             className={cn(
-              'flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-center transition-colors min-w-[60px]',
-              menuOpen
-                ? 'text-white'
-                : 'text-zinc-500 hover:text-zinc-300'
+              "flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-center transition-colors min-w-[60px]",
+              menuOpen ? "text-white" : "text-zinc-500 hover:text-zinc-300",
             )}
           >
             <div
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
-                menuOpen && 'bg-white/10'
+                "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                menuOpen && "bg-white/10",
               )}
             >
               <MoreHorizontal className="h-5 w-5" />

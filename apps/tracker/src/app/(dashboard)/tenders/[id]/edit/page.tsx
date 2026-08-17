@@ -1,9 +1,9 @@
-import { getCurrentUser } from '@/server';
-import { getTenderById } from '@/server/tenders';
-import { TenderForm } from '@/components/tenders/tender-form';
-import { notFound } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { getTenderById } from "@/server/tenders";
+import { TenderForm } from "@/components/tenders/tender-form";
+import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface EditTenderPageProps {
   params: Promise<{

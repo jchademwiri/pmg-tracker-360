@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { ProfileTabs, createProfileTabs } from './profile-tabs';
-import { PasswordForm } from './password-form';
-import { OrganizationInfo } from './organization-info';
-import { SecurityDashboard } from './security-dashboard';
-import { SecuritySettings } from './security-settings';
-import { Badge } from '@/components/ui/badge';
-import type { ChangePasswordData, ActionResult, SessionInfo } from '../actions';
+import { ProfileTabs, createProfileTabs } from "./profile-tabs";
+import { PasswordForm } from "./password-form";
+import { OrganizationInfo } from "./organization-info";
+import { SecurityDashboard } from "./security-dashboard";
+import { SecuritySettings } from "./security-settings";
+import { Badge } from "@/components/ui/badge";
+import type { ChangePasswordData, ActionResult, SessionInfo } from "../actions";
 
 interface OrganizationMembership {
   id: string;
@@ -77,7 +77,7 @@ export function ProfileTabsWrapper({
           securityScore: 75,
           unreadNotifications: 3,
           pendingVerifications: currentUser.emailVerified ? 0 : 1,
-        }
+        },
       )}
     />
   );

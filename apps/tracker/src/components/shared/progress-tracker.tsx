@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Check, X, Clock, FileText, Send } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Check, X, Clock, FileText, Send } from "lucide-react";
 
 interface ProgressTrackerProps {
   status: string; // open, closed, evaluation, awarded, lost, cancelled
@@ -10,10 +10,10 @@ interface ProgressTrackerProps {
 
 export function ProgressTracker({ status, className }: ProgressTrackerProps) {
   const steps = [
-    { id: 'open', label: 'Open', icon: FileText },
-    { id: 'closed', label: 'Closed', icon: Clock },
-    { id: 'evaluation', label: 'Evaluation', icon: Send },
-    { id: 'outcome', label: 'Outcome', icon: Check }, // Icon changes based on win/loss
+    { id: "open", label: "Open", icon: FileText },
+    { id: "closed", label: "Closed", icon: Clock },
+    { id: "evaluation", label: "Evaluation", icon: Send },
+    { id: "outcome", label: "Outcome", icon: Check }, // Icon changes based on win/loss
   ];
 
   // Determine current step index
@@ -22,21 +22,21 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
   let isLost = false;
 
   switch (status) {
-    case 'open':
+    case "open":
       currentIndex = 0;
       break;
-    case 'closed':
+    case "closed":
       currentIndex = 1;
       break;
-    case 'pending':
-    case 'evaluation':
+    case "pending":
+    case "evaluation":
       currentIndex = 2;
       break;
-    case 'awarded':
+    case "awarded":
       currentIndex = 3;
       isWon = true;
       break;
-    case 'lost':
+    case "lost":
       currentIndex = 3;
       isLost = true;
       break;
@@ -45,7 +45,7 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
   }
 
   return (
-    <div className={cn('w-full py-4', className)}>
+    <div className={cn("w-full py-4", className)}>
       <div className="relative flex items-center justify-between">
         {/* Progress Bar Background */}
         <div className="absolute left-0 top-1/2 -z-10 h-0.5 w-full -translate-y-1/2 bg-muted" />
@@ -53,8 +53,8 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
         {/* Active Progress Bar */}
         <div
           className={cn(
-            'absolute left-0 top-1/2 -z-10 h-0.5 -translate-y-1/2 transition-all duration-500',
-            isLost ? 'bg-red-500' : 'bg-primary'
+            "absolute left-0 top-1/2 -z-10 h-0.5 -translate-y-1/2 transition-all duration-500",
+            isLost ? "bg-red-500" : "bg-primary",
           )}
           style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
         />
@@ -68,15 +68,15 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
           if (isLast && isLost) Icon = X;
           if (isLast && isWon) Icon = Check;
 
-          let colorClass = 'bg-muted text-muted-foreground border-muted'; // Inactive
+          let colorClass = "bg-muted text-muted-foreground border-muted"; // Inactive
 
           if (isActive) {
             if (isLast && isLost) {
-              colorClass = 'bg-red-500 text-white border-red-500';
+              colorClass = "bg-red-500 text-white border-red-500";
             } else if (isLast && isWon) {
-              colorClass = 'bg-green-500 text-white border-green-500';
+              colorClass = "bg-green-500 text-white border-green-500";
             } else {
-              colorClass = 'bg-primary text-primary-foreground border-primary';
+              colorClass = "bg-primary text-primary-foreground border-primary";
             }
           }
 
@@ -87,23 +87,23 @@ export function ProgressTracker({ status, className }: ProgressTrackerProps) {
             >
               <div
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300',
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-300",
                   colorClass,
-                  isCurrent && 'ring-4 ring-primary/20'
+                  isCurrent && "ring-4 ring-primary/20",
                 )}
               >
                 <Icon className="h-4 w-4" />
               </div>
               <span
                 className={cn(
-                  'absolute top-10 text-xs font-medium whitespace-nowrap transition-colors',
-                  isActive ? 'text-foreground' : 'text-muted-foreground'
+                  "absolute top-10 text-xs font-medium whitespace-nowrap transition-colors",
+                  isActive ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 {isLast && isLost
-                  ? 'Lost'
+                  ? "Lost"
                   : isLast && isWon
-                    ? 'Awarded'
+                    ? "Awarded"
                     : step.label}
               </span>
             </div>

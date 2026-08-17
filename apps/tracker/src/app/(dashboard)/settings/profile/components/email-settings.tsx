@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Mail, CheckCircle, AlertCircle, Clock, RefreshCw } from 'lucide-react';
-import { useState, useTransition, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { useAccessibilityAnnouncer } from '@/components/accessibility-announcer';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Mail, CheckCircle, AlertCircle, Clock, RefreshCw } from "lucide-react";
+import { useState, useTransition, useEffect, useCallback } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useAccessibilityAnnouncer } from "@/components/accessibility-announcer";
 
 interface EmailSettingsProps {
   email: string;
@@ -39,7 +39,7 @@ export function EmailSettings({
 
       // Removed artificial wait; rely on router.refresh() and parent re-render
     } catch (error) {
-      console.error('Error checking verification status:', error);
+      console.error("Error checking verification status:", error);
     } finally {
       setIsRefreshing(false);
     }
@@ -66,9 +66,9 @@ export function EmailSettings({
     if (initialEmailVerified !== emailVerified) {
       setEmailVerified(initialEmailVerified);
       if (initialEmailVerified) {
-        const successMessage = 'Email verified successfully!';
+        const successMessage = "Email verified successfully!";
         toast.success(successMessage);
-        announce(successMessage, 'assertive');
+        announce(successMessage, "assertive");
       }
     }
   }, [initialEmailVerified, emailVerified, announce]);
@@ -82,12 +82,12 @@ export function EmailSettings({
         await onResendVerification();
         setLastResendTime(Date.now());
         const successMessage =
-          'Verification email sent successfully! Check your inbox.';
+          "Verification email sent successfully! Check your inbox.";
         toast.success(successMessage);
-        announce(successMessage, 'polite');
+        announce(successMessage, "polite");
       } catch (error) {
-        console.error('Failed to send verification email:', error);
-        toast.error('Failed to send verification email. Please try again.');
+        console.error("Failed to send verification email:", error);
+        toast.error("Failed to send verification email. Please try again.");
       } finally {
         setIsResending(false);
       }

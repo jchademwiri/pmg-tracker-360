@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,19 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { UserX, Mail, Shield } from 'lucide-react';
-import type { OwnershipTransferRequest } from '@/lib/ownership-transfer';
+} from "@/components/ui/select";
+import { UserX, Mail, Shield } from "lucide-react";
+import type { OwnershipTransferRequest } from "@/lib/ownership-transfer";
 
 interface OwnershipTransferModalProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ interface OwnershipTransferModalProps {
     id: string;
     name: string;
     email: string;
-    role: 'admin' | 'manager';
+    role: "admin" | "manager";
   }>;
   onTransfer: (request: OwnershipTransferRequest) => Promise<void>;
 }
@@ -44,17 +44,17 @@ export function OwnershipTransferModal({
 }: OwnershipTransferModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    newOwnerId: '',
-    reason: '',
-    transferMessage: '',
+    newOwnerId: "",
+    reason: "",
+    transferMessage: "",
   });
 
   const handleClose = () => {
     if (!isLoading) {
       setFormData({
-        newOwnerId: '',
-        reason: '',
-        transferMessage: '',
+        newOwnerId: "",
+        reason: "",
+        transferMessage: "",
       });
       onClose();
     }
@@ -73,14 +73,14 @@ export function OwnershipTransferModal({
       });
       handleClose();
     } catch (error) {
-      console.error('Error initiating transfer:', error);
+      console.error("Error initiating transfer:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const selectedMember = eligibleMembers.find(
-    (m) => m.id === formData.newOwnerId
+    (m) => m.id === formData.newOwnerId,
   );
 
   return (
