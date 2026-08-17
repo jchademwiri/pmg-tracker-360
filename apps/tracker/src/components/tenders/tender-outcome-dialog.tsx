@@ -175,42 +175,42 @@ export function TenderOutcomeDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2 text-foreground">
+      <DialogContent className="sm:max-w-[760px] md:max-w-[820px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-foreground">
             Record Tender Decision Outcome
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground text-xs">
+          <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
             Finalize the outcome for Tender{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-bold text-foreground">
               {tenderNumber.toUpperCase()}
             </span>
-            . Select whether your submission was appointed or rejected.
+            . Select whether your submission was successfully appointed or rejected.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Outcome Selector Mode Tabs */}
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        {/* Outcome Selector Mode Tabs (Wider 2-Card Grid) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
           {/* Option 1: Appointed / Won */}
           <button
             type="button"
             onClick={() => setOutcomeMode('awarded')}
             disabled={isPending}
-            className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all cursor-pointer text-left ${
+            className={`flex items-start gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
               outcomeMode === 'awarded'
                 ? 'border-emerald-500 bg-emerald-500/10 shadow-xs'
                 : 'border-border/60 hover:border-emerald-500/40 bg-card'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
-                <Trophy className="h-4 w-4" />
-              </div>
-              <span className="font-bold text-sm text-foreground">Appointed (Won)</span>
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+              <Trophy className="h-5 w-5" />
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
-              Awarded the contract. Converts tender into an active project.
-            </p>
+            <div>
+              <span className="font-bold text-sm sm:text-base text-foreground block">Appointed (Won)</span>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                Client awarded the contract. Converts tender into an active project workspace.
+              </p>
+            </div>
           </button>
 
           {/* Option 2: Rejected / Lost */}
@@ -218,21 +218,21 @@ export function TenderOutcomeDialog({
             type="button"
             onClick={() => setOutcomeMode('lost')}
             disabled={isPending}
-            className={`flex flex-col items-start p-3.5 rounded-xl border-2 transition-all cursor-pointer text-left ${
+            className={`flex items-start gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
               outcomeMode === 'lost'
                 ? 'border-red-500 bg-red-500/10 shadow-xs'
                 : 'border-border/60 hover:border-red-500/40 bg-card'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-red-500/20 text-red-600 flex items-center justify-center shrink-0">
-                <XCircle className="h-4 w-4" />
-              </div>
-              <span className="font-bold text-sm text-foreground">Rejected (Lost)</span>
+            <div className="h-9 w-9 rounded-lg bg-red-500/20 text-red-600 flex items-center justify-center shrink-0">
+              <XCircle className="h-5 w-5" />
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">
-              Unsuccessful bid. Log debrief reasons & team learnings.
-            </p>
+            <div>
+              <span className="font-bold text-sm sm:text-base text-foreground block">Rejected (Lost)</span>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                Unsuccessful bid. Log debrief reasons & team learnings for retrospectives.
+              </p>
+            </div>
           </button>
         </div>
 
@@ -246,37 +246,62 @@ export function TenderOutcomeDialog({
               }}
               className="space-y-4 pt-3 border-t border-border/40"
             >
-              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2.5 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center gap-2.5 text-xs sm:text-sm text-emerald-800 dark:text-emerald-300">
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                <span>Great news! Confirming award will create a project workspace.</span>
+                <span>Great news! Confirming the award will initialize a project workspace for contract delivery.</span>
               </div>
 
-              <FormField
-                control={awardForm.control}
-                name="awardValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold">Final Award Value (ZAR)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
-                          R
-                        </span>
-                        <Input
-                          placeholder="0.00"
-                          className="pl-8 text-sm"
-                          disabled={isPending}
-                          {...field}
-                          value={field.value || ''}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={awardForm.control}
+                  name="awardValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold">Final Award Value (ZAR)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                            R
+                          </span>
+                          <Input
+                            placeholder="0.00"
+                            className="pl-8 text-sm"
+                            disabled={isPending}
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={awardForm.control}
+                  name="signedContractUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold">Signed SLA / Contract Reference</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
+                          <Input
+                            placeholder="e.g. Contract No. / SLA document link"
+                            className="pl-9 text-xs sm:text-sm"
+                            disabled={isPending}
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={awardForm.control}
                   name="contractStartDate"
@@ -288,7 +313,7 @@ export function TenderOutcomeDialog({
                           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                           <Input
                             type="date"
-                            className="pl-9 text-xs"
+                            className="pl-9 text-xs sm:text-sm"
                             disabled={isPending}
                             value={toSASTDateString(field.value)}
                             onChange={(e) => {
@@ -313,7 +338,7 @@ export function TenderOutcomeDialog({
                           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                           <Input
                             type="date"
-                            className="pl-9 text-xs"
+                            className="pl-9 text-xs sm:text-sm"
                             disabled={isPending}
                             value={toSASTDateString(field.value)}
                             onChange={(e) => {
@@ -330,29 +355,6 @@ export function TenderOutcomeDialog({
 
               <FormField
                 control={awardForm.control}
-                name="signedContractUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold">Signed SLA / Contract Reference</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
-                        <Input
-                          placeholder="e.g. Contract No. / SLA link"
-                          className="pl-9 text-xs"
-                          disabled={isPending}
-                          {...field}
-                          value={field.value || ''}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={awardForm.control}
                 name="evaluationNotes"
                 render={({ field }) => (
                   <FormItem>
@@ -360,7 +362,7 @@ export function TenderOutcomeDialog({
                     <FormControl>
                       <Textarea
                         placeholder="Any key terms, delivery timelines, or negotiation notes..."
-                        className="min-h-[70px] text-xs"
+                        className="min-h-[85px] text-xs sm:text-sm leading-relaxed"
                         disabled={isPending}
                         {...field}
                         value={field.value || ''}
@@ -386,7 +388,7 @@ export function TenderOutcomeDialog({
                   type="submit"
                   size="sm"
                   disabled={isPending}
-                  className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+                  className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold h-9 px-4"
                 >
                   {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
                   Confirm Appointment & Create Project
@@ -406,71 +408,70 @@ export function TenderOutcomeDialog({
               }}
               className="space-y-4 pt-3 border-t border-border/40"
             >
-              <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 flex items-start gap-2 text-xs text-amber-900 dark:text-amber-300">
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-300">
                 <Lightbulb className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
                 <div>
                   <span className="font-semibold block">Capture feedback for continuous improvement:</span>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Recording specific debrief notes helps our bidding team understand gaps and win future tenders.
                   </span>
                 </div>
               </div>
 
-              <FormField
-                control={lostForm.control}
-                name="lossReason"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold">Primary Reason for Rejection *</FormLabel>
-                    <Select
-                      disabled={isPending}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="text-xs">
-                          <SelectValue placeholder="Select why this tender was lost..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="price">Pricing too high / Competitor undercut</SelectItem>
-                        <SelectItem value="compliance">Compliance / Missing returnable document</SelectItem>
-                        <SelectItem value="specs">Technical specifications shortfall / Non-responsive</SelectItem>
-                        <SelectItem value="experience">Track record / Insufficient references</SelectItem>
-                        <SelectItem value="score">Functionality threshold not met (Scorecard)</SelectItem>
-                        <SelectItem value="cancelled">Tender cancelled / Re-advertised by client</SelectItem>
-                        <SelectItem value="other">Other reason</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={lostForm.control}
-                name="lossDetails"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold">
-                      Winning Bidder & Market Intel (Optional)
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Awarded to ABC Supplies at R 1,200,000"
-                        className="text-xs"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={lostForm.control}
+                  name="lossReason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold">Primary Reason for Rejection *</FormLabel>
+                      <Select
                         disabled={isPending}
-                        {...field}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-[10px]">
-                      Record known competitor details or winning pricing for market benchmarks.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="text-xs sm:text-sm">
+                            <SelectValue placeholder="Select why this tender was lost..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="price">Pricing too high / Competitor undercut</SelectItem>
+                          <SelectItem value="compliance">Compliance / Missing returnable document</SelectItem>
+                          <SelectItem value="specs">Technical specifications shortfall / Non-responsive</SelectItem>
+                          <SelectItem value="experience">Track record / Insufficient references</SelectItem>
+                          <SelectItem value="score">Functionality threshold not met (Scorecard)</SelectItem>
+                          <SelectItem value="cancelled">Tender cancelled / Re-advertised by client</SelectItem>
+                          <SelectItem value="other">Other reason</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={lostForm.control}
+                  name="lossDetails"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold">
+                        Winning Bidder & Market Intel (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. Awarded to ABC Supplies at R 1,200,000"
+                          className="text-xs sm:text-sm"
+                          disabled={isPending}
+                          {...field}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={lostForm.control}
@@ -482,15 +483,15 @@ export function TenderOutcomeDialog({
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Enter feedback received from client debrief, scorecard points breakdown, and actionable steps to improve in the next tender submission..."
-                        className="min-h-[100px] text-xs leading-relaxed"
+                        placeholder="Enter feedback received from client debrief, scorecard points breakdown, specific areas where points were deducted, and actionable steps to improve in the next tender submission..."
+                        className="min-h-[120px] text-xs sm:text-sm leading-relaxed"
                         disabled={isPending}
                         {...field}
                         value={field.value || ''}
                       />
                     </FormControl>
-                    <FormDescription className="text-[10px]">
-                      These notes will be displayed on the tender overview for team retrospectives.
+                    <FormDescription className="text-[11px]">
+                      These notes will be displayed on the tender overview for team retrospectives and future bids.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -512,7 +513,7 @@ export function TenderOutcomeDialog({
                   type="submit"
                   size="sm"
                   disabled={isPending}
-                  className="cursor-pointer bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+                  className="cursor-pointer bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-semibold h-9 px-4"
                 >
                   {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
                   Save Outcome & Log Team Learnings
