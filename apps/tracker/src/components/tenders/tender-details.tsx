@@ -19,6 +19,11 @@ import {
   Clock,
   RefreshCw,
   History,
+  Trophy,
+  XCircle,
+  Lightbulb,
+  Edit,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -36,8 +41,7 @@ import { toast } from 'sonner';
 import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 import { ExtensionList, ExtendedTenderExtension } from './extension-list';
-import { TenderToProjectDialog } from './tender-to-project-dialog';
-import { TenderLostDialog } from './tender-lost-dialog';
+import { TenderOutcomeDialog } from './tender-outcome-dialog';
 import { TenderFollowUpDialog } from './tender-follow-up-dialog';
 import { TenderHeroHeader } from './tender-hero-header';
 import { TenderStakeholdersCard } from './tender-stakeholders-card';
@@ -102,6 +106,16 @@ interface TenderDetailsProps {
 
 const VALID_TABS = ['overview', 'documents', 'extensions', 'follow-ups', 'activities'];
 
+const LOSS_REASON_LABELS: Record<string, string> = {
+  price: 'Pricing too high / Competitor undercut',
+  compliance: 'Compliance / Missing returnable document',
+  specs: 'Technical specs shortfall / Non-responsive',
+  experience: 'Track record / Insufficient references',
+  score: 'Functionality scorecard threshold not met',
+  cancelled: 'Tender cancelled / Re-advertised by client',
+  other: 'Other reason',
+};
+
 export function TenderDetails({
   tender,
   organizationId,
@@ -115,8 +129,7 @@ export function TenderDetails({
   const [isPending, startTransition] = useTransition();
 
   // Dialog states
-  const [showAwardDialog, setShowAwardDialog] = useState(false);
-  const [showLostDialog, setShowLostDialog] = useState(false);
+  const [showOutcomeDialog, setShowOutcomeDialog] = useState(false);
   const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -298,8 +311,7 @@ export function TenderDetails({
         onEdit={handleEdit}
         onExportPdf={handleExportPdf}
         onDelete={handleDelete}
-        onOpenAwardDialog={() => setShowAwardDialog(true)}
-        onOpenLostDialog={() => setShowLostDialog(true)}
+        onOpenOutcomeDialog={() => setShowOutcomeDialog(true)}
         onOpenFollowUpDialog={() => setShowFollowUpDialog(true)}
         onStatusUpdate={handleStatusUpdate}
       />
@@ -365,6 +377,168 @@ export function TenderDetails({
 
             {/* ── OVERVIEW TAB ── */}
             <TabsContent value="overview" className="mt-5 space-y-5">
+              {/* Option A: Award / Appointment Outcome Card (if awarded) */}
+              {tender.status === 'awarded' && (
+                <Card className="rounded-xl border-emerald-500/40 bg-emerald-500/[0.03] shadow-xs">
+                  <CardHeader className="py-3 px-5 border-b border-emerald-500/20 bg-emerald-500/10 flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                      <Trophy className="h-4 w-4 text-emerald-600" />
+                      Award & Appointment Outcome (Won)
+                    </CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowOutcomeDialog(true)}
+                      className="h-7 text-xs text-emerald-700 hover:text-emerald-800 hover:bg-emerald-500/10 cursor-pointer"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit Award Details
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-5 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-3 rounded-lg border border-emerald-500/20 bg-background/60">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                          Final Award Value
+                        </span>
+                        <p className="text-xl font-bold text-emerald-600 mt-0.5">
+                          {formatCurrency(tender.awardValue || tender.value)}
+                        </p>
+                      </div>
+
+                      {tender.value && tender.awardValue && (
+                        <div className="p-3 rounded-lg border border-emerald-500/20 bg-background/60">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                            Initial Estimated Value
+                          </span>
+                          <p className="text-lg font-semibold text-foreground mt-0.5">
+                            {formatCurrency(tender.value)}
+                          </p>
+                        </div>
+                      )}
+
+                      {tender.evaluationNotes && (
+                        <div className="sm:col-span-2 space-y-1">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Appointment & Scope Notes
+                          </span>
+                          <p className="text-xs text-foreground/90 whitespace-pre-wrap rounded-lg bg-background/60 p-3 border border-border/40 leading-relaxed">
+                            {tender.evaluationNotes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Option B: Loss / Rejection Debrief & Team Learnings Card (if lost) */}
+              {tender.status === 'lost' && (
+                <Card className="rounded-xl border-red-500/40 bg-red-500/[0.03] shadow-xs overflow-hidden">
+                  <CardHeader className="py-3 px-5 border-b border-red-500/20 bg-red-500/10 flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <CardTitle className="text-sm font-bold text-red-900 dark:text-red-300">
+                        Tender Outcome: Rejected (Lost)
+                      </CardTitle>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowOutcomeDialog(true)}
+                      className="h-7 text-xs text-red-700 hover:text-red-800 hover:bg-red-500/10 cursor-pointer"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Update Debrief Notes
+                    </Button>
+                  </CardHeader>
+
+                  <CardContent className="p-5 space-y-4">
+                    {/* Primary reason and intel pills */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-3 rounded-lg border border-red-500/20 bg-background/60 space-y-1">
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                          Primary Rejection Reason
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="destructive" className="text-xs font-semibold px-2 py-0.5">
+                            {tender.lossReason
+                              ? LOSS_REASON_LABELS[tender.lossReason] ||
+                                tender.lossReason.replace('_', ' ')
+                              : 'Not specified'}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {tender.lossDetails && (
+                        <div className="p-3 rounded-lg border border-red-500/20 bg-background/60 space-y-1">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                            Competitor / Market Intel
+                          </span>
+                          <p className="text-xs font-medium text-foreground">
+                            {tender.lossDetails}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Debrief & Lessons Learned Text */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                        <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Debrief Feedback & Continuous Improvement Learnings</span>
+                      </div>
+                      {tender.evaluationNotes ? (
+                        <div className="rounded-lg bg-background/80 p-3.5 border border-border/60 text-xs text-foreground/90 whitespace-pre-wrap leading-relaxed">
+                          {tender.evaluationNotes}
+                        </div>
+                      ) : (
+                        <div className="rounded-lg bg-background/40 p-3 border border-dashed border-border/60 text-xs text-muted-foreground italic flex items-center justify-between">
+                          <span>No debrief notes recorded yet. Record feedback from the client to help the team learn.</span>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => setShowOutcomeDialog(true)}
+                            className="text-xs text-blue-600 h-auto p-0 ml-2"
+                          >
+                            + Add Notes
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Option C: In-Progress Pending Decision Banner (if in review, ready, submitted, evaluation) */}
+              {!['awarded', 'lost', 'closed', 'cancelled'].includes(tender.status) && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">
+                        Final Decision Pending
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Once client feedback or contract announcement is received, record the outcome below.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowOutcomeDialog(true)}
+                      className="text-xs h-8 cursor-pointer border-amber-500/40 text-amber-800 dark:text-amber-300 hover:bg-amber-500/10"
+                    >
+                      Record Won / Lost Outcome
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Tender Scope & Detailed Description */}
               <Card className="rounded-xl border-border/60 shadow-xs">
                 <CardHeader className="py-3.5 px-5 bg-muted/20 border-b border-border/40">
@@ -396,84 +570,6 @@ export function TenderDetails({
                   )}
                 </CardContent>
               </Card>
-
-              {/* Award / Appointment Outcome Card (if awarded) */}
-              {tender.status === 'awarded' && (
-                <Card className="rounded-xl border-emerald-500/30 bg-emerald-500/[0.02] shadow-xs">
-                  <CardHeader className="py-3 px-5 border-b border-emerald-500/20 bg-emerald-500/5">
-                    <CardTitle className="text-sm font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      Award & Appointment Outcome
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Final Award Value
-                        </span>
-                        <p className="text-lg font-bold text-emerald-600 mt-0.5">
-                          {formatCurrency(tender.awardValue || tender.value)}
-                        </p>
-                      </div>
-                      {tender.evaluationNotes && (
-                        <div className="sm:col-span-2">
-                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            Appointment & Evaluation Notes
-                          </span>
-                          <p className="text-xs text-foreground/90 mt-1 whitespace-pre-wrap rounded-lg bg-background/60 p-3 border border-border/40">
-                            {tender.evaluationNotes}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Loss / Rejected Outcome Card (if lost) */}
-              {tender.status === 'lost' && (
-                <Card className="rounded-xl border-red-500/30 bg-red-500/[0.02] shadow-xs">
-                  <CardHeader className="py-3 px-5 border-b border-red-500/20 bg-red-500/5">
-                    <CardTitle className="text-sm font-semibold text-red-800 dark:text-red-300 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      Tender Outcome Details (Lost / Rejected)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-5 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Primary Reason for Loss
-                        </span>
-                        <p className="text-sm font-bold text-red-600 capitalize mt-0.5">
-                          {tender.lossReason ? tender.lossReason.replace('_', ' ') : 'Not recorded'}
-                        </p>
-                      </div>
-                      {tender.lossDetails && (
-                        <div>
-                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            Additional Details
-                          </span>
-                          <p className="text-xs text-foreground mt-0.5">
-                            {tender.lossDetails}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    {tender.evaluationNotes && (
-                      <div className="pt-2 border-t border-red-500/10">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Evaluation / Debriefing Feedback
-                        </span>
-                        <p className="text-xs text-foreground/90 mt-1 whitespace-pre-wrap rounded-lg bg-background/60 p-3 border border-border/40">
-                          {tender.evaluationNotes}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Recent Follow-up Highlight Snapshot */}
               <Card className="rounded-xl border-border/60 shadow-xs">
@@ -762,30 +858,29 @@ export function TenderDetails({
         </div>
       </div>
 
-      {/* ── Dialog Modals ── */}
-      <TenderToProjectDialog
-        open={showAwardDialog}
-        onOpenChange={setShowAwardDialog}
+      {/* ── Unified Dual-Outcome Decision Dialog (Appointed / Won OR Rejected / Lost with Debrief) ── */}
+      <TenderOutcomeDialog
+        open={showOutcomeDialog}
+        onOpenChange={setShowOutcomeDialog}
         tenderNumber={tender.tenderNumber}
         estimatedValue={tender.value}
-        onSubmit={(data) => {
+        currentStatus={tender.status}
+        initialAwardValue={tender.awardValue}
+        initialLossReason={tender.lossReason}
+        initialLossDetails={tender.lossDetails}
+        initialEvaluationNotes={tender.evaluationNotes}
+        onAwardSubmit={(data) => {
           handleStatusUpdate('awarded', data);
-          setShowAwardDialog(false);
+          setShowOutcomeDialog(false);
         }}
-        isPending={isPending}
-      />
-
-      <TenderLostDialog
-        open={showLostDialog}
-        onOpenChange={setShowLostDialog}
-        tenderNumber={tender.tenderNumber}
-        onSubmit={(data) => {
+        onLostSubmit={(data) => {
           handleStatusUpdate('lost', data);
-          setShowLostDialog(false);
+          setShowOutcomeDialog(false);
         }}
         isPending={isPending}
       />
 
+      {/* ── Follow-Up Dialog ── */}
       <TenderFollowUpDialog
         open={showFollowUpDialog}
         onOpenChange={setShowFollowUpDialog}
@@ -794,6 +889,7 @@ export function TenderDetails({
         isPending={isPending}
       />
 
+      {/* ── Delete Dialog ── */}
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
