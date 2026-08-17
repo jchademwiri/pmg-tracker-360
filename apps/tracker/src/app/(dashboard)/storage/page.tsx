@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/server';
 import { getStorageAnalytics } from '@/server/storage';
+import { getSubscriptionPlans } from '@pmg/db';
 import { StorageDashboard } from '@/components/storage/storage-dashboard';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,10 @@ export default async function StoragePage() {
     );
   }
 
-  const result = await getStorageAnalytics(session.activeOrganizationId);
+  const [result, plans] = await Promise.all([
+    getStorageAnalytics(session.activeOrganizationId),
+    getSubscriptionPlans(),
+  ]);
 
   if (!result.success || !result.data) {
     return (
@@ -35,6 +39,8 @@ export default async function StoragePage() {
     <StorageDashboard
       organizationId={session.activeOrganizationId}
       data={result.data}
+      plans={plans}
     />
   );
 }
+

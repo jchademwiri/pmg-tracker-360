@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@pmg/db';
+import { db, getPlanLimits } from '@pmg/db';
 import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
 import { tender, client, project, tenderExtension, tenderFollowUp, tenderActivity } from '@pmg/db/schema';
 import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, notInArray, isNotNull } from 'drizzle-orm';
@@ -204,7 +204,8 @@ export async function createTender(
     // Check against the organization owner's plan — not the current user's plan.
     // Subscriptions are linked to the owner, not individual members.
     const ownerPlan = await getOrganizationOwnerPlan(organizationId);
-    const maxTendersAllowed = ownerPlan === 'free' ? 10 : ownerPlan === 'starter' ? 20 : Infinity;
+    const limits = await getPlanLimits(ownerPlan);
+    const maxTendersAllowed = limits.maxTendersPerMonth;
 
     if (maxTendersAllowed !== Infinity) {
       const now = new Date();

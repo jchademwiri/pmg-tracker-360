@@ -33,6 +33,8 @@ import { toast } from 'sonner';
 import { updateUserPlan, BillingInvoice } from '@/server/billing';
 import { formatCurrency } from '@/lib/format';
 
+import { type SubscriptionPlan, DEFAULT_SUBSCRIPTION_PLANS } from '@pmg/db/plans-constants';
+
 interface BillingClientProps {
   currentPlan: string;
   userUpdatedAt?: Date | string;
@@ -44,6 +46,7 @@ interface BillingClientProps {
     storage: number;
   };
   invoices: BillingInvoice[];
+  plans?: SubscriptionPlan[];
 }
 
 interface PlanDetails {
@@ -67,6 +70,7 @@ export default function BillingClient({
   userUpdatedAt,
   usage,
   invoices = [],
+  plans = DEFAULT_SUBSCRIPTION_PLANS,
 }: BillingClientProps) {
   const router = useRouter();
   const [activePlan, setActivePlan] = useState<'free' | 'starter' | 'pro'>(
@@ -74,73 +78,40 @@ export default function BillingClient({
   );
   const [loadingPlan, setLoadingPlan] = useState<'free' | 'starter' | 'pro' | null>(null);
 
-  const planTiers: PlanDetails[] = [
-    {
-      id: 'free',
-      name: 'Free Plan',
-      price: 0,
-      maxOrgs: 1,
-      maxTenders: 10,
-      maxProjects: 0,
-      maxStorageMb: 100,
-      projects: '0 Active Projects',
-      support: 'Community Support',
-      description: 'Perfect for getting started',
-      features: [
-        '1 Organization Ownership',
-        'Basic Tender Tracking',
-        '10 Tenders / Month',
-        '0 Active Projects',
-        '100 MB Storage Cap',
-        'Community Support',
-      ],
-      color: 'border-slate-200 dark:border-slate-800 bg-card',
-    },
-    {
-      id: 'starter',
-      name: 'Starter Plan',
-      price: 249,
-      maxOrgs: 1,
-      maxTenders: 20,
-      maxProjects: 2,
-      maxStorageMb: 1000,
-      projects: '2 Active Projects',
-      support: 'Email Support',
-      description: 'For freelancers & consultants',
-      features: [
-        '1 Organization Ownership',
-        'Advanced Tender Tracking',
-        '20 Tenders / Month',
-        '2 Active Projects',
-        '1 GB Secure Storage',
-        'Email Support',
-      ],
-      color: 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/10',
-    },
-    {
-      id: 'pro',
-      name: 'Pro Plan',
-      price: 499,
-      maxOrgs: 2,
-      maxTenders: 'Unlimited',
-      maxProjects: 5,
-      maxStorageMb: 10000,
-      projects: '5 Active Projects',
-      support: 'Priority 24/7 Support',
-      description: 'For growing teams',
-      features: [
-        '2 Organization Ownerships',
-        'Unlimited Tenders Tracked',
-        '5 Active Projects',
-        '10 GB Secure Storage',
-        'Priority 24/7 Support',
-        'Dynamic Access Controls (RBAC)',
-        'Analytics Dashboard Reports',
-      ],
-      color: 'border-primary bg-primary/5 shadow-lg relative',
-      popular: true,
-    },
-  ];
+  const activePlans = plans.filter((p) => p.isActive);
+
+  const planTiers: PlanDetails[] = activePlans.map((p) => {
+    const id = p.id as 'free' | 'starter' | 'pro';
+    const color =
+      id === 'pro'
+        ? 'border-primary bg-primary/5 shadow-lg relative'
+        : id === 'starter'
+          ? 'border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/10'
+          : 'border-slate-200 dark:border-slate-800 bg-card';
+
+    const support =
+      id === 'pro'
+        ? 'Priority 24/7 Support'
+        : id === 'starter'
+          ? 'Email Support'
+          : 'Community Support';
+
+    return {
+      id,
+      name: p.name,
+      price: p.priceZar,
+      maxOrgs: p.maxOwnedOrgs,
+      maxTenders: p.maxTendersPerMonth === -1 ? 'Unlimited' : p.maxTendersPerMonth,
+      maxProjects: p.maxActiveProjects,
+      maxStorageMb: p.maxStorageMb,
+      projects: `${p.maxActiveProjects} Active Projects`,
+      support,
+      description: p.description,
+      features: Array.isArray(p.features) ? p.features : [],
+      color,
+      popular: p.popular,
+    };
+  });
 
   // Calculate Next Monthly Renewal Date dynamically
   const calculateRenewalDate = () => {

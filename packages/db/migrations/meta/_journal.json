@@ -211,6 +211,20 @@
       "when": 1786858872923,
       "tag": "0029_windy_doctor_doom",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1786960000000,
+      "tag": "0030_subscription_plans",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1786940949441,
+      "tag": "0031_curved_preak",
+      "breakpoints": true
     }
   ]
 }

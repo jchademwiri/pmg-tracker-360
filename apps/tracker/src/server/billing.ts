@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@pmg/db';
+import { db, getPlanLimits } from '@pmg/db';
 import {
   user as userTable,
   member,
@@ -216,15 +216,12 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
     }
     const { organizations, projects, tenders, storage } = usageStats.usage;
 
-    // Plan limits:
-    // Free: max 1 org, max 0 active projects, max 10 tenders/mo, max 100 MB storage
-    // Starter: max 1 org, max 2 active projects, max 20 tenders/mo, max 1000 MB storage
-    // Pro: max 2 orgs, max 5 active projects, unlimited tenders, max 10000 MB storage
-
-    const maxOrgs = plan === 'pro' ? 2 : 1;
-    const maxProjects = plan === 'pro' ? 5 : plan === 'starter' ? 2 : 0;
-    const maxTenders = plan === 'pro' ? Infinity : plan === 'starter' ? 20 : 10;
-    const maxStorageMb = plan === 'pro' ? 10000 : plan === 'starter' ? 1000 : 100;
+    // Dynamic Plan limits from Database/Config
+    const limits = await getPlanLimits(plan);
+    const maxOrgs = limits.maxOwnedOrgs;
+    const maxProjects = limits.maxActiveProjects;
+    const maxTenders = limits.maxTendersPerMonth;
+    const maxStorageMb = limits.maxStorageMb;
 
     if (organizations > maxOrgs) {
       return {
