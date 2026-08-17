@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-import Link from 'next/link';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import Link from "next/link";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -16,12 +16,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Loader } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Loader } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 const forgotPasswordFormSchema = z.object({
   email: z.string().email(),
@@ -30,53 +30,53 @@ const forgotPasswordFormSchema = z.object({
 export function ForgotPasswordForm({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof forgotPasswordFormSchema>>({
     resolver: zodResolver(forgotPasswordFormSchema),
     defaultValues: {
-      email: '',
+      email: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof forgotPasswordFormSchema>) {
     setIsLoading(true);
-    
+
     try {
-      const response = await fetch('/api/auth/forget-password', {
-        method: 'POST',
+      const response = await fetch("/api/auth/forget-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: values.email,
-          redirectTo: '/reset-password',
+          redirectTo: "/reset-password",
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        toast.error(result.error?.message || 'Failed to send reset email');
+        toast.error(result.error?.message || "Failed to send reset email");
       } else {
-        toast.success('Password reset link sent successfully');
-        router.push('/login');
+        toast.success("Password reset link sent successfully");
+        router.push("/login");
       }
     } catch (error) {
-      console.error('Forgot password error:', error);
-      toast.error('Failed to send reset email');
+      console.error("Forgot password error:", error);
+      toast.error("Failed to send reset email");
     }
-    
+
     setIsLoading(false);
   }
 
   return (
     <div
       className={cn(
-        'min-h-screen flex items-center justify-center p-4',
-        className
+        "min-h-screen flex items-center justify-center p-4",
+        className,
       )}
       {...props}
     >
@@ -123,12 +123,12 @@ export function ForgotPasswordForm({
                     {isLoading ? (
                       <Loader className="size-4 animate-spin" />
                     ) : (
-                      'Send Reset Link'
+                      "Send Reset Link"
                     )}
                   </Button>
 
                   <div className="text-center text-sm">
-                    Remember your password?{' '}
+                    Remember your password?{" "}
                     <Link
                       href="/login"
                       className="underline underline-offset-4"

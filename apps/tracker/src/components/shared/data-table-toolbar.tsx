@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import { ReactNode, useRef, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import { ReactNode, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   MobileFilterDrawer,
   MobileFilterField,
-} from '@/components/ui/mobile-filter-drawer';
-import { X, Search, RotateCcw, LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/mobile-filter-drawer";
+import { X, Search, RotateCcw, LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface FilterTabOption {
   id: string;
@@ -93,9 +93,9 @@ export function DataTableToolbar({
   tabs,
   activeTab,
   onTabChange,
-  searchValue = '',
+  searchValue = "",
   onSearchChange,
-  searchPlaceholder = 'Search records...',
+  searchPlaceholder = "Search records...",
   facetedFilters = [],
   sortOptions = [],
   activeSort,
@@ -103,7 +103,7 @@ export function DataTableToolbar({
   sortIcon: SortIcon,
   activeFilters = [],
   onClearAllFilters,
-  mobileDrawerTitle = 'Filter Records',
+  mobileDrawerTitle = "Filter Records",
   actions,
   className,
 }: DataTableToolbarProps) {
@@ -114,17 +114,17 @@ export function DataTableToolbar({
   useEffect(() => {
     if (!onSearchChange) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onSearchChange]);
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Level 1: Segmented Tabs (if provided) */}
       {tabs && tabs.length > 0 && onTabChange && (
         <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 scrollbar-none">
@@ -140,20 +140,20 @@ export function DataTableToolbar({
                   type="button"
                   onClick={() => onTabChange(tab.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-md font-medium transition-all duration-150 text-xs whitespace-nowrap cursor-pointer flex items-center gap-1.5',
+                    "px-3 py-1.5 rounded-md font-medium transition-all duration-150 text-xs whitespace-nowrap cursor-pointer flex items-center gap-1.5",
                     isActive
-                      ? 'bg-background text-foreground shadow-xs font-semibold border border-border/70 dark:border-border/60'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      ? "bg-background text-foreground shadow-xs font-semibold border border-border/70 dark:border-border/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                   )}
                 >
                   <span>{tab.label}</span>
                   {tab.count !== undefined && (
                     <span
                       className={cn(
-                        'text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium',
+                        "text-[10px] px-1.5 py-0.2 rounded-full font-mono font-medium",
                         isActive
-                          ? 'bg-muted text-foreground'
-                          : 'bg-muted/60 text-muted-foreground'
+                          ? "bg-muted text-foreground"
+                          : "bg-muted/60 text-muted-foreground",
                       )}
                     >
                       {tab.count}
@@ -164,7 +164,9 @@ export function DataTableToolbar({
             })}
           </nav>
 
-          {actions && <div className="hidden sm:flex items-center gap-2">{actions}</div>}
+          {actions && (
+            <div className="hidden sm:flex items-center gap-2">{actions}</div>
+          )}
         </div>
       )}
 
@@ -184,7 +186,7 @@ export function DataTableToolbar({
             {searchValue ? (
               <button
                 type="button"
-                onClick={() => onSearchChange('')}
+                onClick={() => onSearchChange("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-sm transition-colors cursor-pointer"
                 aria-label="Clear search"
               >
@@ -206,8 +208,8 @@ export function DataTableToolbar({
               <Select key={f.id} value={f.value} onValueChange={f.onChange}>
                 <SelectTrigger
                   className={cn(
-                    'h-9 text-xs bg-muted/20 border-border/60 hover:border-border',
-                    f.width || 'w-[180px]'
+                    "h-9 text-xs bg-muted/20 border-border/60 hover:border-border",
+                    f.width || "w-[180px]",
                   )}
                 >
                   {FilterIcon && (
@@ -217,7 +219,11 @@ export function DataTableToolbar({
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {f.options.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="text-xs"
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -237,7 +243,11 @@ export function DataTableToolbar({
               </SelectTrigger>
               <SelectContent>
                 {sortOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    className="text-xs"
+                  >
                     {opt.label}
                   </SelectItem>
                 ))}

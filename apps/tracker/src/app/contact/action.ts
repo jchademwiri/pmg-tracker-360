@@ -1,8 +1,12 @@
-'use server';
+"use server";
 
-import { createSupportTicket } from '@/server/support';
-import { formSchema } from './schema';
-import { checkRateLimit, getClientIp, verifyBotProtection } from '@/lib/bot-protection';
+import { createSupportTicket } from "@/server/support";
+import { formSchema } from "./schema";
+import {
+  checkRateLimit,
+  getClientIp,
+  verifyBotProtection,
+} from "@/lib/bot-protection";
 
 type FormState = {
   success?: boolean;
@@ -12,7 +16,7 @@ type FormState = {
 
 export async function submitContactForm(
   prevState: FormState,
-  data: FormData
+  data: FormData,
 ): Promise<FormState> {
   const formData = Object.fromEntries(data);
   const parsed = formSchema.safeParse(formData);
@@ -20,7 +24,7 @@ export async function submitContactForm(
   if (!parsed.success) {
     return {
       success: false,
-      message: 'Please check the form for errors.',
+      message: "Please check the form for errors.",
       errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
     };
   }
@@ -47,10 +51,12 @@ export async function submitContactForm(
 
     if (botCheck.isBot) {
       // Silently drop bot submissions without sending email or database insert
-      console.warn(`[Anti-Spam] Bot submission blocked from ${clientIp}: ${botCheck.reason}`);
+      console.warn(
+        `[Anti-Spam] Bot submission blocked from ${clientIp}: ${botCheck.reason}`,
+      );
       return {
         success: true,
-        message: 'Message sent successfully! We will get back to you shortly.',
+        message: "Message sent successfully! We will get back to you shortly.",
       };
     }
 
@@ -59,8 +65,8 @@ export async function submitContactForm(
       name: parsed.data.name,
       email: parsed.data.email,
       message: parsed.data.details,
-      subject: 'Website Contact Request',
-      priority: 'medium',
+      subject: "Website Contact Request",
+      priority: "medium",
       honeypot: parsed.data.company_website_hp,
       formMountedAt: parsed.data.formMountedAt,
     });
@@ -68,20 +74,19 @@ export async function submitContactForm(
     if (!result.success) {
       return {
         success: false,
-        message: result.error || 'Failed to submit form',
+        message: result.error || "Failed to submit form",
       };
     }
 
     return {
       success: true,
-      message: 'Message sent successfully! We will get back to you shortly.',
+      message: "Message sent successfully! We will get back to you shortly.",
     };
   } catch (error) {
-    console.error('Contact form error:', error);
+    console.error("Contact form error:", error);
     return {
       success: false,
-      message: 'Something went wrong. Please try again or email us directly.',
+      message: "Something went wrong. Please try again or email us directly.",
     };
   }
 }
-

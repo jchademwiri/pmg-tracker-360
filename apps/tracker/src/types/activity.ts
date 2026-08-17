@@ -1,18 +1,18 @@
 // Activity types for recent activity tracking
 
 export type ActivityType =
-  | 'member_joined'
-  | 'member_left'
-  | 'organization_created'
-  | 'organization_updated'
-  | 'role_changed'
-  | 'invitation_sent'
-  | 'invitation_accepted'
-  | 'project_created'
-  | 'project_status_changed'
-  | 'po_created'
-  | 'po_status_changed'
-  | 'po_delivered';
+  | "member_joined"
+  | "member_left"
+  | "organization_created"
+  | "organization_updated"
+  | "role_changed"
+  | "invitation_sent"
+  | "invitation_accepted"
+  | "project_created"
+  | "project_status_changed"
+  | "po_created"
+  | "po_status_changed"
+  | "po_delivered";
 
 export interface RecentActivity {
   id: string;

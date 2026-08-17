@@ -1,1 +1,1 @@
-export { AgeingSummaryTable } from './ageing-summary-table';
+export { AgeingSummaryTable } from "./ageing-summary-table";

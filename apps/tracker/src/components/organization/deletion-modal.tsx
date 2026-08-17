@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,14 +8,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertTriangle,
   Download,
@@ -23,8 +23,8 @@ import {
   Clock,
   FileText,
   Database,
-} from 'lucide-react';
-import type { DeletionConfirmation } from '@/lib/organization-deletion';
+} from "lucide-react";
+import type { DeletionConfirmation } from "@/lib/organization-deletion";
 
 interface OrganizationDeletionModalProps {
   isOpen: boolean;
@@ -48,27 +48,27 @@ export function OrganizationDeletionModal({
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    organizationName: '',
-    confirmationPhrase: '',
-    deletionType: 'soft' as 'soft' | 'permanent',
+    organizationName: "",
+    confirmationPhrase: "",
+    deletionType: "soft" as "soft" | "permanent",
     dataExportRequested: false,
-    exportFormat: 'json' as 'json' | 'csv',
-    reason: '',
+    exportFormat: "json" as "json" | "csv",
+    reason: "",
   });
 
-  const CONFIRMATION_PHRASE = 'DELETE ORGANIZATION';
+  const CONFIRMATION_PHRASE = "DELETE ORGANIZATION";
   const totalSteps = 3;
 
   const handleClose = () => {
     if (!isLoading) {
       setStep(1);
       setFormData({
-        organizationName: '',
-        confirmationPhrase: '',
-        deletionType: 'soft',
+        organizationName: "",
+        confirmationPhrase: "",
+        deletionType: "soft",
         dataExportRequested: false,
-        exportFormat: 'json',
-        reason: '',
+        exportFormat: "json",
+        reason: "",
       });
       onClose();
     }
@@ -101,7 +101,7 @@ export function OrganizationDeletionModal({
       });
       handleClose();
     } catch (error) {
-      console.error('Error confirming deletion:', error);
+      console.error("Error confirming deletion:", error);
     } finally {
       setIsLoading(false);
     }
@@ -121,12 +121,12 @@ export function OrganizationDeletionModal({
             Delete Organization
           </DialogTitle>
           <DialogDescription>
-            Step {step} of {totalSteps}:{' '}
+            Step {step} of {totalSteps}:{" "}
             {step === 1
-              ? 'Confirm Organization'
+              ? "Confirm Organization"
               : step === 2
-                ? 'Final Confirmation'
-                : 'Deletion Options'}
+                ? "Final Confirmation"
+                : "Deletion Options"}
           </DialogDescription>
         </DialogHeader>
 
@@ -137,7 +137,7 @@ export function OrganizationDeletionModal({
               <div
                 key={i}
                 className={`h-2 flex-1 rounded ${
-                  i + 1 <= step ? 'bg-red-500' : 'bg-muted'
+                  i + 1 <= step ? "bg-red-500" : "bg-muted"
                 }`}
               />
             ))}
@@ -156,17 +156,17 @@ export function OrganizationDeletionModal({
                   <ul className="text-xs text-red-600 dark:text-red-400 space-y-1">
                     <li>
                       • {organization.memberCount} member
-                      {organization.memberCount !== 1 ? 's' : ''} will lose
+                      {organization.memberCount !== 1 ? "s" : ""} will lose
                       access
                     </li>
                     <li>
                       • {organization.tenderCount} tender
-                      {organization.tenderCount !== 1 ? 's' : ''} will be
+                      {organization.tenderCount !== 1 ? "s" : ""} will be
                       deleted
                     </li>
                     <li>
                       • {organization.contractCount} contract
-                      {organization.contractCount !== 1 ? 's' : ''} will be
+                      {organization.contractCount !== 1 ? "s" : ""} will be
                       deleted
                     </li>
                     <li>• All settings and configurations will be lost</li>
@@ -176,7 +176,7 @@ export function OrganizationDeletionModal({
 
               <div className="space-y-2">
                 <Label htmlFor="orgName">
-                  Type the organization name to confirm:{' '}
+                  Type the organization name to confirm:{" "}
                   <strong>{organization.name}</strong>
                 </Label>
                 <Input
@@ -189,7 +189,7 @@ export function OrganizationDeletionModal({
                     })
                   }
                   placeholder={organization.name}
-                  className={isStep1Valid ? 'border-green-500' : ''}
+                  className={isStep1Valid ? "border-green-500" : ""}
                 />
               </div>
             </div>
@@ -226,7 +226,7 @@ export function OrganizationDeletionModal({
                     })
                   }
                   placeholder={CONFIRMATION_PHRASE}
-                  className={isStep2Valid ? 'border-green-500' : ''}
+                  className={isStep2Valid ? "border-green-500" : ""}
                 />
               </div>
             </div>
@@ -243,7 +243,7 @@ export function OrganizationDeletionModal({
                   onValueChange={(value: string) =>
                     setFormData({
                       ...formData,
-                      deletionType: value as 'soft' | 'permanent',
+                      deletionType: value as "soft" | "permanent",
                     })
                   }
                 >
@@ -316,7 +316,7 @@ export function OrganizationDeletionModal({
                       onValueChange={(value: string) =>
                         setFormData({
                           ...formData,
-                          exportFormat: value as 'json' | 'csv',
+                          exportFormat: value as "json" | "csv",
                         })
                       }
                       className="flex gap-4"
@@ -407,9 +407,9 @@ export function OrganizationDeletionModal({
                 ) : (
                   <>
                     <Trash2 className="h-4 w-4" />
-                    {formData.deletionType === 'soft'
-                      ? 'Soft Delete'
-                      : 'Permanently Delete'}
+                    {formData.deletionType === "soft"
+                      ? "Soft Delete"
+                      : "Permanently Delete"}
                   </>
                 )}
               </Button>

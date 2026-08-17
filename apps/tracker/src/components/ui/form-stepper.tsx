@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
 export interface StepConfig {
   step: number;
@@ -20,7 +20,7 @@ function StepIndicator({
   currentStep: number;
   onStepClick?: (step: number) => void;
 }) {
-  const currentLabel = steps.find((s) => s.step === currentStep)?.label || '';
+  const currentLabel = steps.find((s) => s.step === currentStep)?.label || "";
 
   return (
     <div className="mb-8">
@@ -43,31 +43,34 @@ function StepIndicator({
       {/* ── Desktop: full horizontal dot stepper ── */}
       <div className="hidden md:flex items-center justify-between max-w-xl mx-auto">
         {steps.map((item, index) => (
-          <div key={item.step} className="flex items-center flex-1 last:flex-none">
+          <div
+            key={item.step}
+            className="flex items-center flex-1 last:flex-none"
+          >
             <div className="flex flex-col items-center">
               <button
                 type="button"
                 onClick={() => onStepClick?.(item.step)}
                 disabled={!onStepClick}
                 className={`size-10 rounded-full flex items-center justify-center font-semibold text-sm border-2 transition-all ${
-                  onStepClick ? 'cursor-pointer' : 'cursor-default'
+                  onStepClick ? "cursor-pointer" : "cursor-default"
                 } ${
                   currentStep === item.step
-                    ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-105'
+                    ? "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
                     : currentStep > item.step
-                      ? 'bg-emerald-500 border-emerald-500 text-white'
-                      : 'border-muted-foreground/30 bg-muted/20 text-muted-foreground'
+                      ? "bg-emerald-500 border-emerald-500 text-white"
+                      : "border-muted-foreground/30 bg-muted/20 text-muted-foreground"
                 }`}
               >
-                {currentStep > item.step ? '✓' : item.step}
+                {currentStep > item.step ? "✓" : item.step}
               </button>
               <span
                 className={`text-xs mt-2 font-medium whitespace-nowrap ${
                   currentStep === item.step
-                    ? 'text-primary'
+                    ? "text-primary"
                     : currentStep > item.step
-                      ? 'text-emerald-500'
-                      : 'text-muted-foreground'
+                      ? "text-emerald-500"
+                      : "text-muted-foreground"
                 }`}
               >
                 {item.label}
@@ -76,7 +79,9 @@ function StepIndicator({
             {index < steps.length - 1 && (
               <div
                 className={`h-[2px] flex-1 mx-4 -mt-6 transition-all ${
-                  currentStep > item.step ? 'bg-emerald-500' : 'bg-muted-foreground/20'
+                  currentStep > item.step
+                    ? "bg-emerald-500"
+                    : "bg-muted-foreground/20"
                 }`}
               />
             )}
@@ -108,8 +113,8 @@ function StepActions({
   currentStep,
   totalSteps,
   isPending = false,
-  submitLabel = 'Save',
-  loadingLabel = 'Saving...',
+  submitLabel = "Save",
+  loadingLabel = "Saving...",
 }: StepActionsProps) {
   const isLastStep = currentStep === totalSteps;
 

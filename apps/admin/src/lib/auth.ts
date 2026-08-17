@@ -1,19 +1,19 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '@pmg/db';
-import { schema } from '@pmg/db/schema';
-import { nextCookies } from 'better-auth/next-js';
-import { magicLink } from 'better-auth/plugins';
-import { getAdminBaseURL } from '@/lib/urls';
-import { resend, SENDER, REPLY_TO } from '@/lib/email-config';
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "@pmg/db";
+import { schema } from "@pmg/db/schema";
+import { nextCookies } from "better-auth/next-js";
+import { magicLink } from "better-auth/plugins";
+import { getAdminBaseURL } from "@/lib/urls";
+import { resend, SENDER, REPLY_TO } from "@/lib/email-config";
 
-const LOCAL_AUTH_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+const LOCAL_AUTH_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
 function getAdminMagicLinkUrl(token: string) {
   const adminBaseURL = getAdminBaseURL();
-  const magicLinkUrl = new URL('/api/auth/magic-link/verify', adminBaseURL);
-  magicLinkUrl.searchParams.set('token', token);
-  magicLinkUrl.searchParams.set('callbackURL', adminBaseURL);
+  const magicLinkUrl = new URL("/api/auth/magic-link/verify", adminBaseURL);
+  magicLinkUrl.searchParams.set("token", token);
+  magicLinkUrl.searchParams.set("callbackURL", adminBaseURL);
   return magicLinkUrl.toString();
 }
 
@@ -21,42 +21,41 @@ export const auth = betterAuth({
   baseURL: getAdminBaseURL(),
   trustedOrigins: [
     getAdminBaseURL(),
-    'http://localhost:3001',
-    'https://admin.tendertrack360.co.za',
+    "http://localhost:3001",
+    "https://admin.tendertrack360.co.za",
   ],
   rateLimit: {
     enabled: true,
     window: 60, // 1 minute
-    max: 10,    // limit to 10 authentication requests per window per client IP
+    max: 10, // limit to 10 authentication requests per window per client IP
   },
   advanced: {
-    cookiePrefix: 'tender-track-360',
+    cookiePrefix: "tender-track-360",
     crossSubdomainCookies: {
       enabled: true,
       domain:
-        process.env.NODE_ENV === 'production'
-          ? 'tendertrack360.co.za'
+        process.env.NODE_ENV === "production"
+          ? "tendertrack360.co.za"
           : undefined,
     },
   },
   user: {
     additionalFields: {
       role: {
-        type: 'string',
-        defaultValue: 'user',
+        type: "string",
+        defaultValue: "user",
         input: false,
       },
       mustSetPassword: {
-        type: 'boolean',
+        type: "boolean",
         defaultValue: false,
         input: false,
       },
     },
   },
-  callbacks: {
-  },
+  callbacks: {},
   database: drizzleAdapter(db, {
-    provider: 'pg',
+    provider: "pg",
     schema,
   }),
   emailAndPassword: {
@@ -79,7 +78,7 @@ export const auth = betterAuth({
           const { error } = await resend.emails.send({
             from: SENDER,
             to: email,
-            subject: 'Your Sign-in Code and Magic Link',
+            subject: "Your Sign-in Code and Magic Link",
             replyTo: REPLY_TO,
             html: `
               <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; border: 1px solid #e4e4e7; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
@@ -110,15 +109,15 @@ export const auth = betterAuth({
             `,
           });
           if (error) {
-            console.error('Error sending magic link email:', error);
+            console.error("Error sending magic link email:", error);
             throw error;
           }
         } catch (err) {
-          console.error('Failed to process magic link email:', err);
+          console.error("Failed to process magic link email:", err);
           throw err;
         }
       },
     }),
     nextCookies(),
-  ]
+  ],
 });

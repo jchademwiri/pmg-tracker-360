@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import type { Route } from 'next';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { isNavActive, isPathInSection } from '@/lib/nav-utils';
+import { ChevronRight, type LucideIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import type { Route } from "next";
+import { usePathname, useSearchParams } from "next/navigation";
+import { isNavActive, isPathInSection } from "@/lib/nav-utils";
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -22,8 +22,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
-import { getUnreadTicketCount } from '@/server/support';
+} from "@/components/ui/sidebar";
+import { getUnreadTicketCount } from "@/server/support";
 
 type NavItem = {
   title: string;
@@ -38,7 +38,7 @@ type NavItem = {
 
 export function NavMain({
   items,
-  label = 'Platform',
+  label = "Platform",
 }: {
   items: NavItem[];
   label?: string;
@@ -50,7 +50,8 @@ export function NavMain({
   useEffect(() => {
     const hasSupport = items.some(
       (item) =>
-        item.url === '/support' || item.items?.some((s) => s.url === '/support')
+        item.url === "/support" ||
+        item.items?.some((s) => s.url === "/support"),
     );
     if (!hasSupport) return;
 
@@ -69,11 +70,11 @@ export function NavMain({
       fetchCount();
     };
 
-    window.addEventListener('support-count-updated', handleUpdate);
+    window.addEventListener("support-count-updated", handleUpdate);
 
     return () => {
       mounted = false;
-      window.removeEventListener('support-count-updated', handleUpdate);
+      window.removeEventListener("support-count-updated", handleUpdate);
     };
   }, [pathname, items]);
 
@@ -84,7 +85,7 @@ export function NavMain({
 
   // Initialize collapsible state only for items that actually have sub-items
   const hasCollapsibleItems = items.some(
-    (item) => item.items && item.items.length > 0
+    (item) => item.items && item.items.length > 0,
   );
 
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(() => {
@@ -93,7 +94,7 @@ export function NavMain({
     items.forEach((item) => {
       if (item.items && item.items.length > 0) {
         initialState[item.title] = item.items.some((sub) =>
-          isPathMatching(sub.url)
+          isPathMatching(sub.url),
         );
       }
     });
@@ -149,7 +150,7 @@ export function NavMain({
                     </span>
                   </Link>
                 </SidebarMenuButton>
-                {item.url === '/support' && unreadSupportCount > 0 && (
+                {item.url === "/support" && unreadSupportCount > 0 && (
                   <SidebarMenuBadge>
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
                       {unreadSupportCount}
@@ -182,7 +183,7 @@ export function NavMain({
                     <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                {item.url === '/support' && unreadSupportCount > 0 && (
+                {item.url === "/support" && unreadSupportCount > 0 && (
                   <SidebarMenuBadge>
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold bg-amber-500 text-black shadow-sm animate-pulse">
                       {unreadSupportCount}
@@ -215,4 +216,3 @@ export function NavMain({
     </SidebarGroup>
   );
 }
-

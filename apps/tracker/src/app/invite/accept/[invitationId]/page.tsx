@@ -1,9 +1,9 @@
-import { db } from '@pmg/db';
-import { invitation, user } from '@pmg/db/schema';
-import { eq, sql } from 'drizzle-orm';
-import AcceptInvitationClient from '@/components/invite/AcceptInvitationClient';
-import { getServerSession } from '@/lib/auth';
-import { SessionUserSync } from '@/components/shared/session-user-sync';
+import { db } from "@pmg/db";
+import { invitation, user } from "@pmg/db/schema";
+import { eq, sql } from "drizzle-orm";
+import AcceptInvitationClient from "@/components/invite/AcceptInvitationClient";
+import { getServerSession } from "@/lib/auth";
+import { SessionUserSync } from "@/components/shared/session-user-sync";
 
 type Props = {
   params: Promise<{
@@ -58,8 +58,8 @@ export default async function InviteAcceptPage({ params }: Props) {
         <div className="mb-6">
           <h1 className="text-2xl font-bold">You're invited</h1>
           <p className="text-muted-foreground mt-2">
-            You were invited to join the organization{' '}
-            <strong>{invite.organization.name}</strong> as{' '}
+            You were invited to join the organization{" "}
+            <strong>{invite.organization.name}</strong> as{" "}
             <strong>{invite.role}</strong>.
           </p>
         </div>

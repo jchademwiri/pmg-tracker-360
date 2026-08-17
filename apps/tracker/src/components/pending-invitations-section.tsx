@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,12 +9,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,10 +22,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
-import { PendingInvitation } from '@/server/organizations';
-import { cancelInvitation, resendInvitation } from '@/server/invitations';
+import { PendingInvitation } from "@/server/organizations";
+import { cancelInvitation, resendInvitation } from "@/server/invitations";
 import {
   MoreHorizontal,
   Mail,
@@ -34,10 +34,10 @@ import {
   Loader,
   AlertCircle,
   RefreshCw,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { handleError, handleSuccess } from '@/lib/error-handler';
-import { CancelInvitationConfirmationDialog } from '@/components/ui/confirmation-dialog';
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { handleError, handleSuccess } from "@/lib/error-handler";
+import { CancelInvitationConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface PendingInvitationsSectionProps {
   invitations: PendingInvitation[];
@@ -53,18 +53,18 @@ function getInvitationStatusBadgeVariant(status: string, expiresAt: Date) {
   const isExpired = now > expiresAt;
 
   if (isExpired) {
-    return 'destructive';
+    return "destructive";
   }
 
   switch (status.toLowerCase()) {
-    case 'pending':
-      return 'secondary';
-    case 'expired':
-      return 'destructive';
-    case 'cancelled':
-      return 'outline';
+    case "pending":
+      return "secondary";
+    case "expired":
+      return "destructive";
+    case "cancelled":
+      return "outline";
     default:
-      return 'secondary';
+      return "secondary";
   }
 }
 
@@ -74,7 +74,7 @@ function getInvitationStatusText(status: string, expiresAt: Date) {
   const isExpired = now > expiresAt;
 
   if (isExpired) {
-    return 'Expired';
+    return "Expired";
   }
 
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -83,23 +83,23 @@ function getInvitationStatusText(status: string, expiresAt: Date) {
 // Helper function to get role badge variant
 function getRoleBadgeVariant(role: string) {
   switch (role.toLowerCase()) {
-    case 'owner':
-      return 'destructive';
-    case 'admin':
-      return 'default';
-    case 'member':
-      return 'secondary';
+    case "owner":
+      return "destructive";
+    case "admin":
+      return "default";
+    case "member":
+      return "secondary";
     default:
-      return 'outline';
+      return "outline";
   }
 }
 
 // Helper function to format date
 function formatDate(date: Date) {
-  return new Date(date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 }
 
@@ -220,20 +220,20 @@ function InvitationActions({ invitation }: { invitation: PendingInvitation }) {
       const result = await resendInvitation(invitation.id);
 
       if (!result.success) {
-        handleError(result.error || 'Failed to resend invitation', {
-          title: 'Resend Failed',
+        handleError(result.error || "Failed to resend invitation", {
+          title: "Resend Failed",
         });
         return;
       }
 
-      handleSuccess('Invitation resent successfully', {
+      handleSuccess("Invitation resent successfully", {
         description: `A new invitation has been sent to ${invitation.email}`,
       });
       router.refresh();
     } catch (error) {
       handleError(error as Error, {
-        title: 'Resend Failed',
-        fallbackMessage: 'Failed to resend invitation',
+        title: "Resend Failed",
+        fallbackMessage: "Failed to resend invitation",
       });
     } finally {
       setIsLoading(false);
@@ -246,21 +246,21 @@ function InvitationActions({ invitation }: { invitation: PendingInvitation }) {
       const result = await cancelInvitation(invitation.id);
 
       if (!result.success) {
-        handleError(result.error || 'Failed to cancel invitation', {
-          title: 'Cancel Failed',
+        handleError(result.error || "Failed to cancel invitation", {
+          title: "Cancel Failed",
         });
         return;
       }
 
-      handleSuccess('Invitation cancelled successfully', {
+      handleSuccess("Invitation cancelled successfully", {
         description: `The invitation for ${invitation.email} has been cancelled`,
       });
       setShowCancelDialog(false);
       router.refresh();
     } catch (error) {
       handleError(error as Error, {
-        title: 'Cancel Failed',
-        fallbackMessage: 'Failed to cancel invitation',
+        title: "Cancel Failed",
+        fallbackMessage: "Failed to cancel invitation",
       });
     } finally {
       setIsLoading(false);
@@ -288,7 +288,7 @@ function InvitationActions({ invitation }: { invitation: PendingInvitation }) {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleResend} disabled={isLoading}>
             <Mail className="mr-2 h-4 w-4" />
-            {isExpired ? 'Resend Invitation' : 'Resend Invitation'}
+            {isExpired ? "Resend Invitation" : "Resend Invitation"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -395,7 +395,7 @@ export function PendingInvitationsSection({
         onSelectionChange([...selectedInvitations, invitationId]);
       } else {
         onSelectionChange(
-          selectedInvitations.filter((id) => id !== invitationId)
+          selectedInvitations.filter((id) => id !== invitationId),
         );
       }
     }
@@ -424,7 +424,7 @@ export function PendingInvitationsSection({
                   checked={isAllSelected}
                   onCheckedChange={handleSelectAll}
                   aria-label="Select all invitations"
-                  {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                  {...(isIndeterminate && { "data-state": "indeterminate" })}
                 />
               </TableHead>
               <TableHead>Email</TableHead>
@@ -439,11 +439,11 @@ export function PendingInvitationsSection({
             {invitations.map((invitation) => {
               const statusText = getInvitationStatusText(
                 invitation.status,
-                invitation.expiresAt
+                invitation.expiresAt,
               );
               const statusVariant = getInvitationStatusBadgeVariant(
                 invitation.status,
-                invitation.expiresAt
+                invitation.expiresAt,
               );
               const daysUntilExpiry = getDaysUntilExpiry(invitation.expiresAt);
               const isExpired = daysUntilExpiry <= 0;
@@ -452,7 +452,7 @@ export function PendingInvitationsSection({
               return (
                 <TableRow
                   key={invitation.id}
-                  className={isSelected ? 'bg-muted/50' : ''}
+                  className={isSelected ? "bg-muted/50" : ""}
                 >
                   <TableCell>
                     <Checkbox
@@ -460,7 +460,7 @@ export function PendingInvitationsSection({
                       onCheckedChange={(checked) =>
                         handleSelectInvitation(
                           invitation.id,
-                          checked as boolean
+                          checked as boolean,
                         )
                       }
                       aria-label={`Select invitation for ${invitation.email}`}

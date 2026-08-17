@@ -1,11 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { StatusBadge } from '@/components/ui/status-badge';
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   AlertTriangle,
   Clock,
@@ -16,10 +29,15 @@ import {
   ChevronRight,
   ShieldAlert,
   Archive,
-  Truck
-} from 'lucide-react';
-import { formatCurrency, formatDate, formatClientName, toTitleCase } from '@/lib/format';
-import Link from 'next/link';
+  Truck,
+} from "lucide-react";
+import {
+  formatCurrency,
+  formatDate,
+  formatClientName,
+  toTitleCase,
+} from "@/lib/format";
+import Link from "next/link";
 
 interface ActionQueuePO {
   id: string;
@@ -76,50 +94,64 @@ interface ProjectActionQueueProps {
 
 type QueueType = keyof ProjectActionQueueData;
 
-export function ProjectActionQueue({ organizationId, initialQueues }: ProjectActionQueueProps) {
+export function ProjectActionQueue({
+  organizationId,
+  initialQueues,
+}: ProjectActionQueueProps) {
   const [queues] = useState<ProjectActionQueueData>(initialQueues);
   const [selectedQueue, setSelectedQueue] = useState<QueueType>(() => {
-    if (initialQueues.overdueDeliveries.length > 0) return 'overdueDeliveries';
-    if (initialQueues.partialDeliveries.length > 0) return 'partialDeliveries';
-    if (initialQueues.highRisks.length > 0) return 'highRisks';
-    if (initialQueues.closeOutCandidates.length > 0) return 'closeOutCandidates';
-    return 'overdueDeliveries';
+    if (initialQueues.overdueDeliveries.length > 0) return "overdueDeliveries";
+    if (initialQueues.partialDeliveries.length > 0) return "partialDeliveries";
+    if (initialQueues.highRisks.length > 0) return "highRisks";
+    if (initialQueues.closeOutCandidates.length > 0)
+      return "closeOutCandidates";
+    return "overdueDeliveries";
   });
 
-  const queueConfig: Record<QueueType, {
-    label: string;
-    description: string;
-    icon: React.ComponentType<{ className?: string }>;
-    colorClass: string;
-    badgeVariant: 'destructive' | 'secondary' | 'outline' | 'default';
-  }> = {
+  const queueConfig: Record<
+    QueueType,
+    {
+      label: string;
+      description: string;
+      icon: React.ComponentType<{ className?: string }>;
+      colorClass: string;
+      badgeVariant: "destructive" | "secondary" | "outline" | "default";
+    }
+  > = {
     overdueDeliveries: {
-      label: 'Overdue Deliveries',
-      description: 'Active purchase orders with expected delivery dates in the past.',
+      label: "Overdue Deliveries",
+      description:
+        "Active purchase orders with expected delivery dates in the past.",
       icon: AlertTriangle,
-      colorClass: 'text-red-500 border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/30',
-      badgeVariant: 'destructive',
+      colorClass:
+        "text-red-500 border-red-500/20 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/30",
+      badgeVariant: "destructive",
     },
     partialDeliveries: {
-      label: 'Partial Deliveries',
-      description: 'Purchase orders with status partially delivered.',
+      label: "Partial Deliveries",
+      description: "Purchase orders with status partially delivered.",
       icon: Truck,
-      colorClass: 'text-amber-500 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30',
-      badgeVariant: 'default',
+      colorClass:
+        "text-amber-500 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/30",
+      badgeVariant: "default",
     },
     highRisks: {
-      label: 'High/Critical Risks',
-      description: 'Active risks on active projects with high or critical severity.',
+      label: "High/Critical Risks",
+      description:
+        "Active risks on active projects with high or critical severity.",
       icon: ShieldAlert,
-      colorClass: 'text-rose-500 border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 hover:border-rose-500/30',
-      badgeVariant: 'destructive',
+      colorClass:
+        "text-rose-500 border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 hover:border-rose-500/30",
+      badgeVariant: "destructive",
     },
     closeOutCandidates: {
-      label: 'Close-out Candidates',
-      description: 'Active projects with contract end date in the past, or all POs fully delivered.',
+      label: "Close-out Candidates",
+      description:
+        "Active projects with contract end date in the past, or all POs fully delivered.",
       icon: Archive,
-      colorClass: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/30',
-      badgeVariant: 'default',
+      colorClass:
+        "text-emerald-500 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/30",
+      badgeVariant: "default",
     },
   };
 
@@ -139,15 +171,24 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
               onClick={() => setSelectedQueue(key)}
               className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all relative ${
                 isSelected
-                  ? 'border-foreground shadow-sm bg-accent/40 ring-1 ring-ring'
-                  : 'bg-card border-border hover:border-muted-foreground/40'
+                  ? "border-foreground shadow-sm bg-accent/40 ring-1 ring-ring"
+                  : "bg-card border-border hover:border-muted-foreground/40"
               }`}
             >
               <div className="flex items-center justify-between w-full mb-2">
-                <div className={`p-2 rounded-lg border bg-background ${isSelected ? 'border-foreground' : 'border-border'}`}>
-                  <Icon className={`h-4 w-4 ${config.colorClass.split(' ')[0]}`} />
+                <div
+                  className={`p-2 rounded-lg border bg-background ${isSelected ? "border-foreground" : "border-border"}`}
+                >
+                  <Icon
+                    className={`h-4 w-4 ${config.colorClass.split(" ")[0]}`}
+                  />
                 </div>
-                <Badge variant={config.badgeVariant} className={list.length > 0 ? '' : 'bg-muted text-muted-foreground'}>
+                <Badge
+                  variant={config.badgeVariant}
+                  className={
+                    list.length > 0 ? "" : "bg-muted text-muted-foreground"
+                  }
+                >
                   {list.length}
                 </Badge>
               </div>
@@ -155,7 +196,9 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                 {config.label}
               </span>
               <span className="text-lg font-bold mt-1 tracking-tight">
-                {list.length > 0 ? `${list.length} item${list.length > 1 ? 's' : ''}` : 'Cleared'}
+                {list.length > 0
+                  ? `${list.length} item${list.length > 1 ? "s" : ""}`
+                  : "Cleared"}
               </span>
             </button>
           );
@@ -168,7 +211,11 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                {React.createElement(queueConfig[selectedQueue].icon, { className: 'h-5 w-5 ' + queueConfig[selectedQueue].colorClass.split(' ')[0] })}
+                {React.createElement(queueConfig[selectedQueue].icon, {
+                  className:
+                    "h-5 w-5 " +
+                    queueConfig[selectedQueue].colorClass.split(" ")[0],
+                })}
                 {queueConfig[selectedQueue].label}
               </CardTitle>
               <CardDescription className="mt-1">
@@ -193,7 +240,7 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
               <TableHeader>
                 <TableRow>
                   {/* Columns headers based on selected queue */}
-                  {selectedQueue === 'highRisks' ? (
+                  {selectedQueue === "highRisks" ? (
                     <>
                       <TableHead className="pl-6 w-[25%]">Project</TableHead>
                       <TableHead className="w-[25%]">Risk Title</TableHead>
@@ -201,12 +248,14 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                       <TableHead className="w-[12%]">Severity</TableHead>
                       <TableHead className="w-[13%]">Logged Date</TableHead>
                     </>
-                  ) : selectedQueue === 'closeOutCandidates' ? (
+                  ) : selectedQueue === "closeOutCandidates" ? (
                     <>
                       <TableHead className="pl-6 w-[20%]">Project #</TableHead>
                       <TableHead className="w-[22%]">Client</TableHead>
                       <TableHead className="w-[26%]">Description</TableHead>
-                      <TableHead className="w-[16%]">Contract End Date</TableHead>
+                      <TableHead className="w-[16%]">
+                        Contract End Date
+                      </TableHead>
                       <TableHead className="w-[16%]">Reason</TableHead>
                     </>
                   ) : (
@@ -220,12 +269,15 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                       <TableHead className="w-[12%]">Status</TableHead>
                     </>
                   )}
-                  <TableHead className="pr-6 text-right w-[120px]">Actions</TableHead>
+                  <TableHead className="pr-6 text-right w-[120px]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {/* Overdue/Partial Deliveries */}
-                {(selectedQueue === 'overdueDeliveries' || selectedQueue === 'partialDeliveries') && 
+                {(selectedQueue === "overdueDeliveries" ||
+                  selectedQueue === "partialDeliveries") &&
                   (queues[selectedQueue] as ActionQueuePO[]).map((po) => (
                     <TableRow key={po.id} className="cursor-default">
                       <TableCell className="pl-6 font-mono font-bold text-xs">
@@ -245,16 +297,23 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                         </Link>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground truncate">
-                        {formatClientName(po.client?.name) || '—'}
+                        {formatClientName(po.client?.name) || "—"}
                       </TableCell>
                       <TableCell className="text-xs font-mono font-bold tabular-nums text-foreground">
-                        {po.totalAmount ? formatCurrency(po.totalAmount) : '—'}
+                        {po.totalAmount ? formatCurrency(po.totalAmount) : "—"}
                       </TableCell>
-                      <TableCell className={`text-xs font-medium ${selectedQueue === 'overdueDeliveries' ? 'text-rose-400 font-bold' : 'text-muted-foreground'}`}>
-                        {po.expectedDeliveryDate ? formatDate(new Date(po.expectedDeliveryDate)) : '—'}
+                      <TableCell
+                        className={`text-xs font-medium ${selectedQueue === "overdueDeliveries" ? "text-rose-400 font-bold" : "text-muted-foreground"}`}
+                      >
+                        {po.expectedDeliveryDate
+                          ? formatDate(new Date(po.expectedDeliveryDate))
+                          : "—"}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge domain="purchaseOrder" status={po.status} />
+                        <StatusBadge
+                          domain="purchaseOrder"
+                          status={po.status}
+                        />
                       </TableCell>
                       <TableCell className="pr-6 text-right">
                         <div className="flex items-center justify-end gap-1.5">
@@ -264,7 +323,9 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                             asChild
                             className="cursor-pointer text-xs h-7 px-2"
                           >
-                            <Link href={`/projects/purchase-orders/${po.id}/deliveries/new`}>
+                            <Link
+                              href={`/projects/purchase-orders/${po.id}/deliveries/new`}
+                            >
                               Log Delivery
                             </Link>
                           </Button>
@@ -281,11 +342,10 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                }
+                  ))}
 
                 {/* High/Critical Risks */}
-                {selectedQueue === 'highRisks' && 
+                {selectedQueue === "highRisks" &&
                   (queues.highRisks as ActionQueueRisk[]).map((risk) => (
                     <TableRow key={risk.id} className="cursor-default">
                       <TableCell className="pl-6 font-mono font-bold text-xs">
@@ -299,8 +359,11 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                       <TableCell className="text-xs font-semibold text-foreground">
                         {risk.title}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground truncate" title={risk.description || ''}>
-                        {risk.description ? toTitleCase(risk.description) : '—'}
+                      <TableCell
+                        className="text-xs text-muted-foreground truncate"
+                        title={risk.description || ""}
+                      >
+                        {risk.description ? toTitleCase(risk.description) : "—"}
                       </TableCell>
                       <TableCell>
                         <StatusBadge domain="risk" status={risk.severity} />
@@ -321,12 +384,13 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                }
+                  ))}
 
                 {/* Close-out Candidates */}
-                {selectedQueue === 'closeOutCandidates' && 
-                  (queues.closeOutCandidates as ActionQueueProjectCandidate[]).map((proj) => (
+                {selectedQueue === "closeOutCandidates" &&
+                  (
+                    queues.closeOutCandidates as ActionQueueProjectCandidate[]
+                  ).map((proj) => (
                     <TableRow key={proj.id} className="cursor-default">
                       <TableCell className="pl-6 font-mono font-bold text-xs">
                         <Link
@@ -337,13 +401,18 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                         </Link>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground truncate">
-                        {formatClientName(proj.client?.name) || '—'}
+                        {formatClientName(proj.client?.name) || "—"}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground truncate" title={proj.description || ''}>
-                        {proj.description ? toTitleCase(proj.description) : '—'}
+                      <TableCell
+                        className="text-xs text-muted-foreground truncate"
+                        title={proj.description || ""}
+                      >
+                        {proj.description ? toTitleCase(proj.description) : "—"}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {proj.contractEndDate ? formatDate(new Date(proj.contractEndDate)) : '—'}
+                        {proj.contractEndDate
+                          ? formatDate(new Date(proj.contractEndDate))
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-xs font-semibold text-amber-400">
                         {proj.candidateReason}
@@ -355,14 +424,11 @@ export function ProjectActionQueue({ organizationId, initialQueues }: ProjectAct
                           asChild
                           className="cursor-pointer text-xs h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                         >
-                          <Link href={`/projects/${proj.id}`}>
-                            Workspace
-                          </Link>
+                          <Link href={`/projects/${proj.id}`}>Workspace</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                }
+                  ))}
               </TableBody>
             </Table>
           )}

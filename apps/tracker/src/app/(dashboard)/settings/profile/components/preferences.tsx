@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Settings,
   Keyboard,
@@ -33,8 +33,8 @@ import {
   Eye,
   HelpCircle,
   Command,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface KeyboardShortcut {
   id: string;
@@ -67,17 +67,17 @@ interface Timezone {
 
 export function Preferences() {
   const [preferences, setPreferences] = useState({
-    theme: 'system',
-    language: 'en',
-    timezone: 'UTC',
-    dateFormat: 'MM/DD/YYYY',
-    timeFormat: '12h',
+    theme: "system",
+    language: "en",
+    timezone: "UTC",
+    dateFormat: "MM/DD/YYYY",
+    timeFormat: "12h",
     animations: true,
     soundEffects: true,
     keyboardShortcuts: true,
     reducedMotion: false,
     highContrast: false,
-    fontSize: 'medium',
+    fontSize: "medium",
     autoSave: true,
     confirmActions: true,
   });
@@ -86,185 +86,185 @@ export function Preferences() {
 
   const themes: Theme[] = [
     {
-      id: 'light',
-      name: 'Light',
-      description: 'Clean and bright interface',
+      id: "light",
+      name: "Light",
+      description: "Clean and bright interface",
       icon: <Sun className="h-4 w-4" />,
     },
     {
-      id: 'dark',
-      name: 'Dark',
-      description: 'Easy on the eyes in low light',
+      id: "dark",
+      name: "Dark",
+      description: "Easy on the eyes in low light",
       icon: <Moon className="h-4 w-4" />,
     },
     {
-      id: 'system',
-      name: 'System',
-      description: 'Follows your system preference',
+      id: "system",
+      name: "System",
+      description: "Follows your system preference",
       icon: <Monitor className="h-4 w-4" />,
     },
   ];
 
   const languages: Language[] = [
-    { id: 'en', name: 'English', code: 'en-US', flag: '🇺🇸' },
-    { id: 'es', name: 'Spanish', code: 'es-ES', flag: '🇪🇸' },
-    { id: 'fr', name: 'French', code: 'fr-FR', flag: '🇫🇷' },
-    { id: 'de', name: 'German', code: 'de-DE', flag: '🇩🇪' },
+    { id: "en", name: "English", code: "en-US", flag: "🇺🇸" },
+    { id: "es", name: "Spanish", code: "es-ES", flag: "🇪🇸" },
+    { id: "fr", name: "French", code: "fr-FR", flag: "🇫🇷" },
+    { id: "de", name: "German", code: "de-DE", flag: "🇩🇪" },
   ];
 
   const timezones: Timezone[] = [
     {
-      id: 'UTC',
-      name: 'UTC',
-      offset: '+00:00',
-      region: 'Coordinated Universal Time',
+      id: "UTC",
+      name: "UTC",
+      offset: "+00:00",
+      region: "Coordinated Universal Time",
     },
     {
-      id: 'EST',
-      name: 'Eastern Time',
-      offset: '-05:00',
-      region: 'America/New_York',
+      id: "EST",
+      name: "Eastern Time",
+      offset: "-05:00",
+      region: "America/New_York",
     },
     {
-      id: 'CST',
-      name: 'Central Time',
-      offset: '-06:00',
-      region: 'America/Chicago',
+      id: "CST",
+      name: "Central Time",
+      offset: "-06:00",
+      region: "America/Chicago",
     },
     {
-      id: 'MST',
-      name: 'Mountain Time',
-      offset: '-07:00',
-      region: 'America/Denver',
+      id: "MST",
+      name: "Mountain Time",
+      offset: "-07:00",
+      region: "America/Denver",
     },
     {
-      id: 'PST',
-      name: 'Pacific Time',
-      offset: '-08:00',
-      region: 'America/Los_Angeles',
+      id: "PST",
+      name: "Pacific Time",
+      offset: "-08:00",
+      region: "America/Los_Angeles",
     },
   ];
 
   const keyboardShortcuts: KeyboardShortcut[] = [
     // Navigation
     {
-      id: 'nav-profile',
-      key: 'Ctrl + P',
-      description: 'Go to Profile',
-      category: 'Navigation',
-      action: 'navigate',
+      id: "nav-profile",
+      key: "Ctrl + P",
+      description: "Go to Profile",
+      category: "Navigation",
+      action: "navigate",
     },
     {
-      id: 'nav-settings',
-      key: 'Ctrl + ,',
-      description: 'Open Settings',
-      category: 'Navigation',
-      action: 'navigate',
+      id: "nav-settings",
+      key: "Ctrl + ,",
+      description: "Open Settings",
+      category: "Navigation",
+      action: "navigate",
     },
     {
-      id: 'nav-dashboard',
-      key: 'Ctrl + D',
-      description: 'Go to Dashboard',
-      category: 'Navigation',
-      action: 'navigate',
+      id: "nav-dashboard",
+      key: "Ctrl + D",
+      description: "Go to Dashboard",
+      category: "Navigation",
+      action: "navigate",
     },
 
     // Actions
     {
-      id: 'save',
-      key: 'Ctrl + S',
-      description: 'Save Changes',
-      category: 'Actions',
-      action: 'save',
+      id: "save",
+      key: "Ctrl + S",
+      description: "Save Changes",
+      category: "Actions",
+      action: "save",
     },
     {
-      id: 'cancel',
-      key: 'Escape',
-      description: 'Cancel/Close',
-      category: 'Actions',
-      action: 'cancel',
+      id: "cancel",
+      key: "Escape",
+      description: "Cancel/Close",
+      category: "Actions",
+      action: "cancel",
     },
     {
-      id: 'search',
-      key: 'Ctrl + K',
-      description: 'Search',
-      category: 'Actions',
-      action: 'search',
+      id: "search",
+      key: "Ctrl + K",
+      description: "Search",
+      category: "Actions",
+      action: "search",
     },
     {
-      id: 'refresh',
-      key: 'F5',
-      description: 'Refresh Page',
-      category: 'Actions',
-      action: 'refresh',
+      id: "refresh",
+      key: "F5",
+      description: "Refresh Page",
+      category: "Actions",
+      action: "refresh",
     },
 
     // Profile
     {
-      id: 'edit-profile',
-      key: 'Ctrl + E',
-      description: 'Edit Profile',
-      category: 'Profile',
-      action: 'edit',
+      id: "edit-profile",
+      key: "Ctrl + E",
+      description: "Edit Profile",
+      category: "Profile",
+      action: "edit",
     },
     {
-      id: 'upload-avatar',
-      key: 'Ctrl + U',
-      description: 'Upload Avatar',
-      category: 'Profile',
-      action: 'upload',
+      id: "upload-avatar",
+      key: "Ctrl + U",
+      description: "Upload Avatar",
+      category: "Profile",
+      action: "upload",
     },
     {
-      id: 'change-password',
-      key: 'Ctrl + Shift + P',
-      description: 'Change Password',
-      category: 'Profile',
-      action: 'security',
+      id: "change-password",
+      key: "Ctrl + Shift + P",
+      description: "Change Password",
+      category: "Profile",
+      action: "security",
     },
 
     // Accessibility
     {
-      id: 'focus-search',
-      key: '/',
-      description: 'Focus Search',
-      category: 'Accessibility',
-      action: 'focus',
+      id: "focus-search",
+      key: "/",
+      description: "Focus Search",
+      category: "Accessibility",
+      action: "focus",
     },
     {
-      id: 'toggle-shortcuts',
-      key: '?',
-      description: 'Show Shortcuts',
-      category: 'Accessibility',
-      action: 'help',
+      id: "toggle-shortcuts",
+      key: "?",
+      description: "Show Shortcuts",
+      category: "Accessibility",
+      action: "help",
     },
   ];
 
   const updatePreference = (key: string, value: string | boolean) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
-    toast.success('Preference updated');
+    toast.success("Preference updated");
   };
 
   const resetToDefaults = () => {
     setPreferences({
-      theme: 'system',
-      language: 'en',
-      timezone: 'UTC',
-      dateFormat: 'MM/DD/YYYY',
-      timeFormat: '12h',
+      theme: "system",
+      language: "en",
+      timezone: "UTC",
+      dateFormat: "MM/DD/YYYY",
+      timeFormat: "12h",
       animations: true,
       soundEffects: true,
       keyboardShortcuts: true,
       reducedMotion: false,
       highContrast: false,
-      fontSize: 'medium',
+      fontSize: "medium",
       autoSave: true,
       confirmActions: true,
     });
-    toast.success('Preferences reset to defaults');
+    toast.success("Preferences reset to defaults");
   };
 
   const getShortcutIcon = (key: string) => {
-    if (key.includes('Ctrl') || key.includes('Cmd')) {
+    if (key.includes("Ctrl") || key.includes("Cmd")) {
       return <Command className="h-3 w-3" />;
     }
     return <Keyboard className="h-3 w-3" />;
@@ -278,7 +278,7 @@ export function Preferences() {
       acc[shortcut.category].push(shortcut);
       return acc;
     },
-    {} as Record<string, KeyboardShortcut[]>
+    {} as Record<string, KeyboardShortcut[]>,
   );
 
   return (
@@ -298,7 +298,7 @@ export function Preferences() {
               <Label>Theme</Label>
               <Select
                 value={preferences.theme}
-                onValueChange={(value) => updatePreference('theme', value)}
+                onValueChange={(value) => updatePreference("theme", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -321,7 +321,7 @@ export function Preferences() {
               <Label>Font Size</Label>
               <Select
                 value={preferences.fontSize}
-                onValueChange={(value) => updatePreference('fontSize', value)}
+                onValueChange={(value) => updatePreference("fontSize", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -340,7 +340,7 @@ export function Preferences() {
               <Label>Language</Label>
               <Select
                 value={preferences.language}
-                onValueChange={(value) => updatePreference('language', value)}
+                onValueChange={(value) => updatePreference("language", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -363,7 +363,7 @@ export function Preferences() {
               <Label>Timezone</Label>
               <Select
                 value={preferences.timezone}
-                onValueChange={(value) => updatePreference('timezone', value)}
+                onValueChange={(value) => updatePreference("timezone", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -388,7 +388,7 @@ export function Preferences() {
               <Label>Date Format</Label>
               <Select
                 value={preferences.dateFormat}
-                onValueChange={(value) => updatePreference('dateFormat', value)}
+                onValueChange={(value) => updatePreference("dateFormat", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -406,7 +406,7 @@ export function Preferences() {
               <Label>Time Format</Label>
               <Select
                 value={preferences.timeFormat}
-                onValueChange={(value) => updatePreference('timeFormat', value)}
+                onValueChange={(value) => updatePreference("timeFormat", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -443,7 +443,7 @@ export function Preferences() {
                   id="animations"
                   checked={preferences.animations}
                   onCheckedChange={(checked) =>
-                    updatePreference('animations', checked)
+                    updatePreference("animations", checked)
                   }
                 />
               </div>
@@ -459,7 +459,7 @@ export function Preferences() {
                   id="sound-effects"
                   checked={preferences.soundEffects}
                   onCheckedChange={(checked) =>
-                    updatePreference('soundEffects', checked)
+                    updatePreference("soundEffects", checked)
                   }
                 />
               </div>
@@ -475,7 +475,7 @@ export function Preferences() {
                   id="auto-save"
                   checked={preferences.autoSave}
                   onCheckedChange={(checked) =>
-                    updatePreference('autoSave', checked)
+                    updatePreference("autoSave", checked)
                   }
                 />
               </div>
@@ -493,7 +493,7 @@ export function Preferences() {
                   id="confirm-actions"
                   checked={preferences.confirmActions}
                   onCheckedChange={(checked) =>
-                    updatePreference('confirmActions', checked)
+                    updatePreference("confirmActions", checked)
                   }
                 />
               </div>
@@ -509,7 +509,7 @@ export function Preferences() {
                   id="keyboard-shortcuts"
                   checked={preferences.keyboardShortcuts}
                   onCheckedChange={(checked) =>
-                    updatePreference('keyboardShortcuts', checked)
+                    updatePreference("keyboardShortcuts", checked)
                   }
                 />
               </div>
@@ -525,7 +525,7 @@ export function Preferences() {
                   id="reduced-motion"
                   checked={preferences.reducedMotion}
                   onCheckedChange={(checked) =>
-                    updatePreference('reducedMotion', checked)
+                    updatePreference("reducedMotion", checked)
                   }
                 />
               </div>
@@ -554,7 +554,7 @@ export function Preferences() {
               id="high-contrast"
               checked={preferences.highContrast}
               onCheckedChange={(checked) =>
-                updatePreference('highContrast', checked)
+                updatePreference("highContrast", checked)
               }
             />
           </div>
@@ -618,7 +618,7 @@ export function Preferences() {
                           ))}
                         </div>
                       </div>
-                    )
+                    ),
                   )}
                 </div>
               </DialogContent>

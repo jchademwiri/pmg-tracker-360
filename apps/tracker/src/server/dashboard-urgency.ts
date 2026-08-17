@@ -1,12 +1,18 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { tender, project, purchaseOrder, tenderFollowUp, document } from '@pmg/db/schema';
-import { and, eq, isNull, lte, gte } from 'drizzle-orm';
-import { validateSessionAndOrg } from './utils';
-import { resolveTenderStatus } from '@/lib/tender-utils';
-import { nowInSAST } from '@/lib/timezone';
-import { URGENCY_WINDOWS } from '@/lib/urgency-windows';
+import { db } from "@pmg/db";
+import {
+  tender,
+  project,
+  purchaseOrder,
+  tenderFollowUp,
+  document,
+} from "@pmg/db/schema";
+import { and, eq, isNull, lte, gte } from "drizzle-orm";
+import { validateSessionAndOrg } from "./utils";
+import { resolveTenderStatus } from "@/lib/tender-utils";
+import { nowInSAST } from "@/lib/timezone";
+import { URGENCY_WINDOWS } from "@/lib/urgency-windows";
 
 export interface UrgencyData {
   closingThisWeek: number;
@@ -40,10 +46,7 @@ async function resolveOrgTenders(organizationId: string) {
     })
     .from(tender)
     .where(
-      and(
-        eq(tender.organizationId, organizationId),
-        isNull(tender.deletedAt)
-      )
+      and(eq(tender.organizationId, organizationId), isNull(tender.deletedAt)),
     );
 
   return tenders.map((t) => ({
@@ -58,34 +61,35 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
 }> {
   try {
     const now = nowInSAST();
-    const sevenDaysFromNow = new Date(now.getTime() + URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(
+      now.getTime() +
+        URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     const resolved = await resolveOrgTenders(organizationId);
 
     // Tenders closing within 7 days (and still open)
     const closingThisWeek = resolved.filter(
       (t) =>
-        t.resolved === 'open' &&
+        t.resolved === "open" &&
         t.submissionDate &&
         t.submissionDate >= now &&
-        t.submissionDate <= sevenDaysFromNow
+        t.submissionDate <= sevenDaysFromNow,
     ).length;
 
     // Overdue tenders (submission date passed, still open)
     const overdueTenders = resolved.filter(
       (t) =>
-        t.resolved === 'open' &&
-        t.submissionDate &&
-        t.submissionDate < now
+        t.resolved === "open" && t.submissionDate && t.submissionDate < now,
     ).length;
 
     // Under evaluation
     const underEvaluation = resolved.filter(
-      (t) => t.resolved === 'evaluation'
+      (t) => t.resolved === "evaluation",
     ).length;
 
     // Total open
-    const totalOpen = resolved.filter((t) => t.resolved === 'open').length;
+    const totalOpen = resolved.filter((t) => t.resolved === "open").length;
 
     // Due Follow-ups (nextFollowUpDate <= now and outcome is empty/null)
     const followUps = await db
@@ -101,11 +105,11 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
       (f) =>
         f.nextFollowUpDate &&
         new Date(f.nextFollowUpDate) <= now &&
-        (!f.outcome || f.outcome.trim() === '')
+        (!f.outcome || f.outcome.trim() === ""),
     ).length;
 
     // Missing Documents (active/open tenders with 0 uploaded documents)
-    const activeTenders = resolved.filter((t) => t.resolved === 'open');
+    const activeTenders = resolved.filter((t) => t.resolved === "open");
     const activeTenderIds = activeTenders.map((t) => t.id);
     let missingDocuments = 0;
     if (activeTenderIds.length > 0) {
@@ -117,7 +121,9 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
         .where(eq(document.organizationId, organizationId));
 
       const docTenderIds = new Set(docs.map((d) => d.tenderId).filter(Boolean));
-      missingDocuments = activeTenders.filter((t) => !docTenderIds.has(t.id)).length;
+      missingDocuments = activeTenders.filter(
+        (t) => !docTenderIds.has(t.id),
+      ).length;
     }
 
     // Overdue Deliveries (expectedDeliveryDate <= now, and status is not delivered/completed/cancelled)
@@ -132,12 +138,12 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
         and(
           eq(purchaseOrder.organizationId, organizationId),
           lte(purchaseOrder.expectedDeliveryDate, now),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       );
 
     const overdueDeliveries = candidatePOs.filter(
-      (po) => !['delivered', 'completed', 'cancelled'].includes(po.status)
+      (po) => !["delivered", "completed", "cancelled"].includes(po.status),
     ).length;
 
     return {
@@ -153,7 +159,7 @@ export async function getDashboardUrgency(organizationId: string): Promise<{
       },
     };
   } catch (error: any) {
-    console.error('Error fetching dashboard urgency:', error);
+    console.error("Error fetching dashboard urgency:", error);
     return {
       success: false,
       urgency: {
@@ -179,30 +185,31 @@ export async function getWorkflowCounts(organizationId: string): Promise<{
 }> {
   try {
     const now = nowInSAST();
-    const sevenDaysFromNow = new Date(now.getTime() + URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(
+      now.getTime() +
+        URGENCY_WINDOWS.CLOSING_THIS_WEEK_DAYS * 24 * 60 * 60 * 1000,
+    );
 
     const resolved = await resolveOrgTenders(organizationId);
 
     // Closing soon: open tenders with submission date within 7 days
     const closingSoon = resolved.filter(
       (t) =>
-        t.resolved === 'open' &&
+        t.resolved === "open" &&
         t.submissionDate &&
         t.submissionDate >= now &&
-        t.submissionDate <= sevenDaysFromNow
+        t.submissionDate <= sevenDaysFromNow,
     ).length;
 
     // Overdue: open tenders past submission date
     const overdue = resolved.filter(
       (t) =>
-        t.resolved === 'open' &&
-        t.submissionDate &&
-        t.submissionDate < now
+        t.resolved === "open" && t.submissionDate && t.submissionDate < now,
     ).length;
 
     // Awarded tenders without a linked project (awaiting conversion)
     const awardedTenderIds = resolved
-      .filter((t) => t.resolved === 'awarded')
+      .filter((t) => t.resolved === "awarded")
       .map((t) => t.id);
 
     let awardedAwaitingConversion = 0;
@@ -214,16 +221,16 @@ export async function getWorkflowCounts(organizationId: string): Promise<{
         .where(
           and(
             eq(project.organizationId, organizationId),
-            isNull(project.deletedAt)
-          )
+            isNull(project.deletedAt),
+          ),
         );
 
       const linkedTenderIds = new Set(
-        linkedProjects.map((p) => p.tenderId).filter(Boolean)
+        linkedProjects.map((p) => p.tenderId).filter(Boolean),
       );
 
       awardedAwaitingConversion = awardedTenderIds.filter(
-        (id) => !linkedTenderIds.has(id)
+        (id) => !linkedTenderIds.has(id),
       ).length;
     }
 
@@ -236,7 +243,7 @@ export async function getWorkflowCounts(organizationId: string): Promise<{
       },
     };
   } catch (error: any) {
-    console.error('Error fetching workflow counts:', error);
+    console.error("Error fetching workflow counts:", error);
     return {
       success: false,
       counts: {

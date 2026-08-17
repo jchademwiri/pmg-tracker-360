@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 
-vi.mock('@pmg/db', () => ({
+vi.mock("@pmg/db", () => ({
   db: {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
@@ -12,7 +12,7 @@ vi.mock('@pmg/db', () => ({
   },
 }));
 
-vi.mock('../reports-queries', () => ({
+vi.mock("../reports-queries", () => ({
   getPlatformOverviewStats: vi.fn().mockResolvedValue({
     totalTenants: 12,
     activeTenants: 10,
@@ -27,7 +27,7 @@ vi.mock('../reports-queries', () => ({
     availableStorageGB: 9.9,
     availableStorageMB: 10140,
     storageUtilizationPct: 1,
-    storageWarningStatus: 'normal',
+    storageWarningStatus: "normal",
     storageOverview: {
       totalUsedBytes: 104857600,
       totalUsedMB: 100,
@@ -37,7 +37,7 @@ vi.mock('../reports-queries', () => ({
       availableStorageGB: 9.9,
       availableStorageMB: 10140,
       utilizationPct: 1,
-      warningStatus: 'normal',
+      warningStatus: "normal",
       buckets: [],
       connectedLiveApi: false,
       lastCheckedAt: new Date(),
@@ -65,21 +65,21 @@ vi.mock('../reports-queries', () => ({
       availableStorageGB: 9.9,
       availableStorageMB: 10140,
       utilizationPct: 1,
-      warningStatus: 'normal',
+      warningStatus: "normal",
       buckets: [],
       connectedLiveApi: false,
       lastCheckedAt: new Date(),
     },
     categories: [
       {
-        category: 'Tender Documents',
+        category: "Tender Documents",
         count: 80,
         sizeBytes: 60000000,
         sizeMB: 57.22,
         percentage: 60,
       },
       {
-        category: 'Project Contracts & Files',
+        category: "Project Contracts & Files",
         count: 40,
         sizeBytes: 30000000,
         sizeMB: 28.61,
@@ -88,10 +88,10 @@ vi.mock('../reports-queries', () => ({
     ],
     topTenants: [
       {
-        id: 'org_1',
-        name: 'Acme Mega Corp',
-        slug: 'acme',
-        createdAt: new Date('2026-01-01'),
+        id: "org_1",
+        name: "Acme Mega Corp",
+        slug: "acme",
+        createdAt: new Date("2026-01-01"),
         deletedAt: null,
         documentCount: 50,
         storageBytes: 40000000,
@@ -104,10 +104,10 @@ vi.mock('../reports-queries', () => ({
   }),
   getAllTenantsUtilization: vi.fn().mockResolvedValue([
     {
-      id: 'org_1',
-      name: 'Acme Mega Corp',
-      slug: 'acme',
-      createdAt: new Date('2026-01-01'),
+      id: "org_1",
+      name: "Acme Mega Corp",
+      slug: "acme",
+      createdAt: new Date("2026-01-01"),
       deletedAt: null,
       documentCount: 50,
       storageBytes: 40000000,
@@ -126,13 +126,13 @@ vi.mock('../reports-queries', () => ({
     suspiciousSessions: 1,
     recentCriticalLogs: [
       {
-        id: 'log_1234567890',
-        action: 'admin.suspicious_ip',
-        resourceType: 'auth',
-        severity: 'critical',
-        createdAt: new Date('2026-02-14'),
-        ipAddress: '192.168.1.1',
-        userAgent: 'Mozilla/5.0',
+        id: "log_1234567890",
+        action: "admin.suspicious_ip",
+        resourceType: "auth",
+        severity: "critical",
+        createdAt: new Date("2026-02-14"),
+        ipAddress: "192.168.1.1",
+        userAgent: "Mozilla/5.0",
       },
     ],
   }),
@@ -142,50 +142,50 @@ import {
   generatePlatformMasterExcel,
   generateStorageAuditExcel,
   generateSecurityAuditExcel,
-} from '../reports-excel';
+} from "../reports-excel";
 import {
   generatePlatformExecutivePdf,
   generateStorageAuditPdf,
   generateSecurityAuditPdf,
-} from '../reports-pdf';
+} from "../reports-pdf";
 
-describe('System Owner Reports Generators', () => {
-  it('generates a valid binary Platform Master Excel workbook', async () => {
+describe("System Owner Reports Generators", () => {
+  it("generates a valid binary Platform Master Excel workbook", async () => {
     const buffer = await generatePlatformMasterExcel();
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(1000);
   });
 
-  it('generates a valid binary Storage Audit Excel workbook', async () => {
+  it("generates a valid binary Storage Audit Excel workbook", async () => {
     const buffer = await generateStorageAuditExcel();
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(500);
   });
 
-  it('generates a valid binary Security Audit Excel workbook', async () => {
+  it("generates a valid binary Security Audit Excel workbook", async () => {
     const buffer = await generateSecurityAuditExcel();
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(500);
   });
 
-  it('generates a valid binary Executive PDF buffer', async () => {
+  it("generates a valid binary Executive PDF buffer", async () => {
     const buffer = await generatePlatformExecutivePdf();
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(1000);
-    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    expect(buffer.subarray(0, 5).toString("ascii")).toBe("%PDF-");
   });
 
-  it('generates a valid binary Storage Audit PDF buffer', async () => {
+  it("generates a valid binary Storage Audit PDF buffer", async () => {
     const buffer = await generateStorageAuditPdf();
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(500);
-    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    expect(buffer.subarray(0, 5).toString("ascii")).toBe("%PDF-");
   });
 
-  it('generates a valid binary Security Audit PDF buffer', async () => {
+  it("generates a valid binary Security Audit PDF buffer", async () => {
     const buffer = await generateSecurityAuditPdf();
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(500);
-    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+    expect(buffer.subarray(0, 5).toString("ascii")).toBe("%PDF-");
   });
 });

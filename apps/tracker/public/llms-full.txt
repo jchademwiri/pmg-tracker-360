@@ -1,0 +1,39 @@
+# Tender Track 360 — Full Technical & Product Context
+
+## System Identity & Purpose
+Tender Track 360 is a South African cloud-based tender management and purchase order tracking system. It solves the critical operational pain points faced by construction companies, engineering firms, logistics providers, and professional service suppliers bidding on public and private tenders in South Africa.
+
+## South African Procurement Frameworks Supported
+- **SOEs**: Eskom SOC Ltd, Transnet Freight & Port, SANRAL (South African National Roads Agency), PRASA (Passenger Rail Agency of South Africa), Rand Water, Umgeni Water.
+- **Government Compliance**: SARS (South African Revenue Service) Tax Compliance PIN verification, National Treasury Central Supplier Database (CSD) report tracking, Standard Bidding Documents (SBD 4 Declaration of Interest, SBD 6.1 Preference Points Claim).
+- **Construction & Engineering**: CIDB (Construction Industry Development Board) Contractor Grading & designation verification.
+- **Privacy & Data Security**: POPIA (Protection of Personal Information Act) compliant, hosted in secure SSAE-16 / ISO-27001 audited data centers with role-based access control.
+
+## Feature Breakdown
+
+### 1. Pre-Submission Tracking
+- Automated alarms at 72 hours, 24 hours, and 4 hours prior to the standard 11:00 AM closing deadline.
+- Mandatory site inspection & briefing session calendar integration.
+- Document returnable checklist tracking with SARS PIN and CSD verification expiry alerts.
+
+### 2. Tender Validity Monitoring
+- 90-day and 120-day validity period countdown timers.
+- Automatic alerts when evaluation committee awards exceed validity periods, prompting formal extension requests or SCM inquiries.
+- Audit trail of communications and tender queries.
+
+### 3. Post-Award Purchase Order (PO) Management
+- 1-Click conversion from awarded tender to active project.
+- Line-item tracking for goods delivered, milestone achievements, and client sign-offs.
+- Cashflow forecasting across 30, 60, and 90 days.
+- Supplier PO and subcontractor order ledger.
+
+### 4. Executive Reporting
+- Board-ready PDF pipeline summaries.
+- Formatted Excel (.xlsx) Tender Register exports.
+
+## Canonical Endpoints
+- Public Site: https://tendertrack360.co.za
+- Documentation: https://docs.tendertrack360.co.za
+- Machine-Readable Pricing: https://tendertrack360.co.za/pricing.md
+- Authentication: https://tendertrack360.co.za/login, https://tendertrack360.co.za/sign-up
+- Contact: https://tendertrack360.co.za/contact

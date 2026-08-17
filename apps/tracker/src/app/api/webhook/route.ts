@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@pmg/db';
-import { waitlist } from '@pmg/db/schema';
-import { nanoid } from 'nanoid';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@pmg/db";
+import { waitlist } from "@pmg/db/schema";
+import { nanoid } from "nanoid";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,16 +17,16 @@ export async function POST(req: NextRequest) {
           id: nanoid(),
           email: email,
           companyName: companyName,
-          source: 'webhook',
+          source: "webhook",
         });
       } catch (e) {
-        console.error('Failed to save webhook lead to db:', e);
+        console.error("Failed to save webhook lead to db:", e);
       }
     }
 
-    return new NextResponse('Webhook received', { status: 200 });
+    return new NextResponse("Webhook received", { status: 200 });
   } catch (e) {
-    console.error('Error processing webhook:', e);
-    return new NextResponse('Error processing webhook', { status: 500 });
+    console.error("Error processing webhook:", e);
+    return new NextResponse("Error processing webhook", { status: 500 });
   }
 }

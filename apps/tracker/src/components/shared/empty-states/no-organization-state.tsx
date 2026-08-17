@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Building2, Plus, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Building2, Plus, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 interface NoOrganizationStateProps {
   className?: string;
@@ -12,9 +12,9 @@ interface NoOrganizationStateProps {
 }
 
 export function NoOrganizationState({
-  className = '',
-  title = 'No Organization Selected',
-  description = 'You need to select an organization or create a new one to view and manage operational data like tenders, projects, and purchase orders.',
+  className = "",
+  title = "No Organization Selected",
+  description = "You need to select an organization or create a new one to view and manage operational data like tenders, projects, and purchase orders.",
 }: NoOrganizationStateProps) {
   return (
     <div className={`w-full max-w-lg mx-auto py-12 px-4 ${className}`}>
@@ -24,9 +24,7 @@ export function NoOrganizationState({
             <Building2 className="size-8 text-muted-foreground" />
           </div>
 
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            {title}
-          </h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{title}</h2>
 
           <p className="text-sm text-muted-foreground mb-6 max-w-sm leading-relaxed">
             {description}

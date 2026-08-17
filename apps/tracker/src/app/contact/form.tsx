@@ -1,10 +1,16 @@
-'use client';
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { useActionState, useRef, useTransition, useState, useEffect } from 'react';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import {
+  useActionState,
+  useRef,
+  useTransition,
+  useState,
+  useEffect,
+} from "react";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,17 +19,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { submitContactForm } from './action';
-import { formSchema } from './schema';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { submitContactForm } from "./action";
+import { formSchema } from "./schema";
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function ContactForm() {
   const [state, formAction] = useActionState(submitContactForm, {
-    message: '',
+    message: "",
   });
 
   const [formMountedAt, setFormMountedAt] = useState<number>(() => Date.now());
@@ -35,10 +41,10 @@ export function ContactForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      details: '',
-      company_website_hp: '',
+      name: "",
+      email: "",
+      details: "",
+      company_website_hp: "",
       formMountedAt,
     },
   });
@@ -68,8 +74,8 @@ export function ContactForm() {
             role="status"
             className={`mt-4 px-4 py-3 rounded-lg text-sm font-medium border transition-all duration-200 ${
               state.success
-                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-                : 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20'
+                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                : "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
             }`}
           >
             {state.message}
@@ -99,11 +105,7 @@ export function ContactForm() {
               tabIndex={-1}
               defaultValue=""
             />
-            <input
-              type="hidden"
-              name="formMountedAt"
-              value={formMountedAt}
-            />
+            <input type="hidden" name="formMountedAt" value={formMountedAt} />
           </div>
 
           <FormField
@@ -164,11 +166,10 @@ export function ContactForm() {
           />
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Sending...' : 'Contact Us'}
+            {isPending ? "Sending..." : "Contact Us"}
           </Button>
         </form>
       </Form>
     </div>
   );
 }
-

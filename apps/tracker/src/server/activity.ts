@@ -1,27 +1,27 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { member, organization } from '@pmg/db/schema';
+import { db } from "@pmg/db";
+import { member, organization } from "@pmg/db/schema";
 import type {
   RecentActivity,
   ActivitySummary,
   RecentActivityResponse,
-} from '@/types/activity';
-import { eq, desc, inArray, and, gte } from 'drizzle-orm';
-import { getCurrentUser } from './users';
+} from "@/types/activity";
+import { eq, desc, inArray, and, gte } from "drizzle-orm";
+import { getCurrentUser } from "./users";
 
 /**
  * Get recent activities across all organizations the user has access to
  */
 export async function getRecentActivities(
   limit: number = 10,
-  offset: number = 0
+  offset: number = 0,
 ): Promise<RecentActivityResponse> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Get user's organization memberships
@@ -61,7 +61,7 @@ export async function getRecentActivities(
     for (const memberRecord of recentMembers) {
       // Skip if this is the current user's own membership (unless it's recent)
       const daysSinceJoin = Math.floor(
-        (Date.now() - memberRecord.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - memberRecord.createdAt.getTime()) / (1000 * 60 * 60 * 24),
       );
 
       if (memberRecord.userId === currentUser.id && daysSinceJoin > 7) {
@@ -72,7 +72,7 @@ export async function getRecentActivities(
         id: `member_joined_${memberRecord.id}`,
         organizationId: memberRecord.organizationId,
         organizationName: memberRecord.organization.name,
-        type: 'member_joined',
+        type: "member_joined",
         description: `${memberRecord.user.name} joined ${memberRecord.organization.name}`,
         timestamp: memberRecord.createdAt,
         userId: memberRecord.userId,
@@ -93,7 +93,7 @@ export async function getRecentActivities(
     for (const org of organizations) {
       // Only show organization creation if it's recent (within last 30 days)
       const daysSinceCreation = Math.floor(
-        (Date.now() - org.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - org.createdAt.getTime()) / (1000 * 60 * 60 * 24),
       );
 
       if (daysSinceCreation <= 30) {
@@ -101,7 +101,7 @@ export async function getRecentActivities(
           id: `org_created_${org.id}`,
           organizationId: org.id,
           organizationName: org.name,
-          type: 'organization_created',
+          type: "organization_created",
           description: `${org.name} was created`,
           timestamp: org.createdAt,
           metadata: {
@@ -124,7 +124,7 @@ export async function getRecentActivities(
       totalCount: activities.length,
     };
   } catch (error) {
-    console.error('Error fetching recent activities:', error);
+    console.error("Error fetching recent activities:", error);
     return {
       activities: [],
       hasMore: false,
@@ -137,20 +137,20 @@ export async function getRecentActivities(
  * Get activity summary for organizations
  */
 export async function getActivitySummaries(
-  organizationIds: string[]
+  organizationIds: string[],
 ): Promise<Record<string, ActivitySummary>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Verify user has access to these organizations
     const userMemberships = await db.query.member.findMany({
       where: and(
         eq(member.userId, currentUser.id),
-        inArray(member.organizationId, organizationIds)
+        inArray(member.organizationId, organizationIds),
       ),
     });
 
@@ -165,7 +165,7 @@ export async function getActivitySummaries(
       const recentMembersCount = await db.query.member.findMany({
         where: and(
           eq(member.organizationId, orgId),
-          gte(member.createdAt, thirtyDaysAgo)
+          gte(member.createdAt, thirtyDaysAgo),
         ),
       });
 
@@ -196,7 +196,7 @@ export async function getActivitySummaries(
 
     return summaries;
   } catch (error) {
-    console.error('Error fetching activity summaries:', error);
+    console.error("Error fetching activity summaries:", error);
     return {};
   }
 }
@@ -206,25 +206,25 @@ export async function getActivitySummaries(
  */
 export async function getOrganizationActivities(
   organizationId: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<RecentActivity[]> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Verify user has access to this organization
     const userMembership = await db.query.member.findFirst({
       where: and(
         eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationId)
+        eq(member.organizationId, organizationId),
       ),
     });
 
     if (!userMembership) {
-      throw new Error('User does not have access to this organization');
+      throw new Error("User does not have access to this organization");
     }
 
     const activities: RecentActivity[] = [];
@@ -245,7 +245,7 @@ export async function getOrganizationActivities(
         id: `member_joined_${memberRecord.id}`,
         organizationId: memberRecord.organizationId,
         organizationName: memberRecord.organization.name,
-        type: 'member_joined',
+        type: "member_joined",
         description: `${memberRecord.user.name} joined the organization`,
         timestamp: memberRecord.createdAt,
         userId: memberRecord.userId,
@@ -258,10 +258,10 @@ export async function getOrganizationActivities(
     }
 
     return activities.sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
     );
   } catch (error) {
-    console.error('Error fetching organization activities:', error);
+    console.error("Error fetching organization activities:", error);
     return [];
   }
 }

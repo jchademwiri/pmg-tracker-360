@@ -1,7 +1,7 @@
-import { getCurrentUser } from '@/server';
-import { ProjectForm } from '@/components/projects/project-form';
+import { getCurrentUser } from "@/server";
+import { ProjectForm } from "@/components/projects/project-form";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function NewProjectPage() {
   const { session } = await getCurrentUser();

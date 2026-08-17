@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect } from 'react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState, useTransition, useEffect } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Shield,
   Monitor,
@@ -24,13 +24,13 @@ import {
   Loader2,
   RefreshCw,
   AlertTriangle,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   SessionInfo,
   getUserSessions,
   revokeSession,
   revokeAllOtherSessions,
-} from '../actions';
+} from "../actions";
 
 interface SecuritySettingsProps {
   initialSessions?: SessionInfo[];
@@ -63,8 +63,8 @@ export function SecuritySettings({
           toast.error(result.message);
         }
       } catch (error) {
-        toast.error('Failed to load sessions');
-        console.error('Load sessions error:', error);
+        toast.error("Failed to load sessions");
+        console.error("Load sessions error:", error);
       } finally {
         setIsRefreshing(false);
       }
@@ -79,15 +79,15 @@ export function SecuritySettings({
           toast.success(result.message);
           // Remove the revoked session from the list
           setSessions((prev) =>
-            prev.filter((session) => session.id !== sessionId)
+            prev.filter((session) => session.id !== sessionId),
           );
           setShowRevokeDialog(null);
         } else {
           toast.error(result.message);
         }
       } catch (error) {
-        toast.error('Failed to revoke session');
-        console.error('Revoke session error:', error);
+        toast.error("Failed to revoke session");
+        console.error("Revoke session error:", error);
       }
     });
   };
@@ -105,8 +105,8 @@ export function SecuritySettings({
           toast.error(result.message);
         }
       } catch (error) {
-        toast.error('Failed to sign out other sessions');
-        console.error('Revoke all sessions error:', error);
+        toast.error("Failed to sign out other sessions");
+        console.error("Revoke all sessions error:", error);
       }
     });
   };
@@ -114,10 +114,10 @@ export function SecuritySettings({
   const formatLastActive = (date: Date) => {
     const now = new Date();
     const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60)
+      (now.getTime() - date.getTime()) / (1000 * 60),
     );
 
-    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
 
     const diffInHours = Math.floor(diffInMinutes / 60);
@@ -126,11 +126,15 @@ export function SecuritySettings({
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays} days ago`;
 
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const getDeviceIcon = (device: string) => {
-    if (device.toLowerCase().includes('mobile')) {
+    if (device.toLowerCase().includes("mobile")) {
       return <Smartphone className="h-4 w-4" />;
     }
     return <Monitor className="h-4 w-4" />;
@@ -160,8 +164,8 @@ export function SecuritySettings({
                 className="justify-center"
                 aria-label={
                   isRefreshing
-                    ? 'Refreshing sessions...'
-                    : 'Refresh session list'
+                    ? "Refreshing sessions..."
+                    : "Refresh session list"
                 }
               >
                 {isRefreshing ? (

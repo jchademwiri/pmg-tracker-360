@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { ChevronDown, Calendar } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/format';
+import { useState } from "react";
+import { ChevronDown, Calendar } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/format";
 
 export interface GroupableItem {
   id: string;
@@ -21,20 +21,23 @@ type Props = {
 
 export default function MonthlyAccordionGroup({
   items,
-  emptyMessage = 'No items found.',
-  itemTypeLabel = 'Item',
+  emptyMessage = "No items found.",
+  itemTypeLabel = "Item",
 }: Props) {
   const now = new Date();
-  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const groups: Record<string, { label: string; items: GroupableItem[] }> = {};
 
   items.forEach((item) => {
     const itemDate = item.date ? new Date(item.date) : new Date();
     const year = itemDate.getFullYear();
-    const month = String(itemDate.getMonth() + 1).padStart(2, '0');
+    const month = String(itemDate.getMonth() + 1).padStart(2, "0");
     const monthKey = `${year}-${month}`;
-    const monthName = itemDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    const monthName = itemDate.toLocaleDateString("en-GB", {
+      month: "long",
+      year: "numeric",
+    });
 
     if (!groups[monthKey]) {
       groups[monthKey] = { label: monthName, items: [] };
@@ -45,7 +48,9 @@ export default function MonthlyAccordionGroup({
   const monthKeys = Object.keys(groups).sort().reverse();
 
   const [openMonth, setOpenMonth] = useState<string | null>(
-    monthKeys.includes(currentMonthKey) ? currentMonthKey : monthKeys[0] || null
+    monthKeys.includes(currentMonthKey)
+      ? currentMonthKey
+      : monthKeys[0] || null,
   );
 
   if (items.length === 0) {
@@ -75,19 +80,25 @@ export default function MonthlyAccordionGroup({
             >
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm text-foreground">{grp.label}</span>
+                <span className="font-semibold text-sm text-foreground">
+                  {grp.label}
+                </span>
                 {isCurrentMonth && (
-                  <Badge variant="default" className="text-[10px] uppercase font-bold">
+                  <Badge
+                    variant="default"
+                    className="text-[10px] uppercase font-bold"
+                  >
                     Current Month
                   </Badge>
                 )}
                 <span className="text-xs text-muted-foreground font-medium">
-                  ({grp.items.length} {itemTypeLabel.toLowerCase()}{grp.items.length > 1 ? 's' : ''})
+                  ({grp.items.length} {itemTypeLabel.toLowerCase()}
+                  {grp.items.length > 1 ? "s" : ""})
                 </span>
               </div>
               <ChevronDown
                 className={`h-4 w-4 text-muted-foreground transition-transform duration-300 ${
-                  isOpen ? 'rotate-180' : ''
+                  isOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
@@ -101,7 +112,9 @@ export default function MonthlyAccordionGroup({
                       className="py-3 flex flex-wrap items-center justify-between gap-3 first:pt-2 last:pb-0"
                     >
                       <div className="space-y-0.5">
-                        <div className="text-sm font-medium text-foreground">{it.title}</div>
+                        <div className="text-sm font-medium text-foreground">
+                          {it.title}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           ID: <span className="font-mono">{it.id}</span>
                         </div>

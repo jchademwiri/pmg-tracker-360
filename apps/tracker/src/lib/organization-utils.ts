@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { toast } from 'sonner';
-import { rememberActiveOrganization } from '@/server/organizations';
+import { toast } from "sonner";
+import { rememberActiveOrganization } from "@/server/organizations";
 
 export interface OrganizationSwitchOptions {
   organizationId: string;
@@ -23,7 +23,7 @@ function extractErrorMessage(response: Response, rawText: string): string {
       parsed?.error?.message ||
       parsed?.error ||
       parsed?.details;
-    if (typeof message === 'string' && message.trim()) {
+    if (typeof message === "string" && message.trim()) {
       return message.trim();
     }
   } catch {
@@ -45,31 +45,27 @@ export async function switchOrganization({
 }: OrganizationSwitchOptions): Promise<{ success: boolean; error?: string }> {
   try {
     const baseUrl =
-      typeof window !== 'undefined'
+      typeof window !== "undefined"
         ? window.location.origin
-        : 'http://localhost:3000';
+        : "http://localhost:3000";
 
     const response = await fetch(
       `${baseUrl}/api/auth/organization/set-active`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ organizationId }),
-        credentials: 'include',
-      }
+        credentials: "include",
+      },
     );
 
     if (!response.ok) {
       const rawText = await response.text();
       const message = extractErrorMessage(response, rawText);
       const errorMessage = `Failed to switch organization: ${message}`;
-      console.error(
-        'Organization switch failed:',
-        response.status,
-        rawText
-      );
+      console.error("Organization switch failed:", response.status, rawText);
       if (showToast) {
         toast.error(errorMessage);
       }
@@ -84,14 +80,14 @@ export async function switchOrganization({
       const remembered = await rememberActiveOrganization(organizationId);
       if (!remembered.success) {
         console.error(
-          'Failed to remember active organization preference:',
-          remembered.error
+          "Failed to remember active organization preference:",
+          remembered.error,
         );
       }
     } catch (rememberError) {
       console.error(
-        'Failed to remember active organization preference:',
-        rememberError
+        "Failed to remember active organization preference:",
+        rememberError,
       );
     }
 
@@ -111,12 +107,12 @@ export async function switchOrganization({
 
     return { success: true };
   } catch (error) {
-    console.error('Organization switch error:', error);
+    console.error("Organization switch error:", error);
 
-    let errorMessage = 'Failed to switch organization';
+    let errorMessage = "Failed to switch organization";
     if (error instanceof Error) {
       errorMessage = error.message;
-    } else if (typeof error === 'object' && error !== null) {
+    } else if (typeof error === "object" && error !== null) {
       errorMessage = `Network error: ${String(error)}`;
     }
 

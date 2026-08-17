@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface AccessibilityAnnouncerProps {
   message: string;
-  priority?: 'polite' | 'assertive';
+  priority?: "polite" | "assertive";
   clearAfter?: number;
 }
 
@@ -14,10 +14,10 @@ interface AccessibilityAnnouncerProps {
  */
 export function AccessibilityAnnouncer({
   message,
-  priority = 'polite',
+  priority = "polite",
   clearAfter = 3000,
 }: AccessibilityAnnouncerProps) {
-  const [currentMessage, setCurrentMessage] = useState('');
+  const [currentMessage, setCurrentMessage] = useState("");
 
   useEffect(() => {
     if (message) {
@@ -25,7 +25,7 @@ export function AccessibilityAnnouncer({
 
       if (clearAfter > 0) {
         const timer = setTimeout(() => {
-          setCurrentMessage('');
+          setCurrentMessage("");
         }, clearAfter);
 
         return () => clearTimeout(timer);
@@ -51,13 +51,13 @@ export function AccessibilityAnnouncer({
 export function useAccessibilityAnnouncer() {
   const [announcement, setAnnouncement] = useState<{
     message: string;
-    priority: 'polite' | 'assertive';
+    priority: "polite" | "assertive";
     id: number;
   } | null>(null);
 
   const announce = (
     message: string,
-    priority: 'polite' | 'assertive' = 'polite'
+    priority: "polite" | "assertive" = "polite",
   ) => {
     setAnnouncement({
       message,

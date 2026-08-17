@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import type { TicketWithUser, TicketMessageItem } from '@/lib/admin-queries';
-import DataTable, { type Column } from '@/components/DataTable';
-import StatusBadge from '@/components/StatusBadge';
-import { PrioritySelect, type PriorityValue } from './PrioritySelect';
-import { FormattedMessage } from './FormattedMessage';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import { useState, useEffect, useRef } from "react";
+import type { TicketWithUser, TicketMessageItem } from "@/lib/admin-queries";
+import DataTable, { type Column } from "@/components/DataTable";
+import StatusBadge from "@/components/StatusBadge";
+import { PrioritySelect, type PriorityValue } from "./PrioritySelect";
+import { FormattedMessage } from "./FormattedMessage";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   getTicketThreadAction,
   sendAdminTicketMessageAction,
@@ -15,8 +15,8 @@ import {
   sendTicketTranscriptEmailAction,
   bulkUpdateTicketStatus,
   bulkDeleteTickets,
-} from './actions';
-import { useRouter, useSearchParams } from 'next/navigation';
+} from "./actions";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   LifeBuoy,
   MessageCircle,
@@ -47,48 +47,48 @@ import {
   AlertTriangle,
   ExternalLink,
   ChevronDown,
-} from 'lucide-react';
+} from "lucide-react";
 
 type Props = {
   tickets: TicketWithUser[];
 };
 
-type ViewMode = 'split' | 'table';
-type FilterTab = 'all' | 'active' | 'urgent' | 'resolved';
+type ViewMode = "split" | "table";
+type FilterTab = "all" | "active" | "urgent" | "resolved";
 
 const CANNED_RESPONSES = [
   {
-    label: '⚡ Investigating',
-    text: 'Hello, thank you for reaching out. Our engineering and support team is currently investigating this inquiry and will update you shortly.',
+    label: "⚡ Investigating",
+    text: "Hello, thank you for reaching out. Our engineering and support team is currently investigating this inquiry and will update you shortly.",
   },
   {
-    label: '📋 Request Info',
-    text: 'Could you please provide the tender reference number, document name, or a screenshot of the issue to help us resolve this faster?',
+    label: "📋 Request Info",
+    text: "Could you please provide the tender reference number, document name, or a screenshot of the issue to help us resolve this faster?",
   },
   {
-    label: '✅ Resolved',
-    text: 'We have reviewed your request and applied the necessary fix. Please verify on your dashboard and let us know if you need further assistance.',
+    label: "✅ Resolved",
+    text: "We have reviewed your request and applied the necessary fix. Please verify on your dashboard and let us know if you need further assistance.",
   },
   {
-    label: '🛠️ Escalated',
-    text: 'Your request has been escalated to our senior technical specialists. We will follow up as soon as the verification is complete.',
+    label: "🛠️ Escalated",
+    text: "Your request has been escalated to our senior technical specialists. We will follow up as soon as the verification is complete.",
   },
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'open', label: 'Open' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'closed', label: 'Closed' },
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
 ];
 
 export default function TicketsListClient({ tickets: initialTickets }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const urlTicketId = searchParams.get('ticket') || searchParams.get('id');
+  const urlTicketId = searchParams.get("ticket") || searchParams.get("id");
 
   const [tickets, setTickets] = useState<TicketWithUser[]>(initialTickets);
-  const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [activeTicket, setActiveTicket] = useState<TicketWithUser | null>(null);
   const [messages, setMessages] = useState<TicketMessageItem[]>([]);
@@ -96,22 +96,24 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
   const [refreshing, setRefreshing] = useState(false);
 
   // Search & Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterTab, setFilterTab] = useState<FilterTab>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterTab, setFilterTab] = useState<FilterTab>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
   // Multi-select for bulk actions
-  const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(new Set());
+  const [selectedTicketIds, setSelectedTicketIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [actionLoading, setActionLoading] = useState(false);
 
   // Composer state
-  const [replyMessage, setReplyMessage] = useState('');
+  const [replyMessage, setReplyMessage] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendingTranscript, setSendingTranscript] = useState(false);
   const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
+    type: "success" | "error";
     message: string;
   } | null>(null);
 
@@ -121,15 +123,15 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
     title: string;
     description: string;
     confirmText: string;
-    variant: 'danger' | 'warning' | 'info';
+    variant: "danger" | "warning" | "info";
     requireValue?: string;
     action: () => Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    description: '',
-    confirmText: 'Confirm',
-    variant: 'danger',
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
     action: async () => {},
   });
 
@@ -146,8 +148,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       const match = initialTickets.find(
         (t) =>
           t.id.toLowerCase() === urlTicketId.toLowerCase() ||
-          (t.ticketCode && t.ticketCode.toLowerCase() === urlTicketId.toLowerCase()) ||
-          (t.ticketNumber && String(t.ticketNumber) === urlTicketId)
+          (t.ticketCode &&
+            t.ticketCode.toLowerCase() === urlTicketId.toLowerCase()) ||
+          (t.ticketNumber && String(t.ticketNumber) === urlTicketId),
       );
       if (match && selectedTicketId !== match.id) {
         setSelectedTicketId(match.id);
@@ -169,10 +172,10 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
 
   // Scroll to bottom when messages update
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
   };
@@ -186,13 +189,13 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       setMessages((res.messages as TicketMessageItem[]) || []);
       // Mark unread as 0 locally
       setTickets((prev) =>
-        prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t))
+        prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t)),
       );
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('admin-support-count-updated'));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("admin-support-count-updated"));
       }
     } else {
-      showNotification('error', res.error || 'Failed to load thread.');
+      showNotification("error", res.error || "Failed to load thread.");
     }
   };
 
@@ -219,15 +222,15 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
     setSending(false);
 
     if (res.success) {
-      setReplyMessage('');
+      setReplyMessage("");
       showNotification(
-        'success',
-        isInternal ? 'Internal note added' : 'Reply sent to user'
+        "success",
+        isInternal ? "Internal note added" : "Reply sent to user",
       );
       await loadThread(activeTicket.id);
       router.refresh();
     } else {
-      showNotification('error', res.error || 'Failed to send message.');
+      showNotification("error", res.error || "Failed to send message.");
     }
   };
 
@@ -237,11 +240,16 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       await updateTicketStatus(activeTicket.id, newStatus);
       setActiveTicket((prev) => (prev ? { ...prev, status: newStatus } : null));
       setTickets((prev) =>
-        prev.map((t) => (t.id === activeTicket.id ? { ...t, status: newStatus } : t))
+        prev.map((t) =>
+          t.id === activeTicket.id ? { ...t, status: newStatus } : t,
+        ),
       );
-      showNotification('success', `Status updated to ${newStatus.toUpperCase()}`);
+      showNotification(
+        "success",
+        `Status updated to ${newStatus.toUpperCase()}`,
+      );
     } catch (err: any) {
-      showNotification('error', err.message || 'Status update failed.');
+      showNotification("error", err.message || "Status update failed.");
     }
   };
 
@@ -249,13 +257,20 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
     if (!activeTicket) return;
     try {
       await updateTicketPriority(activeTicket.id, newPriority);
-      setActiveTicket((prev) => (prev ? { ...prev, priority: newPriority } : null));
-      setTickets((prev) =>
-        prev.map((t) => (t.id === activeTicket.id ? { ...t, priority: newPriority } : t))
+      setActiveTicket((prev) =>
+        prev ? { ...prev, priority: newPriority } : null,
       );
-      showNotification('success', `Priority updated to ${newPriority.toUpperCase()}`);
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === activeTicket.id ? { ...t, priority: newPriority } : t,
+        ),
+      );
+      showNotification(
+        "success",
+        `Priority updated to ${newPriority.toUpperCase()}`,
+      );
     } catch (err: any) {
-      showNotification('error', err.message || 'Priority update failed.');
+      showNotification("error", err.message || "Priority update failed.");
     }
   };
 
@@ -264,13 +279,16 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
     setSendingTranscript(true);
     const res = await sendTicketTranscriptEmailAction(
       activeTicket.id,
-      activeTicket.email
+      activeTicket.email,
     );
     setSendingTranscript(false);
     if (res.success) {
-      showNotification('success', `Full transcript emailed to ${activeTicket.email}`);
+      showNotification(
+        "success",
+        `Full transcript emailed to ${activeTicket.email}`,
+      );
     } else {
-      showNotification('error', res.error || 'Failed to email transcript.');
+      showNotification("error", res.error || "Failed to email transcript.");
     }
   };
 
@@ -306,18 +324,31 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
   };
 
   // Metrics
-  const openCount = tickets.filter((t) => t.status === 'open').length;
-  const inProgressCount = tickets.filter((t) => t.status === 'in_progress').length;
-  const resolvedCount = tickets.filter((t) => t.status === 'resolved' || t.status === 'closed').length;
-  const urgentCount = tickets.filter((t) => t.priority === 'urgent').length;
+  const openCount = tickets.filter((t) => t.status === "open").length;
+  const inProgressCount = tickets.filter(
+    (t) => t.status === "in_progress",
+  ).length;
+  const resolvedCount = tickets.filter(
+    (t) => t.status === "resolved" || t.status === "closed",
+  ).length;
+  const urgentCount = tickets.filter((t) => t.priority === "urgent").length;
 
   // Filter tickets
   const filteredTickets = tickets.filter((t) => {
-    if (filterTab === 'active' && (t.status === 'resolved' || t.status === 'closed')) return false;
-    if (filterTab === 'urgent' && t.priority !== 'urgent') return false;
-    if (filterTab === 'resolved' && t.status !== 'resolved' && t.status !== 'closed') return false;
+    if (
+      filterTab === "active" &&
+      (t.status === "resolved" || t.status === "closed")
+    )
+      return false;
+    if (filterTab === "urgent" && t.priority !== "urgent") return false;
+    if (
+      filterTab === "resolved" &&
+      t.status !== "resolved" &&
+      t.status !== "closed"
+    )
+      return false;
 
-    if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
+    if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
 
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -333,7 +364,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
 
   const getPriorityBadge = (priority: string) => {
     const p = priority.toLowerCase();
-    if (p === 'urgent') {
+    if (p === "urgent") {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-950/80 text-rose-300 border border-rose-700/60 shadow-[0_0_8px_rgba(244,63,94,0.4)]">
           <Flame className="h-3 w-3 text-rose-400 fill-rose-400" />
@@ -341,7 +372,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
         </span>
       );
     }
-    if (p === 'high') {
+    if (p === "high") {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-950/80 text-amber-300 border border-amber-700/60">
           <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -349,7 +380,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
         </span>
       );
     }
-    if (p === 'low') {
+    if (p === "low") {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-950/80 text-emerald-300 border border-emerald-700/60">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -368,8 +399,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
   // Table Columns
   const tableColumns: Column<TicketWithUser>[] = [
     {
-      key: 'select',
-      header: '',
+      key: "select",
+      header: "",
       render: (t) => (
         <button
           type="button"
@@ -385,32 +416,43 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       ),
     },
     {
-      key: 'ref',
-      header: 'Ticket ID',
+      key: "ref",
+      header: "Ticket ID",
       render: (t) => (
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-            #{t.ticketCode || (t.ticketNumber ? `TICK-${t.ticketNumber}` : `TICK-${t.id.slice(0, 8).toUpperCase()}`)}
+            #
+            {t.ticketCode ||
+              (t.ticketNumber
+                ? `TICK-${t.ticketNumber}`
+                : `TICK-${t.id.slice(0, 8).toUpperCase()}`)}
           </span>
           {t.unreadCount && t.unreadCount > 0 ? (
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" title="Unread message" />
+            <span
+              className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"
+              title="Unread message"
+            />
           ) : null}
         </div>
       ),
     },
     {
-      key: 'subject',
-      header: 'Subject / Issue',
+      key: "subject",
+      header: "Subject / Issue",
       render: (t) => (
         <div className="flex flex-col gap-0.5 max-w-sm">
-          <span className="font-semibold text-zinc-100 truncate">{t.subject || 'Support Request'}</span>
-          <span className="text-xs text-zinc-400 line-clamp-1">{t.message}</span>
+          <span className="font-semibold text-zinc-100 truncate">
+            {t.subject || "Support Request"}
+          </span>
+          <span className="text-xs text-zinc-400 line-clamp-1">
+            {t.message}
+          </span>
         </div>
       ),
     },
     {
-      key: 'submitter',
-      header: 'Submitter',
+      key: "submitter",
+      header: "Submitter",
       render: (t) => (
         <div className="flex flex-col gap-0.5">
           <span className="font-medium text-zinc-200">{t.name}</span>
@@ -419,25 +461,25 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       ),
     },
     {
-      key: 'priority',
-      header: 'Priority',
+      key: "priority",
+      header: "Priority",
       render: (t) => getPriorityBadge(t.priority),
     },
     {
-      key: 'status',
-      header: 'Status',
+      key: "status",
+      header: "Status",
       render: (t) => <StatusBadge status={t.status} />,
     },
     {
-      key: 'created',
-      header: 'Created',
+      key: "created",
+      header: "Created",
       render: (t) => (
         <span className="text-xs text-zinc-400">
-          {new Date(t.createdAt).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
+          {new Date(t.createdAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </span>
       ),
@@ -465,7 +507,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
               </span>
             </div>
             <p className="text-xs text-zinc-400 hidden sm:block">
-              Executive two-way concierge, real-time ticket triage, and user communications.
+              Executive two-way concierge, real-time ticket triage, and user
+              communications.
             </p>
           </div>
         </div>
@@ -476,23 +519,34 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
             <div className="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-700/60 rounded-xl px-2.5 py-1 text-xs text-emerald-300 font-bold animate-pulse shadow-sm">
               <Mail className="h-3.5 w-3.5" />
               <span>
-                {tickets.reduce((sum, t) => sum + (t.unreadCount || 0), 0)} Unread Msg(s)
+                {tickets.reduce((sum, t) => sum + (t.unreadCount || 0), 0)}{" "}
+                Unread Msg(s)
               </span>
             </div>
           )}
 
           <div className="hidden xl:flex items-center gap-1.5 bg-zinc-900/80 border border-zinc-800 rounded-xl px-2.5 py-1 text-xs text-zinc-300">
-            <span className="font-semibold text-zinc-100">All: {tickets.length}</span>
+            <span className="font-semibold text-zinc-100">
+              All: {tickets.length}
+            </span>
             <span className="text-zinc-600">•</span>
-            <span className="text-amber-400 font-semibold">Open: {openCount}</span>
+            <span className="text-amber-400 font-semibold">
+              Open: {openCount}
+            </span>
             <span className="text-zinc-600">•</span>
-            <span className="text-blue-400 font-semibold">In Progress: {inProgressCount}</span>
+            <span className="text-blue-400 font-semibold">
+              In Progress: {inProgressCount}
+            </span>
             <span className="text-zinc-600">•</span>
-            <span className="text-emerald-400 font-semibold">Resolved: {resolvedCount}</span>
+            <span className="text-emerald-400 font-semibold">
+              Resolved: {resolvedCount}
+            </span>
             {urgentCount > 0 && (
               <>
                 <span className="text-zinc-600">•</span>
-                <span className="text-rose-400 font-bold">Urgent: {urgentCount}</span>
+                <span className="text-rose-400 font-bold">
+                  Urgent: {urgentCount}
+                </span>
               </>
             )}
           </div>
@@ -505,7 +559,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
             className="h-9 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
             title="Refresh Live Support Operations"
           >
-            <RotateCcw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-amber-400' : ''}`} />
+            <RotateCcw
+              className={`h-3.5 w-3.5 ${refreshing ? "animate-spin text-amber-400" : ""}`}
+            />
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
@@ -513,11 +569,11 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
           <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-0.5">
             <button
               type="button"
-              onClick={() => setViewMode('split')}
+              onClick={() => setViewMode("split")}
               className={`px-3 py-1 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'split'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-zinc-400 hover:text-white'
+                viewMode === "split"
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
@@ -525,11 +581,11 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('table')}
+              onClick={() => setViewMode("table")}
               className={`px-3 py-1 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'text-zinc-400 hover:text-white'
+                viewMode === "table"
+                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <List className="h-3.5 w-3.5" />
@@ -543,9 +599,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       {notification && (
         <div
           className={`shrink-0 mt-2 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center justify-between animate-in fade-in duration-200 ${
-            notification.type === 'success'
-              ? 'bg-emerald-950/80 border border-emerald-700/60 text-emerald-300'
-              : 'bg-rose-950/80 border border-rose-700/60 text-rose-300'
+            notification.type === "success"
+              ? "bg-emerald-950/80 border border-emerald-700/60 text-emerald-300"
+              : "bg-rose-950/80 border border-rose-700/60 text-rose-300"
           }`}
         >
           <span>{notification.message}</span>
@@ -565,7 +621,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       {selectedTicketIds.size > 0 && (
         <div className="shrink-0 mt-2 p-2.5 bg-amber-950/40 border border-amber-700/50 rounded-xl flex items-center justify-between gap-3 text-xs animate-in fade-in-0 duration-200">
           <div className="flex items-center gap-2 text-amber-200 font-medium">
-            <span className="font-bold">{selectedTicketIds.size}</span> ticket(s) selected
+            <span className="font-bold">{selectedTicketIds.size}</span>{" "}
+            ticket(s) selected
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -573,11 +630,11 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
               onClick={() =>
                 setDialogState({
                   isOpen: true,
-                  title: 'Bulk In Progress',
+                  title: "Bulk In Progress",
                   description: `Mark ${selectedTicketIds.size} selected ticket(s) as In Progress?`,
-                  confirmText: 'Update to In Progress',
-                  variant: 'info',
-                  action: () => handleBulkStatus('in_progress'),
+                  confirmText: "Update to In Progress",
+                  variant: "info",
+                  action: () => handleBulkStatus("in_progress"),
                 })
               }
               className="px-2.5 py-1 bg-blue-950 hover:bg-blue-900 text-blue-300 border border-blue-800 rounded-lg cursor-pointer transition-all"
@@ -589,11 +646,11 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
               onClick={() =>
                 setDialogState({
                   isOpen: true,
-                  title: 'Bulk Resolve',
+                  title: "Bulk Resolve",
                   description: `Mark ${selectedTicketIds.size} selected ticket(s) as Closed/Resolved?`,
-                  confirmText: 'Resolve Tickets',
-                  variant: 'warning',
-                  action: () => handleBulkStatus('closed'),
+                  confirmText: "Resolve Tickets",
+                  variant: "warning",
+                  action: () => handleBulkStatus("closed"),
                 })
               }
               className="px-2.5 py-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-lg cursor-pointer transition-all"
@@ -605,10 +662,10 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
               onClick={() =>
                 setDialogState({
                   isOpen: true,
-                  title: 'Bulk Delete Tickets',
+                  title: "Bulk Delete Tickets",
                   description: `Permanently delete ${selectedTicketIds.size} selected ticket(s)? This will also delete all message transcripts.`,
-                  confirmText: 'Delete Tickets',
-                  variant: 'danger',
+                  confirmText: "Delete Tickets",
+                  variant: "danger",
                   action: handleBulkDelete,
                 })
               }
@@ -631,7 +688,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       {/* =========================================================================
           VIEW MODE 1: SPLIT 2-PANE CONCIERGE DESK (Default Luxury Experience)
       ========================================================================= */}
-      {viewMode === 'split' && (
+      {viewMode === "split" && (
         <div className="flex-1 min-h-0 mt-3 grid grid-cols-1 lg:grid-cols-12 rounded-2xl border border-zinc-800 bg-zinc-950/70 backdrop-blur-md overflow-hidden shadow-2xl">
           {/* =======================================================================
               LEFT PANE: TICKET OPERATIONS ROSTER (Internally scrollable)
@@ -652,23 +709,25 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
 
               {/* Status Segmented Tabs */}
               <div className="flex gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800">
-                {(['all', 'active', 'urgent', 'resolved'] as FilterTab[]).map((tab) => {
-                  const isActive = filterTab === tab;
-                  return (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setFilterTab(tab)}
-                      className={`flex-1 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer capitalize ${
-                        isActive
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                          : 'text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  );
-                })}
+                {(["all", "active", "urgent", "resolved"] as FilterTab[]).map(
+                  (tab) => {
+                    const isActive = filterTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setFilterTab(tab)}
+                        className={`flex-1 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer capitalize ${
+                          isActive
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    );
+                  },
+                )}
               </div>
             </div>
 
@@ -677,7 +736,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
               {filteredTickets.length === 0 ? (
                 <div className="text-center py-16 px-4 space-y-2">
                   <Inbox className="h-8 w-8 text-zinc-600 mx-auto" />
-                  <p className="text-xs font-medium text-zinc-300">No support tickets found</p>
+                  <p className="text-xs font-medium text-zinc-300">
+                    No support tickets found
+                  </p>
                   <p className="text-[11px] text-zinc-500">
                     No tickets match the current filter or search criteria.
                   </p>
@@ -691,7 +752,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                     24 * 60 * 60 * 1000;
                   const ticketCode =
                     t.ticketCode ||
-                    (t.ticketNumber ? `TICK-${t.ticketNumber}` : `TICK-${t.id.slice(0, 8).toUpperCase()}`);
+                    (t.ticketNumber
+                      ? `TICK-${t.ticketNumber}`
+                      : `TICK-${t.id.slice(0, 8).toUpperCase()}`);
 
                   return (
                     <div
@@ -699,14 +762,18 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                       onClick={() => {
                         setSelectedTicketId(t.id);
                         setActiveTicket(t);
-                        if (typeof window !== 'undefined') {
-                          window.history.replaceState(null, '', `/support-tickets?ticket=${t.id}`);
+                        if (typeof window !== "undefined") {
+                          window.history.replaceState(
+                            null,
+                            "",
+                            `/support-tickets?ticket=${t.id}`,
+                          );
                         }
                       }}
                       className={`p-3 rounded-xl border transition-all cursor-pointer space-y-2 group relative ${
                         isSelected
-                          ? 'bg-amber-500/10 border-amber-500/60 shadow-lg ring-1 ring-amber-500/30'
-                          : 'bg-zinc-900/60 hover:bg-zinc-800/60 border-zinc-800/80'
+                          ? "bg-amber-500/10 border-amber-500/60 shadow-lg ring-1 ring-amber-500/30"
+                          : "bg-zinc-900/60 hover:bg-zinc-800/60 border-zinc-800/80"
                       }`}
                     >
                       {/* Top Badges Row */}
@@ -728,7 +795,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                           </span>
                           <StatusBadge status={t.status} />
                           {getPriorityBadge(t.priority)}
-                          {isRecent && t.status === 'open' && (
+                          {isRecent && t.status === "open" && (
                             <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
                               NEW
                             </span>
@@ -750,14 +817,14 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                             {t.name}
                           </span>
                           <span className="text-[10px] text-zinc-500 shrink-0">
-                            {new Date(t.createdAt).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
+                            {new Date(t.createdAt).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
                             })}
                           </span>
                         </div>
                         <h4 className="text-xs font-semibold text-zinc-100 line-clamp-1">
-                          {t.subject || 'Support Request'}
+                          {t.subject || "Support Request"}
                         </h4>
                         <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">
                           {t.message}
@@ -766,7 +833,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
 
                       {/* Footer */}
                       <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1 border-t border-zinc-800/60">
-                        <span className="truncate max-w-[170px]">{t.email}</span>
+                        <span className="truncate max-w-[170px]">
+                          {t.email}
+                        </span>
                         <span className="flex items-center gap-1 font-medium text-zinc-400">
                           <MessageCircle className="h-3 w-3" />
                           <span>{t.messageCount || 1} msg(s)</span>
@@ -791,13 +860,17 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded border border-amber-400/20">
-                          #{activeTicket.ticketCode || (activeTicket.ticketNumber ? `TICK-${activeTicket.ticketNumber}` : `TICK-${activeTicket.id.slice(0, 8).toUpperCase()}`)}
+                          #
+                          {activeTicket.ticketCode ||
+                            (activeTicket.ticketNumber
+                              ? `TICK-${activeTicket.ticketNumber}`
+                              : `TICK-${activeTicket.id.slice(0, 8).toUpperCase()}`)}
                         </span>
                         <StatusBadge status={activeTicket.status} />
                         {getPriorityBadge(activeTicket.priority)}
                       </div>
                       <h2 className="text-base sm:text-lg font-bold text-white truncate">
-                        {activeTicket.subject || 'Support Request'}
+                        {activeTicket.subject || "Support Request"}
                       </h2>
                     </div>
 
@@ -875,30 +948,33 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                   ) : messages.length === 0 ? (
                     <div className="text-center py-16 px-4 space-y-2">
                       <MessageCircle className="h-8 w-8 text-zinc-600 mx-auto" />
-                      <p className="text-xs font-semibold text-zinc-300">No conversation history yet</p>
+                      <p className="text-xs font-semibold text-zinc-300">
+                        No conversation history yet
+                      </p>
                       <p className="text-[11px] text-zinc-500">
-                        Post an admin reply below to initiate or update the client thread.
+                        Post an admin reply below to initiate or update the
+                        client thread.
                       </p>
                     </div>
                   ) : (
                     messages.map((m) => {
-                      const isAdm = m.senderType === 'admin';
+                      const isAdm = m.senderType === "admin";
                       const isInternalNote = m.isInternal;
 
                       return (
                         <div
                           key={m.id}
                           className={`flex gap-3 ${
-                            isAdm ? 'flex-row-reverse' : 'flex-row'
+                            isAdm ? "flex-row-reverse" : "flex-row"
                           }`}
                         >
                           <div
                             className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-xs ${
                               isInternalNote
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                                 : isAdm
-                                ? 'bg-amber-500 text-black'
-                                : 'bg-zinc-800 text-zinc-200 border border-zinc-700'
+                                  ? "bg-amber-500 text-black"
+                                  : "bg-zinc-800 text-zinc-200 border border-zinc-700"
                             }`}
                           >
                             {isInternalNote ? (
@@ -913,10 +989,10 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                           <div
                             className={`max-w-[85%] rounded-2xl p-3.5 text-xs shadow-md space-y-1.5 ${
                               isInternalNote
-                                ? 'bg-amber-950/30 border border-dashed border-amber-500/50 text-amber-100'
+                                ? "bg-amber-950/30 border border-dashed border-amber-500/50 text-amber-100"
                                 : isAdm
-                                ? 'bg-amber-500/10 border border-amber-500/30 text-zinc-100'
-                                : 'bg-zinc-900 border border-zinc-800 text-zinc-100'
+                                  ? "bg-amber-500/10 border border-amber-500/30 text-zinc-100"
+                                  : "bg-zinc-900 border border-zinc-800 text-zinc-100"
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-400 pb-1 border-b border-zinc-800/40">
@@ -935,8 +1011,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                               </span>
                               <span>
                                 {new Date(m.createdAt).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
+                                  hour: "2-digit",
+                                  minute: "2-digit",
                                 })}
                               </span>
                             </div>
@@ -961,8 +1037,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                         onClick={() => setIsInternal(false)}
                         className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1 ${
                           !isInternal
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                            : 'text-zinc-400 hover:text-white'
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            : "text-zinc-400 hover:text-white"
                         }`}
                       >
                         <MessageCircle className="h-3 w-3" />
@@ -973,8 +1049,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                         onClick={() => setIsInternal(true)}
                         className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1 ${
                           isInternal
-                            ? 'bg-amber-500/30 text-amber-200 border border-amber-500/50'
-                            : 'text-zinc-400 hover:text-white'
+                            ? "bg-amber-500/30 text-amber-200 border border-amber-500/50"
+                            : "text-zinc-400 hover:text-white"
                         }`}
                       >
                         <Lock className="h-3 w-3 text-amber-400" />
@@ -1006,20 +1082,20 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                         value={replyMessage}
                         onChange={(e) => setReplyMessage(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
+                          if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
                             handleSendMessage();
                           }
                         }}
                         placeholder={
                           isInternal
-                            ? '🔒 Type an internal staff note (visible only to admins)...'
-                            : 'Type your reply to the user (Enter to send, Shift+Enter for new line)...'
+                            ? "🔒 Type an internal staff note (visible only to admins)..."
+                            : "Type your reply to the user (Enter to send, Shift+Enter for new line)..."
                         }
                         className={`w-full p-3 rounded-xl text-xs text-white placeholder:text-zinc-500 focus:outline-none transition-all resize-none ${
                           isInternal
-                            ? 'bg-amber-950/20 border border-amber-500/40 focus:border-amber-500'
-                            : 'bg-zinc-950 border border-zinc-800 focus:border-amber-500'
+                            ? "bg-amber-950/20 border border-amber-500/40 focus:border-amber-500"
+                            : "bg-zinc-950 border border-zinc-800 focus:border-amber-500"
                         }`}
                       />
                     </div>
@@ -1031,7 +1107,9 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                             <input
                               type="checkbox"
                               checked={sendEmailNotification}
-                              onChange={(e) => setSendEmailNotification(e.target.checked)}
+                              onChange={(e) =>
+                                setSendEmailNotification(e.target.checked)
+                              }
                               className="rounded border-zinc-700 bg-zinc-900 text-amber-500 focus:ring-0 cursor-pointer"
                             />
                             <span>Email user reply alert</span>
@@ -1047,8 +1125,8 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                         disabled={sending || !replyMessage.trim()}
                         className={`h-9 px-4 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all disabled:opacity-50 ${
                           isInternal
-                            ? 'bg-amber-600 hover:bg-amber-500 text-black'
-                            : 'bg-amber-500 hover:bg-amber-400 text-black'
+                            ? "bg-amber-600 hover:bg-amber-500 text-black"
+                            : "bg-amber-500 hover:bg-amber-400 text-black"
                         }`}
                       >
                         {sending ? (
@@ -1059,7 +1137,11 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                         ) : (
                           <>
                             <Send className="h-3.5 w-3.5" />
-                            <span>{isInternal ? 'Save Internal Note' : 'Send Public Reply'}</span>
+                            <span>
+                              {isInternal
+                                ? "Save Internal Note"
+                                : "Send Public Reply"}
+                            </span>
                           </>
                         )}
                       </button>
@@ -1073,9 +1155,12 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
                   <div className="h-14 w-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
                     <LifeBuoy className="h-7 w-7" />
                   </div>
-                  <h3 className="text-base font-bold text-white">Select a Ticket</h3>
+                  <h3 className="text-base font-bold text-white">
+                    Select a Ticket
+                  </h3>
                   <p className="text-xs text-zinc-400">
-                    Choose a support request from the roster on the left to start live concierge triage.
+                    Choose a support request from the roster on the left to
+                    start live concierge triage.
                   </p>
                 </div>
               </div>
@@ -1087,7 +1172,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       {/* =========================================================================
           VIEW MODE 2: DENSE DATA ROSTER TABLE
       ========================================================================= */}
-      {viewMode === 'table' && (
+      {viewMode === "table" && (
         <div className="flex-1 min-h-0 mt-3 bg-zinc-900/60 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col p-4">
           <div className="flex-1 min-h-0 overflow-y-auto">
             <DataTable<TicketWithUser>
@@ -1097,9 +1182,13 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
               onRowClick={(t: TicketWithUser) => {
                 setSelectedTicketId(t.id);
                 setActiveTicket(t);
-                setViewMode('split');
-                if (typeof window !== 'undefined') {
-                  window.history.replaceState(null, '', `/support-tickets?ticket=${t.id}`);
+                setViewMode("split");
+                if (typeof window !== "undefined") {
+                  window.history.replaceState(
+                    null,
+                    "",
+                    `/support-tickets?ticket=${t.id}`,
+                  );
                 }
               }}
             />

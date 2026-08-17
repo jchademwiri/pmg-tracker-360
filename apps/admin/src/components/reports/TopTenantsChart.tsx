@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   BarChart,
@@ -8,8 +8,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import type { TenantStorageUsage } from '@/lib/reports-queries';
+} from "recharts";
+import type { TenantStorageUsage } from "@/lib/reports-queries";
 
 type Props = {
   data: TenantStorageUsage[];
@@ -17,7 +17,7 @@ type Props = {
 
 export function TopTenantsChart({ data }: Props) {
   const chartData = data.slice(0, 6).map((t) => ({
-    name: t.name.length > 18 ? t.name.slice(0, 16) + '…' : t.name,
+    name: t.name.length > 18 ? t.name.slice(0, 16) + "…" : t.name,
     storageMB: t.storageMB,
     tenders: t.tenderCount,
     projects: t.projectCount,
@@ -39,13 +39,17 @@ export function TopTenantsChart({ data }: Props) {
           layout="vertical"
           margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" horizontal={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="rgba(255,255,255,0.08)"
+            horizontal={false}
+          />
           <XAxis
             type="number"
             stroke="#94a3b8"
             fontSize={12}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
             unit=" MB"
           />
           <YAxis
@@ -54,21 +58,21 @@ export function TopTenantsChart({ data }: Props) {
             stroke="#94a3b8"
             fontSize={12}
             tickLine={false}
-            axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
             width={120}
           />
           <Tooltip
             formatter={(value: any, name: any) => [
               `${Number(value).toFixed(2)} MB`,
-              'Storage',
+              "Storage",
             ]}
             contentStyle={{
-              backgroundColor: '#0f172a',
-              borderColor: 'rgba(255,255,255,0.15)',
-              borderRadius: '8px',
-              color: '#f8fafc',
-              fontSize: '12px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              backgroundColor: "#0f172a",
+              borderColor: "rgba(255,255,255,0.15)",
+              borderRadius: "8px",
+              color: "#f8fafc",
+              fontSize: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
             }}
           />
           <Bar

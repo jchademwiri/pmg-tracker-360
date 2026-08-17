@@ -1,14 +1,14 @@
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { getCurrentUser } from '@/server';
-import { getTenderById, getTenderFollowUps } from '@/server/tenders';
-import { getDocuments } from '@/server/documents';
-import { getTenderExtensions } from '@/server/modules/extensions';
-import { TenderDetails } from '@/components/tenders/tender-details';
-import { NoOrganizationState } from '@/components/shared/empty-states';
-import { formatClientName, formatCurrency } from '@/lib/format';
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getCurrentUser } from "@/server";
+import { getTenderById, getTenderFollowUps } from "@/server/tenders";
+import { getDocuments } from "@/server/documents";
+import { getTenderExtensions } from "@/server/modules/extensions";
+import { TenderDetails } from "@/components/tenders/tender-details";
+import { NoOrganizationState } from "@/components/shared/empty-states";
+import { formatClientName, formatCurrency } from "@/lib/format";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface TenderDetailPageProps {
   params: Promise<{
@@ -24,21 +24,21 @@ export async function generateMetadata({
 
   if (!session?.activeOrganizationId) {
     return {
-      title: 'Tender Details | PMG Tracker 360',
+      title: "Tender Details | PMG Tracker 360",
     };
   }
 
   const result = await getTenderById(session.activeOrganizationId, id);
   if (!result.success || !result.tender) {
     return {
-      title: 'Tender Not Found | PMG Tracker 360',
+      title: "Tender Not Found | PMG Tracker 360",
     };
   }
 
   const tender = result.tender;
   const clientName = tender.client?.name
     ? formatClientName(tender.client.name)
-    : 'Buyer';
+    : "Buyer";
 
   return {
     title: `${tender.tenderNumber.toUpperCase()} — ${clientName} | PMG Tracker 360`,
@@ -48,7 +48,7 @@ export async function generateMetadata({
     openGraph: {
       title: `${tender.tenderNumber.toUpperCase()} | PMG Tracker 360`,
       description: `Status: ${tender.status} | Value: ${formatCurrency(tender.value)}`,
-      type: 'website',
+      type: "website",
     },
   };
 }
@@ -66,16 +66,16 @@ export default async function TenderDetailPage({
   const result = await getTenderById(session.activeOrganizationId, id);
   const documentsResult = await getDocuments(
     session.activeOrganizationId,
-    'tender',
-    id
+    "tender",
+    id,
   );
   const extensionsResult = await getTenderExtensions(
     session.activeOrganizationId,
-    id
+    id,
   );
   const followUpsResult = await getTenderFollowUps(
     session.activeOrganizationId,
-    id
+    id,
   );
 
   if (!result.success || !result.tender) {
@@ -86,19 +86,22 @@ export default async function TenderDetailPage({
 
   // JSON-LD Structured Data for search engines and AI crawlers
   const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'GovernmentService',
+    "@context": "https://schema.org",
+    "@type": "GovernmentService",
     name: tender.tenderNumber,
-    description: tender.description || `Tender opportunity ${tender.tenderNumber}`,
-    serviceType: 'BiddingOpportunity',
+    description:
+      tender.description || `Tender opportunity ${tender.tenderNumber}`,
+    serviceType: "BiddingOpportunity",
     provider: {
-      '@type': 'Organization',
-      name: tender.client?.name ? formatClientName(tender.client.name) : 'Tendering Authority',
+      "@type": "Organization",
+      name: tender.client?.name
+        ? formatClientName(tender.client.name)
+        : "Tendering Authority",
     },
     offers: {
-      '@type': 'Offer',
-      price: tender.value ? tender.value.replace(/[^0-9.]/g, '') : undefined,
-      priceCurrency: 'ZAR',
+      "@type": "Offer",
+      price: tender.value ? tender.value.replace(/[^0-9.]/g, "") : undefined,
+      priceCurrency: "ZAR",
       validThrough: tender.evaluationDate || tender.validityDate || undefined,
     },
   };

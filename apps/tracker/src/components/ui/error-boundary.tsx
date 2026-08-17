@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import React from "react";
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Button } from "./button";
+import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -46,7 +46,7 @@ export class ErrorBoundary extends React.Component<
     });
 
     // Log error to monitoring service
-    console.error('Error Boundary caught an error:', error, errorInfo);
+    console.error("Error Boundary caught an error:", error, errorInfo);
 
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -59,7 +59,7 @@ export class ErrorBoundary extends React.Component<
   };
 
   goHome = () => {
-    window.location.href = '/dashboard';
+    window.location.href = "/dashboard";
   };
 
   render() {
@@ -100,7 +100,7 @@ function DefaultErrorFallback({
             we&#x27;ll look into it.
           </p>
 
-          {process.env.NODE_ENV === 'development' && error && (
+          {process.env.NODE_ENV === "development" && error && (
             <details className="text-xs bg-muted p-3 rounded">
               <summary className="cursor-pointer font-medium mb-2">
                 Error Details (Development)
@@ -131,7 +131,7 @@ function DefaultErrorFallback({
 // Hook for functional components to trigger error boundary
 export function useErrorHandler() {
   return (error: Error, errorInfo?: React.ErrorInfo) => {
-    console.error('Error caught by useErrorHandler:', error, errorInfo);
+    console.error("Error caught by useErrorHandler:", error, errorInfo);
     throw error;
   };
 }

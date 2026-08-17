@@ -1,7 +1,7 @@
-import { Suspense } from 'react';
-import { requireAdminPage } from '@/lib/require-admin-page';
-import { getOpenTickets } from '@/lib/admin-queries';
-import TicketsListClient from './TicketsListClient';
+import { Suspense } from "react";
+import { requireAdminPage } from "@/lib/require-admin-page";
+import { getOpenTickets } from "@/lib/admin-queries";
+import TicketsListClient from "./TicketsListClient";
 
 export default async function SupportTicketsPage() {
   // 1. Auth guard
@@ -12,7 +12,13 @@ export default async function SupportTicketsPage() {
 
   return (
     <div className="w-full h-full animate-in fade-in duration-300 font-sans">
-      <Suspense fallback={<div className="h-[calc(100vh-8.5rem)] flex items-center justify-center text-zinc-400 text-sm">Loading Operations Center...</div>}>
+      <Suspense
+        fallback={
+          <div className="h-[calc(100vh-8.5rem)] flex items-center justify-center text-zinc-400 text-sm">
+            Loading Operations Center...
+          </div>
+        }
+      >
         <TicketsListClient tickets={tickets} />
       </Suspense>
     </div>

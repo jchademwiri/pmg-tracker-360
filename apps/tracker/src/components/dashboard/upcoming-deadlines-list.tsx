@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Calendar, ArrowRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from "next/link";
+import { Calendar, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   getDeadlineUrgencyClass,
   getDeadlineUrgencyLabel,
-} from '@/lib/deadline-display';
+} from "@/lib/deadline-display";
 
 interface UpcomingDeadlineItem {
   id: string;
@@ -29,14 +29,14 @@ export function UpcomingDeadlinesList({
   deadlines,
 }: UpcomingDeadlinesListProps) {
   const formatDeadline = (date: Date | null) => {
-    if (!date) return 'No date';
+    if (!date) return "No date";
 
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(new Date(date));
   };
 
@@ -75,14 +75,14 @@ export function UpcomingDeadlinesList({
                   </Link>
                   <Badge
                     className={`text-[10px] px-1.5 py-0 h-5 ${getDeadlineUrgencyClass(
-                      item.daysUntilDeadline
+                      item.daysUntilDeadline,
                     )}`}
                   >
                     {getDeadlineUrgencyLabel(item.daysUntilDeadline)}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">
-                  {item.client?.name || 'Unknown Client'}
+                  {item.client?.name || "Unknown Client"}
                 </p>
                 <div className="flex items-center text-xs text-muted-foreground">
                   <Calendar className="mr-1 h-3 w-3" />

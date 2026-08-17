@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useOptimistic, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { toast } from 'sonner';
-import { useFormFocusManagement } from '@/hooks/use-focus-management';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useTransition, useOptimistic, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useFormFocusManagement } from "@/hooks/use-focus-management";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -16,19 +16,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Save, X, Loader2 } from 'lucide-react';
-import { AvatarUpload } from './avatar-upload';
-import { updateUserImage, removeUserImage } from '@/server/users';
+} from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit, Save, X, Loader2 } from "lucide-react";
+import { AvatarUpload } from "./avatar-upload";
+import { updateUserImage, removeUserImage } from "@/server/users";
 
 // Validation schema for profile form
 const profileFormSchema = z.object({
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must not exceed 50 characters')
-    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must not exceed 50 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -41,7 +41,7 @@ interface ProfileFormProps {
     image?: string | null;
   };
   onSubmit: (
-    data: ProfileFormData
+    data: ProfileFormData,
   ) => Promise<{ success: boolean; message: string; data?: unknown }>;
 }
 
@@ -56,7 +56,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
     (state, updates: { name?: string; image?: string | null }) => ({
       ...state,
       ...updates,
-    })
+    }),
   );
 
   const form = useForm<ProfileFormData>({
@@ -99,7 +99,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
             Object.entries(result.data).forEach(([field, errors]) => {
               if (Array.isArray(errors) && errors.length > 0) {
                 form.setError(field as keyof ProfileFormData, {
-                  type: 'server',
+                  type: "server",
                   message: errors[0],
                 });
               }
@@ -109,8 +109,8 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
       } catch (error) {
         // Revert optimistic update on error
         updateOptimisticUser({ name: user.name });
-        toast.error('An unexpected error occurred. Please try again.');
-        console.error('Profile update failed:', error);
+        toast.error("An unexpected error occurred. Please try again.");
+        console.error("Profile update failed:", error);
       }
     });
   };
@@ -126,13 +126,13 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
       const result = await removeUserImage();
       if (result.success) {
         updateOptimisticUser({ image: null });
-        toast.success('Profile picture removed');
+        toast.success("Profile picture removed");
       } else {
-        toast.error(result.error || 'Failed to remove profile picture');
+        toast.error(result.error || "Failed to remove profile picture");
       }
     } catch (error) {
-      console.error('Failed to remove profile picture:', error);
-      toast.error('Failed to remove profile picture');
+      console.error("Failed to remove profile picture:", error);
+      toast.error("Failed to remove profile picture");
     }
   };
 
@@ -143,7 +143,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
 
   const handleUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     return await updateUserImage(formData);
   };
 
@@ -231,7 +231,7 @@ export function ProfileForm({ user, onSubmit }: ProfileFormProps) {
                     ) : (
                       <Save className="h-4 w-4" aria-hidden="true" />
                     )}
-                    <span>{isPending ? 'Saving...' : 'Save Changes'}</span>
+                    <span>{isPending ? "Saving..." : "Save Changes"}</span>
                   </Button>
                   <Button
                     type="button"

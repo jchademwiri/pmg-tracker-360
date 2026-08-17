@@ -10,70 +10,69 @@ import {
   LifeBuoy,
   Truck,
   HardDrive,
-} from 'lucide-react';
+} from "lucide-react";
 
 export const dashboadLinks = {
   operations: [
     {
-      title: 'Dashboard',
-      url: '/dashboard',
+      title: "Dashboard",
+      url: "/dashboard",
       icon: LayoutDashboard,
     },
     {
-      title: 'Tenders',
-      url: '/tenders',
+      title: "Tenders",
+      url: "/tenders",
       icon: ClipboardList,
     },
     {
-      title: 'Projects',
-      url: '/projects',
+      title: "Projects",
+      url: "/projects",
       icon: FolderKanban,
     },
     {
-      title: 'Purchase Orders',
-      url: '/projects/purchase-orders',
+      title: "Purchase Orders",
+      url: "/projects/purchase-orders",
       icon: Truck,
-      minRole: 'manager', // Hide for standard 'member' role
+      minRole: "manager", // Hide for standard 'member' role
     },
     {
-      title: 'Clients',
-      url: '/clients',
+      title: "Clients",
+      url: "/clients",
       icon: Users,
     },
   ],
   insights: [
     {
-      title: 'Calendar',
-      url: '/calendar',
+      title: "Calendar",
+      url: "/calendar",
       icon: Calendar,
     },
     {
-      title: 'Reports',
-      url: '/reports',
+      title: "Reports",
+      url: "/reports",
       icon: BarChart3,
     },
     {
-      title: 'Storage',
-      url: '/storage',
+      title: "Storage",
+      url: "/storage",
       icon: HardDrive,
     },
   ],
   settings: [
     {
-      title: 'Organizations',
-      url: '/organization',
+      title: "Organizations",
+      url: "/organization",
       icon: Building2,
     },
     {
-      title: 'Settings',
-      url: '/settings',
+      title: "Settings",
+      url: "/settings",
       icon: Settings,
     },
     {
-      title: 'Support Desk',
-      url: '/support',
+      title: "Support Desk",
+      url: "/support",
       icon: LifeBuoy,
     },
   ],
 };
-

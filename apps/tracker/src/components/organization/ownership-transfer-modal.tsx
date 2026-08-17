@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,18 +8,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { UserX } from 'lucide-react';
+} from "@/components/ui/select";
+import { UserX } from "lucide-react";
 
 interface Member {
   id: string;
@@ -51,8 +51,8 @@ export function OwnershipTransferModal({
   eligibleMembers,
   onTransfer,
 }: OwnershipTransferModalProps) {
-  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
-  const [reason, setReason] = useState('');
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  const [reason, setReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleTransfer = async () => {
@@ -66,10 +66,10 @@ export function OwnershipTransferModal({
         reason: reason.trim() || undefined,
       });
       onClose();
-      setSelectedMemberId('');
-      setReason('');
+      setSelectedMemberId("");
+      setReason("");
     } catch (error) {
-      console.error('Transfer failed:', error);
+      console.error("Transfer failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +101,7 @@ export function OwnershipTransferModal({
                   {selectedMemberId ? (
                     (() => {
                       const member = eligibleMembers.find(
-                        (m) => m.userId === selectedMemberId
+                        (m) => m.userId === selectedMemberId,
                       );
                       return member ? (
                         <div className="flex flex-col text-left">
@@ -110,7 +110,7 @@ export function OwnershipTransferModal({
                           </span>
                         </div>
                       ) : (
-                        'Select Member'
+                        "Select Member"
                       );
                     })()
                   ) : (
@@ -152,7 +152,7 @@ export function OwnershipTransferModal({
             disabled={!selectedMemberId || isLoading}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {isLoading ? 'Transferring...' : 'Transfer Ownership'}
+            {isLoading ? "Transferring..." : "Transfer Ownership"}
           </Button>
         </DialogFooter>
       </DialogContent>

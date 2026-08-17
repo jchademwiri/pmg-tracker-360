@@ -1,8 +1,8 @@
-import { auth } from '@/lib/auth';
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@pmg/db';
-import { user, member, invitation } from '@pmg/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@pmg/db";
+import { user, member, invitation } from "@pmg/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
 
     if (!invitationId || !email || !password || !name) {
       return NextResponse.json(
-        { success: false, message: 'Missing fields' },
-        { status: 400 }
+        { success: false, message: "Missing fields" },
+        { status: 400 },
       );
     }
 
@@ -21,17 +21,17 @@ export async function POST(request: NextRequest) {
       where: eq(invitation.id, invitationId),
     });
 
-    if (!invite || invite.status !== 'pending') {
+    if (!invite || invite.status !== "pending") {
       return NextResponse.json(
-        { success: false, message: 'Invitation is no longer valid.' },
-        { status: 400 }
+        { success: false, message: "Invitation is no longer valid." },
+        { status: 400 },
       );
     }
 
     if (invite.email.toLowerCase() !== email.toLowerCase()) {
       return NextResponse.json(
-        { success: false, message: 'Email does not match the invitation.' },
-        { status: 400 }
+        { success: false, message: "Email does not match the invitation." },
+        { status: 400 },
       );
     }
 
@@ -47,11 +47,11 @@ export async function POST(request: NextRequest) {
       signUpUserId = signUpResult?.user?.id ?? null;
     } catch (signUpErr: any) {
       // If the account already exists (e.g. race condition), continue
-      const msg: string = signUpErr?.body?.message || signUpErr?.message || '';
-      if (!msg.toLowerCase().includes('already')) {
+      const msg: string = signUpErr?.body?.message || signUpErr?.message || "";
+      if (!msg.toLowerCase().includes("already")) {
         return NextResponse.json(
-          { success: false, message: msg || 'Failed to create account.' },
-          { status: 400 }
+          { success: false, message: msg || "Failed to create account." },
+          { status: 400 },
         );
       }
     }
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
 
     if (!signUpUserId) {
       return NextResponse.json(
-        { success: false, message: 'Could not resolve user after sign-up.' },
-        { status: 500 }
+        { success: false, message: "Could not resolve user after sign-up." },
+        { status: 500 },
       );
     }
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       });
       sessionHeaders = signInResult?.headers;
     } catch (signInErr) {
-      console.error('Sign in after sign-up failed:', signInErr);
+      console.error("Sign in after sign-up failed:", signInErr);
       // Non-fatal — user can log in manually, but try to continue
     }
 
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         const existingMember = await tx.query.member.findFirst({
           where: and(
             eq(member.userId, userId),
-            eq(member.organizationId, invite.organizationId)
+            eq(member.organizationId, invite.organizationId),
           ),
         });
 
@@ -109,18 +109,21 @@ export async function POST(request: NextRequest) {
             id: crypto.randomUUID(),
             organizationId: invite.organizationId,
             userId,
-            role: invite.role ?? 'member',
+            role: invite.role ?? "member",
             createdAt: new Date(),
           });
         }
 
         await tx
           .update(invitation)
-          .set({ status: 'accepted' })
+          .set({ status: "accepted" })
           .where(eq(invitation.id, invitationId));
       });
     } catch (acceptErr) {
-      console.error('Failed to complete invitation acceptance in DB:', acceptErr);
+      console.error(
+        "Failed to complete invitation acceptance in DB:",
+        acceptErr,
+      );
       // Non-fatal — account was created, member row may already exist
     }
 
@@ -133,8 +136,8 @@ export async function POST(request: NextRequest) {
     if (sessionHeaders) {
       try {
         sessionHeaders.forEach((value: string, key: string) => {
-          if (key.toLowerCase() === 'set-cookie') {
-            res.headers.append('set-cookie', value);
+          if (key.toLowerCase() === "set-cookie") {
+            res.headers.append("set-cookie", value);
           }
         });
       } catch {
@@ -144,10 +147,10 @@ export async function POST(request: NextRequest) {
 
     return res;
   } catch (error: any) {
-    console.error('Error in complete-signup route:', error);
+    console.error("Error in complete-signup route:", error);
     return NextResponse.json(
-      { success: false, message: error?.body?.message || 'Internal error' },
-      { status: 500 }
+      { success: false, message: error?.body?.message || "Internal error" },
+      { status: 500 },
     );
   }
 }

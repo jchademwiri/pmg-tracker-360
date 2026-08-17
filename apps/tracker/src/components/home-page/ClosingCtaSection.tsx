@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { Sparkles, ArrowRight, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { Sparkles, ArrowRight, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function ClosingCtaSection() {
   return (
@@ -16,7 +16,8 @@ export function ClosingCtaSection() {
         </h2>
 
         <p className="max-w-xl mx-auto text-sm sm:text-base text-muted-foreground text-pretty">
-          Track your submissions, receive automated briefing alarms, manage your awarded POs, and download presentation reports in seconds.
+          Track your submissions, receive automated briefing alarms, manage your
+          awarded POs, and download presentation reports in seconds.
         </p>
 
         {/* Primary CTA */}
@@ -37,7 +38,10 @@ export function ClosingCtaSection() {
         {/* Micro Guarantees */}
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-muted-foreground/90 pt-2">
           <span className="inline-flex items-center gap-1.5">
-            <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+            <Check
+              className="h-3.5 w-3.5 text-emerald-400"
+              aria-hidden="true"
+            />
             <span>Free Forever Account</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -45,7 +49,10 @@ export function ClosingCtaSection() {
             <span>Free Upgrades During Beta</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+            <Check
+              className="h-3.5 w-3.5 text-emerald-400"
+              aria-hidden="true"
+            />
             <span>No Credit Card Required</span>
           </span>
         </div>

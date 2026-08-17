@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { bulkCancelInvitations, bulkRemoveMembers } from '@/server/invitations';
-import { X, Trash2, UserX } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { handleError, handleSuccess } from '@/lib/error-handler';
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { bulkCancelInvitations, bulkRemoveMembers } from "@/server/invitations";
+import { X, Trash2, UserX } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { handleError, handleSuccess } from "@/lib/error-handler";
 import {
   RemoveMemberConfirmationDialog,
   CancelInvitationConfirmationDialog,
-} from '@/components/ui/confirmation-dialog';
+} from "@/components/ui/confirmation-dialog";
 
 interface BulkActionsToolbarProps {
   selectedMembers: string[];
@@ -37,7 +37,7 @@ export function BulkActionsToolbar({
   selectedMembers,
   selectedInvitations,
   onClearSelection,
-  className = '',
+  className = "",
 }: BulkActionsToolbarProps) {
   const [showRemoveMembersDialog, setShowRemoveMembersDialog] = useState(false);
   const [showCancelInvitationsDialog, setShowCancelInvitationsDialog] =
@@ -45,7 +45,7 @@ export function BulkActionsToolbar({
   const [operationState, setOperationState] = useState<BulkOperationState>({
     isProcessing: false,
     progress: 0,
-    currentOperation: '',
+    currentOperation: "",
   });
   const router = useRouter();
 
@@ -63,7 +63,7 @@ export function BulkActionsToolbar({
       setOperationState({
         isProcessing: true,
         progress: 0,
-        currentOperation: 'Removing members...',
+        currentOperation: "Removing members...",
       });
 
       // Removed simulated progress updates; rely on actual API completion
@@ -75,53 +75,53 @@ export function BulkActionsToolbar({
       setOperationState((prev) => ({
         ...prev,
         progress: 100,
-        currentOperation: 'Completed',
+        currentOperation: "Completed",
         results: {
           success: result.success,
           removedCount: result.data?.removedCount,
           errors: result.success
             ? []
-            : [result.error?.message || 'Unknown error'],
+            : [result.error?.message || "Unknown error"],
         },
       }));
 
       if (result.success) {
         handleSuccess(
           `Successfully removed ${result.data?.removedCount} member${
-            result.data?.removedCount === 1 ? '' : 's'
+            result.data?.removedCount === 1 ? "" : "s"
           }`,
           {
             description:
-              'The selected members have been removed from the organization',
-          }
+              "The selected members have been removed from the organization",
+          },
         );
         onClearSelection();
         router.refresh();
       } else {
-        handleError(result.error || 'Failed to remove members', {
-          title: 'Bulk Remove Failed',
+        handleError(result.error || "Failed to remove members", {
+          title: "Bulk Remove Failed",
         });
       }
     } catch (error) {
       setOperationState((prev) => ({
         ...prev,
         progress: 100,
-        currentOperation: 'Failed',
+        currentOperation: "Failed",
         results: {
           success: false,
-          errors: ['An unexpected error occurred'],
+          errors: ["An unexpected error occurred"],
         },
       }));
       handleError(error as Error, {
-        title: 'Bulk Remove Failed',
-        fallbackMessage: 'Failed to remove members',
+        title: "Bulk Remove Failed",
+        fallbackMessage: "Failed to remove members",
       });
     } finally {
       // Close immediately after operation completes to improve responsiveness
       setOperationState({
         isProcessing: false,
         progress: 0,
-        currentOperation: '',
+        currentOperation: "",
       });
       setShowRemoveMembersDialog(false);
     }
@@ -134,7 +134,7 @@ export function BulkActionsToolbar({
       setOperationState({
         isProcessing: true,
         progress: 0,
-        currentOperation: 'Cancelling invitations...',
+        currentOperation: "Cancelling invitations...",
       });
 
       // Removed simulated progress updates; rely on actual API completion
@@ -146,52 +146,52 @@ export function BulkActionsToolbar({
       setOperationState((prev) => ({
         ...prev,
         progress: 100,
-        currentOperation: 'Completed',
+        currentOperation: "Completed",
         results: {
           success: result.success,
           cancelledCount: result.data?.cancelledCount,
           errors: result.success
             ? []
-            : [result.error?.message || 'Unknown error'],
+            : [result.error?.message || "Unknown error"],
         },
       }));
 
       if (result.success) {
         handleSuccess(
           `Successfully cancelled ${result.data?.cancelledCount} invitation${
-            result.data?.cancelledCount === 1 ? '' : 's'
+            result.data?.cancelledCount === 1 ? "" : "s"
           }`,
           {
-            description: 'The selected invitations have been cancelled',
-          }
+            description: "The selected invitations have been cancelled",
+          },
         );
         onClearSelection();
         router.refresh();
       } else {
-        handleError(result.error || 'Failed to cancel invitations', {
-          title: 'Bulk Cancel Failed',
+        handleError(result.error || "Failed to cancel invitations", {
+          title: "Bulk Cancel Failed",
         });
       }
     } catch (error) {
       setOperationState((prev) => ({
         ...prev,
         progress: 100,
-        currentOperation: 'Failed',
+        currentOperation: "Failed",
         results: {
           success: false,
-          errors: ['An unexpected error occurred'],
+          errors: ["An unexpected error occurred"],
         },
       }));
       handleError(error as Error, {
-        title: 'Bulk Cancel Failed',
-        fallbackMessage: 'Failed to cancel invitations',
+        title: "Bulk Cancel Failed",
+        fallbackMessage: "Failed to cancel invitations",
       });
     } finally {
       // Close immediately after operation completes to improve responsiveness
       setOperationState({
         isProcessing: false,
         progress: 0,
-        currentOperation: '',
+        currentOperation: "",
       });
       setShowCancelInvitationsDialog(false);
     }
@@ -214,13 +214,13 @@ export function BulkActionsToolbar({
                 {selectedMembers.length > 0 && (
                   <Badge variant="outline">
                     {selectedMembers.length} member
-                    {selectedMembers.length === 1 ? '' : 's'}
+                    {selectedMembers.length === 1 ? "" : "s"}
                   </Badge>
                 )}
                 {selectedInvitations.length > 0 && (
                   <Badge variant="outline">
                     {selectedInvitations.length} invitation
-                    {selectedInvitations.length === 1 ? '' : 's'}
+                    {selectedInvitations.length === 1 ? "" : "s"}
                   </Badge>
                 )}
               </div>

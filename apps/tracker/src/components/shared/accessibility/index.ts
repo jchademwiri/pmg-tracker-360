@@ -1,2 +1,2 @@
-export * from '../../accessibility-announcer';
-export * from '../../skip-navigation';
+export * from "../../accessibility-announcer";
+export * from "../../skip-navigation";

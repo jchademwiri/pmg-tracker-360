@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
-import { Button } from './button';
-import { Card, CardContent, CardHeader, CardTitle } from './card';
+import { AlertTriangle, RefreshCw, WifiOff } from "lucide-react";
+import { Button } from "./button";
+import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
 interface ErrorStateProps {
   title?: string;
@@ -11,7 +11,7 @@ interface ErrorStateProps {
     label: string;
     onClick: () => void;
   };
-  type?: 'error' | 'network' | 'not-found' | 'unauthorized';
+  type?: "error" | "network" | "not-found" | "unauthorized";
   className?: string;
 }
 
@@ -19,49 +19,49 @@ export function ErrorState({
   title,
   description,
   action,
-  type = 'error',
+  type = "error",
   className,
 }: ErrorStateProps) {
   const getErrorConfig = () => {
     switch (type) {
-      case 'network':
+      case "network":
         return {
           icon: WifiOff,
-          title: title || 'Connection Error',
+          title: title || "Connection Error",
           description:
             description ||
-            'Unable to connect to the server. Please check your internet connection.',
-          iconColor: 'text-orange-600 dark:text-orange-400',
-          bgColor: 'bg-orange-100 dark:bg-orange-900/20',
+            "Unable to connect to the server. Please check your internet connection.",
+          iconColor: "text-orange-600 dark:text-orange-400",
+          bgColor: "bg-orange-100 dark:bg-orange-900/20",
         };
-      case 'not-found':
+      case "not-found":
         return {
           icon: AlertTriangle,
-          title: title || 'Not Found',
+          title: title || "Not Found",
           description:
             description ||
-            'The resource you&apos;re looking for doesn&apos;t exist.',
-          iconColor: 'text-blue-600 dark:text-blue-400',
-          bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+            "The resource you&apos;re looking for doesn&apos;t exist.",
+          iconColor: "text-blue-600 dark:text-blue-400",
+          bgColor: "bg-blue-100 dark:bg-blue-900/20",
         };
-      case 'unauthorized':
+      case "unauthorized":
         return {
           icon: AlertTriangle,
-          title: title || 'Access Denied',
+          title: title || "Access Denied",
           description:
             description ||
-            'You don&apos;t have permission to access this resource.',
-          iconColor: 'text-yellow-600 dark:text-yellow-400',
-          bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+            "You don&apos;t have permission to access this resource.",
+          iconColor: "text-yellow-600 dark:text-yellow-400",
+          bgColor: "bg-yellow-100 dark:bg-yellow-900/20",
         };
       default:
         return {
           icon: AlertTriangle,
-          title: title || 'Something went wrong',
+          title: title || "Something went wrong",
           description:
-            description || 'An unexpected error occurred. Please try again.',
-          iconColor: 'text-red-600 dark:text-red-400',
-          bgColor: 'bg-red-100 dark:bg-red-900/20',
+            description || "An unexpected error occurred. Please try again.",
+          iconColor: "text-red-600 dark:text-red-400",
+          bgColor: "bg-red-100 dark:bg-red-900/20",
         };
     }
   };
@@ -100,7 +100,7 @@ export function NetworkError({ onRetry }: { onRetry?: () => void }) {
   return (
     <ErrorState
       type="network"
-      action={onRetry ? { label: 'Retry', onClick: onRetry } : undefined}
+      action={onRetry ? { label: "Retry", onClick: onRetry } : undefined}
     />
   );
 }

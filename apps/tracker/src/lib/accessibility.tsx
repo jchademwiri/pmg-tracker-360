@@ -1,6 +1,6 @@
 // Accessibility utilities and helpers
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 // Focus management utilities
 export function useFocusTrap(isActive: boolean) {
@@ -11,14 +11,16 @@ export function useFocusTrap(isActive: boolean) {
 
     const container = containerRef.current;
     const focusableElements = container.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
-    
+
     const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    const lastElement = focusableElements[
+      focusableElements.length - 1
+    ] as HTMLElement;
 
     const handleTabKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== "Tab") return;
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -34,21 +36,21 @@ export function useFocusTrap(isActive: boolean) {
     };
 
     const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         // Let parent components handle escape
         e.stopPropagation();
       }
     };
 
-    container.addEventListener('keydown', handleTabKey);
-    container.addEventListener('keydown', handleEscapeKey);
+    container.addEventListener("keydown", handleTabKey);
+    container.addEventListener("keydown", handleEscapeKey);
 
     // Focus first element when trap becomes active
     firstElement?.focus();
 
     return () => {
-      container.removeEventListener('keydown', handleTabKey);
-      container.removeEventListener('keydown', handleEscapeKey);
+      container.removeEventListener("keydown", handleTabKey);
+      container.removeEventListener("keydown", handleEscapeKey);
     };
   }, [isActive]);
 
@@ -56,13 +58,16 @@ export function useFocusTrap(isActive: boolean) {
 }
 
 // Announce to screen readers
-export function announceToScreenReader(message: string, priority: 'polite' | 'assertive' = 'polite') {
-  if (typeof window === 'undefined') return;
+export function announceToScreenReader(
+  message: string,
+  priority: "polite" | "assertive" = "polite",
+) {
+  if (typeof window === "undefined") return;
 
-  const announcement = document.createElement('div');
-  announcement.setAttribute('aria-live', priority);
-  announcement.setAttribute('aria-atomic', 'true');
-  announcement.setAttribute('class', 'sr-only');
+  const announcement = document.createElement("div");
+  announcement.setAttribute("aria-live", priority);
+  announcement.setAttribute("aria-atomic", "true");
+  announcement.setAttribute("class", "sr-only");
   announcement.textContent = message;
 
   document.body.appendChild(announcement);
@@ -74,7 +79,13 @@ export function announceToScreenReader(message: string, priority: 'polite' | 'as
 }
 
 // Skip link component for keyboard navigation
-export function SkipLink({ href, children }: { href: string; children: React.ReactNode }) {
+export function SkipLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <a
       href={href}
@@ -86,10 +97,14 @@ export function SkipLink({ href, children }: { href: string; children: React.Rea
 }
 
 // ARIA label generators
-export function generateAriaLabel(action: string, target: string, context?: string): string {
+export function generateAriaLabel(
+  action: string,
+  target: string,
+  context?: string,
+): string {
   const parts = [action, target];
   if (context) parts.push(`in ${context}`);
-  return parts.join(' ');
+  return parts.join(" ");
 }
 
 // Color contrast utilities
@@ -98,15 +113,15 @@ export function getContrastRatio(color1: string, color2: string): number {
   // In a real implementation, you'd use a proper color library
   const getLuminance = (color: string): number => {
     // This is a simplified version - use a proper color library in production
-    const hex = color.replace('#', '');
+    const hex = color.replace("#", "");
     const r = parseInt(hex.substr(0, 2), 16) / 255;
     const g = parseInt(hex.substr(2, 2), 16) / 255;
     const b = parseInt(hex.substr(4, 2), 16) / 255;
-    
-    const [rs, gs, bs] = [r, g, b].map(c => 
-      c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+
+    const [rs, gs, bs] = [r, g, b].map((c) =>
+      c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4),
     );
-    
+
     return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
   };
 
@@ -114,13 +129,17 @@ export function getContrastRatio(color1: string, color2: string): number {
   const lum2 = getLuminance(color2);
   const brightest = Math.max(lum1, lum2);
   const darkest = Math.min(lum1, lum2);
-  
+
   return (brightest + 0.05) / (darkest + 0.05);
 }
 
-export function meetsWCAGContrast(color1: string, color2: string, level: 'AA' | 'AAA' = 'AA'): boolean {
+export function meetsWCAGContrast(
+  color1: string,
+  color2: string,
+  level: "AA" | "AAA" = "AA",
+): boolean {
   const ratio = getContrastRatio(color1, color2);
-  return level === 'AA' ? ratio >= 4.5 : ratio >= 7;
+  return level === "AA" ? ratio >= 4.5 : ratio >= 7;
 }
 
 // Keyboard navigation helpers
@@ -128,18 +147,18 @@ export function useKeyboardNavigation(
   items: HTMLElement[],
   options: {
     loop?: boolean;
-    orientation?: 'horizontal' | 'vertical';
+    orientation?: "horizontal" | "vertical";
     onSelect?: (index: number) => void;
-  } = {}
+  } = {},
 ) {
-  const { loop = true, orientation = 'vertical', onSelect } = options;
+  const { loop = true, orientation = "vertical", onSelect } = options;
 
   const handleKeyDown = (e: KeyboardEvent, currentIndex: number) => {
     let nextIndex = currentIndex;
 
     switch (e.key) {
-      case 'ArrowDown':
-        if (orientation === 'vertical') {
+      case "ArrowDown":
+        if (orientation === "vertical") {
           nextIndex = currentIndex + 1;
           if (nextIndex >= items.length) {
             nextIndex = loop ? 0 : items.length - 1;
@@ -147,8 +166,8 @@ export function useKeyboardNavigation(
           e.preventDefault();
         }
         break;
-      case 'ArrowUp':
-        if (orientation === 'vertical') {
+      case "ArrowUp":
+        if (orientation === "vertical") {
           nextIndex = currentIndex - 1;
           if (nextIndex < 0) {
             nextIndex = loop ? items.length - 1 : 0;
@@ -156,8 +175,8 @@ export function useKeyboardNavigation(
           e.preventDefault();
         }
         break;
-      case 'ArrowRight':
-        if (orientation === 'horizontal') {
+      case "ArrowRight":
+        if (orientation === "horizontal") {
           nextIndex = currentIndex + 1;
           if (nextIndex >= items.length) {
             nextIndex = loop ? 0 : items.length - 1;
@@ -165,8 +184,8 @@ export function useKeyboardNavigation(
           e.preventDefault();
         }
         break;
-      case 'ArrowLeft':
-        if (orientation === 'horizontal') {
+      case "ArrowLeft":
+        if (orientation === "horizontal") {
           nextIndex = currentIndex - 1;
           if (nextIndex < 0) {
             nextIndex = loop ? items.length - 1 : 0;
@@ -174,16 +193,16 @@ export function useKeyboardNavigation(
           e.preventDefault();
         }
         break;
-      case 'Home':
+      case "Home":
         nextIndex = 0;
         e.preventDefault();
         break;
-      case 'End':
+      case "End":
         nextIndex = items.length - 1;
         e.preventDefault();
         break;
-      case 'Enter':
-      case ' ':
+      case "Enter":
+      case " ":
         onSelect?.(currentIndex);
         e.preventDefault();
         break;
@@ -199,41 +218,46 @@ export function useKeyboardNavigation(
 
 // Reduced motion detection
 export function useReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (typeof window === "undefined") return false;
+
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 // High contrast detection
 export function useHighContrast(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  return window.matchMedia('(prefers-contrast: high)').matches;
+  if (typeof window === "undefined") return false;
+
+  return window.matchMedia("(prefers-contrast: high)").matches;
 }
 
 // Screen reader detection
 export function useScreenReader(): boolean {
-  if (typeof window === 'undefined') return false;
-  
+  if (typeof window === "undefined") return false;
+
   // This is a heuristic - not 100% accurate
-  return window.navigator.userAgent.includes('NVDA') || 
-         window.navigator.userAgent.includes('JAWS') || 
-         window.speechSynthesis?.getVoices().length > 0;
+  return (
+    window.navigator.userAgent.includes("NVDA") ||
+    window.navigator.userAgent.includes("JAWS") ||
+    window.speechSynthesis?.getVoices().length > 0
+  );
 }
 
 // ARIA live region hook
 export function useAriaLiveRegion() {
   const regionRef = useRef<HTMLDivElement>(null);
 
-  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+  const announce = (
+    message: string,
+    priority: "polite" | "assertive" = "polite",
+  ) => {
     if (regionRef.current) {
-      regionRef.current.setAttribute('aria-live', priority);
+      regionRef.current.setAttribute("aria-live", priority);
       regionRef.current.textContent = message;
-      
+
       // Clear after announcement
       setTimeout(() => {
         if (regionRef.current) {
-          regionRef.current.textContent = '';
+          regionRef.current.textContent = "";
         }
       }, 1000);
     }

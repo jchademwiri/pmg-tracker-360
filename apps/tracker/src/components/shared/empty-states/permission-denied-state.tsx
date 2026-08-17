@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ShieldAlert, ArrowLeft, Home } from 'lucide-react';
-import Link from 'next/link';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
+import Link from "next/link";
 
 interface PermissionDeniedStateProps {
   className?: string;
@@ -12,8 +12,8 @@ interface PermissionDeniedStateProps {
 }
 
 export function PermissionDeniedState({
-  className = '',
-  title = 'Permission Denied',
+  className = "",
+  title = "Permission Denied",
   description = "You do not have the required permissions to view this section. If you believe this is an error, please contact your organization administrator to update your role permissions.",
 }: PermissionDeniedStateProps) {
   return (
@@ -24,9 +24,7 @@ export function PermissionDeniedState({
             <ShieldAlert className="size-8 text-red-600 dark:text-red-400" />
           </div>
 
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            {title}
-          </h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{title}</h2>
 
           <p className="text-sm text-muted-foreground mb-6 max-w-sm leading-relaxed">
             {description}

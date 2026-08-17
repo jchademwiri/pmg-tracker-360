@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 import {
   CalendarClock,
   Hourglass,
@@ -9,54 +9,57 @@ import {
   Sparkles,
   FileText,
   FileDown,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function WorkflowEngineSection() {
   const steps = [
     {
-      step: '01',
+      step: "01",
       icon: CalendarClock,
-      tag: 'PRE-SUBMISSION',
-      title: 'Track Briefings & Submit on Time',
+      tag: "PRE-SUBMISSION",
+      title: "Track Briefings & Submit on Time",
       description:
-        'Never miss a mandatory briefing session or get disqualified by a strict 11:00 AM closing cutoff. Automated alarms notify your estimators days in advance while returnable checklists ensure 100% compliance.',
+        "Never miss a mandatory briefing session or get disqualified by a strict 11:00 AM closing cutoff. Automated alarms notify your estimators days in advance while returnable checklists ensure 100% compliance.",
       features: [
-        'Mandatory site inspection alerts & calendar sync',
-        '72h, 24h, and 4h closing countdown sirens',
-        'Pre-flight SBD 4, CSD & SARS Pin verification',
+        "Mandatory site inspection alerts & calendar sync",
+        "72h, 24h, and 4h closing countdown sirens",
+        "Pre-flight SBD 4, CSD & SARS Pin verification",
       ],
     },
     {
-      step: '02',
+      step: "02",
       icon: Hourglass,
-      tag: 'EVALUATION MONITORING',
-      title: 'Track Validity Expiries & Follow Up',
+      tag: "EVALUATION MONITORING",
+      title: "Track Validity Expiries & Follow Up",
       description:
-        'Submitted your bid and heard nothing back? Automatically monitor 90-day and 120-day bid validity periods and receive reminders to follow up with the procurement office before decisions expire.',
+        "Submitted your bid and heard nothing back? Automatically monitor 90-day and 120-day bid validity periods and receive reminders to follow up with the procurement office before decisions expire.",
       features: [
-        'Automatic 90/120-day validity countdown tracker',
-        'Proactive follow-up prompts when evaluation stalls',
-        'Audit-ready submission logs & correspondence history',
+        "Automatic 90/120-day validity countdown tracker",
+        "Proactive follow-up prompts when evaluation stalls",
+        "Audit-ready submission logs & correspondence history",
       ],
     },
     {
-      step: '03',
+      step: "03",
       icon: PackageCheck,
-      tag: 'POST-AWARD & REPORTING',
-      title: 'Manage Awarded POs & Present to the Board',
+      tag: "POST-AWARD & REPORTING",
+      title: "Manage Awarded POs & Present to the Board",
       description:
-        '1-Click conversion from won tender to active project. Track supplier and client Purchase Orders, forecast upcoming monthly cashflow, and download presentation-ready PDF and Excel reports with a single click.',
+        "1-Click conversion from won tender to active project. Track supplier and client Purchase Orders, forecast upcoming monthly cashflow, and download presentation-ready PDF and Excel reports with a single click.",
       features: [
-        '1-Click conversion into active project & PO ledger',
-        '30, 60, and 90-day cashflow forecasting',
-        'Boardroom-ready PDF & formatted Excel (.xlsx) reports',
+        "1-Click conversion into active project & PO ledger",
+        "30, 60, and 90-day cashflow forecasting",
+        "Boardroom-ready PDF & formatted Excel (.xlsx) reports",
       ],
     },
   ];
 
   return (
-    <section id="how-it-works" className="py-20 md:py-24 border-t border-border/40 bg-secondary/10 scroll-mt-20">
+    <section
+      id="how-it-works"
+      className="py-20 md:py-24 border-t border-border/40 bg-secondary/10 scroll-mt-20"
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
@@ -68,7 +71,8 @@ export function WorkflowEngineSection() {
             Everything in Order, From Briefing to PO Delivery
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground text-pretty">
-            Three simple steps that give your business complete command over the entire bidding and contract fulfillment lifecycle.
+            Three simple steps that give your business complete command over the
+            entire bidding and contract fulfillment lifecycle.
           </p>
         </div>
 
@@ -106,8 +110,14 @@ export function WorkflowEngineSection() {
               {/* Bullet Features */}
               <div className="pt-4 border-t border-border/50 space-y-2">
                 {item.features.map((feat) => (
-                  <div key={feat} className="flex items-start gap-2 text-xs text-foreground/90 font-medium">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div
+                    key={feat}
+                    className="flex items-start gap-2 text-xs text-foreground/90 font-medium"
+                  >
+                    <CheckCircle2
+                      className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
                     <span>{feat}</span>
                   </div>
                 ))}
@@ -118,7 +128,11 @@ export function WorkflowEngineSection() {
 
         {/* Action Hook */}
         <div className="mt-12 text-center">
-          <Button size="lg" asChild className="h-11 px-8 font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer">
+          <Button
+            size="lg"
+            asChild
+            className="h-11 px-8 font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md cursor-pointer"
+          >
             <Link href="/sign-up">
               <span>Start For Free & Organize Your Tenders</span>
               <ArrowRight className="h-4 w-4" aria-hidden="true" />

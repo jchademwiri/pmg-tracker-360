@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { toast } from 'sonner';
-import { useFormFocusManagement } from '@/hooks/use-focus-management';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useState, useTransition, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useFormFocusManagement } from "@/hooks/use-focus-management";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -17,9 +17,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+} from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   Eye,
   EyeOff,
@@ -29,35 +29,35 @@ import {
   Loader2,
   Check,
   AlertCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 // Password strength validation schema
 const passwordFormSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
+    currentPassword: z.string().min(1, "Current password is required"),
     newPassword: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      .regex(/[0-9]/, 'Password must contain at least one number')
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
       .regex(
         /[^a-zA-Z0-9]/,
-        'Password must contain at least one special character'
+        "Password must contain at least one special character",
       ),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
     signOutOtherSessions: z.boolean(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ['confirmPassword'],
+    path: ["confirmPassword"],
   });
 
 type PasswordFormData = z.infer<typeof passwordFormSchema>;
 
 interface PasswordFormProps {
   onSubmit: (
-    data: PasswordFormData
+    data: PasswordFormData,
   ) => Promise<{ success: boolean; message: string; data?: unknown }>;
 }
 
@@ -76,12 +76,12 @@ const calculatePasswordStrength = (password: string): number => {
 };
 
 const getPasswordStrengthLabel = (
-  strength: number
+  strength: number,
 ): { label: string; color: string } => {
-  if (strength < 40) return { label: 'Weak', color: 'text-red-500' };
-  if (strength < 70) return { label: 'Fair', color: 'text-yellow-500' };
-  if (strength < 90) return { label: 'Good', color: 'text-blue-500' };
-  return { label: 'Strong', color: 'text-green-500' };
+  if (strength < 40) return { label: "Weak", color: "text-red-500" };
+  if (strength < 70) return { label: "Fair", color: "text-yellow-500" };
+  if (strength < 90) return { label: "Good", color: "text-blue-500" };
+  return { label: "Strong", color: "text-green-500" };
 };
 
 export function PasswordForm({ onSubmit }: PasswordFormProps) {
@@ -95,9 +95,9 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
   const form = useForm<PasswordFormData>({
     resolver: zodResolver(passwordFormSchema),
     defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
       signOutOtherSessions: false,
     },
   });
@@ -113,7 +113,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
     }
   }, [form.formState.errors, focusFirstError, announceError]);
 
-  const newPassword = form.watch('newPassword');
+  const newPassword = form.watch("newPassword");
   const passwordStrength = newPassword
     ? calculatePasswordStrength(newPassword)
     : 0;
@@ -136,7 +136,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
             Object.entries(result.data).forEach(([field, errors]) => {
               if (Array.isArray(errors) && errors.length > 0) {
                 form.setError(field as keyof PasswordFormData, {
-                  type: 'server',
+                  type: "server",
                   message: errors[0],
                 });
               }
@@ -144,8 +144,8 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
           }
         }
       } catch (error) {
-        toast.error('An unexpected error occurred. Please try again.');
-        console.error('Password change failed:', error);
+        toast.error("An unexpected error occurred. Please try again.");
+        console.error("Password change failed:", error);
       }
     });
   };
@@ -157,13 +157,13 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
 
   // Password requirements checklist
   const passwordRequirements = [
-    { test: (pwd: string) => pwd.length >= 8, label: 'At least 8 characters' },
-    { test: (pwd: string) => /[a-z]/.test(pwd), label: 'One lowercase letter' },
-    { test: (pwd: string) => /[A-Z]/.test(pwd), label: 'One uppercase letter' },
-    { test: (pwd: string) => /[0-9]/.test(pwd), label: 'One number' },
+    { test: (pwd: string) => pwd.length >= 8, label: "At least 8 characters" },
+    { test: (pwd: string) => /[a-z]/.test(pwd), label: "One lowercase letter" },
+    { test: (pwd: string) => /[A-Z]/.test(pwd), label: "One uppercase letter" },
+    { test: (pwd: string) => /[0-9]/.test(pwd), label: "One number" },
     {
       test: (pwd: string) => /[^a-zA-Z0-9]/.test(pwd),
-      label: 'One special character',
+      label: "One special character",
     },
   ];
 
@@ -226,7 +226,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                         <div className="relative">
                           <Input
                             {...field}
-                            type={showCurrentPassword ? 'text' : 'password'}
+                            type={showCurrentPassword ? "text" : "password"}
                             disabled={isPending}
                             placeholder="Enter your current password"
                             className="pr-10"
@@ -243,8 +243,8 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                             disabled={isPending}
                             aria-label={
                               showCurrentPassword
-                                ? 'Hide current password'
-                                : 'Show current password'
+                                ? "Hide current password"
+                                : "Show current password"
                             }
                           >
                             {showCurrentPassword ? (
@@ -274,7 +274,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                         <div className="relative">
                           <Input
                             {...field}
-                            type={showNewPassword ? 'text' : 'password'}
+                            type={showNewPassword ? "text" : "password"}
                             disabled={isPending}
                             placeholder="Enter your new password"
                             className="pr-10"
@@ -289,8 +289,8 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                             disabled={isPending}
                             aria-label={
                               showNewPassword
-                                ? 'Hide new password'
-                                : 'Show new password'
+                                ? "Hide new password"
+                                : "Show new password"
                             }
                           >
                             {showNewPassword ? (
@@ -341,11 +341,11 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                                   key={index}
                                   className={`flex items-center space-x-2 text-xs ${
                                     isValid
-                                      ? 'text-green-600'
-                                      : 'text-muted-foreground'
+                                      ? "text-green-600"
+                                      : "text-muted-foreground"
                                   }`}
                                   role="listitem"
-                                  aria-label={`${req.label}: ${isValid ? 'satisfied' : 'not satisfied'}`}
+                                  aria-label={`${req.label}: ${isValid ? "satisfied" : "not satisfied"}`}
                                 >
                                   {isValid ? (
                                     <Check
@@ -382,7 +382,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                         <div className="relative">
                           <Input
                             {...field}
-                            type={showConfirmPassword ? 'text' : 'password'}
+                            type={showConfirmPassword ? "text" : "password"}
                             disabled={isPending}
                             placeholder="Confirm your new password"
                             className="pr-10"
@@ -399,8 +399,8 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                             disabled={isPending}
                             aria-label={
                               showConfirmPassword
-                                ? 'Hide confirm password'
-                                : 'Show confirm password'
+                                ? "Hide confirm password"
+                                : "Show confirm password"
                             }
                           >
                             {showConfirmPassword ? (
@@ -460,7 +460,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
                       <Save className="h-4 w-4" aria-hidden="true" />
                     )}
                     <span>
-                      {isPending ? 'Changing Password...' : 'Change Password'}
+                      {isPending ? "Changing Password..." : "Change Password"}
                     </span>
                   </Button>
                   <Button

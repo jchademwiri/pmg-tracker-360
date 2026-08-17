@@ -1,9 +1,9 @@
-import { getCurrentUser } from '@/server';
-import { getProjectById } from '@/server/projects';
-import { ProjectForm } from '@/components/projects/project-form';
-import { notFound } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { getProjectById } from "@/server/projects";
+import { ProjectForm } from "@/components/projects/project-form";
+import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface EditProjectPageProps {
   params: Promise<{

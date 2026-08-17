@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-type Variant = 'primary' | 'success' | 'warning' | 'danger';
+type Variant = "primary" | "success" | "warning" | "danger";
 
 type VariantClasses = {
   iconBg: string;
@@ -10,24 +10,24 @@ type VariantClasses = {
 
 const VARIANT_MAP: Record<Variant, VariantClasses> = {
   primary: {
-    iconBg: 'bg-indigo-500/10',
-    iconBorder: 'border-indigo-500/20',
-    countColor: 'text-indigo-400',
+    iconBg: "bg-indigo-500/10",
+    iconBorder: "border-indigo-500/20",
+    countColor: "text-indigo-400",
   },
   success: {
-    iconBg: 'bg-emerald-500/10',
-    iconBorder: 'border-emerald-500/20',
-    countColor: 'text-emerald-400',
+    iconBg: "bg-emerald-500/10",
+    iconBorder: "border-emerald-500/20",
+    countColor: "text-emerald-400",
   },
   warning: {
-    iconBg: 'bg-amber-500/10',
-    iconBorder: 'border-amber-500/20',
-    countColor: 'text-amber-400',
+    iconBg: "bg-amber-500/10",
+    iconBorder: "border-amber-500/20",
+    countColor: "text-amber-400",
   },
   danger: {
-    iconBg: 'bg-red-500/10',
-    iconBorder: 'border-red-500/20',
-    countColor: 'text-red-400',
+    iconBg: "bg-red-500/10",
+    iconBorder: "border-red-500/20",
+    countColor: "text-red-400",
   },
 };
 
@@ -54,7 +54,9 @@ export default function MetricCard({
   const content = (
     <>
       <div className="flex flex-col gap-1 min-w-0">
-        <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+          {label}
+        </p>
         <p className={`text-2xl font-bold ${countColor}`}>{count}</p>
         {secondaryNote && (
           <p className="text-xs text-zinc-500">{secondaryNote}</p>

@@ -1,16 +1,16 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { member } from '@pmg/db/schema';
-import { auth } from '@/lib/auth';
-import { Role } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm/sql/expressions/conditions';
-import { checkIfAdmin } from '@/server';
+import { db } from "@pmg/db";
+import { member } from "@pmg/db/schema";
+import { auth } from "@/lib/auth";
+import { Role } from "@pmg/db/schema";
+import { eq } from "drizzle-orm/sql/expressions/conditions";
+import { checkIfAdmin } from "@/server";
 
 export const addMember = async (
   organizationId: string,
   userId: string,
-  role: Role
+  role: Role,
 ) => {
   try {
     await auth.api.addMember({
@@ -22,13 +22,13 @@ export const addMember = async (
     });
     return {
       success: true,
-      message: 'Member added successfully',
+      message: "Member added successfully",
     };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: e.message || 'An unknown error occurred',
+      message: e.message || "An unknown error occurred",
     };
   }
 };
@@ -38,7 +38,7 @@ export const removeMember = async (memberId: string) => {
   if (!isAdmin) {
     return {
       success: false,
-      message: 'You do not have permission to remove members',
+      message: "You do not have permission to remove members",
     };
   }
 
@@ -46,15 +46,15 @@ export const removeMember = async (memberId: string) => {
     await db.delete(member).where(eq(member.id, memberId));
     return {
       success: true,
-      message: 'Member removed successfully',
+      message: "Member removed successfully",
       error: null,
     };
   } catch (error) {
     const e = error as Error;
     return {
       success: false,
-      message: e.message || 'An unknown error occurred',
-      error: e.message || 'An unknown error occurred',
+      message: e.message || "An unknown error occurred",
+      error: e.message || "An unknown error occurred",
     };
   }
 };

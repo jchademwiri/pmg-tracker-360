@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useTransition } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect, useTransition } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
@@ -18,7 +18,7 @@ import {
   Database,
   LogOut,
   type LucideIcon,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -32,10 +32,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from '@/components/ui/sidebar';
-import { Separator } from '@/components/ui/separator';
-import { adminSignOut } from '@/app/actions';
-import { getUnreadTicketsCountForAdminAction } from '@/app/support-tickets/actions';
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { adminSignOut } from "@/app/actions";
+import { getUnreadTicketsCountForAdminAction } from "@/app/support-tickets/actions";
 
 /* ------------------------------------------------------------------ */
 /*  Navigation data                                                    */
@@ -54,41 +54,41 @@ type NavGroup = {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Overview',
+    label: "Overview",
     items: [
-      { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/reports', label: 'Reports & Analytics', icon: BarChart3 },
+      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/reports", label: "Reports & Analytics", icon: BarChart3 },
     ],
   },
   {
-    label: 'Tenants',
+    label: "Tenants",
     items: [
-      { href: '/organizations', label: 'Organizations', icon: Building2 },
-      { href: '/users', label: 'Users', icon: Users },
+      { href: "/organizations", label: "Organizations", icon: Building2 },
+      { href: "/users", label: "Users", icon: Users },
     ],
   },
   {
-    label: 'Platform',
+    label: "Platform",
     items: [
-      { href: '/pricing', label: 'Pricing & Plans', icon: CreditCard },
-      { href: '/storage', label: 'Storage & R2', icon: HardDrive },
-      { href: '/system-admins', label: 'System Admins', icon: ShieldCheck },
+      { href: "/pricing", label: "Pricing & Plans", icon: CreditCard },
+      { href: "/storage", label: "Storage & R2", icon: HardDrive },
+      { href: "/system-admins", label: "System Admins", icon: ShieldCheck },
     ],
   },
   {
-    label: 'Support & Growth',
+    label: "Support & Growth",
     items: [
-      { href: '/support-tickets', label: 'Support Tickets', icon: LifeBuoy },
-      { href: '/feedback', label: 'Feedback', icon: MessageSquare },
+      { href: "/support-tickets", label: "Support Tickets", icon: LifeBuoy },
+      { href: "/feedback", label: "Feedback", icon: MessageSquare },
     ],
   },
   {
-    label: 'Security',
-    items: [{ href: '/sessions', label: 'Sessions', icon: ShieldAlert }],
+    label: "Security",
+    items: [{ href: "/sessions", label: "Sessions", icon: ShieldAlert }],
   },
   {
-    label: 'Operations',
-    items: [{ href: '/backups', label: 'Backups', icon: Database }],
+    label: "Operations",
+    items: [{ href: "/backups", label: "Backups", icon: Database }],
   },
 ];
 
@@ -110,7 +110,7 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [unreadTicketCount, setUnreadTicketCount] = useState(0);
-  const initial = userName?.[0]?.toUpperCase() ?? 'A';
+  const initial = userName?.[0]?.toUpperCase() ?? "A";
 
   useEffect(() => {
     let mounted = true;
@@ -128,11 +128,11 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
       fetchCount();
     };
 
-    window.addEventListener('admin-support-count-updated', handleUpdate);
+    window.addEventListener("admin-support-count-updated", handleUpdate);
 
     return () => {
       mounted = false;
-      window.removeEventListener('admin-support-count-updated', handleUpdate);
+      window.removeEventListener("admin-support-count-updated", handleUpdate);
     };
   }, [pathname]);
 
@@ -150,7 +150,7 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
           <Shield className="h-6 w-6 text-[var(--sidebar-primary)] animate-pulse shrink-0" />
           <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
             <span className="font-bold text-lg tracking-wider text-white">
-              PLATFORM{' '}
+              PLATFORM{" "}
               <span className="text-[var(--sidebar-primary)]">ADMIN</span>
             </span>
           </div>
@@ -166,7 +166,8 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = pathname === item.href;
-                  const showBadge = item.href === '/support-tickets' && unreadTicketCount > 0;
+                  const showBadge =
+                    item.href === "/support-tickets" && unreadTicketCount > 0;
 
                   return (
                     <SidebarMenuItem key={item.href}>
@@ -203,7 +204,7 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip={userName ?? 'Admin'}
+              tooltip={userName ?? "Admin"}
               onClick={handleSignOut}
               disabled={isPending}
             >
@@ -212,10 +213,10 @@ export function AdminSidebar({ userName, userEmail }: AdminSidebarProps) {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {userName ?? 'Admin'}
+                  {userName ?? "Admin"}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {userEmail ?? ''}
+                  {userEmail ?? ""}
                 </span>
               </div>
               <LogOut className="ml-auto size-4 text-muted-foreground" />

@@ -4,8 +4,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { getTenderStats } from '@/server/tenders';
+} from "@/components/ui/card";
+import { getTenderStats } from "@/server/tenders";
 
 interface DashboardChartsProps {
   organizationId: string;
@@ -46,23 +46,23 @@ export async function DashboardCharts({
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-500 ${
-                        status === 'open'
-                          ? 'bg-green-500'
-                          : status === 'closed'
-                            ? 'bg-gray-500'
-                            : status === 'evaluation'
-                              ? 'bg-blue-500'
-                              : status === 'awarded'
-                                ? 'bg-amber-500'
-                                : status === 'lost'
-                                  ? 'bg-red-500'
-                                  : 'bg-muted'
+                        status === "open"
+                          ? "bg-green-500"
+                          : status === "closed"
+                            ? "bg-gray-500"
+                            : status === "evaluation"
+                              ? "bg-blue-500"
+                              : status === "awarded"
+                                ? "bg-amber-500"
+                                : status === "lost"
+                                  ? "bg-red-500"
+                                  : "bg-muted"
                       }`}
                       role="progressbar"
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={
-                        typeof width === 'string' ? parseFloat(width) : width
+                        typeof width === "string" ? parseFloat(width) : width
                       }
                       aria-label={`Progress: ${width}`}
                       style={{ width }}

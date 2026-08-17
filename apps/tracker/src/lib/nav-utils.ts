@@ -9,10 +9,10 @@
 export function isNavActive(
   pathname: string,
   searchParams: URLSearchParams,
-  url: string
+  url: string,
 ): boolean {
-  if (url === '#') return false;
-  const [targetPath, targetQuery] = url.split('?');
+  if (url === "#") return false;
+  const [targetPath, targetQuery] = url.split("?");
 
   // Exact path match required — prefix match intentionally excluded
   if (pathname !== targetPath) return false;
@@ -23,7 +23,7 @@ export function isNavActive(
   // Nav link has query params → all must match
   const targetParams = new URLSearchParams(targetQuery);
   return Array.from(targetParams.entries()).every(
-    ([key, value]) => searchParams.get(key) === value
+    ([key, value]) => searchParams.get(key) === value,
   );
 }
 
@@ -34,6 +34,6 @@ export function isNavActive(
  * anywhere in that section.
  */
 export function isPathInSection(pathname: string, url: string): boolean {
-  const targetPath = url.split('?')[0];
+  const targetPath = url.split("?")[0];
   return pathname === targetPath || pathname.startsWith(`${targetPath}/`);
 }

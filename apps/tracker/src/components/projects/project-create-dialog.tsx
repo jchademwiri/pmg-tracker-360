@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Plus, FileText } from 'lucide-react';
+import { useState, useTransition, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Plus, FileText } from "lucide-react";
 
 import {
   Dialog,
@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,24 +21,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-import { createProject } from '@/server/projects';
-import { getClients } from '@/server/clients';
+import { createProject } from "@/server/projects";
+import { getClients } from "@/server/clients";
 import {
   ProjectCreateSchema,
   type ProjectCreateInput,
-} from '@/lib/validations/project';
-import { ClientCreateDialog } from '@/components/clients/client-create-dialog';
+} from "@/lib/validations/project";
+import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 
 interface ProjectCreateDialogProps {
   organizationId: string;
@@ -65,10 +65,10 @@ export function ProjectCreateDialog({
   const form = useForm<ProjectCreateInput>({
     resolver: zodResolver(ProjectCreateSchema),
     defaultValues: {
-      projectNumber: '',
-      description: '',
-      clientId: '',
-      status: 'active',
+      projectNumber: "",
+      description: "",
+      clientId: "",
+      status: "active",
     },
   });
 
@@ -78,10 +78,10 @@ export function ProjectCreateDialog({
       const loadClients = async () => {
         try {
           setLoadingClients(true);
-          const result = await getClients(organizationId, '', 1, 100);
+          const result = await getClients(organizationId, "", 1, 100);
           setClients(result.clients);
         } catch (error) {
-          console.error('Error loading clients:', error);
+          console.error("Error loading clients:", error);
         } finally {
           setLoadingClients(false);
         }
@@ -108,11 +108,11 @@ export function ProjectCreateDialog({
             projectNumber: result.project.projectNumber,
           });
         } else {
-          setError(result.error || 'Failed to create project');
+          setError(result.error || "Failed to create project");
         }
       } catch (err) {
-        setError('An unexpected error occurred');
-        console.error('Project creation error:', err);
+        setError("An unexpected error occurred");
+        console.error("Project creation error:", err);
       }
     });
   };
@@ -225,7 +225,7 @@ export function ProjectCreateDialog({
                             name: newClient.name,
                           },
                         ]);
-                        form.setValue('clientId', newClient.id);
+                        form.setValue("clientId", newClient.id);
                       }}
                     />
                   </div>

@@ -1,22 +1,22 @@
 /**
  * @jest-environment node
  */
-import { db } from '@pmg/db';
-import { organization, user, member, ownershipTransfer } from '@pmg/db/schema';
-import { ownershipTransferManager } from '@/lib/ownership-transfer';
-import { eq } from 'drizzle-orm';
+import { db } from "@pmg/db";
+import { organization, user, member, ownershipTransfer } from "@pmg/db/schema";
+import { ownershipTransferManager } from "@/lib/ownership-transfer";
+import { eq } from "drizzle-orm";
 
 // Mock revalidatePath
-jest.mock('next/cache', () => ({
+jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
 // Mock Resend
-jest.mock('resend', () => {
+jest.mock("resend", () => {
   return {
     Resend: jest.fn().mockImplementation(() => ({
       emails: {
-        send: jest.fn().mockResolvedValue({ id: 'mock_email_id' }),
+        send: jest.fn().mockResolvedValue({ id: "mock_email_id" }),
       },
     })),
   };
@@ -34,8 +34,8 @@ afterAll(() => {
   console.log = originalConsoleLog;
 });
 
-describe('Ownership Transfer Tests', () => {
-  const TEST_PREFIX = 'OT_TEST_' + Date.now();
+describe("Ownership Transfer Tests", () => {
+  const TEST_PREFIX = "OT_TEST_" + Date.now();
   let orgId: string;
   let ownerId: string;
   let newOwnerId: string;
@@ -48,12 +48,12 @@ describe('Ownership Transfer Tests', () => {
     await db.insert(user).values([
       {
         id: ownerId,
-        name: 'Owner User',
+        name: "Owner User",
         email: `owner_${Date.now()}@test.com`,
       },
       {
         id: newOwnerId,
-        name: 'New Owner User',
+        name: "New Owner User",
         email: `new_${Date.now()}@test.com`,
       },
     ]);
@@ -72,14 +72,14 @@ describe('Ownership Transfer Tests', () => {
         id: `mem_${Date.now()}_1`,
         organizationId: orgId,
         userId: ownerId,
-        role: 'owner',
+        role: "owner",
         createdAt: new Date(),
       },
       {
         id: `mem_${Date.now()}_2`,
         organizationId: orgId,
         userId: newOwnerId,
-        role: 'member',
+        role: "member",
         createdAt: new Date(),
       },
     ]);
@@ -94,15 +94,15 @@ describe('Ownership Transfer Tests', () => {
     if (newOwnerId) await db.delete(user).where(eq(user.id, newOwnerId));
   });
 
-  describe('Initiate Transfer', () => {
-    it('should allow owner to initiate transfer', async () => {
+  describe("Initiate Transfer", () => {
+    it("should allow owner to initiate transfer", async () => {
       const result = await ownershipTransferManager.initiateOwnershipTransfer(
         {
           organizationId: orgId,
           newOwnerId: newOwnerId,
-          reason: 'Test transfer',
+          reason: "Test transfer",
         },
-        ownerId
+        ownerId,
       );
 
       expect(result.success).toBe(true);
@@ -113,26 +113,26 @@ describe('Ownership Transfer Tests', () => {
         where: eq(ownershipTransfer.id, result.transferId!),
       });
       expect(transfer).toBeDefined();
-      expect(transfer?.status).toBe('pending');
+      expect(transfer?.status).toBe("pending");
       expect(transfer?.fromUserId).toBe(ownerId);
       expect(transfer?.toUserId).toBe(newOwnerId);
     });
 
-    it('should fail if non-owner tries to initiate', async () => {
+    it("should fail if non-owner tries to initiate", async () => {
       const result = await ownershipTransferManager.initiateOwnershipTransfer(
         {
           organizationId: orgId,
           newOwnerId: ownerId, // trying to transfer back to original owner? or doesn't matter
         },
-        newOwnerId // Not the owner
+        newOwnerId, // Not the owner
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Only the current owner');
+      expect(result.error).toContain("Only the current owner");
     });
   });
 
-  describe('Cancel Transfer', () => {
+  describe("Cancel Transfer", () => {
     beforeEach(async () => {
       // Clean up any existing pending transfers to avoid conflicts
       await db
@@ -140,12 +140,12 @@ describe('Ownership Transfer Tests', () => {
         .where(eq(ownershipTransfer.organizationId, orgId));
     });
 
-    it('should allow owner to cancel pending transfer', async () => {
+    it("should allow owner to cancel pending transfer", async () => {
       // Create a pending transfer first
       const initResult =
         await ownershipTransferManager.initiateOwnershipTransfer(
           { organizationId: orgId, newOwnerId: newOwnerId },
-          ownerId
+          ownerId,
         );
       expect(initResult.success).toBe(true);
       const transferId = initResult.transferId!;
@@ -153,7 +153,7 @@ describe('Ownership Transfer Tests', () => {
       // Cancel it
       const result = await ownershipTransferManager.cancelOwnershipTransfer(
         transferId,
-        ownerId
+        ownerId,
       );
       expect(result.success).toBe(true);
 
@@ -161,11 +161,11 @@ describe('Ownership Transfer Tests', () => {
       const transfer = await db.query.ownershipTransfer.findFirst({
         where: eq(ownershipTransfer.id, transferId),
       });
-      expect(transfer?.status).toBe('cancelled');
+      expect(transfer?.status).toBe("cancelled");
     }, 15000); // Increased timeout
   });
 
-  describe('Accept Transfer', () => {
+  describe("Accept Transfer", () => {
     let transferId: string;
 
     beforeEach(async () => {
@@ -177,19 +177,19 @@ describe('Ownership Transfer Tests', () => {
       const initResult =
         await ownershipTransferManager.initiateOwnershipTransfer(
           { organizationId: orgId, newOwnerId: newOwnerId },
-          ownerId
+          ownerId,
         );
       transferId = initResult.transferId!;
     });
 
-    it('should successfully transfer ownership', async () => {
+    it("should successfully transfer ownership", async () => {
       const result = await ownershipTransferManager.acceptOwnershipTransfer(
         transferId,
-        newOwnerId
+        newOwnerId,
       );
 
       if (!result.success) {
-        console.error('Accept Transfer Error:', result.error);
+        console.error("Accept Transfer Error:", result.error);
       }
       expect(result.success).toBe(true);
 
@@ -197,7 +197,7 @@ describe('Ownership Transfer Tests', () => {
       const transfer = await db.query.ownershipTransfer.findFirst({
         where: eq(ownershipTransfer.id, transferId),
       });
-      expect(transfer?.status).toBe('accepted');
+      expect(transfer?.status).toBe("accepted");
 
       // Verify Member Roles
       const oldOwnerMember = await db.query.member.findFirst({
@@ -207,11 +207,11 @@ describe('Ownership Transfer Tests', () => {
         where: eq(member.userId, newOwnerId),
       });
 
-      expect(oldOwnerMember?.role).toBe('admin');
-      expect(newOwnerMember?.role).toBe('owner');
+      expect(oldOwnerMember?.role).toBe("admin");
+      expect(newOwnerMember?.role).toBe("owner");
     }, 15000);
 
-    it('should fail if wrong user tries to accept', async () => {
+    it("should fail if wrong user tries to accept", async () => {
       // Create another pending transfer (first reset roles if needed?
       // The previous test changed roles. So owner is now newOwnerId.)
 
@@ -221,17 +221,17 @@ describe('Ownership Transfer Tests', () => {
       const initResult =
         await ownershipTransferManager.initiateOwnershipTransfer(
           { organizationId: orgId, newOwnerId: ownerId },
-          newOwnerId // Current owner
+          newOwnerId, // Current owner
         );
       const tid = initResult.transferId!;
 
       // Random user tries to accept
       const result = await ownershipTransferManager.acceptOwnershipTransfer(
         tid,
-        'random_user_id'
+        "random_user_id",
       );
       expect(result.success).toBe(false);
-      expect(result.error).toContain('not the intended recipient');
+      expect(result.error).toContain("not the intended recipient");
     }, 15000); // Increased timeout
   });
 });

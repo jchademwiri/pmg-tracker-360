@@ -1,25 +1,25 @@
-import { DynamicBreadcrumb } from '@/components/dynamic-breadcrumb';
-import { AppSidebarClient } from '@/components/shared/navigation';
-import { Separator } from '@/components/ui/separator';
+import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb";
+import { AppSidebarClient } from "@/components/shared/navigation";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
-import { checkUserSession } from '@/lib/session-check';
-import { getNotifications } from '@/server/notifications';
-import { NotificationBell } from '@/components/notifications/notification-bell';
-import { MobileBottomNav } from '@/components/ui/mobile-bottom-nav';
+import { checkUserSession } from "@/lib/session-check";
+import { getNotifications } from "@/server/notifications";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { MobileBottomNav } from "@/components/ui/mobile-bottom-nav";
 import {
   getActiveOrganizations,
   getUserOrganizationMembership,
-} from '@/server/organizations';
-import { getCurrentUser } from '@/server/users';
-import { SessionUserSync } from '@/components/shared/session-user-sync';
+} from "@/server/organizations";
+import { getCurrentUser } from "@/server/users";
+import { SessionUserSync } from "@/components/shared/session-user-sync";
 
 // Force dynamic rendering for dashboard layout since it uses server functions with headers
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function MainDashboardLayout({
   children,
@@ -42,11 +42,11 @@ export default async function MainDashboardLayout({
   const { currentUser, session } = await getCurrentUser();
 
   // Fetch current user's role in the active organization
-  let role = 'member'; // Default to lowest permission
+  let role = "member"; // Default to lowest permission
   if (currentUser && session?.activeOrganizationId) {
     const membership = await getUserOrganizationMembership(
       currentUser.id,
-      session.activeOrganizationId
+      session.activeOrganizationId,
     );
     if (membership) {
       role = membership.role;
@@ -86,7 +86,7 @@ export default async function MainDashboardLayout({
                 <NotificationBell
                   notifications={notifications}
                   unreadCount={unreadCount}
-                  organizationId={sessionCheck.activeOrganizationId || ''}
+                  organizationId={sessionCheck.activeOrganizationId || ""}
                 />
               </div>
             </div>

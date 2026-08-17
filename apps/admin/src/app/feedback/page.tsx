@@ -1,6 +1,6 @@
-import { requireAdminPage } from '@/lib/require-admin-page';
-import { getFeedback } from '@/lib/admin-queries';
-import FeedbackListClient from './FeedbackListClient';
+import { requireAdminPage } from "@/lib/require-admin-page";
+import { getFeedback } from "@/lib/admin-queries";
+import FeedbackListClient from "./FeedbackListClient";
 
 export default async function FeedbackPage({
   searchParams,
@@ -13,7 +13,7 @@ export default async function FeedbackPage({
   // 2. Read type filter from URL
   const params = await searchParams;
   const typeFilter = params?.type; // undefined = all
-  const viewMode = typeFilter ?? 'all';
+  const viewMode = typeFilter ?? "all";
 
   // 3. Fetch (server always fetches all; client-side filter applied in FeedbackListClient)
   const feedbackItems = await getFeedback();
@@ -22,7 +22,9 @@ export default async function FeedbackPage({
   return (
     <div className="space-y-6 animate-in fade-in duration-500 font-sans">
       <div className="space-y-1">
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">Feedback</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-white">
+          Feedback
+        </h1>
         <p className="text-sm text-zinc-400">
           User-submitted bug reports, feature requests, and general feedback.
         </p>

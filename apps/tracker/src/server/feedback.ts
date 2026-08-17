@@ -1,25 +1,29 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { feedback, user } from '@pmg/db/schema';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
-import { revalidatePath } from 'next/cache';
-import { nanoid } from 'nanoid';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
-import { checkRateLimit, getClientIp, verifyBotProtection } from '@/lib/bot-protection';
+import { db } from "@pmg/db";
+import { feedback, user } from "@pmg/db/schema";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { nanoid } from "nanoid";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import {
+  checkRateLimit,
+  getClientIp,
+  verifyBotProtection,
+} from "@/lib/bot-protection";
 
 const feedbackSchema = z.object({
   message: z
     .string()
-    .min(1, 'Message is required')
-    .max(1000, 'Message is too long'),
-  type: z.enum(['bug', 'feature', 'other']),
+    .min(1, "Message is required")
+    .max(1000, "Message is too long"),
+  type: z.enum(["bug", "feature", "other"]),
   url: z.string().optional(),
   userId: z.string().optional(),
   name: z.string().optional(),
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
   honeypot: z.string().optional(),
   formMountedAt: z.number().optional(),
 });
@@ -31,7 +35,11 @@ export async function submitFeedback(input: FeedbackInput) {
     const validated = feedbackSchema.parse(input);
 
     // Verify session if available
-    let sessionUser: { id: string; name?: string | null; email?: string | null } | null = null;
+    let sessionUser: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+    } | null = null;
     try {
       const headerList = await headers();
       const session = await auth.api.getSession({ headers: headerList });
@@ -51,7 +59,11 @@ export async function submitFeedback(input: FeedbackInput) {
       const clientIp = await getClientIp();
 
       // Rate limit check
-      const rateLimit = checkRateLimit(`feedback:${clientIp}`, 5, 10 * 60 * 1000);
+      const rateLimit = checkRateLimit(
+        `feedback:${clientIp}`,
+        5,
+        10 * 60 * 1000,
+      );
       if (!rateLimit.allowed) {
         return {
           success: false,
@@ -87,14 +99,14 @@ export async function submitFeedback(input: FeedbackInput) {
     // Send email notification to system admins
     try {
       if (process.env.RESEND_API_KEY) {
-        const { Resend } = await import('resend');
+        const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         // Fetch all system admin emails
         const adminUsers = await db
           .select({ email: user.email })
           .from(user)
-          .where(eq(user.role, 'admin'));
+          .where(eq(user.role, "admin"));
 
         const adminEmails = adminUsers
           .map((a) => a.email)
@@ -103,22 +115,35 @@ export async function submitFeedback(input: FeedbackInput) {
         const recipients =
           adminEmails.length > 0
             ? adminEmails
-            : [process.env.RECEIVER_SUPPORT_EMAIL || 'info@contact.tendertrack360.co.za'];
+            : [
+                process.env.RECEIVER_SUPPORT_EMAIL ||
+                  "info@contact.tendertrack360.co.za",
+              ];
 
         const escapeHtml = (unsafe: string) =>
           unsafe
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
-        const safeMessage = escapeHtml(validated.message).replace(/\n/g, '<br>');
-        const safeName = validated.name ? escapeHtml(validated.name) : 'Anonymous User';
-        const safeEmail = validated.email ? escapeHtml(validated.email) : 'No email provided';
-        const safeUrl = validated.url ? escapeHtml(validated.url) : 'N/A';
-        const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
-        const adminUrl = process.env.ADMIN_APP_URL || 'https://admin.tendertrack360.co.za/feedback';
+        const safeMessage = escapeHtml(validated.message).replace(
+          /\n/g,
+          "<br>",
+        );
+        const safeName = validated.name
+          ? escapeHtml(validated.name)
+          : "Anonymous User";
+        const safeEmail = validated.email
+          ? escapeHtml(validated.email)
+          : "No email provided";
+        const safeUrl = validated.url ? escapeHtml(validated.url) : "N/A";
+        const senderEmail =
+          process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+        const adminUrl =
+          process.env.ADMIN_APP_URL ||
+          "https://admin.tendertrack360.co.za/feedback";
 
         const { error: emailError } = await resend.emails.send({
           from: `Tender Track 360 <${senderEmail}>`,
@@ -158,16 +183,19 @@ export async function submitFeedback(input: FeedbackInput) {
         });
 
         if (emailError) {
-          console.error('Failed to send feedback email notification:', emailError);
+          console.error(
+            "Failed to send feedback email notification:",
+            emailError,
+          );
         }
       }
     } catch (emailError) {
-      console.error('Failed to send feedback email notification:', emailError);
+      console.error("Failed to send feedback email notification:", emailError);
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to submit feedback:', error);
-    return { success: false, error: 'Failed to submit feedback' };
+    console.error("Failed to submit feedback:", error);
+    return { success: false, error: "Failed to submit feedback" };
   }
 }

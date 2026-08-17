@@ -1,19 +1,21 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { getCurrentUser } from '@/server';
-import { getProjectById } from '@/server/projects';
-import { getProjectLineItems } from '@/server/purchase-orders';
-import { ProjectLineItemsList } from '@/components/projects/project-line-items-list';
-import { Button } from '@/components/ui/button';
-import { notFound } from 'next/navigation';
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { getCurrentUser } from "@/server";
+import { getProjectById } from "@/server/projects";
+import { getProjectLineItems } from "@/server/purchase-orders";
+import { ProjectLineItemsList } from "@/components/projects/project-line-items-list";
+import { Button } from "@/components/ui/button";
+import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface ProjectItemsPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function ProjectItemsPage({ params }: ProjectItemsPageProps) {
+export default async function ProjectItemsPage({
+  params,
+}: ProjectItemsPageProps) {
   const { id } = await params;
   const { session } = await getCurrentUser();
 
@@ -21,8 +23,12 @@ export default async function ProjectItemsPage({ params }: ProjectItemsPageProps
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <h2 className="mb-2 text-xl font-semibold">No Organization Selected</h2>
-          <p className="text-gray-600">Please select an organization to view project items.</p>
+          <h2 className="mb-2 text-xl font-semibold">
+            No Organization Selected
+          </h2>
+          <p className="text-gray-600">
+            Please select an organization to view project items.
+          </p>
         </div>
       </div>
     );
@@ -34,7 +40,10 @@ export default async function ProjectItemsPage({ params }: ProjectItemsPageProps
     notFound();
   }
 
-  const itemsResult = await getProjectLineItems(session.activeOrganizationId, id);
+  const itemsResult = await getProjectLineItems(
+    session.activeOrganizationId,
+    id,
+  );
 
   return (
     <div className="space-y-6">

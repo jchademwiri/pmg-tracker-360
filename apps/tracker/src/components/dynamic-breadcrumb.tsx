@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState, Fragment } from 'react';
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,52 +9,68 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { getTenderBreadcrumbLabel } from '@/server/tenders';
+} from "@/components/ui/breadcrumb";
+import { getTenderBreadcrumbLabel } from "@/server/tenders";
 import {
   getProjectLineItemBreadcrumbLabel,
   getPurchaseOrderBreadcrumbLabel,
-} from '@/server/purchase-orders';
-import { getProjectBreadcrumbLabel } from '@/server/projects';
+} from "@/server/purchase-orders";
+import { getProjectBreadcrumbLabel } from "@/server/projects";
 
 const STATIC_SEGMENT_LABELS: Record<string, string> = {
-  tenders: 'Tenders',
-  overview: 'Overview',
-  create: 'Add Tender',
-  edit: 'Edit',
-  projects: 'Projects',
-  items: 'Items',
-  new: 'New',
-  deliveries: 'Deliveries',
+  tenders: "Tenders",
+  overview: "Overview",
+  create: "Add Tender",
+  edit: "Edit",
+  projects: "Projects",
+  items: "Items",
+  new: "New",
+  deliveries: "Deliveries",
 };
 
-const TENDER_STATIC_ROUTES = new Set(['overview', 'create']);
-const PROJECT_STATIC_ROUTES = new Set(['overview', 'create', 'purchase-orders', 'contracts']);
-const PURCHASE_ORDER_STATIC_ROUTES = new Set(['create', 'edit', 'deliveries', 'new']);
+const TENDER_STATIC_ROUTES = new Set(["overview", "create"]);
+const PROJECT_STATIC_ROUTES = new Set([
+  "overview",
+  "create",
+  "purchase-orders",
+  "contracts",
+]);
+const PURCHASE_ORDER_STATIC_ROUTES = new Set([
+  "create",
+  "edit",
+  "deliveries",
+  "new",
+]);
 
 function formatSegmentName(segment: string) {
   return segment
-    .split('-')
+    .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 export function DynamicBreadcrumb() {
   const pathname = usePathname();
   const [tenderLabels, setTenderLabels] = useState<Record<string, string>>({});
-  const [projectLabels, setProjectLabels] = useState<Record<string, string>>({});
-  const [purchaseOrderLabels, setPurchaseOrderLabels] = useState<Record<string, string>>({});
-  const [projectLineItemLabels, setProjectLineItemLabels] = useState<Record<string, string>>({});
+  const [projectLabels, setProjectLabels] = useState<Record<string, string>>(
+    {},
+  );
+  const [purchaseOrderLabels, setPurchaseOrderLabels] = useState<
+    Record<string, string>
+  >({});
+  const [projectLineItemLabels, setProjectLineItemLabels] = useState<
+    Record<string, string>
+  >({});
 
   const pathSegments = useMemo(
-    () => pathname.split('/').filter(Boolean),
-    [pathname]
+    () => pathname.split("/").filter(Boolean),
+    [pathname],
   );
 
   useEffect(() => {
     const tenderId = pathSegments.find((segment, index) => {
       return (
-        pathSegments[index - 1] === 'tenders' &&
+        pathSegments[index - 1] === "tenders" &&
         !TENDER_STATIC_ROUTES.has(segment)
       );
     });
@@ -84,7 +100,7 @@ export function DynamicBreadcrumb() {
   useEffect(() => {
     const projectId = pathSegments.find((segment, index) => {
       return (
-        pathSegments[index - 1] === 'projects' &&
+        pathSegments[index - 1] === "projects" &&
         !PROJECT_STATIC_ROUTES.has(segment)
       );
     });
@@ -114,7 +130,7 @@ export function DynamicBreadcrumb() {
   useEffect(() => {
     const purchaseOrderId = pathSegments.find((segment, index) => {
       return (
-        pathSegments[index - 1] === 'purchase-orders' &&
+        pathSegments[index - 1] === "purchase-orders" &&
         !PURCHASE_ORDER_STATIC_ROUTES.has(segment)
       );
     });
@@ -143,7 +159,7 @@ export function DynamicBreadcrumb() {
 
   useEffect(() => {
     const projectLineItemId = pathSegments.find((segment, index) => {
-      return pathSegments[index - 1] === 'items' && !['new'].includes(segment);
+      return pathSegments[index - 1] === "items" && !["new"].includes(segment);
     });
 
     if (!projectLineItemId || projectLineItemLabels[projectLineItemId]) {
@@ -177,23 +193,25 @@ export function DynamicBreadcrumb() {
 
         {pathSegments.map((segment, index) => {
           const isLast = index === pathSegments.length - 1;
-          const href = `/${pathSegments.slice(0, index + 1).join('/')}`;
+          const href = `/${pathSegments.slice(0, index + 1).join("/")}`;
           const isTenderId =
-            pathSegments[index - 1] === 'tenders' &&
+            pathSegments[index - 1] === "tenders" &&
             !TENDER_STATIC_ROUTES.has(segment);
           const isPurchaseOrderId =
-            pathSegments[index - 1] === 'purchase-orders' &&
+            pathSegments[index - 1] === "purchase-orders" &&
             !PURCHASE_ORDER_STATIC_ROUTES.has(segment);
           const isProjectId =
-            pathSegments[index - 1] === 'projects' &&
+            pathSegments[index - 1] === "projects" &&
             !PROJECT_STATIC_ROUTES.has(segment);
           const isProjectLineItemId =
-            pathSegments[index - 1] === 'items' && segment !== 'new';
+            pathSegments[index - 1] === "items" && segment !== "new";
           const displayName =
             (isTenderId ? tenderLabels[segment] : undefined) ||
             (isProjectId ? projectLabels[segment] : undefined) ||
             (isPurchaseOrderId ? purchaseOrderLabels[segment] : undefined) ||
-            (isProjectLineItemId ? projectLineItemLabels[segment] : undefined) ||
+            (isProjectLineItemId
+              ? projectLineItemLabels[segment]
+              : undefined) ||
             STATIC_SEGMENT_LABELS[segment] ||
             formatSegmentName(segment);
 
@@ -206,7 +224,10 @@ export function DynamicBreadcrumb() {
                     {displayName}
                   </BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink href={href} className="max-w-[90px] sm:max-w-none truncate inline-block">
+                  <BreadcrumbLink
+                    href={href}
+                    className="max-w-[90px] sm:max-w-none truncate inline-block"
+                  >
                     {displayName}
                   </BreadcrumbLink>
                 )}

@@ -1,16 +1,16 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { notification } from '@pmg/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { getServerSession } from '@/lib/auth';
-import { nanoid } from 'nanoid';
+import { db } from "@pmg/db";
+import { notification } from "@pmg/db/schema";
+import { eq, and, desc } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getServerSession } from "@/lib/auth";
+import { nanoid } from "nanoid";
 
 // Get notifications for the current user
 export async function getNotifications(
   organizationId: string,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     const session = await getServerSession();
@@ -22,7 +22,7 @@ export async function getNotifications(
     ) {
       return {
         success: false,
-        error: 'Unauthorized',
+        error: "Unauthorized",
         notifications: [],
         unreadCount: 0,
       };
@@ -36,8 +36,8 @@ export async function getNotifications(
       .where(
         and(
           eq(notification.organizationId, organizationId),
-          eq(notification.userId, userId)
-        )
+          eq(notification.userId, userId),
+        ),
       )
       .orderBy(desc(notification.createdAt))
       .limit(limit);
@@ -47,17 +47,17 @@ export async function getNotifications(
       where: and(
         eq(notification.organizationId, organizationId),
         eq(notification.userId, userId),
-        eq(notification.read, false)
+        eq(notification.read, false),
       ),
     });
     const unreadCount = unreadResult.length;
 
     return { success: true, notifications, unreadCount };
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    console.error("Error fetching notifications:", error);
     return {
       success: false,
-      error: 'Failed to fetch notifications',
+      error: "Failed to fetch notifications",
       notifications: [],
       unreadCount: 0,
     };
@@ -67,7 +67,7 @@ export async function getNotifications(
 // Mark a notification as read
 export async function markNotificationDetail(
   organizationId: string,
-  notificationId: string
+  notificationId: string,
 ) {
   try {
     const session = await getServerSession();
@@ -77,7 +77,7 @@ export async function markNotificationDetail(
       !session.session.activeOrganizationId ||
       session.session.activeOrganizationId !== organizationId
     ) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     await db
@@ -86,15 +86,15 @@ export async function markNotificationDetail(
       .where(
         and(
           eq(notification.id, notificationId),
-          eq(notification.userId, session.user.id)
-        )
+          eq(notification.userId, session.user.id),
+        ),
       );
 
-    revalidatePath('/dashboard');
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
-    console.error('Error marking notification read:', error);
-    return { success: false, error: 'Failed' };
+    console.error("Error marking notification read:", error);
+    return { success: false, error: "Failed" };
   }
 }
 
@@ -108,7 +108,7 @@ export async function markAllNotificationsRead(organizationId: string) {
       !session.session.activeOrganizationId ||
       session.session.activeOrganizationId !== organizationId
     ) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     await db
@@ -118,15 +118,15 @@ export async function markAllNotificationsRead(organizationId: string) {
         and(
           eq(notification.organizationId, organizationId),
           eq(notification.userId, session.user.id),
-          eq(notification.read, false)
-        )
+          eq(notification.read, false),
+        ),
       );
 
-    revalidatePath('/dashboard');
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
-    console.error('Error marking all notifications read:', error);
-    return { success: false, error: 'Failed' };
+    console.error("Error marking all notifications read:", error);
+    return { success: false, error: "Failed" };
   }
 }
 
@@ -136,7 +136,7 @@ export async function createNotification({
   organizationId,
   title,
   message,
-  type = 'info',
+  type = "info",
   link,
 }: {
   userId: string;
@@ -159,7 +159,7 @@ export async function createNotification({
     });
     return { success: true };
   } catch (error) {
-    console.error('Error creating notification:', error);
-    return { success: false, error: 'Failed' };
+    console.error("Error creating notification:", error);
+    return { success: false, error: "Failed" };
   }
 }

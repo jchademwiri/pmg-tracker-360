@@ -1,15 +1,18 @@
-import { getCurrentUser } from '@/server';
-import { getPurchaseOrders, getUniqueSuppliers } from '@/server/purchase-orders';
-import { getProjectsList } from '@/server/projects';
-import { POList } from '@/components/purchase-orders/po-list';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import {
+  getPurchaseOrders,
+  getUniqueSuppliers,
+} from "@/server/purchase-orders";
+import { getProjectsList } from "@/server/projects";
+import { POList } from "@/components/purchase-orders/po-list";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function PurchaseOrdersPage({
   searchParams,
@@ -23,13 +26,13 @@ export default async function PurchaseOrdersPage({
     headers: await headers(),
     body: {
       permissions: {
-        purchase_order: ['read'],
+        purchase_order: ["read"],
       },
     },
   });
 
   if (!hasPermission) {
-    redirect('/dashboard');
+    redirect("/dashboard");
   }
 
   const resolvedSearchParams = await searchParams; // Correct Promise resolution as per Next.js 15
@@ -51,20 +54,48 @@ export default async function PurchaseOrdersPage({
 
   // Fetch projects list and unique suppliers list for filters
   const projectsResult = await getProjectsList(session.activeOrganizationId);
-  const suppliersResult = await getUniqueSuppliers(session.activeOrganizationId);
+  const suppliersResult = await getUniqueSuppliers(
+    session.activeOrganizationId,
+  );
 
-  const projects = projectsResult.success ? (projectsResult.projects || []) : [];
-  const suppliers = suppliersResult.success ? (suppliersResult.suppliers || []) : [];
+  const projects = projectsResult.success ? projectsResult.projects || [] : [];
+  const suppliers = suppliersResult.success
+    ? suppliersResult.suppliers || []
+    : [];
 
   // Parse filters from search params
-  const search = typeof resolvedSearchParams.search === 'string' ? resolvedSearchParams.search : undefined;
-  const page = typeof resolvedSearchParams.page === 'string' ? parseInt(resolvedSearchParams.page, 10) : 1;
-  const limit = typeof resolvedSearchParams.limit === 'string' ? parseInt(resolvedSearchParams.limit, 10) : 10;
-  const projectId = typeof resolvedSearchParams.projectId === 'string' ? resolvedSearchParams.projectId : undefined;
-  const status = typeof resolvedSearchParams.status === 'string' ? resolvedSearchParams.status : undefined;
-  const supplierName = typeof resolvedSearchParams.supplier === 'string' ? resolvedSearchParams.supplier : undefined;
-  const startDateStr = typeof resolvedSearchParams.startDate === 'string' ? resolvedSearchParams.startDate : undefined;
-  const endDateStr = typeof resolvedSearchParams.endDate === 'string' ? resolvedSearchParams.endDate : undefined;
+  const search =
+    typeof resolvedSearchParams.search === "string"
+      ? resolvedSearchParams.search
+      : undefined;
+  const page =
+    typeof resolvedSearchParams.page === "string"
+      ? parseInt(resolvedSearchParams.page, 10)
+      : 1;
+  const limit =
+    typeof resolvedSearchParams.limit === "string"
+      ? parseInt(resolvedSearchParams.limit, 10)
+      : 10;
+  const projectId =
+    typeof resolvedSearchParams.projectId === "string"
+      ? resolvedSearchParams.projectId
+      : undefined;
+  const status =
+    typeof resolvedSearchParams.status === "string"
+      ? resolvedSearchParams.status
+      : undefined;
+  const supplierName =
+    typeof resolvedSearchParams.supplier === "string"
+      ? resolvedSearchParams.supplier
+      : undefined;
+  const startDateStr =
+    typeof resolvedSearchParams.startDate === "string"
+      ? resolvedSearchParams.startDate
+      : undefined;
+  const endDateStr =
+    typeof resolvedSearchParams.endDate === "string"
+      ? resolvedSearchParams.endDate
+      : undefined;
   const startDate = startDateStr ? new Date(startDateStr) : undefined;
   const endDate = endDateStr ? new Date(endDateStr) : undefined;
 
@@ -78,7 +109,7 @@ export default async function PurchaseOrdersPage({
     status,
     supplierName,
     startDate,
-    endDate
+    endDate,
   );
 
   return (
@@ -87,7 +118,8 @@ export default async function PurchaseOrdersPage({
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Purchase Orders</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Track and manage all purchase orders to prevent duplicate orders and ensure proper fulfillment.
+            Track and manage all purchase orders to prevent duplicate orders and
+            ensure proper fulfillment.
           </p>
         </div>
         <div className="flex items-center gap-2">

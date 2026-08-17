@@ -1,10 +1,17 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Calendar, User, PhoneCall, Loader2, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Calendar,
+  User,
+  PhoneCall,
+  Loader2,
+  MessageSquare,
+  CheckCircle2,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -12,8 +19,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -21,13 +28,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toSASTDateString, parseDateToUTC } from "@/lib/timezone";
 
 const FollowUpSchema = z.object({
-  followUpDate: z.coerce.date({ required_error: 'Follow-up date is required' }),
+  followUpDate: z.coerce.date({ required_error: "Follow-up date is required" }),
   contactPerson: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   outcome: z.string().optional().nullable(),
@@ -58,9 +65,9 @@ export function TenderFollowUpDialog({
     resolver: zodResolver(FollowUpSchema),
     defaultValues: {
       followUpDate: new Date(),
-      contactPerson: '',
-      notes: '',
-      outcome: '',
+      contactPerson: "",
+      notes: "",
+      outcome: "",
       nextFollowUpDate: null,
     },
   });
@@ -72,11 +79,14 @@ export function TenderFollowUpDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      if (!isPending) {
-        onOpenChange(val);
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!isPending) {
+          onOpenChange(val);
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[720px] md:max-w-[780px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-foreground">
@@ -84,7 +94,11 @@ export function TenderFollowUpDialog({
             Log Tender Follow-up
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
-            Record a follow-up conversation or status query for Tender <span className="font-bold text-foreground">{tenderNumber.toUpperCase()}</span>.
+            Record a follow-up conversation or status query for Tender{" "}
+            <span className="font-bold text-foreground">
+              {tenderNumber.toUpperCase()}
+            </span>
+            .
           </DialogDescription>
         </DialogHeader>
 
@@ -102,7 +116,9 @@ export function TenderFollowUpDialog({
                 name="followUpDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm font-semibold">Follow-up Date *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">
+                      Follow-up Date *
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -127,7 +143,9 @@ export function TenderFollowUpDialog({
                 name="nextFollowUpDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm font-semibold">Next Follow-up Date (Optional)</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">
+                      Next Follow-up Date (Optional)
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -154,7 +172,9 @@ export function TenderFollowUpDialog({
                 name="contactPerson"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm font-semibold">Client Contact Person</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">
+                      Client Contact Person
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -163,7 +183,7 @@ export function TenderFollowUpDialog({
                           className="pl-10 text-xs sm:text-sm"
                           disabled={isPending}
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || ""}
                         />
                       </div>
                     </FormControl>
@@ -177,7 +197,9 @@ export function TenderFollowUpDialog({
                 name="outcome"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm font-semibold">Outcome / Status Headline</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">
+                      Outcome / Status Headline
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <CheckCircle2 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -186,7 +208,7 @@ export function TenderFollowUpDialog({
                           className="pl-10 text-xs sm:text-sm"
                           disabled={isPending}
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || ""}
                         />
                       </div>
                     </FormControl>
@@ -201,14 +223,16 @@ export function TenderFollowUpDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs sm:text-sm font-semibold">Discussion Notes & Feedback</FormLabel>
+                  <FormLabel className="text-xs sm:text-sm font-semibold">
+                    Discussion Notes & Feedback
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Detailed notes from the call, email correspondence, or meeting with the client regarding validity, clarifications, or award timeline..."
                       className="min-h-[110px] text-xs sm:text-sm leading-relaxed"
                       disabled={isPending}
                       {...field}
-                      value={field.value || ''}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -233,7 +257,9 @@ export function TenderFollowUpDialog({
                 disabled={isPending}
                 className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold h-9 px-4"
               >
-                {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                {isPending && (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                )}
                 Save Follow-up Entry
               </Button>
             </div>

@@ -1,15 +1,28 @@
-'use client'
+"use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts'
-import { ChartContainer } from '@/components/ui/chart'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface MonthlyTrendsChartProps {
   data: Array<{
-    month: string
-    tenders: number
-    value: number
-  }>
+    month: string;
+    tenders: number;
+    value: number;
+  }>;
 }
 
 export function MonthlyTrendsChart({ data }: MonthlyTrendsChartProps) {
@@ -18,7 +31,9 @@ export function MonthlyTrendsChart({ data }: MonthlyTrendsChartProps) {
       <Card>
         <CardHeader>
           <CardTitle>Monthly Trends</CardTitle>
-          <CardDescription>Tender creation and value trends over time</CardDescription>
+          <CardDescription>
+            Tender creation and value trends over time
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -26,14 +41,16 @@ export function MonthlyTrendsChart({ data }: MonthlyTrendsChartProps) {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Monthly Trends</CardTitle>
-        <CardDescription>Tender creation and value trends over time</CardDescription>
+        <CardDescription>
+          Tender creation and value trends over time
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer>
@@ -64,5 +81,5 @@ export function MonthlyTrendsChart({ data }: MonthlyTrendsChartProps) {
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

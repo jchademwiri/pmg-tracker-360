@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,16 +8,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Database,
   Download,
@@ -28,10 +28,10 @@ import {
   ScrollText,
   Users,
   type LucideIcon,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type ExportFormat = 'json' | 'csv';
+type ExportFormat = "json" | "csv";
 
 interface DataExportModalProps {
   isOpen: boolean;
@@ -50,15 +50,15 @@ interface FormatOption {
 
 const formatOptions: FormatOption[] = [
   {
-    value: 'json',
-    label: 'JSON',
-    description: 'Machine-readable — best for backups',
+    value: "json",
+    label: "JSON",
+    description: "Machine-readable — best for backups",
     icon: FileText,
   },
   {
-    value: 'csv',
-    label: 'CSV',
-    description: 'Spreadsheet-compatible — opens in Excel',
+    value: "csv",
+    label: "CSV",
+    description: "Spreadsheet-compatible — opens in Excel",
     icon: Database,
   },
 ];
@@ -72,27 +72,27 @@ interface CategoryOption {
 
 const categoryOptions: CategoryOption[] = [
   {
-    id: 'members',
-    label: 'Members and roles',
-    description: 'Team members and their permissions',
+    id: "members",
+    label: "Members and roles",
+    description: "Team members and their permissions",
     icon: Users,
   },
   {
-    id: 'tenders',
-    label: 'Tenders and submissions',
-    description: 'Bids, linked clients and submission history',
+    id: "tenders",
+    label: "Tenders and submissions",
+    description: "Bids, linked clients and submission history",
     icon: FileText,
   },
   {
-    id: 'contracts',
-    label: 'Contracts and agreements',
-    description: 'Signed agreements and associated documents',
+    id: "contracts",
+    label: "Contracts and agreements",
+    description: "Signed agreements and associated documents",
     icon: ScrollText,
   },
   {
-    id: 'projects',
-    label: 'Projects and purchase orders',
-    description: 'Project budgets and supplier orders',
+    id: "projects",
+    label: "Projects and purchase orders",
+    description: "Project budgets and supplier orders",
     icon: FolderKanban,
   },
 ];
@@ -105,7 +105,7 @@ export function DataExportModal({
   organizationName,
   onExport,
 }: DataExportModalProps) {
-  const [format, setFormat] = useState<ExportFormat>('json');
+  const [format, setFormat] = useState<ExportFormat>("json");
   const [selected, setSelected] = useState<Record<string, boolean>>({
     members: true,
     tenders: true,
@@ -133,7 +133,7 @@ export function DataExportModal({
       await onExport(format);
       onClose();
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error("Export failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +163,10 @@ export function DataExportModal({
               value={format}
               onValueChange={(value) => setFormat(value as ExportFormat)}
             >
-              <SelectTrigger id="export-format" className="w-full h-auto py-2.5">
+              <SelectTrigger
+                id="export-format"
+                className="w-full h-auto py-2.5"
+              >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <activeFormat.icon className="h-4 w-4 shrink-0 text-primary" />
                   <div className="flex flex-col items-start leading-tight min-w-0">
@@ -193,9 +196,9 @@ export function DataExportModal({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {format === 'json'
-                ? 'JSON includes your full organization backup.'
-                : 'CSV exports your organization details for spreadsheets.'}
+              {format === "json"
+                ? "JSON includes your full organization backup."
+                : "CSV exports your organization details for spreadsheets."}
             </p>
           </div>
 
@@ -215,7 +218,7 @@ export function DataExportModal({
                   onClick={() => setAllCategories(!allSelected)}
                   className="text-xs font-medium text-primary hover:underline underline-offset-2 cursor-pointer"
                 >
-                  {allSelected ? 'Clear' : 'Select all'}
+                  {allSelected ? "Clear" : "Select all"}
                 </button>
               </div>
             </div>
@@ -228,24 +231,24 @@ export function DataExportModal({
                     key={category.id}
                     onClick={(event) => {
                       // Let the checkbox handle its own click — only row clicks toggle
-                      if ((event.target as HTMLElement).closest('button')) {
+                      if ((event.target as HTMLElement).closest("button")) {
                         return;
                       }
                       toggleCategory(category.id);
                     }}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg border p-3 cursor-pointer select-none transition-colors',
+                      "flex items-center gap-3 rounded-lg border p-3 cursor-pointer select-none transition-colors",
                       isChecked
-                        ? 'border-primary/40 bg-primary/5 hover:bg-primary/10'
-                        : 'border-border bg-muted/20 hover:bg-muted/40'
+                        ? "border-primary/40 bg-primary/5 hover:bg-primary/10"
+                        : "border-border bg-muted/20 hover:bg-muted/40",
                     )}
                   >
                     <span
                       className={cn(
-                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors',
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors",
                         isChecked
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-muted text-muted-foreground'
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground",
                       )}
                     >
                       <category.icon className="h-4 w-4" />
@@ -273,13 +276,13 @@ export function DataExportModal({
         <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span
             className={cn(
-              'text-xs text-muted-foreground',
-              nothingSelected && 'text-destructive font-medium'
+              "text-xs text-muted-foreground",
+              nothingSelected && "text-destructive font-medium",
             )}
           >
             {nothingSelected
-              ? 'Select at least one category to export.'
-              : 'A download will start after export.'}
+              ? "Select at least one category to export."
+              : "A download will start after export."}
           </span>
           <div className="flex items-center gap-2">
             <Button

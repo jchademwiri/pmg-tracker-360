@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
   Building2,
@@ -15,9 +15,9 @@ import {
   FolderOpen,
   Receipt,
   Truck,
-} from 'lucide-react';
-import type { RecentActivity } from '@/types/activity';
-import { formatDistanceToNow, format } from 'date-fns';
+} from "lucide-react";
+import type { RecentActivity } from "@/types/activity";
+import { formatDistanceToNow, format } from "date-fns";
 
 interface RecentActivitySectionProps {
   activities: RecentActivity[];
@@ -32,7 +32,7 @@ export function RecentActivitySection({
   isLoading = false,
   showViewAll = false,
   onViewAll,
-  className = '',
+  className = "",
 }: RecentActivitySectionProps) {
   if (isLoading) {
     return <RecentActivitySkeleton className={className} />;
@@ -75,95 +75,95 @@ interface ActivityItemProps {
 }
 
 function ActivityItem({ activity }: ActivityItemProps) {
-  const getActivityIcon = (type: RecentActivity['type']) => {
+  const getActivityIcon = (type: RecentActivity["type"]) => {
     switch (type) {
-      case 'member_joined':
+      case "member_joined":
         return <Users className="h-4 w-4 text-green-600" />;
-      case 'member_left':
+      case "member_left":
         return <Users className="h-4 w-4 text-red-600" />;
-      case 'organization_created':
+      case "organization_created":
         return <Building2 className="h-4 w-4 text-blue-600" />;
-      case 'organization_updated':
+      case "organization_updated":
         return <Building2 className="h-4 w-4 text-orange-600" />;
-      case 'role_changed':
+      case "role_changed":
         return <Users className="h-4 w-4 text-purple-600" />;
-      case 'invitation_sent':
+      case "invitation_sent":
         return <Users className="h-4 w-4 text-blue-500" />;
-      case 'invitation_accepted':
+      case "invitation_accepted":
         return <Users className="h-4 w-4 text-green-500" />;
-      case 'project_created':
+      case "project_created":
         return <FolderOpen className="h-4 w-4 text-blue-600" />;
-      case 'project_status_changed':
+      case "project_status_changed":
         return <FolderOpen className="h-4 w-4 text-orange-600" />;
-      case 'po_created':
+      case "po_created":
         return <Receipt className="h-4 w-4 text-green-600" />;
-      case 'po_status_changed':
+      case "po_status_changed":
         return <Receipt className="h-4 w-4 text-yellow-600" />;
-      case 'po_delivered':
+      case "po_delivered":
         return <Truck className="h-4 w-4 text-green-700" />;
       default:
         return <ActivityIcon className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getActivityBadgeColor = (type: RecentActivity['type']) => {
+  const getActivityBadgeColor = (type: RecentActivity["type"]) => {
     switch (type) {
-      case 'member_joined':
-      case 'invitation_accepted':
-        return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'member_left':
-        return 'bg-red-100 text-red-800 hover:bg-red-100';
-      case 'organization_created':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-      case 'organization_updated':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-100';
-      case 'role_changed':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-100';
-      case 'invitation_sent':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-      case 'project_created':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-      case 'project_status_changed':
-        return 'bg-orange-100 text-orange-800 hover:bg-orange-100';
-      case 'po_created':
-        return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'po_status_changed':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
-      case 'po_delivered':
-        return 'bg-green-200 text-green-900 hover:bg-green-200';
+      case "member_joined":
+      case "invitation_accepted":
+        return "bg-green-100 text-green-800 hover:bg-green-100";
+      case "member_left":
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+      case "organization_created":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "organization_updated":
+        return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+      case "role_changed":
+        return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+      case "invitation_sent":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "project_created":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "project_status_changed":
+        return "bg-orange-100 text-orange-800 hover:bg-orange-100";
+      case "po_created":
+        return "bg-green-100 text-green-800 hover:bg-green-100";
+      case "po_status_changed":
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+      case "po_delivered":
+        return "bg-green-200 text-green-900 hover:bg-green-200";
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
 
-  const formatActivityType = (type: RecentActivity['type']) => {
+  const formatActivityType = (type: RecentActivity["type"]) => {
     switch (type) {
-      case 'member_joined':
-        return 'Member Joined';
-      case 'member_left':
-        return 'Member Left';
-      case 'organization_created':
-        return 'Organization Created';
-      case 'organization_updated':
-        return 'Organization Updated';
-      case 'role_changed':
-        return 'Role Changed';
-      case 'invitation_sent':
-        return 'Invitation Sent';
-      case 'invitation_accepted':
-        return 'Invitation Accepted';
-      case 'project_created':
-        return 'Project Created';
-      case 'project_status_changed':
-        return 'Project Status Changed';
-      case 'po_created':
-        return 'Purchase Order Created';
-      case 'po_status_changed':
-        return 'Purchase Order Status Changed';
-      case 'po_delivered':
-        return 'Purchase Order Delivered';
+      case "member_joined":
+        return "Member Joined";
+      case "member_left":
+        return "Member Left";
+      case "organization_created":
+        return "Organization Created";
+      case "organization_updated":
+        return "Organization Updated";
+      case "role_changed":
+        return "Role Changed";
+      case "invitation_sent":
+        return "Invitation Sent";
+      case "invitation_accepted":
+        return "Invitation Accepted";
+      case "project_created":
+        return "Project Created";
+      case "project_status_changed":
+        return "Project Status Changed";
+      case "po_created":
+        return "Purchase Order Created";
+      case "po_status_changed":
+        return "Purchase Order Status Changed";
+      case "po_delivered":
+        return "Purchase Order Delivered";
       default:
-        return 'Activity';
+        return "Activity";
     }
   };
 
@@ -187,7 +187,8 @@ function ActivityItem({ activity }: ActivityItemProps) {
 
         <div className="flex items-center text-xs text-muted-foreground">
           <Clock className="h-3 w-3 mr-1" />
-          {format(activity.timestamp, 'dd MMM yyyy')} | {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+          {format(activity.timestamp, "dd MMM yyyy")} |{" "}
+          {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
         </div>
 
         <div className="flex flex-col">

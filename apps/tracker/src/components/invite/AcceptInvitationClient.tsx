@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { signOut } from '@/lib/auth-client';
-import { sendVerificationEmail } from '@/server';
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { signOut } from "@/lib/auth-client";
+import { sendVerificationEmail } from "@/server";
 
 export default function AcceptInvitationClient({
   invitationId,
@@ -21,9 +21,11 @@ export default function AcceptInvitationClient({
   currentUserVerified?: boolean;
 }) {
   const router = useRouter();
-  const [showSignUp, setShowSignUp] = useState(!userExists && !currentUserEmail);
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
+  const [showSignUp, setShowSignUp] = useState(
+    !userExists && !currentUserEmail,
+  );
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -48,7 +50,7 @@ export default function AcceptInvitationClient({
       // After sign-out, reload the invite page so the user can log in as the correct account
       window.location.href = currentPath;
     } catch {
-      toast.error('Sign out failed. Please try again.');
+      toast.error("Sign out failed. Please try again.");
       setIsSigningOut(false);
     }
   };
@@ -57,14 +59,15 @@ export default function AcceptInvitationClient({
     if (!currentUserEmail) return;
     setIsResending(true);
     try {
-      const { success, message } = await sendVerificationEmail(currentUserEmail);
+      const { success, message } =
+        await sendVerificationEmail(currentUserEmail);
       if (success) {
-        toast.success('Verification email sent. Check your inbox.');
+        toast.success("Verification email sent. Check your inbox.");
       } else {
-        toast.error(message || 'Failed to send verification email.');
+        toast.error(message || "Failed to send verification email.");
       }
     } catch {
-      toast.error('Failed to send verification email.');
+      toast.error("Failed to send verification email.");
     } finally {
       setIsResending(false);
     }
@@ -95,8 +98,8 @@ export default function AcceptInvitationClient({
           )}
           {isCorrectUser && !currentUserVerified && (
             <div className="p-3 bg-yellow-50 text-yellow-800 rounded text-sm border border-yellow-200">
-              Please verify your email address before accepting this
-              invitation. Check your inbox for the verification link.
+              Please verify your email address before accepting this invitation.
+              Check your inbox for the verification link.
             </div>
           )}
         </div>
@@ -108,7 +111,7 @@ export default function AcceptInvitationClient({
               disabled={isAccepting}
               className="rounded bg-primary px-6 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {isAccepting ? 'Accepting…' : 'Accept Invitation'}
+              {isAccepting ? "Accepting…" : "Accept Invitation"}
             </button>
           )}
           {isCorrectUser && !currentUserVerified && (
@@ -118,14 +121,14 @@ export default function AcceptInvitationClient({
                 disabled={isResending}
                 className="rounded bg-primary px-4 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isResending ? 'Sending…' : 'Resend Verification Email'}
+                {isResending ? "Sending…" : "Resend Verification Email"}
               </button>
               <button
                 onClick={handleCheckVerified}
                 disabled={isRefreshing}
                 className="rounded border px-4 py-2 hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isRefreshing ? 'Checking…' : 'I verified — check again'}
+                {isRefreshing ? "Checking…" : "I verified — check again"}
               </button>
             </>
           )}
@@ -134,7 +137,7 @@ export default function AcceptInvitationClient({
             disabled={isSigningOut}
             className="rounded border px-4 py-2 hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isSigningOut ? 'Signing out…' : 'Sign out'}
+            {isSigningOut ? "Signing out…" : "Sign out"}
           </button>
         </div>
       </div>
@@ -216,15 +219,15 @@ export default function AcceptInvitationClient({
               <button
                 onClick={async () => {
                   if (!name || !password) {
-                    setError('Name and password are required');
+                    setError("Name and password are required");
                     return;
                   }
                   setIsSubmitting(true);
                   setError(null);
                   try {
-                    const resp = await fetch('/api/invite/complete-signup', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                    const resp = await fetch("/api/invite/complete-signup", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         invitationId,
                         name,
@@ -234,15 +237,15 @@ export default function AcceptInvitationClient({
                     });
                     const data = await resp.json();
                     if (data?.success) {
-                      toast.success('Account created and invitation accepted!');
-                      window.location.href = data.redirectUrl || '/dashboard';
+                      toast.success("Account created and invitation accepted!");
+                      window.location.href = data.redirectUrl || "/dashboard";
                     } else {
-                      setError(data?.message || 'Failed to create account');
-                      toast.error(data?.message || 'Failed to create account');
+                      setError(data?.message || "Failed to create account");
+                      toast.error(data?.message || "Failed to create account");
                     }
                   } catch {
-                    setError('Network error');
-                    toast.error('Network error occurred');
+                    setError("Network error");
+                    toast.error("Network error occurred");
                   } finally {
                     setIsSubmitting(false);
                   }
@@ -250,7 +253,7 @@ export default function AcceptInvitationClient({
                 disabled={isSubmitting}
                 className="rounded bg-primary px-6 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Creating Account…' : 'Create & Accept'}
+                {isSubmitting ? "Creating Account…" : "Create & Accept"}
               </button>
               <Link
                 href={loginHref}

@@ -1,15 +1,15 @@
-import { db } from '@pmg/db';
+import { db } from "@pmg/db";
 import {
   ownershipTransfer,
   organization,
   user,
   member,
   type Role,
-} from '@pmg/db/schema';
-import { eq, and, desc, lt, or } from 'drizzle-orm';
-import { Resend } from 'resend';
-import OwnershipTransferEmail from '@/emails/ownership-transfer';
-import { env } from '@/env';
+} from "@pmg/db/schema";
+import { eq, and, desc, lt, or } from "drizzle-orm";
+import { Resend } from "resend";
+import OwnershipTransferEmail from "@/emails/ownership-transfer";
+import { env } from "@/env";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -36,7 +36,7 @@ export interface PendingTransfer {
   toUserId: string;
   toUserName: string;
   toUserEmail: string;
-  status: 'pending' | 'accepted' | 'cancelled' | 'expired';
+  status: "pending" | "accepted" | "cancelled" | "expired";
   createdAt: Date;
   expiresAt: Date;
   transferMessage?: string;
@@ -49,7 +49,7 @@ class OwnershipTransferManager {
   async validateTransferRequest(
     organizationId: string,
     fromUserId: string,
-    toUserId: string
+    toUserId: string,
   ): Promise<{ isValid: boolean; errors: string[] }> {
     // Basic validation: user exists, org exists, fromUser is owner
     const org = await db.query.organization.findFirst({
@@ -57,7 +57,7 @@ class OwnershipTransferManager {
     });
 
     if (!org) {
-      return { isValid: false, errors: ['Organization not found'] };
+      return { isValid: false, errors: ["Organization not found"] };
     }
 
     // Check if fromUser is the owner via Member table
@@ -65,14 +65,14 @@ class OwnershipTransferManager {
       where: and(
         eq(member.organizationId, organizationId),
         eq(member.userId, fromUserId),
-        eq(member.role, 'owner')
+        eq(member.role, "owner"),
       ),
     });
 
     if (!currentOwnerMember) {
       return {
         isValid: false,
-        errors: ['Only the current owner can initiate transfer'],
+        errors: ["Only the current owner can initiate transfer"],
       };
     }
 
@@ -80,7 +80,7 @@ class OwnershipTransferManager {
     const existingTransfer = await db.query.ownershipTransfer.findFirst({
       where: and(
         eq(ownershipTransfer.organizationId, organizationId),
-        eq(ownershipTransfer.status, 'pending')
+        eq(ownershipTransfer.status, "pending"),
       ),
     });
 
@@ -88,7 +88,7 @@ class OwnershipTransferManager {
       return {
         isValid: false,
         errors: [
-          'There is already a pending ownership transfer for this organization',
+          "There is already a pending ownership transfer for this organization",
         ],
       };
     }
@@ -98,7 +98,7 @@ class OwnershipTransferManager {
 
   async initiateOwnershipTransfer(
     request: OwnershipTransferRequest,
-    fromUserId: string
+    fromUserId: string,
   ): Promise<OwnershipTransferResult> {
     try {
       const { organizationId, newOwnerId, reason, transferMessage } = request;
@@ -107,10 +107,10 @@ class OwnershipTransferManager {
       const validation = await this.validateTransferRequest(
         organizationId,
         fromUserId,
-        newOwnerId
+        newOwnerId,
       );
       if (!validation.isValid) {
-        return { success: false, error: validation.errors.join(', ') };
+        return { success: false, error: validation.errors.join(", ") };
       }
 
       // 2. Prepare Data
@@ -118,7 +118,7 @@ class OwnershipTransferManager {
       const transferToken = crypto.randomUUID(); // Secure random token
       const now = new Date();
       const expiresAt = new Date(
-        now.getTime() + this.TRANSFER_EXPIRY_HOURS * 60 * 60 * 1000
+        now.getTime() + this.TRANSFER_EXPIRY_HOURS * 60 * 60 * 1000,
       );
 
       // 3. Database Insert
@@ -128,7 +128,7 @@ class OwnershipTransferManager {
         fromUserId,
         toUserId: newOwnerId,
         transferToken,
-        status: 'pending',
+        status: "pending",
         reason,
         transferMessage,
         createdAt: now,
@@ -154,14 +154,14 @@ class OwnershipTransferManager {
           from:
             process.env.SENDER_EMAIL && process.env.SENDER_NAME
               ? `${process.env.SENDER_NAME} <${process.env.SENDER_EMAIL}>`
-              : 'Tender Track 360 <hello@contact.tendertrack360.co.za>',
+              : "Tender Track 360 <hello@contact.tendertrack360.co.za>",
           // MVP: All emails to info@tendertrack360.co.za
           to: toUser.email,
           subject: `Ownership Transfer Request for ${org.name}`,
-          replyTo: process.env.REPLY_TO_EMAIL || 'info@tendertrack360.co.za',
+          replyTo: process.env.REPLY_TO_EMAIL || "info@tendertrack360.co.za",
           react: OwnershipTransferEmail({
             toEmail: toUser.email,
-            fromUserName: fromUser.name || 'Current Owner',
+            fromUserName: fromUser.name || "Current Owner",
             organizationName: org.name,
             acceptLink,
             expiresInHours: this.TRANSFER_EXPIRY_HOURS,
@@ -174,20 +174,20 @@ class OwnershipTransferManager {
         transferId,
       };
     } catch (error) {
-      console.error('Error initiating ownership transfer:', error);
+      console.error("Error initiating ownership transfer:", error);
       return {
         success: false,
         error:
           error instanceof Error
             ? error.message
-            : 'Failed to initiate ownership transfer',
+            : "Failed to initiate ownership transfer",
       };
     }
   }
 
   async acceptOwnershipTransfer(
     transferId: string,
-    acceptingUserId: string
+    acceptingUserId: string,
   ): Promise<OwnershipTransferResult> {
     try {
       const result = await db.transaction(async (tx) => {
@@ -197,10 +197,10 @@ class OwnershipTransferManager {
         });
 
         if (!transfer) {
-          return { success: false, error: 'Transfer request not found' };
+          return { success: false, error: "Transfer request not found" };
         }
 
-        if (transfer.status !== 'pending') {
+        if (transfer.status !== "pending") {
           return {
             success: false,
             error: `Transfer request is ${transfer.status}`,
@@ -209,13 +209,13 @@ class OwnershipTransferManager {
 
         if (transfer.expiresAt < new Date()) {
           // Mark as expired if needed, but for now just return error
-          return { success: false, error: 'Transfer request has expired' };
+          return { success: false, error: "Transfer request has expired" };
         }
 
         if (transfer.toUserId !== acceptingUserId) {
           return {
             success: false,
-            error: 'You are not the intended recipient of this transfer',
+            error: "You are not the intended recipient of this transfer",
           };
         }
 
@@ -227,29 +227,29 @@ class OwnershipTransferManager {
         // Update Old Owner Role to 'admin'
         await tx
           .update(member)
-          .set({ role: 'admin' })
+          .set({ role: "admin" })
           .where(
             and(
               eq(member.organizationId, orgId),
-              eq(member.userId, transfer.fromUserId)
-            )
+              eq(member.userId, transfer.fromUserId),
+            ),
           );
 
         // Update New Owner Role to 'owner'
         await tx
           .update(member)
-          .set({ role: 'owner' })
+          .set({ role: "owner" })
           .where(
             and(
               eq(member.organizationId, orgId),
-              eq(member.userId, acceptingUserId)
-            )
+              eq(member.userId, acceptingUserId),
+            ),
           );
 
         // 3. Mark Transfer as Accepted
         await tx
           .update(ownershipTransfer)
-          .set({ status: 'accepted', acceptedAt: new Date() })
+          .set({ status: "accepted", acceptedAt: new Date() })
           .where(eq(ownershipTransfer.id, transferId));
 
         return {
@@ -265,20 +265,20 @@ class OwnershipTransferManager {
 
       return result;
     } catch (error) {
-      console.error('Error accepting ownership transfer:', error);
+      console.error("Error accepting ownership transfer:", error);
       return {
         success: false,
         error:
           error instanceof Error
             ? error.message
-            : 'Failed to accept ownership transfer',
+            : "Failed to accept ownership transfer",
       };
     }
   }
 
   async cancelOwnershipTransfer(
     transferId: string,
-    cancellingUserId: string
+    cancellingUserId: string,
   ): Promise<OwnershipTransferResult> {
     try {
       const transfer = await db.query.ownershipTransfer.findFirst({
@@ -286,7 +286,7 @@ class OwnershipTransferManager {
       });
 
       if (!transfer) {
-        return { success: false, error: 'Transfer request not found' };
+        return { success: false, error: "Transfer request not found" };
       }
 
       // Only fromUser (initiator) can cancel? Or maybe new owner too? Usually initiator or current owner.
@@ -295,20 +295,20 @@ class OwnershipTransferManager {
         // But relying on fromUserId is safer for "My Pending Transfers" logic.
         return {
           success: false,
-          error: 'Not authorized to cancel this transfer',
+          error: "Not authorized to cancel this transfer",
         };
       }
 
-      if (transfer.status !== 'pending') {
+      if (transfer.status !== "pending") {
         return {
           success: false,
-          error: 'Cannot cancel a non-pending transfer',
+          error: "Cannot cancel a non-pending transfer",
         };
       }
 
       await db
         .update(ownershipTransfer)
-        .set({ status: 'cancelled', cancelledAt: new Date() })
+        .set({ status: "cancelled", cancelledAt: new Date() })
         .where(eq(ownershipTransfer.id, transferId));
 
       await this.sendTransferCancellationEmails(transferId);
@@ -318,17 +318,17 @@ class OwnershipTransferManager {
         transferId,
       };
     } catch (error) {
-      console.error('Error cancelling ownership transfer:', error);
+      console.error("Error cancelling ownership transfer:", error);
       return {
         success: false,
-        error: 'Failed to cancel ownership transfer',
+        error: "Failed to cancel ownership transfer",
       };
     }
   }
 
   async acceptTransferByToken(
     token: string,
-    acceptingUserId: string
+    acceptingUserId: string,
   ): Promise<OwnershipTransferResult> {
     try {
       const transfer = await db.query.ownershipTransfer.findFirst({
@@ -338,16 +338,16 @@ class OwnershipTransferManager {
       if (!transfer) {
         return {
           success: false,
-          error: 'Invalid transfer token',
+          error: "Invalid transfer token",
         };
       }
 
       return await this.acceptOwnershipTransfer(transfer.id, acceptingUserId);
     } catch (error) {
-      console.error('Error accepting transfer by token:', error);
+      console.error("Error accepting transfer by token:", error);
       return {
         success: false,
-        error: 'Failed to accept transfer',
+        error: "Failed to accept transfer",
       };
     }
   }
@@ -357,11 +357,11 @@ class OwnershipTransferManager {
       // Find transfers where user is either sender or recipient
       const transfers = await db.query.ownershipTransfer.findMany({
         where: and(
-          eq(ownershipTransfer.status, 'pending'),
+          eq(ownershipTransfer.status, "pending"),
           or(
             eq(ownershipTransfer.fromUserId, userId),
-            eq(ownershipTransfer.toUserId, userId)
-          )
+            eq(ownershipTransfer.toUserId, userId),
+          ),
         ),
         with: {
           organization: true,
@@ -381,14 +381,14 @@ class OwnershipTransferManager {
         toUserId: t.toUserId,
         toUserName: t.toUser.name,
         toUserEmail: t.toUser.email,
-        status: t.status as 'pending' | 'accepted' | 'cancelled' | 'expired',
+        status: t.status as "pending" | "accepted" | "cancelled" | "expired",
         createdAt: t.createdAt,
         expiresAt: t.expiresAt,
         transferMessage: t.transferMessage || undefined,
         reason: t.reason || undefined,
       }));
     } catch (error) {
-      console.error('Error getting pending transfers', error);
+      console.error("Error getting pending transfers", error);
       return [];
     }
   }
@@ -417,17 +417,17 @@ class OwnershipTransferManager {
         toUserName: transfer.toUser.name,
         toUserEmail: transfer.toUser.email,
         status: transfer.status as
-          | 'pending'
-          | 'accepted'
-          | 'cancelled'
-          | 'expired',
+          | "pending"
+          | "accepted"
+          | "cancelled"
+          | "expired",
         createdAt: transfer.createdAt,
         expiresAt: transfer.expiresAt,
         transferMessage: transfer.transferMessage || undefined,
         reason: transfer.reason || undefined,
       };
     } catch (error) {
-      console.error('Error getting transfer by token:', error);
+      console.error("Error getting transfer by token:", error);
       return null;
     }
   }
@@ -455,14 +455,14 @@ class OwnershipTransferManager {
         toUserId: t.toUserId,
         toUserName: t.toUser.name,
         toUserEmail: t.toUser.email,
-        status: t.status as 'pending' | 'accepted' | 'cancelled' | 'expired',
+        status: t.status as "pending" | "accepted" | "cancelled" | "expired",
         createdAt: t.createdAt,
         expiresAt: t.expiresAt,
         transferMessage: t.transferMessage || undefined,
         reason: t.reason || undefined,
       }));
     } catch (error) {
-      console.error('Error getting transfer history:', error);
+      console.error("Error getting transfer history:", error);
       return [];
     }
   }
@@ -471,26 +471,26 @@ class OwnershipTransferManager {
     try {
       await db
         .update(ownershipTransfer)
-        .set({ status: 'expired' })
+        .set({ status: "expired" })
         .where(
           and(
-            eq(ownershipTransfer.status, 'pending'),
-            lt(ownershipTransfer.expiresAt, new Date())
-          )
+            eq(ownershipTransfer.status, "pending"),
+            lt(ownershipTransfer.expiresAt, new Date()),
+          ),
         );
     } catch (error) {
-      console.error('Error expiring old transfers:', error);
+      console.error("Error expiring old transfers:", error);
     }
   }
 
   private async sendTransferNotificationEmail(
-    transferId: string
+    transferId: string,
   ): Promise<void> {
     // Already handled in initiateOwnershipTransfer, but good for retries
   }
 
   private async sendTransferCompletionEmails(
-    transferId: string
+    transferId: string,
   ): Promise<void> {
     try {
       const transfer = await db.query.ownershipTransfer.findFirst({
@@ -506,7 +506,7 @@ class OwnershipTransferManager {
 
       // Notify New Owner
       await resend.emails.send({
-        from: 'Tender Track 360 <hello@contact.tendertrack360.co.za>',
+        from: "Tender Track 360 <hello@contact.tendertrack360.co.za>",
         to: transfer.toUser.email,
         subject: `Ownership Transferred: ${transfer.organization.name}`,
         html: `<p>Congratulations! You are now the owner of <strong>${transfer.organization.name}</strong>.</p>`,
@@ -514,18 +514,18 @@ class OwnershipTransferManager {
 
       // Notify Old Owner
       await resend.emails.send({
-        from: 'Tender Track 360 <hello@contact.tendertrack360.co.za>',
+        from: "Tender Track 360 <hello@contact.tendertrack360.co.za>",
         to: transfer.fromUser.email, // Assuming fromUser still has access or we just email them
         subject: `Ownership Transfer Complete: ${transfer.organization.name}`,
         html: `<p>You have successfully transferred ownership of <strong>${transfer.organization.name}</strong> to ${transfer.toUser.name}.</p>`,
       });
     } catch (error) {
-      console.error('Failed to send transfer completion emails:', error);
+      console.error("Failed to send transfer completion emails:", error);
     }
   }
 
   private async sendTransferCancellationEmails(
-    transferId: string
+    transferId: string,
   ): Promise<void> {
     try {
       const transfer = await db.query.ownershipTransfer.findFirst({
@@ -541,13 +541,13 @@ class OwnershipTransferManager {
 
       // Notify intended recipient that it was cancelled
       await resend.emails.send({
-        from: 'Tender Track 360 <hello@contact.tendertrack360.co.za>',
+        from: "Tender Track 360 <hello@contact.tendertrack360.co.za>",
         to: transfer.toUser.email,
         subject: `Ownership Transfer Cancelled: ${transfer.organization.name}`,
         html: `<p>The ownership transfer request for <strong>${transfer.organization.name}</strong> has been cancelled.</p>`,
       });
     } catch (error) {
-      console.error('Failed to send transfer cancellation emails:', error);
+      console.error("Failed to send transfer cancellation emails:", error);
     }
   }
 }

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
-import { switchOrganization } from '@/lib/organization-utils';
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { switchOrganization } from "@/lib/organization-utils";
 
 interface OrganizationProviderProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export function OrganizationProvider({
 
   useEffect(() => {
     // Only run this effect on organization-specific pages
-    if (!pathname.includes('/organization/')) {
+    if (!pathname.includes("/organization/")) {
       return;
     }
 

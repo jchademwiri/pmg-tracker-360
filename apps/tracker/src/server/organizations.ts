@@ -1,18 +1,24 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { member, organization, invitation, user, project } from '@pmg/db/schema';
-import type { Role } from '@pmg/db/schema';
+import { db } from "@pmg/db";
+import {
+  member,
+  organization,
+  invitation,
+  user,
+  project,
+} from "@pmg/db/schema";
+import type { Role } from "@pmg/db/schema";
 
 type Organization = typeof organization.$inferSelect;
 
-import { eq, inArray, and, isNull } from 'drizzle-orm';
-import { count } from 'drizzle-orm';
-import { desc } from 'drizzle-orm';
-import { getCurrentUser } from './users';
-import { StorageService } from '@/lib/storage';
-import { nanoid } from 'nanoid';
-import { revalidatePath } from 'next/cache';
+import { eq, inArray, and, isNull } from "drizzle-orm";
+import { count } from "drizzle-orm";
+import { desc } from "drizzle-orm";
+import { getCurrentUser } from "./users";
+import { StorageService } from "@/lib/storage";
+import { nanoid } from "nanoid";
+import { revalidatePath } from "next/cache";
 
 // Enhanced organization data with member counts and user roles
 export interface OrganizationWithStats extends Organization {
@@ -28,12 +34,12 @@ export async function checkOrganizationSlugAvailability(slug: string) {
     normalizedSlug.length < 2 ||
     normalizedSlug.length > 50 ||
     !/^[a-z0-9-]+$/.test(normalizedSlug) ||
-    normalizedSlug.startsWith('-') ||
-    normalizedSlug.endsWith('-')
+    normalizedSlug.startsWith("-") ||
+    normalizedSlug.endsWith("-")
   ) {
     return {
       available: false,
-      error: 'Please enter a valid organization slug.',
+      error: "Please enter a valid organization slug.",
     };
   }
 
@@ -46,10 +52,10 @@ export async function checkOrganizationSlugAvailability(slug: string) {
 
     return { available: existingOrganization.length === 0 };
   } catch (error) {
-    console.error('Error checking organization slug availability:', error);
+    console.error("Error checking organization slug availability:", error);
     return {
       available: false,
-      error: 'Unable to check slug availability right now.',
+      error: "Unable to check slug availability right now.",
     };
   }
 }
@@ -59,7 +65,7 @@ export async function getorganizations(): Promise<OrganizationWithStats[]> {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Get user's memberships with role information (including soft-deleted organizations for the list)
@@ -91,13 +97,13 @@ export async function getorganizations(): Promise<OrganizationWithStats[]> {
           userRole: membership.role as Role,
           lastActivity: membership.organization.createdAt, // Placeholder for now
         };
-      })
+      }),
     );
 
     return organizationsWithStats;
   } catch (error) {
-    console.error('Error fetching organizations:', error);
-    throw new Error('Failed to fetch organizations');
+    console.error("Error fetching organizations:", error);
+    throw new Error("Failed to fetch organizations");
   }
 }
 
@@ -109,7 +115,7 @@ export async function getActiveOrganizations(): Promise<
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Get user's memberships with role information, excluding soft-deleted organizations
@@ -122,7 +128,7 @@ export async function getActiveOrganizations(): Promise<
 
     // Filter out soft-deleted organizations for sidebar
     const activeMemberships = userMemberships.filter(
-      (membership) => !membership.organization.deletedAt
+      (membership) => !membership.organization.deletedAt,
     );
 
     if (activeMemberships.length === 0) {
@@ -141,7 +147,7 @@ export async function getActiveOrganizations(): Promise<
         const memberCount = memberCountResult[0]?.count || 0;
 
         let logoUrl = membership.organization.logo;
-        if (logoUrl && !logoUrl.startsWith('http')) {
+        if (logoUrl && !logoUrl.startsWith("http")) {
           logoUrl = await StorageService.getSignedUrl(logoUrl);
         }
 
@@ -152,16 +158,16 @@ export async function getActiveOrganizations(): Promise<
           userRole: membership.role as Role,
           lastActivity: membership.organization.createdAt,
         };
-      })
+      }),
     );
 
     return organizationsWithStats;
   } catch (error) {
-    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error;
     }
-    console.error('Error fetching active organizations:', error);
-    throw new Error('Failed to fetch active organizations');
+    console.error("Error fetching active organizations:", error);
+    throw new Error("Failed to fetch active organizations");
   }
 }
 
@@ -174,9 +180,9 @@ export async function getOrganizationsForProvider() {
     where: and(
       inArray(
         organization.id,
-        members.map((m) => m.organizationId)
+        members.map((m) => m.organizationId),
       ),
-      isNull(organization.deletedAt) // Filter out soft-deleted organizations from sidebar
+      isNull(organization.deletedAt), // Filter out soft-deleted organizations from sidebar
     ),
   });
   // Map to match the expected type for OrganizationProvider
@@ -199,7 +205,7 @@ export async function getActiveOrganization(userId: string) {
     const savedMembership = await db.query.member.findFirst({
       where: and(
         eq(member.userId, userId),
-        eq(member.organizationId, currentUser.lastActiveOrganizationId)
+        eq(member.organizationId, currentUser.lastActiveOrganizationId),
       ),
       with: {
         organization: true,
@@ -219,7 +225,7 @@ export async function getActiveOrganization(userId: string) {
   });
 
   const activeMemberships = memberships.filter(
-    (membership) => !membership.organization.deletedAt
+    (membership) => !membership.organization.deletedAt,
   );
 
   if (activeMemberships.length !== 1) {
@@ -254,7 +260,7 @@ export async function rememberActiveOrganization(organizationId: string) {
     const membership = await db.query.member.findFirst({
       where: and(
         eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationId)
+        eq(member.organizationId, organizationId),
       ),
       with: {
         organization: true,
@@ -264,7 +270,7 @@ export async function rememberActiveOrganization(organizationId: string) {
     if (!membership || membership.organization.deletedAt) {
       return {
         success: false,
-        error: 'You do not have access to this organization',
+        error: "You do not have access to this organization",
       };
     }
 
@@ -273,28 +279,28 @@ export async function rememberActiveOrganization(organizationId: string) {
       .set({ lastActiveOrganizationId: organizationId })
       .where(eq(user.id, currentUser.id));
 
-    revalidatePath('/dashboard');
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
-    console.error('Error remembering active organization:', error);
+    console.error("Error remembering active organization:", error);
     return {
       success: false,
       error:
         error instanceof Error
           ? error.message
-          : 'Failed to save organization preference',
+          : "Failed to save organization preference",
     };
   }
 }
 
 export async function getUserOrganizationMembership(
   userId: string,
-  organizationId: string
+  organizationId: string,
 ) {
   const membership = await db.query.member.findFirst({
     where: and(
       eq(member.userId, userId),
-      eq(member.organizationId, organizationId)
+      eq(member.organizationId, organizationId),
     ),
     with: {
       organization: true,
@@ -318,7 +324,7 @@ export async function getOrganizationBySlug(slug: string) {
     });
     return organizationBySlug;
   } catch (error) {
-    console.error('Error fetching organization by slug:', error);
+    console.error("Error fetching organization by slug:", error);
     return null;
   }
 }
@@ -329,7 +335,7 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     const organizationBySlug = await db.query.organization.findFirst({
@@ -351,7 +357,7 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
     const userMembership = await db.query.member.findFirst({
       where: and(
         eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationBySlug.id)
+        eq(member.organizationId, organizationBySlug.id),
       ),
     });
 
@@ -370,9 +376,9 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
       .where(
         and(
           eq(project.organizationId, organizationBySlug.id),
-          eq(project.status, 'active'),
-          isNull(project.deletedAt)
-        )
+          eq(project.status, "active"),
+          isNull(project.deletedAt),
+        ),
       );
 
     const activeProjects = activeProjectsResult[0]?.count || 0;
@@ -380,10 +386,10 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
     // Generate signed URL for logo if it exists
     if (
       organizationBySlug.logo &&
-      !organizationBySlug.logo.startsWith('http')
+      !organizationBySlug.logo.startsWith("http")
     ) {
       organizationBySlug.logo = await StorageService.getSignedUrl(
-        organizationBySlug.logo
+        organizationBySlug.logo,
       );
     }
 
@@ -394,7 +400,7 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
       activeProjects,
     };
   } catch (error) {
-    console.error('Error fetching organization by slug with user role:', error);
+    console.error("Error fetching organization by slug with user role:", error);
     return null;
   }
 }
@@ -409,25 +415,25 @@ export interface OrganizationStats {
 
 // Get detailed statistics for a specific organization
 export async function getOrganizationStats(
-  organizationId: string
+  organizationId: string,
 ): Promise<OrganizationStats | null> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Verify user has access to this organization
     const userMembership = await db.query.member.findFirst({
       where: and(
         eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationId)
+        eq(member.organizationId, organizationId),
       ),
     });
 
     if (!userMembership) {
-      throw new Error('User does not have access to this organization');
+      throw new Error("User does not have access to this organization");
     }
 
     // Get member count
@@ -444,7 +450,7 @@ export async function getOrganizationStats(
     });
 
     if (!org) {
-      throw new Error('Organization not found');
+      throw new Error("Organization not found");
     }
 
     return {
@@ -454,27 +460,27 @@ export async function getOrganizationStats(
       recentUpdates: 0, // Placeholder - would be calculated from activity logs
     };
   } catch (error) {
-    console.error('Error fetching organization stats:', error);
+    console.error("Error fetching organization stats:", error);
     return null;
   }
 }
 
 // Get statistics for multiple organizations
 export async function getOrganizationsStats(
-  organizationIds: string[]
+  organizationIds: string[],
 ): Promise<Record<string, OrganizationStats>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Verify user has access to these organizations
     const userMemberships = await db.query.member.findMany({
       where: and(
         eq(member.userId, currentUser.id),
-        inArray(member.organizationId, organizationIds)
+        inArray(member.organizationId, organizationIds),
       ),
     });
 
@@ -488,12 +494,12 @@ export async function getOrganizationsStats(
         if (orgStats) {
           stats[orgId] = orgStats;
         }
-      })
+      }),
     );
 
     return stats;
   } catch (error) {
-    console.error('Error fetching organizations stats:', error);
+    console.error("Error fetching organizations stats:", error);
     return {};
   }
 }
@@ -523,22 +529,22 @@ export interface PendingInvitation {
 
 // Get all members of an organization
 export async function getOrganizationMembers(
-  organizationId: string
+  organizationId: string,
 ): Promise<OrganizationMember[]> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Verify user has access to this organization
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
-      throw new Error('Access denied to this organization');
+      throw new Error("Access denied to this organization");
     }
 
     // Fetch all members of the organization
@@ -569,42 +575,42 @@ export async function getOrganizationMembers(
       lastActive: memberRecord.user.createdAt, // You might want to add a lastActive field to user table
     }));
   } catch (error) {
-    console.error('Error fetching organization members:', error);
-    throw new Error('Failed to fetch organization members');
+    console.error("Error fetching organization members:", error);
+    throw new Error("Failed to fetch organization members");
   }
 }
 
 // Get pending invitations for an organization
 export async function getPendingInvitations(
-  organizationId: string
+  organizationId: string,
 ): Promise<PendingInvitation[]> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Verify user has access to this organization
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
 
     if (!userMembership) {
-      throw new Error('User does not have access to this organization');
+      throw new Error("User does not have access to this organization");
     }
 
     // Only owners and admins can view pending invitations
-    if (!['owner', 'admin'].includes(userMembership.role)) {
-      throw new Error('Insufficient permissions to view invitations');
+    if (!["owner", "admin"].includes(userMembership.role)) {
+      throw new Error("Insufficient permissions to view invitations");
     }
 
     // Get pending invitations with inviter information
     const pendingInvitations = await db.query.invitation.findMany({
       where: and(
         eq(invitation.organizationId, organizationId),
-        eq(invitation.status, 'pending')
+        eq(invitation.status, "pending"),
       ),
       with: {
         // We need to add the inviter relation to get the inviter's name
@@ -625,56 +631,56 @@ export async function getPendingInvitations(
           status: inv.status,
           expiresAt: inv.expiresAt,
           invitedAt: new Date(), // We'll use current date as placeholder since invitation table doesn't have createdAt
-          inviterName: inviter?.name || 'Unknown',
+          inviterName: inviter?.name || "Unknown",
         };
-      })
+      }),
     );
 
     return invitationsWithInviterNames;
   } catch (error) {
-    console.error('Error fetching pending invitations:', error);
-    throw new Error('Failed to fetch pending invitations');
+    console.error("Error fetching pending invitations:", error);
+    throw new Error("Failed to fetch pending invitations");
   }
 }
 
 export async function updateOrganizationLogo(
   organizationId: string,
-  formData: FormData
+  formData: FormData,
 ) {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     // Verify user has access to this organization and has appropriate role
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
 
-    if (!userMembership || !['owner', 'admin'].includes(userMembership.role)) {
-      return { success: false, error: 'Insufficient permissions' };
+    if (!userMembership || !["owner", "admin"].includes(userMembership.role)) {
+      return { success: false, error: "Insufficient permissions" };
     }
 
-    const file = formData.get('file') as File;
+    const file = formData.get("file") as File;
     if (!file) {
-      return { success: false, error: 'No file provided' };
+      return { success: false, error: "No file provided" };
     }
 
     // specific validation for images
-    if (!file.type.startsWith('image/')) {
-      return { success: false, error: 'File must be an image' };
+    if (!file.type.startsWith("image/")) {
+      return { success: false, error: "File must be an image" };
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      return { success: false, error: 'File size must be less than 5MB' };
+      return { success: false, error: "File size must be less than 5MB" };
     }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const fileExtension = file.name.split(".").pop() || "jpg";
 
     // Fetch organization details (name for path, logo for cleanup)
     // Fetch organization details (name for path, logo for cleanup, slug for folder)
@@ -688,9 +694,9 @@ export async function updateOrganizationLogo(
     });
 
     // Sanitize org name for folder path
-    const orgIdentifier = orgDetails?.slug || orgDetails?.name || 'org';
+    const orgIdentifier = orgDetails?.slug || orgDetails?.name || "org";
     const safeIdentifier = orgIdentifier
-      .replace(/[^a-zA-Z0-9]/g, '_')
+      .replace(/[^a-zA-Z0-9]/g, "_")
       .toLowerCase();
     const timestamp = Date.now();
     const uniqueKey = `organizations/${safeIdentifier}/logo/logo-${timestamp}.${fileExtension}`;
@@ -698,7 +704,7 @@ export async function updateOrganizationLogo(
     const storageKey = await StorageService.uploadFile(
       buffer,
       uniqueKey,
-      file.type
+      file.type,
     );
 
     // Update organization record
@@ -708,18 +714,18 @@ export async function updateOrganizationLogo(
       .where(eq(organization.id, organizationId));
 
     // Cleanup: Delete old logo if it exists (perform AFTER successful upload and DB update)
-    if (orgDetails?.logo && !orgDetails.logo.startsWith('http')) {
+    if (orgDetails?.logo && !orgDetails.logo.startsWith("http")) {
       try {
         await StorageService.deleteFile(orgDetails.logo);
       } catch (e) {
-        console.error('Failed to delete old organization logo:', e);
+        console.error("Failed to delete old organization logo:", e);
         // Do not fail the request if cleanup fails, as the new logo is already live
       }
     }
 
     revalidatePath(`/organization/${organizationId}/settings`); // Revalidate settings page
-    revalidatePath('/organization'); // Revalidate list
-    revalidatePath('/dashboard'); // Revalidate sidebar potentially
+    revalidatePath("/organization"); // Revalidate list
+    revalidatePath("/dashboard"); // Revalidate sidebar potentially
 
     // Return signed URL for immediate display plus the durable storage key.
     // Only the key is persisted in the DB — the signed URL expires after 1h.
@@ -727,14 +733,14 @@ export async function updateOrganizationLogo(
 
     return { success: true, imageUrl: signedUrl, key: storageKey };
   } catch (error) {
-    console.error('Error updating organization logo:', error);
+    console.error("Error updating organization logo:", error);
     if (error instanceof Error) {
-      console.error('Stack:', error.stack);
+      console.error("Stack:", error.stack);
     }
     return {
       success: false,
       error:
-        'Failed to update organization logo: ' +
+        "Failed to update organization logo: " +
         (error instanceof Error ? error.message : String(error)),
     };
   }

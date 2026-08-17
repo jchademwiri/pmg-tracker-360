@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm';
+import { relations, sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -13,141 +13,196 @@ import {
   index,
   jsonb,
   bigint,
-} from 'drizzle-orm/pg-core';
+} from "drizzle-orm/pg-core";
 
 /* =========================
    AUTH & ORG TABLES
 ========================= */
-export const user = pgTable('user', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified')
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified")
     .$defaultFn(() => false)
     .notNull(),
-  image: text('image'),
-  createdAt: timestamp('created_at')
+  image: text("image"),
+  createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
-  updatedAt: timestamp('updated_at')
+  updatedAt: timestamp("updated_at")
     .$defaultFn(() => new Date())
     .notNull(),
-  plan: text('plan').default('free').notNull(),
-  role: text('role').default('user').notNull(),
-  lastActiveOrganizationId: text('last_active_organization_id'),
+  plan: text("plan").default("free").notNull(),
+  role: text("role").default("user").notNull(),
+  lastActiveOrganizationId: text("last_active_organization_id"),
   /**
    * Set when an account is created with a system-generated placeholder
    * password the user never chose (e.g. a system admin invite). Cleared once
    * they set their own password. Used to force that prompt on first login.
    */
-  mustSetPassword: boolean('must_set_password').default(false).notNull(),
+  mustSetPassword: boolean("must_set_password").default(false).notNull(),
 });
 
 export type User = typeof user.$inferSelect;
 
-export const session = pgTable('session', {
-  id: text('id').primaryKey(),
-  expiresAt: timestamp('expires_at').notNull(),
-  token: text('token').notNull().unique(),
-  createdAt: timestamp('created_at').notNull(),
-  updatedAt: timestamp('updated_at').notNull(),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  userId: text('user_id')
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  activeOrganizationId: text('active_organization_id'),
+    .references(() => user.id, { onDelete: "cascade" }),
+  activeOrganizationId: text("active_organization_id"),
 });
 
-export const account = pgTable('account', {
-  id: text('id').primaryKey(),
-  accountId: text('account_id').notNull(),
-  providerId: text('provider_id').notNull(),
-  userId: text('user_id')
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  accessToken: text('access_token'),
-  refreshToken: text('refresh_token'),
-  idToken: text('id_token'),
-  accessTokenExpiresAt: timestamp('access_token_expires_at'),
-  refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
-  scope: text('scope'),
-  password: text('password'),
-  createdAt: timestamp('created_at').notNull(),
-  updatedAt: timestamp('updated_at').notNull(),
+    .references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
 });
 
 export const verification = pgTable(
-  'verification',
+  "verification",
   {
-    id: text('id').primaryKey(),
-    identifier: text('identifier').notNull(),
-    value: text('value').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').$defaultFn(() => new Date()),
-    updatedAt: timestamp('updated_at').$defaultFn(() => new Date()),
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+    updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
   },
   (table) => ({
-    identifierValueUnique: unique('verification_identifier_value_unique').on(table.identifier, table.value),
-  })
+    identifierValueUnique: unique("verification_identifier_value_unique").on(
+      table.identifier,
+      table.value,
+    ),
+  }),
 );
 
 /* =========================
    ORGANISATIONS
 ========================= */
 
-export const organization = pgTable('organization', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  slug: text('slug').unique(),
-  logo: text('logo'),
-  createdAt: timestamp('created_at').notNull(),
-  metadata: jsonb('metadata').$type<Record<string, unknown> | string | null>(),
+export const organization = pgTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").unique(),
+  logo: text("logo"),
+  createdAt: timestamp("created_at").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | string | null>(),
   // Soft deletion & appeal fields
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: text('deleted_by').references(() => user.id),
-  deletionReason: text('deletion_reason'),
-  permanentDeletionScheduledAt: timestamp('permanent_deletion_scheduled_at'),
-  appealStatus: text('appeal_status').default('none'),
-  appealReason: text('appeal_reason'),
-  appealedAt: timestamp('appealed_at'),
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: text("deleted_by").references(() => user.id),
+  deletionReason: text("deletion_reason"),
+  permanentDeletionScheduledAt: timestamp("permanent_deletion_scheduled_at"),
+  appealStatus: text("appeal_status").default("none"),
+  appealReason: text("appeal_reason"),
+  appealedAt: timestamp("appealed_at"),
 });
 
 /* =========================
    ENUMS
 ========================= */
-export const role = pgEnum('role', ['owner', 'admin', 'manager', 'member']);
-export const tenderStatus = pgEnum('tender_status', ['draft', 'open', 'closed', 'evaluation', 'awarded', 'lost', 'cancelled', 'new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'submitted']);
-export const projectStatus = pgEnum('project_status', ['active', 'completed', 'cancelled']);
-export const poStatus = pgEnum('po_status', ['open', 'draft', 'sent', 'delivered', 'completed', 'cancelled', 'partially_delivered', 'disputed']);
-export const invitationStatus = pgEnum('invitation_status', ['pending', 'accepted', 'rejected', 'expired', 'cancelled']);
-export const ownershipTransferStatus = pgEnum('ownership_transfer_status', ['pending', 'accepted', 'cancelled', 'expired']);
-export const riskSeverity = pgEnum('risk_severity', ['low', 'medium', 'high', 'critical']);
-export const riskStatus = pgEnum('risk_status', ['open', 'mitigated', 'closed']);
-export const tenderPriority = pgEnum('tender_priority', ['low', 'medium', 'high', 'urgent']);
+export const role = pgEnum("role", ["owner", "admin", "manager", "member"]);
+export const tenderStatus = pgEnum("tender_status", [
+  "draft",
+  "open",
+  "closed",
+  "evaluation",
+  "awarded",
+  "lost",
+  "cancelled",
+  "new",
+  "review",
+  "approved_to_prepare",
+  "preparation",
+  "ready",
+  "submitted",
+]);
+export const projectStatus = pgEnum("project_status", [
+  "active",
+  "completed",
+  "cancelled",
+]);
+export const poStatus = pgEnum("po_status", [
+  "open",
+  "draft",
+  "sent",
+  "delivered",
+  "completed",
+  "cancelled",
+  "partially_delivered",
+  "disputed",
+]);
+export const invitationStatus = pgEnum("invitation_status", [
+  "pending",
+  "accepted",
+  "rejected",
+  "expired",
+  "cancelled",
+]);
+export const ownershipTransferStatus = pgEnum("ownership_transfer_status", [
+  "pending",
+  "accepted",
+  "cancelled",
+  "expired",
+]);
+export const riskSeverity = pgEnum("risk_severity", [
+  "low",
+  "medium",
+  "high",
+  "critical",
+]);
+export const riskStatus = pgEnum("risk_status", [
+  "open",
+  "mitigated",
+  "closed",
+]);
+export const tenderPriority = pgEnum("tender_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent",
+]);
 export type Role = (typeof role.enumValues)[number];
 
 export const member = pgTable(
-  'member',
+  "member",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    userId: text('user_id')
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    role: role('role').default('member').notNull(),
-    createdAt: timestamp('created_at').notNull(),
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: role("role").default("member").notNull(),
+    createdAt: timestamp("created_at").notNull(),
   },
   (table) => ({
-    orgUserUnique: unique('member_organization_id_user_id_unique').on(
+    orgUserUnique: unique("member_organization_id_user_id_unique").on(
       table.organizationId,
-      table.userId
+      table.userId,
     ),
-    orgIdIdx: index('idx_member_org_id').on(table.organizationId),
-    userIdIdx: index('idx_member_user_id').on(table.userId),
-  })
+    orgIdIdx: index("idx_member_org_id").on(table.organizationId),
+    userIdIdx: index("idx_member_user_id").on(table.userId),
+  }),
 );
 
 export type Member = typeof member.$inferSelect & {
@@ -159,189 +214,193 @@ export type Organization = typeof organization.$inferSelect;
 export type MemberWithUser = Member;
 
 export const invitation = pgTable(
-  'invitation',
+  "invitation",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    email: text('email').notNull(),
-    role: role('role'),
-    status: invitationStatus('status').default('pending').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    inviterId: text('inviter_id')
+      .references(() => organization.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: role("role"),
+    status: invitationStatus("status").default("pending").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    inviterId: text("inviter_id")
       .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
+      .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => ({
-    invitationOrgEmailPendingUnique: uniqueIndex('invitation_organization_id_email_pending_unique')
+    invitationOrgEmailPendingUnique: uniqueIndex(
+      "invitation_organization_id_email_pending_unique",
+    )
       .on(table.organizationId, table.email)
       .where(sql`status = 'pending'`),
-  })
+  }),
 );
 
 /* =========================
    NOTIFICATION PREFERENCES
 ========================= */
 export const notificationPreferences = pgTable(
-  'notification_preferences',
+  "notification_preferences",
   {
-    id: text('id').primaryKey(),
-    userId: text('user_id')
+    id: text("id").primaryKey(),
+    userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    emailNotifications: boolean('email_notifications').default(true).notNull(),
-    pushNotifications: boolean('push_notifications').default(true).notNull(),
-    smsNotifications: boolean('sms_notifications').default(false).notNull(),
-    tenderReminders: boolean('tender_reminders').default(true).notNull(),
-    projectUpdates: boolean('project_updates').default(true).notNull(),
-    calendarReminders: boolean('calendar_reminders').default(true).notNull(),
-    systemAlerts: boolean('system_alerts').default(true).notNull(),
-    marketingEmails: boolean('marketing_emails').default(false).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+      .references(() => user.id, { onDelete: "cascade" }),
+    emailNotifications: boolean("email_notifications").default(true).notNull(),
+    pushNotifications: boolean("push_notifications").default(true).notNull(),
+    smsNotifications: boolean("sms_notifications").default(false).notNull(),
+    tenderReminders: boolean("tender_reminders").default(true).notNull(),
+    projectUpdates: boolean("project_updates").default(true).notNull(),
+    calendarReminders: boolean("calendar_reminders").default(true).notNull(),
+    systemAlerts: boolean("system_alerts").default(true).notNull(),
+    marketingEmails: boolean("marketing_emails").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    userIdUnique: unique('notification_preferences_user_id_unique').on(
-      table.userId
+    userIdUnique: unique("notification_preferences_user_id_unique").on(
+      table.userId,
     ),
-  })
+  }),
 );
 
-export const notification = pgTable('notification', {
-  id: text('id').primaryKey(),
-  userId: text('user_id')
+export const notification = pgTable("notification", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  organizationId: text('organization_id')
+    .references(() => user.id, { onDelete: "cascade" }),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  message: text('message').notNull(),
-  type: text('type').default('info').notNull(), // info, success, warning, error
-  read: boolean('read').default(false).notNull(),
-  link: text('link'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+    .references(() => organization.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").default("info").notNull(), // info, success, warning, error
+  read: boolean("read").default(false).notNull(),
+  link: text("link"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /* =========================
    OWNERSHIP TRANSFER
 ========================= */
-export const ownershipTransfer = pgTable('ownership_transfer', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const ownershipTransfer = pgTable("ownership_transfer", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  fromUserId: text('from_user_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  fromUserId: text("from_user_id")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  toUserId: text('to_user_id')
+    .references(() => user.id, { onDelete: "cascade" }),
+  toUserId: text("to_user_id")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  status: ownershipTransferStatus('status').default('pending').notNull(),
-  transferToken: text('transfer_token').unique().notNull(),
-  reason: text('reason'),
-  transferMessage: text('transfer_message'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  expiresAt: timestamp('expires_at').notNull(),
-  acceptedAt: timestamp('accepted_at'),
-  cancelledAt: timestamp('cancelled_at'),
+    .references(() => user.id, { onDelete: "cascade" }),
+  status: ownershipTransferStatus("status").default("pending").notNull(),
+  transferToken: text("transfer_token").unique().notNull(),
+  reason: text("reason"),
+  transferMessage: text("transfer_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  cancelledAt: timestamp("cancelled_at"),
 });
 
 /* =========================
    SECURITY AUDIT LOG
 ========================= */
-export const securityAuditLog = pgTable('security_audit_log', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const securityAuditLog = pgTable("security_audit_log", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
-  action: text('action').notNull(),
-  resourceType: text('resource_type').notNull(),
-  resourceId: text('resource_id'),
-  details: jsonb('details'),
-  severity: text('severity').default('info').notNull(), // info, warning, critical
-  sessionId: text('session_id'),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+    .references(() => organization.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  action: text("action").notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id"),
+  details: jsonb("details"),
+  severity: text("severity").default("info").notNull(), // info, warning, critical
+  sessionId: text("session_id"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /* =========================
    SESSION TRACKING
 ========================= */
-export const sessionTracking = pgTable('session_tracking', {
-  id: text('id').primaryKey(),
-  sessionId: text('session_id')
+export const sessionTracking = pgTable("session_tracking", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id")
     .notNull()
-    .references(() => session.id, { onDelete: 'cascade' }),
-  organizationId: text('organization_id').references(() => organization.id, {
-    onDelete: 'cascade',
+    .references(() => session.id, { onDelete: "cascade" }),
+  organizationId: text("organization_id").references(() => organization.id, {
+    onDelete: "cascade",
   }),
-  loginTime: timestamp('login_time').defaultNow().notNull(),
-  lastActivity: timestamp('last_activity').defaultNow().notNull(),
-  logoutTime: timestamp('logout_time'),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  deviceInfo: jsonb('device_info'),
-  locationInfo: jsonb('location_info'),
-  isSuspicious: boolean('is_suspicious').default(false).notNull(),
+  loginTime: timestamp("login_time").defaultNow().notNull(),
+  lastActivity: timestamp("last_activity").defaultNow().notNull(),
+  logoutTime: timestamp("logout_time"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  deviceInfo: jsonb("device_info"),
+  locationInfo: jsonb("location_info"),
+  isSuspicious: boolean("is_suspicious").default(false).notNull(),
 });
 
 /* =========================
    WAITLIST
 ========================= */
-export const waitlist = pgTable('waitlist', {
-  id: text('id').primaryKey(),
-  email: text('email').notNull().unique(),
-  companyName: text('company_name'),
-  source: text('source').default('website'), // website, webhook, etc.
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const waitlist = pgTable("waitlist", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  companyName: text("company_name"),
+  source: text("source").default("website"), // website, webhook, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 /* =========================
    FEEDBACK
 ========================= */
-export const feedback = pgTable('feedback', {
-  id: text('id').primaryKey(),
-  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
-  message: text('message').notNull(),
-  type: text('type').notNull(), // bug, feature, other
-  url: text('url'),
-  name: text('name'),
-  email: text('email'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const feedback = pgTable("feedback", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // bug, feature, other
+  url: text("url"),
+  name: text("name"),
+  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const supportTickets = pgTable('support_tickets', {
-  id: text('id').primaryKey(),
-  ticketNumber: integer('ticket_number'),
-  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  subject: text('subject').default('Support Request').notNull(),
-  message: text('message').notNull(),
-  status: text('status').default('open').notNull(), // open, closed, in_progress, resolved
-  priority: text('priority').default('medium').notNull(), // low, medium, high, urgent
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+export const supportTickets = pgTable("support_tickets", {
+  id: text("id").primaryKey(),
+  ticketNumber: integer("ticket_number"),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").default("Support Request").notNull(),
+  message: text("message").notNull(),
+  status: text("status").default("open").notNull(), // open, closed, in_progress, resolved
+  priority: text("priority").default("medium").notNull(), // low, medium, high, urgent
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const supportTicketMessages = pgTable('support_ticket_messages', {
-  id: text('id').primaryKey(),
-  ticketId: text('ticket_id')
+export const supportTicketMessages = pgTable("support_ticket_messages", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id")
     .notNull()
-    .references(() => supportTickets.id, { onDelete: 'cascade' }),
-  senderId: text('sender_id').references(() => user.id, { onDelete: 'set null' }),
-  senderType: text('sender_type').notNull(), // 'user' | 'admin' | 'system'
-  senderName: text('sender_name').notNull(),
-  senderEmail: text('sender_email').notNull(),
-  message: text('message').notNull(),
-  isInternal: boolean('is_internal').default(false).notNull(),
-  readAt: timestamp('read_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+    .references(() => supportTickets.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").references(() => user.id, {
+    onDelete: "set null",
+  }),
+  senderType: text("sender_type").notNull(), // 'user' | 'admin' | 'system'
+  senderName: text("sender_name").notNull(),
+  senderEmail: text("sender_email").notNull(),
+  message: text("message").notNull(),
+  isInternal: boolean("is_internal").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 /* =========================
@@ -350,339 +409,356 @@ export const supportTicketMessages = pgTable('support_ticket_messages', {
 
 // Client table with embedded contact fields
 export const client = pgTable(
-  'client',
+  "client",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
-    notes: text('notes'),
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    notes: text("notes"),
     // Embedded contact fields
-    contactName: text('contact_name'),
-    contactEmail: text('contact_email'),
-    contactPhone: text('contact_phone'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-    deletedAt: timestamp('deleted_at'), // Soft deletion
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"), // Soft deletion
   },
   (table) => ({
-    clientNameOrgUnique: unique('client_organization_id_name_unique').on(
+    clientNameOrgUnique: unique("client_organization_id_name_unique").on(
       table.organizationId,
-      table.name
+      table.name,
     ),
-    orgIdIdx: index('idx_client_org_id').on(table.organizationId),
-  })
+    orgIdIdx: index("idx_client_org_id").on(table.organizationId),
+  }),
 );
 
 // Tender table with unique tender numbers
 export const tender = pgTable(
-  'tender',
+  "tender",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    tenderNumber: text('tender_number').notNull(), // User-input unique identifier
-    description: text('description'),
-    clientId: text('client_id')
+      .references(() => organization.id, { onDelete: "cascade" }),
+    tenderNumber: text("tender_number").notNull(), // User-input unique identifier
+    description: text("description"),
+    clientId: text("client_id")
       .notNull()
-      .references(() => client.id, { onDelete: 'cascade' }),
-    submissionDate: timestamp('submission_date'),
-    value: decimal('value', { precision: 15, scale: 2 }),
-    awardValue: decimal('award_value', { precision: 15, scale: 2 }),
-    lossReason: text('loss_reason'),
-    lossDetails: text('loss_details'),
-    evaluationNotes: text('evaluation_notes'),
-    status: tenderStatus('status').default('open').notNull(),
-    priority: tenderPriority('priority').default('medium').notNull(),
-    evaluationDate: timestamp('evaluation_date'), // Current validated period deadline
-    validityDays: integer('validity_days'),
-    validityDate: timestamp('validity_date'),
-    contactName: text('contact_name'),
-    contactEmail: text('contact_email'),
-    contactPhone: text('contact_phone'),
-    briefingDate: timestamp('briefing_date'),
-    briefingLocation: text('briefing_location'),
-    isBriefingMandatory: boolean('is_briefing_mandatory').default(false).notNull(),
-    briefingAttended: boolean('briefing_attended').default(false).notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-    deletedAt: timestamp('deleted_at'), // Soft deletion
+      .references(() => client.id, { onDelete: "cascade" }),
+    submissionDate: timestamp("submission_date"),
+    value: decimal("value", { precision: 15, scale: 2 }),
+    awardValue: decimal("award_value", { precision: 15, scale: 2 }),
+    lossReason: text("loss_reason"),
+    lossDetails: text("loss_details"),
+    evaluationNotes: text("evaluation_notes"),
+    status: tenderStatus("status").default("open").notNull(),
+    priority: tenderPriority("priority").default("medium").notNull(),
+    evaluationDate: timestamp("evaluation_date"), // Current validated period deadline
+    validityDays: integer("validity_days"),
+    validityDate: timestamp("validity_date"),
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    briefingDate: timestamp("briefing_date"),
+    briefingLocation: text("briefing_location"),
+    isBriefingMandatory: boolean("is_briefing_mandatory")
+      .default(false)
+      .notNull(),
+    briefingAttended: boolean("briefing_attended").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"), // Soft deletion
   },
   (table) => ({
-    tenderNumberOrgUnique: unique('tender_organization_id_tender_number_unique').on(
-      table.organizationId,
-      table.tenderNumber
-    ),
-    statusIdx: index('idx_tender_status').on(table.status),
-    clientIdIdx: index('idx_tender_client_id').on(table.clientId),
-    orgIdIdx: index('idx_tender_org_id').on(table.organizationId),
-  })
+    tenderNumberOrgUnique: unique(
+      "tender_organization_id_tender_number_unique",
+    ).on(table.organizationId, table.tenderNumber),
+    statusIdx: index("idx_tender_status").on(table.status),
+    clientIdIdx: index("idx_tender_client_id").on(table.clientId),
+    orgIdIdx: index("idx_tender_org_id").on(table.organizationId),
+  }),
 );
 
 // Project table with tender inheritance support
 export const project = pgTable(
-  'project',
+  "project",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    projectNumber: text('project_number').notNull(), // Inherited from tender or custom
-    description: text('description'), // Inherited from tender or custom
-    tenderId: text('tender_id').references(() => tender.id), // Optional link to originating tender
-    clientId: text('client_id').references(() => client.id), // Inherited from tender or custom
-    status: projectStatus('status').default('active').notNull(),
-    contractStartDate: timestamp('contract_start_date'),
-    contractEndDate: timestamp('contract_end_date'),
-    awardValue: decimal('award_value', { precision: 15, scale: 2 }),
-    signedContractUrl: text('signed_contract_url'),
+      .references(() => organization.id, { onDelete: "cascade" }),
+    projectNumber: text("project_number").notNull(), // Inherited from tender or custom
+    description: text("description"), // Inherited from tender or custom
+    tenderId: text("tender_id").references(() => tender.id), // Optional link to originating tender
+    clientId: text("client_id").references(() => client.id), // Inherited from tender or custom
+    status: projectStatus("status").default("active").notNull(),
+    contractStartDate: timestamp("contract_start_date"),
+    contractEndDate: timestamp("contract_end_date"),
+    awardValue: decimal("award_value", { precision: 15, scale: 2 }),
+    signedContractUrl: text("signed_contract_url"),
     // Close-out details
-    closeOutDate: timestamp('close_out_date'),
-    closeOutNotes: text('close_out_notes'),
-    closeOutSubmittedBy: text('close_out_submitted_by').references(() => user.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-    deletedAt: timestamp('deleted_at'), // Soft deletion
+    closeOutDate: timestamp("close_out_date"),
+    closeOutNotes: text("close_out_notes"),
+    closeOutSubmittedBy: text("close_out_submitted_by").references(
+      () => user.id,
+    ),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"), // Soft deletion
   },
   (table) => ({
-    projectNumberOrgUnique: unique('project_organization_id_project_number_unique').on(
-      table.organizationId,
-      table.projectNumber
-    ),
-    statusIdx: index('idx_project_status').on(table.status),
-    orgIdIdx: index('idx_project_org_id').on(table.organizationId),
-  })
+    projectNumberOrgUnique: unique(
+      "project_organization_id_project_number_unique",
+    ).on(table.organizationId, table.projectNumber),
+    statusIdx: index("idx_project_status").on(table.status),
+    orgIdIdx: index("idx_project_org_id").on(table.organizationId),
+  }),
 );
 
-export const projectLineItem = pgTable('project_line_item', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const projectLineItem = pgTable("project_line_item", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('project_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  projectId: text("project_id")
     .notNull()
-    .references(() => project.id, { onDelete: 'cascade' }),
-  itemNumber: text('item_number').default('ITEM').notNull(),
-  sapReference: text('sap_reference'),
-  description: text('description').notNull(),
-  unit: text('unit').notNull(),
-  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'),
+    .references(() => project.id, { onDelete: "cascade" }),
+  itemNumber: text("item_number").default("ITEM").notNull(),
+  sapReference: text("sap_reference"),
+  description: text("description").notNull(),
+  unit: text("unit").notNull(),
+  unitPrice: decimal("unit_price", { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"),
 });
 
 // Purchase Order table with project relationships
 export const purchaseOrder = pgTable(
-  'purchase_order',
+  "purchase_order",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    projectId: text('project_id')
+      .references(() => organization.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
       .notNull()
-      .references(() => project.id, { onDelete: 'cascade' }),
-    poNumber: text('po_number').notNull().unique(), // Unique PO number
-    supplierName: text('supplier_name'), // Optional supplier name
-    description: text('description').notNull(),
-    totalAmount: decimal('total_amount', { precision: 15, scale: 2 }).notNull(),
-    status: poStatus('status').default('open').notNull(),
+      .references(() => project.id, { onDelete: "cascade" }),
+    poNumber: text("po_number").notNull().unique(), // Unique PO number
+    supplierName: text("supplier_name"), // Optional supplier name
+    description: text("description").notNull(),
+    totalAmount: decimal("total_amount", { precision: 15, scale: 2 }).notNull(),
+    status: poStatus("status").default("open").notNull(),
     // Calendar-related dates
-    poDate: timestamp('po_date'), // Purchase order date
-    expectedDeliveryDate: timestamp('expected_delivery_date'),
-    deliveredAt: timestamp('delivered_at'),
-    deliveryAddress: text('delivery_address'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-    deletedAt: timestamp('deleted_at'), // Soft deletion
+    poDate: timestamp("po_date"), // Purchase order date
+    expectedDeliveryDate: timestamp("expected_delivery_date"),
+    deliveredAt: timestamp("delivered_at"),
+    deliveryAddress: text("delivery_address"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"), // Soft deletion
   },
   (table) => ({
-    projectIdIdx: index('idx_po_project_id').on(table.projectId),
-    orgIdIdx: index('idx_po_org_id').on(table.organizationId),
-  })
+    projectIdIdx: index("idx_po_project_id").on(table.projectId),
+    orgIdIdx: index("idx_po_org_id").on(table.organizationId),
+  }),
 );
 
 // Purchase Order Delivery Note table
-export const purchaseOrderDeliveryNote = pgTable('purchase_order_delivery_note', {
-  id: text('id').primaryKey(),
-  purchaseOrderId: text('purchase_order_id')
+export const purchaseOrderDeliveryNote = pgTable(
+  "purchase_order_delivery_note",
+  {
+    id: text("id").primaryKey(),
+    purchaseOrderId: text("purchase_order_id")
+      .notNull()
+      .references(() => purchaseOrder.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    deliveryNoteNumber: text("delivery_note_number").notNull(),
+    recipientName: text("recipient_name").notNull(),
+    receivedAt: timestamp("received_at").notNull(),
+    status: text("status").default("received").notNull(), // received, verified, disputed
+    podFileUrl: text("pod_file_url"), // Link to uploaded PDF/Image in storage
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+);
+
+export const purchaseOrderLineItem = pgTable("purchase_order_line_item", {
+  id: text("id").primaryKey(),
+  purchaseOrderId: text("purchase_order_id")
     .notNull()
-    .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
-  projectId: text('project_id')
-    .notNull()
-    .references(() => project.id, { onDelete: 'cascade' }),
-  deliveryNoteNumber: text('delivery_note_number').notNull(),
-  recipientName: text('recipient_name').notNull(),
-  receivedAt: timestamp('received_at').notNull(),
-  status: text('status').default('received').notNull(), // received, verified, disputed
-  podFileUrl: text('pod_file_url'), // Link to uploaded PDF/Image in storage
-  notes: text('notes'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+    .references(() => purchaseOrder.id, { onDelete: "cascade" }),
+  projectLineItemId: text("project_line_item_id").references(
+    () => projectLineItem.id,
+    {
+      onDelete: "restrict",
+    },
+  ),
+  itemNumber: text("item_number").default("ITEM").notNull(),
+  sapReference: text("sap_reference"),
+  description: text("description").notNull(),
+  unit: text("unit").default("unit").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 15, scale: 2 }).notNull(),
+  subtotal: decimal("subtotal", { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const purchaseOrderLineItem = pgTable('purchase_order_line_item', {
-  id: text('id').primaryKey(),
-  purchaseOrderId: text('purchase_order_id')
-    .notNull()
-    .references(() => purchaseOrder.id, { onDelete: 'cascade' }),
-  projectLineItemId: text('project_line_item_id').references(() => projectLineItem.id, {
-    onDelete: 'restrict',
-  }),
-  itemNumber: text('item_number').default('ITEM').notNull(),
-  sapReference: text('sap_reference'),
-  description: text('description').notNull(),
-  unit: text('unit').default('unit').notNull(),
-  quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
-  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).notNull(),
-  subtotal: decimal('subtotal', { precision: 15, scale: 2 }).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-export const purchaseOrderDeliveryItem = pgTable('purchase_order_delivery_item', {
-  id: text('id').primaryKey(),
-  deliveryNoteId: text('delivery_note_id')
-    .notNull()
-    .references(() => purchaseOrderDeliveryNote.id, { onDelete: 'cascade' }),
-  lineItemId: text('line_item_id')
-    .notNull()
-    .references(() => purchaseOrderLineItem.id, { onDelete: 'cascade' }),
-  quantityDelivered: decimal('quantity_delivered', { precision: 10, scale: 2 }).notNull(),
-  unitPrice: decimal('unit_price', { precision: 15, scale: 2 }).default('0').notNull(),
-  deliveryValue: decimal('delivery_value', { precision: 15, scale: 2 }).default('0').notNull(),
-});
+export const purchaseOrderDeliveryItem = pgTable(
+  "purchase_order_delivery_item",
+  {
+    id: text("id").primaryKey(),
+    deliveryNoteId: text("delivery_note_id")
+      .notNull()
+      .references(() => purchaseOrderDeliveryNote.id, { onDelete: "cascade" }),
+    lineItemId: text("line_item_id")
+      .notNull()
+      .references(() => purchaseOrderLineItem.id, { onDelete: "cascade" }),
+    quantityDelivered: decimal("quantity_delivered", {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    unitPrice: decimal("unit_price", { precision: 15, scale: 2 })
+      .default("0")
+      .notNull(),
+    deliveryValue: decimal("delivery_value", { precision: 15, scale: 2 })
+      .default("0")
+      .notNull(),
+  },
+);
 
 // Project Activity Timeline table
-export const projectActivity = pgTable('project_activity', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const projectActivity = pgTable("project_activity", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('project_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  projectId: text("project_id")
     .notNull()
-    .references(() => project.id, { onDelete: 'cascade' }),
-  activityType: text('activity_type').notNull(), // e.g. status_change, po_added, document_uploaded, risk_recorded, close_out, project_created
-  description: text('description').notNull(),
-  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+    .references(() => project.id, { onDelete: "cascade" }),
+  activityType: text("activity_type").notNull(), // e.g. status_change, po_added, document_uploaded, risk_recorded, close_out, project_created
+  description: text("description").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Project Delivery Risk table
-export const projectRisk = pgTable('project_risk', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const projectRisk = pgTable("project_risk", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  projectId: text('project_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  projectId: text("project_id")
     .notNull()
-    .references(() => project.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  description: text('description').notNull(),
-  severity: riskSeverity('severity').default('medium').notNull(),
-  status: riskStatus('status').default('open').notNull(),
-  mitigationPlan: text('mitigation_plan'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    .references(() => project.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  severity: riskSeverity("severity").default("medium").notNull(),
+  status: riskStatus("status").default("open").notNull(),
+  mitigationPlan: text("mitigation_plan"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const tenderExtension = pgTable('tender_extension', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const tenderExtension = pgTable("tender_extension", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  tenderId: text('tender_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  tenderId: text("tender_id")
     .notNull()
-    .references(() => tender.id, { onDelete: 'cascade' }),
-  extensionDate: timestamp('extension_date').notNull(), // Date of the extension letter
-  newEvaluationDate: timestamp('new_evaluation_date').notNull(), // New validated deadline
-  contactName: text('contact_name'),
-  contactEmail: text('contact_email').notNull(), // Mandatory
-  contactPhone: text('contact_phone'), // Optional
-  notes: text('notes'),
-  createdBy: text('created_by')
+    .references(() => tender.id, { onDelete: "cascade" }),
+  extensionDate: timestamp("extension_date").notNull(), // Date of the extension letter
+  newEvaluationDate: timestamp("new_evaluation_date").notNull(), // New validated deadline
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email").notNull(), // Mandatory
+  contactPhone: text("contact_phone"), // Optional
+  notes: text("notes"),
+  createdBy: text("created_by")
     .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  deletedAt: timestamp('deleted_at'), // Soft deletion
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"), // Soft deletion
 });
 
 // Tender Follow-up table
-export const tenderFollowUp = pgTable('tender_follow_up', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const tenderFollowUp = pgTable("tender_follow_up", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  tenderId: text('tender_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  tenderId: text("tender_id")
     .notNull()
-    .references(() => tender.id, { onDelete: 'cascade' }),
-  followUpDate: timestamp('follow_up_date').notNull(),
-  contactPerson: text('contact_person'),
-  notes: text('notes'),
-  outcome: text('outcome'),
-  nextFollowUpDate: timestamp('next_follow_up_date'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    .references(() => tender.id, { onDelete: "cascade" }),
+  followUpDate: timestamp("follow_up_date").notNull(),
+  contactPerson: text("contact_person"),
+  notes: text("notes"),
+  outcome: text("outcome"),
+  nextFollowUpDate: timestamp("next_follow_up_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Tender Activity Timeline table
-export const tenderActivity = pgTable('tender_activity', {
-  id: text('id').primaryKey(),
-  organizationId: text('organization_id')
+export const tenderActivity = pgTable("tender_activity", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
     .notNull()
-    .references(() => organization.id, { onDelete: 'cascade' }),
-  tenderId: text('tender_id')
+    .references(() => organization.id, { onDelete: "cascade" }),
+  tenderId: text("tender_id")
     .notNull()
-    .references(() => tender.id, { onDelete: 'cascade' }),
-  activityType: text('activity_type').notNull(), // e.g. status_change, extension_added, follow_up_added, document_uploaded, tender_created
-  description: text('description').notNull(),
-  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+    .references(() => tender.id, { onDelete: "cascade" }),
+  activityType: text("activity_type").notNull(), // e.g. status_change, extension_added, follow_up_added, document_uploaded, tender_created
+  description: text("description").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export type TenderActivity = typeof tenderActivity.$inferSelect;
 
-
 // Document table for file attachments
 export const document = pgTable(
-  'document',
+  "document",
   {
-    id: text('id').primaryKey(),
-    organizationId: text('organization_id')
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
       .notNull()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
-    url: text('url').notNull(),
-    size: bigint('size', { mode: 'number' }).notNull(),
-    type: text('type').notNull(), // MIME type
-    tenderId: text('tender_id').references(() => tender.id, {
-      onDelete: 'cascade',
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    size: bigint("size", { mode: "number" }).notNull(),
+    type: text("type").notNull(), // MIME type
+    tenderId: text("tender_id").references(() => tender.id, {
+      onDelete: "cascade",
     }),
-    projectId: text('project_id').references(() => project.id, {
-      onDelete: 'cascade',
+    projectId: text("project_id").references(() => project.id, {
+      onDelete: "cascade",
     }),
-    purchaseOrderId: text('purchase_order_id').references(
+    purchaseOrderId: text("purchase_order_id").references(
       () => purchaseOrder.id,
       {
-        onDelete: 'cascade',
-      }
+        onDelete: "cascade",
+      },
     ),
-    extensionId: text('extension_id').references(() => tenderExtension.id, {
-      onDelete: 'cascade',
+    extensionId: text("extension_id").references(() => tenderExtension.id, {
+      onDelete: "cascade",
     }),
-    uploadedBy: text('uploaded_by')
+    uploadedBy: text("uploaded_by")
       .notNull()
       .references(() => user.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
-    tenderIdIdx: index('idx_doc_tender_id').on(table.tenderId),
-    projectIdIdx: index('idx_doc_project_id').on(table.projectId),
-    purchaseOrderIdIdx: index('idx_doc_po_id').on(table.purchaseOrderId),
-  })
+    tenderIdIdx: index("idx_doc_tender_id").on(table.tenderId),
+    projectIdIdx: index("idx_doc_project_id").on(table.projectId),
+    purchaseOrderIdIdx: index("idx_doc_po_id").on(table.purchaseOrderId),
+  }),
 );
 
 /* =========================
@@ -745,7 +821,7 @@ export const notificationPreferencesRelations = relations(
       fields: [notificationPreferences.userId],
       references: [user.id],
     }),
-  })
+  }),
 );
 
 export const notificationRelations = relations(notification, ({ one }) => ({
@@ -775,7 +851,7 @@ export const ownershipTransferRelations = relations(
       fields: [ownershipTransfer.toUserId],
       references: [user.id],
     }),
-  })
+  }),
 );
 
 // Security Audit Log Relations
@@ -790,7 +866,7 @@ export const securityAuditLogRelations = relations(
       fields: [securityAuditLog.userId],
       references: [user.id],
     }),
-  })
+  }),
 );
 
 // Session Tracking Relations
@@ -805,7 +881,7 @@ export const sessionTrackingRelations = relations(
       fields: [sessionTracking.organizationId],
       references: [organization.id],
     }),
-  })
+  }),
 );
 
 // Tender Management Relations
@@ -853,30 +929,36 @@ export const projectRelations = relations(project, ({ one, many }) => ({
   documents: many(document),
 }));
 
-export const projectLineItemRelations = relations(projectLineItem, ({ one, many }) => ({
-  organization: one(organization, {
-    fields: [projectLineItem.organizationId],
-    references: [organization.id],
+export const projectLineItemRelations = relations(
+  projectLineItem,
+  ({ one, many }) => ({
+    organization: one(organization, {
+      fields: [projectLineItem.organizationId],
+      references: [organization.id],
+    }),
+    project: one(project, {
+      fields: [projectLineItem.projectId],
+      references: [project.id],
+    }),
+    purchaseOrderLineItems: many(purchaseOrderLineItem),
   }),
-  project: one(project, {
-    fields: [projectLineItem.projectId],
-    references: [project.id],
-  }),
-  purchaseOrderLineItems: many(purchaseOrderLineItem),
-}));
+);
 
-export const purchaseOrderRelations = relations(purchaseOrder, ({ one, many }) => ({
-  organization: one(organization, {
-    fields: [purchaseOrder.organizationId],
-    references: [organization.id],
+export const purchaseOrderRelations = relations(
+  purchaseOrder,
+  ({ one, many }) => ({
+    organization: one(organization, {
+      fields: [purchaseOrder.organizationId],
+      references: [organization.id],
+    }),
+    project: one(project, {
+      fields: [purchaseOrder.projectId],
+      references: [project.id],
+    }),
+    lineItems: many(purchaseOrderLineItem),
+    deliveryNotes: many(purchaseOrderDeliveryNote),
   }),
-  project: one(project, {
-    fields: [purchaseOrder.projectId],
-    references: [project.id],
-  }),
-  lineItems: many(purchaseOrderLineItem),
-  deliveryNotes: many(purchaseOrderDeliveryNote),
-}));
+);
 
 export const purchaseOrderLineItemRelations = relations(
   purchaseOrderLineItem,
@@ -890,7 +972,7 @@ export const purchaseOrderLineItemRelations = relations(
       references: [projectLineItem.id],
     }),
     deliveryItems: many(purchaseOrderDeliveryItem),
-  })
+  }),
 );
 
 export const purchaseOrderDeliveryNoteRelations = relations(
@@ -905,7 +987,7 @@ export const purchaseOrderDeliveryNoteRelations = relations(
       references: [project.id],
     }),
     items: many(purchaseOrderDeliveryItem),
-  })
+  }),
 );
 
 export const purchaseOrderDeliveryItemRelations = relations(
@@ -919,7 +1001,7 @@ export const purchaseOrderDeliveryItemRelations = relations(
       fields: [purchaseOrderDeliveryItem.lineItemId],
       references: [purchaseOrderLineItem.id],
     }),
-  })
+  }),
 );
 
 export const tenderExtensionRelations = relations(
@@ -938,22 +1020,19 @@ export const tenderExtensionRelations = relations(
       references: [user.id],
     }),
     documents: many(document),
-  })
+  }),
 );
 
-export const tenderFollowUpRelations = relations(
-  tenderFollowUp,
-  ({ one }) => ({
-    organization: one(organization, {
-      fields: [tenderFollowUp.organizationId],
-      references: [organization.id],
-    }),
-    tender: one(tender, {
-      fields: [tenderFollowUp.tenderId],
-      references: [tender.id],
-    }),
-  })
-);
+export const tenderFollowUpRelations = relations(tenderFollowUp, ({ one }) => ({
+  organization: one(organization, {
+    fields: [tenderFollowUp.organizationId],
+    references: [organization.id],
+  }),
+  tender: one(tender, {
+    fields: [tenderFollowUp.tenderId],
+    references: [tender.id],
+  }),
+}));
 
 export const tenderActivityRelations = relations(tenderActivity, ({ one }) => ({
   organization: one(organization, {
@@ -969,20 +1048,23 @@ export const tenderActivityRelations = relations(tenderActivity, ({ one }) => ({
     references: [user.id],
   }),
 }));
-export const projectActivityRelations = relations(projectActivity, ({ one }) => ({
-  organization: one(organization, {
-    fields: [projectActivity.organizationId],
-    references: [organization.id],
+export const projectActivityRelations = relations(
+  projectActivity,
+  ({ one }) => ({
+    organization: one(organization, {
+      fields: [projectActivity.organizationId],
+      references: [organization.id],
+    }),
+    project: one(project, {
+      fields: [projectActivity.projectId],
+      references: [project.id],
+    }),
+    user: one(user, {
+      fields: [projectActivity.userId],
+      references: [user.id],
+    }),
   }),
-  project: one(project, {
-    fields: [projectActivity.projectId],
-    references: [project.id],
-  }),
-  user: one(user, {
-    fields: [projectActivity.userId],
-    references: [user.id],
-  }),
-}));
+);
 
 export const projectRiskRelations = relations(projectRisk, ({ one }) => ({
   organization: one(organization, {
@@ -1025,26 +1107,26 @@ export const documentRelations = relations(document, ({ one }) => ({
 /* =========================
    SUBSCRIPTION PLANS TABLE
 ========================= */
-export const subscriptionPlan = pgTable('subscription_plan', {
-  id: text('id').primaryKey(), // 'free', 'starter', 'pro'
-  name: text('name').notNull(),
-  description: text('description').notNull(),
-  priceZar: integer('price_zar').notNull().default(0),
-  period: text('period').notNull().default('per month'),
-  maxStorageMb: integer('max_storage_mb').notNull().default(100),
-  maxTendersPerMonth: integer('max_tenders_per_month').notNull().default(10), // -1 for unlimited
-  maxActiveProjects: integer('max_active_projects').notNull().default(0),
-  maxOwnedOrgs: integer('max_owned_orgs').notNull().default(1),
-  features: jsonb('features').$type<string[]>().notNull(),
-  popular: boolean('popular').notNull().default(false),
-  sortOrder: integer('sort_order').notNull().default(0),
-  isActive: boolean('is_active').notNull().default(true),
-  ctaText: text('cta_text').notNull().default('Select Plan'),
-  badgeText: text('badge_text'),
-  createdAt: timestamp('created_at')
+export const subscriptionPlan = pgTable("subscription_plan", {
+  id: text("id").primaryKey(), // 'free', 'starter', 'pro'
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  priceZar: integer("price_zar").notNull().default(0),
+  period: text("period").notNull().default("per month"),
+  maxStorageMb: integer("max_storage_mb").notNull().default(100),
+  maxTendersPerMonth: integer("max_tenders_per_month").notNull().default(10), // -1 for unlimited
+  maxActiveProjects: integer("max_active_projects").notNull().default(0),
+  maxOwnedOrgs: integer("max_owned_orgs").notNull().default(1),
+  features: jsonb("features").$type<string[]>().notNull(),
+  popular: boolean("popular").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  ctaText: text("cta_text").notNull().default("Select Plan"),
+  badgeText: text("badge_text"),
+  createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
-  updatedAt: timestamp('updated_at')
+  updatedAt: timestamp("updated_at")
     .$defaultFn(() => new Date())
     .notNull(),
 });
@@ -1113,8 +1195,10 @@ export const schema = {
 
 export type Feedback = typeof feedback.$inferSelect;
 export type SupportTicket = typeof supportTickets.$inferSelect;
-export type PurchaseOrderDeliveryNote = typeof purchaseOrderDeliveryNote.$inferSelect;
-export type PurchaseOrderDeliveryItem = typeof purchaseOrderDeliveryItem.$inferSelect;
+export type PurchaseOrderDeliveryNote =
+  typeof purchaseOrderDeliveryNote.$inferSelect;
+export type PurchaseOrderDeliveryItem =
+  typeof purchaseOrderDeliveryItem.$inferSelect;
 export type TenderFollowUp = typeof tenderFollowUp.$inferSelect;
 export type SubscriptionPlan = typeof subscriptionPlan.$inferSelect;
 export type NewSubscriptionPlan = typeof subscriptionPlan.$inferInsert;

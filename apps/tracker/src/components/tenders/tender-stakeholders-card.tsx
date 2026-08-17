@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 import {
   Building,
   User,
@@ -10,17 +10,17 @@ import {
   ExternalLink,
   Copy,
   UserCheck,
-} from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatClientName, formatPhoneNumber } from '@/lib/format';
-import { toast } from 'sonner';
+} from "@/components/ui/tooltip";
+import { formatClientName, formatPhoneNumber } from "@/lib/format";
+import { toast } from "sonner";
 
 interface TenderStakeholdersCardProps {
   client: {
@@ -48,8 +48,8 @@ export function TenderStakeholdersCard({
 
   const hasTenderContact = Boolean(
     tenderContact.contactName ||
-      tenderContact.contactEmail ||
-      tenderContact.contactPhone
+    tenderContact.contactEmail ||
+    tenderContact.contactPhone,
   );
 
   return (
@@ -86,7 +86,9 @@ export function TenderStakeholdersCard({
               </p>
             </div>
 
-            {(client.contactName || client.contactEmail || client.contactPhone) && (
+            {(client.contactName ||
+              client.contactEmail ||
+              client.contactPhone) && (
               <div className="rounded-lg border border-border/50 bg-background/50 p-2.5 space-y-2 text-xs">
                 <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
                   <User className="h-3.5 w-3.5 text-blue-500" />
@@ -115,7 +117,7 @@ export function TenderStakeholdersCard({
                             size="icon"
                             className="h-5 w-5 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                             onClick={() =>
-                              copyToClipboard(client.contactEmail!, 'Email')
+                              copyToClipboard(client.contactEmail!, "Email")
                             }
                           >
                             <Copy className="h-3 w-3" />
@@ -143,7 +145,10 @@ export function TenderStakeholdersCard({
                             size="icon"
                             className="h-5 w-5 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                             onClick={() =>
-                              copyToClipboard(client.contactPhone!, 'Phone number')
+                              copyToClipboard(
+                                client.contactPhone!,
+                                "Phone number",
+                              )
                             }
                           >
                             <Copy className="h-3 w-3" />
@@ -203,7 +208,7 @@ export function TenderStakeholdersCard({
                           onClick={() =>
                             copyToClipboard(
                               tenderContact.contactEmail!,
-                              'Email'
+                              "Email",
                             )
                           }
                         >
@@ -237,7 +242,7 @@ export function TenderStakeholdersCard({
                           onClick={() =>
                             copyToClipboard(
                               tenderContact.contactPhone!,
-                              'Phone number'
+                              "Phone number",
                             )
                           }
                         >

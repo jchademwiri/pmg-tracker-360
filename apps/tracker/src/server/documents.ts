@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { db, getPlanLimits } from '@pmg/db';
+import { db, getPlanLimits } from "@pmg/db";
 import {
   document,
   tender,
@@ -8,11 +8,11 @@ import {
   project,
   purchaseOrder,
   organization,
-} from '@pmg/db/schema';
-import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
-import { eq, and, desc, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { StorageService } from '@/lib/storage';
+} from "@pmg/db/schema";
+import { validateSessionAndOrg, getOrganizationOwnerPlan } from "./utils";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { StorageService } from "@/lib/storage";
 
 export interface DocumentUploadTarget {
   tenderId?: string;
@@ -20,13 +20,13 @@ export interface DocumentUploadTarget {
   purchaseOrderId?: string;
   extensionId?: string;
   category?:
-    | 'tender'
-    | 'briefing'
-    | 'extension'
-    | 'appointment_letter'
-    | 'contract'
-    | 'sla'
-    | 'general';
+    | "tender"
+    | "briefing"
+    | "extension"
+    | "appointment_letter"
+    | "contract"
+    | "sla"
+    | "general";
   extensionDate?: string | Date;
 }
 
@@ -36,39 +36,40 @@ export interface DocumentUploadTarget {
 export async function uploadDocument(
   organizationId: string,
   formData: FormData,
-  target: DocumentUploadTarget
+  target: DocumentUploadTarget,
 ) {
   try {
     const { userId } = await validateSessionAndOrg(organizationId);
 
-    const file = formData.get('file') as File | null;
+    const file = formData.get("file") as File | null;
     if (!file) {
-      return { success: false, error: 'No file provided' };
+      return { success: false, error: "No file provided" };
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      return { success: false, error: 'File size exceeds 10MB limit per file' };
+      return { success: false, error: "File size exceeds 10MB limit per file" };
     }
 
     // Validate file type
     const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'text/plain',
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "text/plain",
     ];
     if (!allowedTypes.includes(file.type)) {
       return {
         success: false,
-        error: 'File type not supported. Please upload PDF, Word, Excel, images, or text files.',
+        error:
+          "File type not supported. Please upload PDF, Word, Excel, images, or text files.",
       };
     }
 
@@ -104,18 +105,21 @@ export async function uploadDocument(
 
     const orgSlug = (orgRecord[0]?.slug || orgRecord[0]?.name || organizationId)
       .toLowerCase()
-      .replace(/[^a-z0-9_-]/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^a-z0-9_-]/g, "-")
+      .replace(/^-+|-+$/g, "");
 
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+    const fileExt = file.name.split(".").pop()?.toLowerCase() || "pdf";
 
     let finalFileName = file.name;
-    let storageKey = `${orgSlug}/documents/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    let storageKey = `${orgSlug}/documents/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
     // Naming logic based on entity target and category
-    if (target.extensionId || (target.tenderId && target.category === 'extension')) {
-      let tenderNum = 'TENDER';
-      let extensionDateStr = '';
+    if (
+      target.extensionId ||
+      (target.tenderId && target.category === "extension")
+    ) {
+      let tenderNum = "TENDER";
+      let extensionDateStr = "";
 
       if (target.extensionId) {
         const ext = await db
@@ -130,7 +134,9 @@ export async function uploadDocument(
           .limit(1);
 
         if (ext.length > 0) {
-          tenderNum = ext[0].tenderNumber.replace(/[^a-zA-Z0-9_-]/g, '-').toUpperCase();
+          tenderNum = ext[0].tenderNumber
+            .replace(/[^a-zA-Z0-9_-]/g, "-")
+            .toUpperCase();
           const d = target.extensionDate
             ? new Date(target.extensionDate)
             : ext[0].newEvaluationDate
@@ -147,9 +153,13 @@ export async function uploadDocument(
           .where(eq(tender.id, target.tenderId))
           .limit(1);
         if (t.length > 0) {
-          tenderNum = t[0].tenderNumber.replace(/[^a-zA-Z0-9_-]/g, '-').toUpperCase();
+          tenderNum = t[0].tenderNumber
+            .replace(/[^a-zA-Z0-9_-]/g, "-")
+            .toUpperCase();
         }
-        const d = target.extensionDate ? new Date(target.extensionDate) : new Date();
+        const d = target.extensionDate
+          ? new Date(target.extensionDate)
+          : new Date();
         extensionDateStr = d.toISOString().slice(0, 10);
       }
 
@@ -163,12 +173,12 @@ export async function uploadDocument(
               ? eq(document.extensionId, target.extensionId)
               : target.tenderId
                 ? eq(document.tenderId, target.tenderId)
-                : undefined
-          )
+                : undefined,
+          ),
         );
 
       const extSeq = Number(existingExtDocs[0]?.count || 0) + 1;
-      const seqSuffix = extSeq > 1 ? `-${extSeq}` : '';
+      const seqSuffix = extSeq > 1 ? `-${extSeq}` : "";
       finalFileName = `Extension-${tenderNum}-${extensionDateStr}${seqSuffix}.${fileExt}`;
       storageKey = `${orgSlug}/tenders/${tenderNum}/extensions/${finalFileName}`;
     } else if (target.tenderId) {
@@ -177,11 +187,11 @@ export async function uploadDocument(
         .from(tender)
         .where(eq(tender.id, target.tenderId))
         .limit(1);
-      const tenderNum = (t[0]?.tenderNumber || 'TENDER')
-        .replace(/[^a-zA-Z0-9_-]/g, '-')
+      const tenderNum = (t[0]?.tenderNumber || "TENDER")
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
         .toUpperCase();
 
-      const docPrefix = target.category === 'briefing' ? 'Briefing' : 'Tender';
+      const docPrefix = target.category === "briefing" ? "Briefing" : "Tender";
 
       const existingTenderDocs = await db
         .select({ count: sql<number>`count(*)` })
@@ -190,25 +200,28 @@ export async function uploadDocument(
           and(
             eq(document.organizationId, organizationId),
             eq(document.tenderId, target.tenderId),
-            sql`${document.extensionId} IS NULL`
-          )
+            sql`${document.extensionId} IS NULL`,
+          ),
         );
       const docSeq = Number(existingTenderDocs[0]?.count || 0) + 1;
 
       finalFileName = `${docPrefix}-${tenderNum}-${docSeq}.${fileExt}`;
     } else if (target.projectId) {
       const p = await db
-        .select({ projectNumber: project.projectNumber, description: project.description })
+        .select({
+          projectNumber: project.projectNumber,
+          description: project.description,
+        })
         .from(project)
         .where(eq(project.id, target.projectId))
         .limit(1);
-      const projectIdent = (p[0]?.projectNumber || p[0]?.description || 'PRJ')
-        .replace(/[^a-zA-Z0-9_-]/g, '-')
+      const projectIdent = (p[0]?.projectNumber || p[0]?.description || "PRJ")
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
         .toUpperCase();
 
-      const category = target.category || 'general';
+      const category = target.category || "general";
 
-      if (category === 'appointment_letter') {
+      if (category === "appointment_letter") {
         const existing = await db
           .select({ count: sql<number>`count(*)` })
           .from(document)
@@ -216,14 +229,14 @@ export async function uploadDocument(
             and(
               eq(document.organizationId, organizationId),
               eq(document.projectId, target.projectId),
-              sql`${document.name} ILIKE 'Appointment-Letter-%'`
-            )
+              sql`${document.name} ILIKE 'Appointment-Letter-%'`,
+            ),
           );
         const seq = Number(existing[0]?.count || 0) + 1;
         finalFileName = `Appointment-Letter-${projectIdent}-${seq}.${fileExt}`;
         storageKey = `${orgSlug}/projects/${projectIdent}/appointment-letters/${finalFileName}`;
-      } else if (category === 'contract' || category === 'sla') {
-        const prefix = category === 'sla' ? 'SLA' : 'Contract';
+      } else if (category === "contract" || category === "sla") {
+        const prefix = category === "sla" ? "SLA" : "Contract";
         const existing = await db
           .select({ count: sql<number>`count(*)` })
           .from(document)
@@ -231,14 +244,16 @@ export async function uploadDocument(
             and(
               eq(document.organizationId, organizationId),
               eq(document.projectId, target.projectId),
-              sql`(${document.name} ILIKE 'Contract-%' OR ${document.name} ILIKE 'SLA-%')`
-            )
+              sql`(${document.name} ILIKE 'Contract-%' OR ${document.name} ILIKE 'SLA-%')`,
+            ),
           );
         const seq = Number(existing[0]?.count || 0) + 1;
         finalFileName = `${prefix}-${projectIdent}-${seq}.${fileExt}`;
         storageKey = `${orgSlug}/projects/${projectIdent}/contracts/${finalFileName}`;
-      } else if (category === 'extension') {
-        const d = target.extensionDate ? new Date(target.extensionDate) : new Date();
+      } else if (category === "extension") {
+        const d = target.extensionDate
+          ? new Date(target.extensionDate)
+          : new Date();
         const dateStr = d.toISOString().slice(0, 10);
         const existing = await db
           .select({ count: sql<number>`count(*)` })
@@ -247,11 +262,11 @@ export async function uploadDocument(
             and(
               eq(document.organizationId, organizationId),
               eq(document.projectId, target.projectId),
-              sql`${document.name} ILIKE 'Extension-%'`
-            )
+              sql`${document.name} ILIKE 'Extension-%'`,
+            ),
           );
         const seq = Number(existing[0]?.count || 0) + 1;
-        const seqSuffix = seq > 1 ? `-${seq}` : '';
+        const seqSuffix = seq > 1 ? `-${seq}` : "";
         finalFileName = `Extension-${projectIdent}-${dateStr}${seqSuffix}.${fileExt}`;
         storageKey = `${orgSlug}/projects/${projectIdent}/extensions/${finalFileName}`;
       } else {
@@ -262,8 +277,8 @@ export async function uploadDocument(
             and(
               eq(document.organizationId, organizationId),
               eq(document.projectId, target.projectId),
-              sql`${document.name} ILIKE 'Project-%'`
-            )
+              sql`${document.name} ILIKE 'Project-%'`,
+            ),
           );
         const seq = Number(existing[0]?.count || 0) + 1;
         finalFileName = `Project-${projectIdent}-${seq}.${fileExt}`;
@@ -275,8 +290,8 @@ export async function uploadDocument(
         .from(purchaseOrder)
         .where(eq(purchaseOrder.id, target.purchaseOrderId))
         .limit(1);
-      const poNum = (po[0]?.poNumber || 'PO')
-        .replace(/[^a-zA-Z0-9_-]/g, '-')
+      const poNum = (po[0]?.poNumber || "PO")
+        .replace(/[^a-zA-Z0-9_-]/g, "-")
         .toUpperCase();
 
       const existing = await db
@@ -285,8 +300,8 @@ export async function uploadDocument(
         .where(
           and(
             eq(document.organizationId, organizationId),
-            eq(document.purchaseOrderId, target.purchaseOrderId)
-          )
+            eq(document.purchaseOrderId, target.purchaseOrderId),
+          ),
         );
       const seq = Number(existing[0]?.count || 0) + 1;
       finalFileName = `POD-${poNum}-${seq}.${fileExt}`;
@@ -294,7 +309,11 @@ export async function uploadDocument(
     }
 
     // Upload to R2
-    const uploadedKey = await StorageService.uploadFile(fileBuffer, storageKey, file.type);
+    const uploadedKey = await StorageService.uploadFile(
+      fileBuffer,
+      storageKey,
+      file.type,
+    );
 
     // Generate signed URL immediately for client preview and instant download
     const signedUrl = await StorageService.getSignedUrl(uploadedKey);
@@ -338,8 +357,11 @@ export async function uploadDocument(
       },
     };
   } catch (error: any) {
-    console.error('Error uploading document:', error);
-    return { success: false, error: error.message || 'Failed to upload document' };
+    console.error("Error uploading document:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to upload document",
+    };
   }
 }
 
@@ -348,30 +370,30 @@ export async function uploadDocument(
  */
 export async function getDocuments(
   organizationId: string,
-  entityType: 'tender' | 'project' | 'purchaseOrder',
-  entityId: string
+  entityType: "tender" | "project" | "purchaseOrder",
+  entityId: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
 
     let whereCondition;
     switch (entityType) {
-      case 'tender':
+      case "tender":
         whereCondition = and(
           eq(document.organizationId, organizationId),
-          eq(document.tenderId, entityId)
+          eq(document.tenderId, entityId),
         );
         break;
-      case 'project':
+      case "project":
         whereCondition = and(
           eq(document.organizationId, organizationId),
-          eq(document.projectId, entityId)
+          eq(document.projectId, entityId),
         );
         break;
-      case 'purchaseOrder':
+      case "purchaseOrder":
         whereCondition = and(
           eq(document.organizationId, organizationId),
-          eq(document.purchaseOrderId, entityId)
+          eq(document.purchaseOrderId, entityId),
         );
         break;
     }
@@ -397,20 +419,27 @@ export async function getDocuments(
           ...doc,
           signedUrl,
         };
-      })
+      }),
     );
 
     return { success: true, documents: docsWithUrls };
   } catch (error: any) {
-    console.error('Error fetching documents:', error);
-    return { success: false, error: error.message || 'Failed to fetch documents', documents: [] };
+    console.error("Error fetching documents:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch documents",
+      documents: [],
+    };
   }
 }
 
 /**
  * Delete a document (from storage and database)
  */
-export async function deleteDocument(organizationId: string, documentId: string) {
+export async function deleteDocument(
+  organizationId: string,
+  documentId: string,
+) {
   try {
     const { userId } = await validateSessionAndOrg(organizationId);
 
@@ -418,12 +447,12 @@ export async function deleteDocument(organizationId: string, documentId: string)
     const doc = await db.query.document.findFirst({
       where: and(
         eq(document.id, documentId),
-        eq(document.organizationId, organizationId)
+        eq(document.organizationId, organizationId),
       ),
     });
 
     if (!doc) {
-      return { success: false, error: 'Document not found' };
+      return { success: false, error: "Document not found" };
     }
 
     // Delete from storage
@@ -442,7 +471,10 @@ export async function deleteDocument(organizationId: string, documentId: string)
 
     return { success: true };
   } catch (error: any) {
-    console.error('Error deleting document:', error);
-    return { success: false, error: error.message || 'Failed to delete document' };
+    console.error("Error deleting document:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete document",
+    };
   }
 }

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { authClient } from '@/lib/auth-client';
-import { Button } from '@/components/ui/button';
-import type { OrganizationWithStats } from '@/server/organizations';
-import { switchOrganization } from '@/lib/organization-utils';
+import { useState, useEffect } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import type { OrganizationWithStats } from "@/server/organizations";
+import { switchOrganization } from "@/lib/organization-utils";
 
 interface OrganizationSelectorProps {
   organizations: OrganizationWithStats[];
@@ -30,14 +30,14 @@ export function OrganizationSelector({
       const org = organizations.find((o) => o.id === orgId);
       const res = await switchOrganization({
         organizationId: orgId,
-        organizationName: org?.name || '',
-        redirectUrl: '/dashboard',
+        organizationName: org?.name || "",
+        redirectUrl: "/dashboard",
       });
       if (!res.success) {
         setIsSwitching(false);
       }
     } catch (err) {
-      console.error('Failed to switch organization:', err);
+      console.error("Failed to switch organization:", err);
       setIsSwitching(false);
     }
   };
@@ -61,7 +61,9 @@ export function OrganizationSelector({
         <div>
           <h1 className="text-4xl font-bold">Tender Track 360</h1>
           <p className="mt-4 text-lg">
-            {isSwitching ? 'Switching organization...' : 'Loading your organization...'}
+            {isSwitching
+              ? "Switching organization..."
+              : "Loading your organization..."}
           </p>
         </div>
       </section>
@@ -94,7 +96,7 @@ export function OrganizationSelector({
               <Button
                 key={org.id}
                 variant={
-                  activeOrganization?.id === org.id ? 'default' : 'outline'
+                  activeOrganization?.id === org.id ? "default" : "outline"
                 }
                 className="w-full justify-start cursor-pointer"
                 onClick={() => handleSelectOrg(org.id)}

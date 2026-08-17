@@ -6,7 +6,7 @@ import * as os from "os";
 export function loadEnv() {
   // Determine a starting directory for climbing up to find the workspace root
   let startDir = process.cwd();
-  
+
   // Try to use import.meta.url if available in ESM
   try {
     if (import.meta.url) {
@@ -38,7 +38,7 @@ export function loadEnv() {
       workspaceEnvPath = potentialPath;
       break;
     }
-    
+
     // Also check if we hit a workspace marker like turbo.json or package.json
     // to stop traversing beyond the workspace. But checking the env file directly is safer.
     const parent = path.dirname(dir);
@@ -75,7 +75,9 @@ export function loadEnv() {
     if (fs.existsSync(globalEnvPath)) {
       config({ path: globalEnvPath });
     } else {
-      console.warn("⚠️ No .env.local found in workspace or global (home) directory.");
+      console.warn(
+        "⚠️ No .env.local found in workspace or global (home) directory.",
+      );
     }
   }
 }

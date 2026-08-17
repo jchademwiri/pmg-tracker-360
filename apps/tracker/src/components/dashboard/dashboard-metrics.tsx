@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 import {
   CalendarDays,
   CalendarRange,
@@ -9,9 +9,9 @@ import {
   AlertCircle,
   FileCheck2,
   ChevronRight,
-} from 'lucide-react';
-import { getTenderStats } from '@/server/tenders';
-import { formatNumber } from '@/lib/dashboard-data';
+} from "lucide-react";
+import { getTenderStats } from "@/server/tenders";
+import { formatNumber } from "@/lib/dashboard-data";
 
 interface DashboardMetricsProps {
   organizationId: string;
@@ -53,66 +53,77 @@ export async function DashboardMetrics({
       };
     }
   } catch (error) {
-    console.error('Failed to fetch tender mission metrics:', error);
+    console.error("Failed to fetch tender mission metrics:", error);
   }
 
-  const currentMonthName = new Intl.DateTimeFormat('en-ZA', { month: 'short' }).format(new Date());
+  const currentMonthName = new Intl.DateTimeFormat("en-ZA", {
+    month: "short",
+  }).format(new Date());
   const currentYear = new Date().getFullYear();
 
   const cards = [
     {
-      id: 'mtd',
-      title: 'Submitted This Month',
+      id: "mtd",
+      title: "Submitted This Month",
       value: tenderStats.submittedThisMonth,
       subtext: `${currentMonthName} 1st to today`,
-      href: '/tenders?submitted=this-month',
+      href: "/tenders?submitted=this-month",
       icon: CalendarDays,
-      iconColor: 'text-sky-400',
-      iconBg: 'bg-sky-500/10 border-sky-500/20',
-      cardBg: 'bg-card/75 hover:bg-card/95 hover:border-sky-500/40',
-      ctaText: 'View Month Submissions',
+      iconColor: "text-sky-400",
+      iconBg: "bg-sky-500/10 border-sky-500/20",
+      cardBg: "bg-card/75 hover:bg-card/95 hover:border-sky-500/40",
+      ctaText: "View Month Submissions",
       isUrgent: false,
     },
     {
-      id: 'ytd',
-      title: 'Submitted This Year',
+      id: "ytd",
+      title: "Submitted This Year",
       value: tenderStats.submittedThisYear,
       subtext: `${currentYear} cumulative YTD`,
-      href: '/tenders?submitted=this-year',
+      href: "/tenders?submitted=this-year",
       icon: CalendarRange,
-      iconColor: 'text-emerald-400',
-      iconBg: 'bg-emerald-500/10 border-emerald-500/20',
-      cardBg: 'bg-card/75 hover:bg-card/95 hover:border-emerald-500/40',
-      ctaText: 'View 2026 Submissions',
+      iconColor: "text-emerald-400",
+      iconBg: "bg-emerald-500/10 border-emerald-500/20",
+      cardBg: "bg-card/75 hover:bg-card/95 hover:border-emerald-500/40",
+      ctaText: "View 2026 Submissions",
       isUrgent: false,
     },
     {
-      id: 'validity-expired',
-      title: 'Expired Validity (No Follow-up)',
+      id: "validity-expired",
+      title: "Expired Validity (No Follow-up)",
       value: tenderStats.expiredValidityUncontactedCount,
-      subtext: 'Lapsed period with no communication',
-      href: '/tenders?filter=validity-expired-uncontacted',
+      subtext: "Lapsed period with no communication",
+      href: "/tenders?filter=validity-expired-uncontacted",
       icon: Hourglass,
-      iconColor: tenderStats.expiredValidityUncontactedCount > 0 ? 'text-amber-400' : 'text-muted-foreground',
-      iconBg: tenderStats.expiredValidityUncontactedCount > 0 ? 'bg-amber-500/15 border-amber-500/30' : 'bg-muted/20 border-border/50',
+      iconColor:
+        tenderStats.expiredValidityUncontactedCount > 0
+          ? "text-amber-400"
+          : "text-muted-foreground",
+      iconBg:
+        tenderStats.expiredValidityUncontactedCount > 0
+          ? "bg-amber-500/15 border-amber-500/30"
+          : "bg-muted/20 border-border/50",
       cardBg:
         tenderStats.expiredValidityUncontactedCount > 0
-          ? 'bg-amber-950/15 border-amber-500/40 hover:bg-amber-950/25 hover:border-amber-400 shadow-md shadow-amber-950/20'
-          : 'bg-card/75 hover:bg-card/95 hover:border-border/80',
-      ctaText: tenderStats.expiredValidityUncontactedCount > 0 ? 'Take Action Now' : 'All Validities Followed Up',
+          ? "bg-amber-950/15 border-amber-500/40 hover:bg-amber-950/25 hover:border-amber-400 shadow-md shadow-amber-950/20"
+          : "bg-card/75 hover:bg-card/95 hover:border-border/80",
+      ctaText:
+        tenderStats.expiredValidityUncontactedCount > 0
+          ? "Take Action Now"
+          : "All Validities Followed Up",
       isUrgent: tenderStats.expiredValidityUncontactedCount > 0,
     },
     {
-      id: 'evaluation',
-      title: 'Under Evaluation',
+      id: "evaluation",
+      title: "Under Evaluation",
       value: tenderStats.underEvaluationCount,
-      subtext: 'Awaiting client / SCM outcome',
-      href: '/tenders?status=evaluation',
+      subtext: "Awaiting client / SCM outcome",
+      href: "/tenders?status=evaluation",
       icon: FileCheck2,
-      iconColor: 'text-primary',
-      iconBg: 'bg-primary/10 border-primary/20',
-      cardBg: 'bg-card/75 hover:bg-card/95 hover:border-primary/40',
-      ctaText: 'View Active Pipeline',
+      iconColor: "text-primary",
+      iconBg: "bg-primary/10 border-primary/20",
+      cardBg: "bg-card/75 hover:bg-card/95 hover:border-primary/40",
+      ctaText: "View Active Pipeline",
       isUrgent: false,
     },
   ];
@@ -139,7 +150,9 @@ export async function DashboardMetrics({
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {card.title}
                 </span>
-                <div className={`p-2 rounded-xl border ${card.iconBg} ${card.iconColor} transition-transform group-hover:scale-110`}>
+                <div
+                  className={`p-2 rounded-xl border ${card.iconBg} ${card.iconColor} transition-transform group-hover:scale-110`}
+                >
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </div>
               </div>
@@ -155,10 +168,13 @@ export async function DashboardMetrics({
             </div>
 
             <div className="pt-3 border-t border-border/40 flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-              <span className={card.isUrgent ? 'text-amber-400 font-bold' : ''}>
+              <span className={card.isUrgent ? "text-amber-400 font-bold" : ""}>
                 {card.ctaText}
               </span>
-              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              <ChevronRight
+                className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                aria-hidden="true"
+              />
             </div>
           </Link>
         );

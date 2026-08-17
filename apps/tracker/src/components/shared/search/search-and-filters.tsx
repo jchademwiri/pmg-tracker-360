@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import { useState, useCallback, useMemo } from "react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { X, Search, Filter } from 'lucide-react';
-import type { Role } from '@pmg/db/schema';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { X, Search, Filter } from "lucide-react";
+import type { Role } from "@pmg/db/schema";
 
 export interface FilterState {
   search: string;
-  role: Role | 'all';
-  status: 'all' | 'active' | 'pending' | 'expired' | 'inactive';
+  role: Role | "all";
+  status: "all" | "active" | "pending" | "expired" | "inactive";
 }
 
 export interface SearchAndFiltersProps {
@@ -28,32 +28,32 @@ export interface SearchAndFiltersProps {
   className?: string;
 }
 
-const ROLE_OPTIONS: Array<{ value: Role | 'all'; label: string }> = [
-  { value: 'all', label: 'All Roles' },
-  { value: 'owner', label: 'Owner' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'member', label: 'Member' },
+const ROLE_OPTIONS: Array<{ value: Role | "all"; label: string }> = [
+  { value: "all", label: "All Roles" },
+  { value: "owner", label: "Owner" },
+  { value: "admin", label: "Admin" },
+  { value: "member", label: "Member" },
 ];
 
-const STATUS_OPTIONS: Array<{ value: FilterState['status']; label: string }> = [
-  { value: 'all', label: 'All Status' },
-  { value: 'active', label: 'Active' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'expired', label: 'Expired' },
-  { value: 'inactive', label: 'Inactive' },
+const STATUS_OPTIONS: Array<{ value: FilterState["status"]; label: string }> = [
+  { value: "all", label: "All Status" },
+  { value: "active", label: "Active" },
+  { value: "pending", label: "Pending" },
+  { value: "expired", label: "Expired" },
+  { value: "inactive", label: "Inactive" },
 ];
 
 export function SearchAndFilters({
   onFiltersChange,
-  placeholder = 'Search members and invitations...',
+  placeholder = "Search members and invitations...",
   showRoleFilter = true,
   showStatusFilter = true,
-  className = '',
+  className = "",
 }: SearchAndFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    role: 'all',
-    status: 'all',
+    search: "",
+    role: "all",
+    status: "all",
   });
 
   const handleFilterChange = useCallback(
@@ -62,35 +62,35 @@ export function SearchAndFilters({
       setFilters(updatedFilters);
       onFiltersChange(updatedFilters);
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   const handleSearchChange = useCallback(
     (value: string) => {
       handleFilterChange({ search: value });
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const handleRoleChange = useCallback(
     (value: string) => {
-      handleFilterChange({ role: value as Role | 'all' });
+      handleFilterChange({ role: value as Role | "all" });
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const handleStatusChange = useCallback(
     (value: string) => {
-      handleFilterChange({ status: value as FilterState['status'] });
+      handleFilterChange({ status: value as FilterState["status"] });
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
   const clearFilters = useCallback(() => {
     const clearedFilters: FilterState = {
-      search: '',
-      role: 'all',
-      status: 'all',
+      search: "",
+      role: "all",
+      status: "all",
     };
     setFilters(clearedFilters);
     onFiltersChange(clearedFilters);
@@ -101,28 +101,28 @@ export function SearchAndFilters({
 
     if (filters.search) {
       active.push({
-        key: 'search',
-        label: 'Search',
+        key: "search",
+        label: "Search",
         value: filters.search,
       });
     }
 
-    if (filters.role !== 'all') {
+    if (filters.role !== "all") {
       const roleOption = ROLE_OPTIONS.find((opt) => opt.value === filters.role);
       active.push({
-        key: 'role',
-        label: 'Role',
+        key: "role",
+        label: "Role",
         value: roleOption?.label || filters.role,
       });
     }
 
-    if (filters.status !== 'all') {
+    if (filters.status !== "all") {
       const statusOption = STATUS_OPTIONS.find(
-        (opt) => opt.value === filters.status
+        (opt) => opt.value === filters.status,
       );
       active.push({
-        key: 'status',
-        label: 'Status',
+        key: "status",
+        label: "Status",
         value: statusOption?.label || filters.status,
       });
     }
@@ -210,12 +210,12 @@ export function SearchAndFilters({
                 size="sm"
                 className="h-auto p-0 ml-1 hover:bg-transparent"
                 onClick={() => {
-                  if (filter.key === 'search') {
-                    handleFilterChange({ search: '' });
-                  } else if (filter.key === 'role') {
-                    handleFilterChange({ role: 'all' });
-                  } else if (filter.key === 'status') {
-                    handleFilterChange({ status: 'all' });
+                  if (filter.key === "search") {
+                    handleFilterChange({ search: "" });
+                  } else if (filter.key === "role") {
+                    handleFilterChange({ role: "all" });
+                  } else if (filter.key === "status") {
+                    handleFilterChange({ status: "all" });
                   }
                 }}
               >

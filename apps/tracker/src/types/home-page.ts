@@ -25,9 +25,9 @@ export interface DashboardSummary {
   }>;
   notifications: Array<{
     id: string;
-    type: 'deadline' | 'update' | 'alert';
+    type: "deadline" | "update" | "alert";
     message: string;
-    priority: 'high' | 'medium' | 'low';
+    priority: "high" | "medium" | "low";
   }>;
 }
 

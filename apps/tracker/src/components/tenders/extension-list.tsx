@@ -1,17 +1,26 @@
-'use client';
+"use client";
 
-import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Calendar, User, Phone, Mail, FileText, Download, Trash2, Pencil } from 'lucide-react';
-import { ExtensionForm, EditableExtension } from './extension-form';
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { deleteTenderExtension } from '@/server/modules/extensions';
-import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { formatFileSize } from '@/lib/format';
+import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Calendar,
+  User,
+  Phone,
+  Mail,
+  FileText,
+  Download,
+  Trash2,
+  Pencil,
+} from "lucide-react";
+import { ExtensionForm, EditableExtension } from "./extension-form";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { deleteTenderExtension } from "@/server/modules/extensions";
+import { DeleteConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { formatFileSize } from "@/lib/format";
 
 export interface ExtensionDocument {
   id: string;
@@ -65,7 +74,8 @@ export function ExtensionList({
     ? extensions.find((e) => e.id === editExtensionId)
     : undefined;
 
-  const isEditingLatestExtension = !!editExtensionId && editExtensionId === latestExtensionId;
+  const isEditingLatestExtension =
+    !!editExtensionId && editExtensionId === latestExtensionId;
 
   const editExtensionData: EditableExtension | undefined = extToEdit
     ? {
@@ -87,10 +97,10 @@ export function ExtensionList({
     startTransition(async () => {
       const result = await deleteTenderExtension(organizationId, id);
       if (result.success) {
-        toast.success('Extension deleted');
+        toast.success("Extension deleted");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to delete extension');
+        toast.error(result.error || "Failed to delete extension");
       }
     });
   };
@@ -122,11 +132,11 @@ export function ExtensionList({
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-primary" />
-                    Extended on {format(new Date(ext.extensionDate), 'PPP')}
+                    Extended on {format(new Date(ext.extensionDate), "PPP")}
                   </CardTitle>
                   <Badge variant="outline" className="text-xs">
-                    New Deadline:{' '}
-                    {format(new Date(ext.newEvaluationDate), 'PPP')}
+                    New Deadline:{" "}
+                    {format(new Date(ext.newEvaluationDate), "PPP")}
                   </Badge>
                 </div>
               </CardHeader>
@@ -145,7 +155,10 @@ export function ExtensionList({
                       Attached Extension Letter
                     </p>
                     {ext.documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between gap-2">
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between gap-2"
+                      >
                         <div className="flex items-center gap-2 truncate min-w-0">
                           <FileText className="h-4 w-4 text-blue-500 shrink-0" />
                           <span className="text-xs truncate" title={doc.name}>
@@ -178,7 +191,7 @@ export function ExtensionList({
                     </p>
                     <div className="flex items-center gap-2">
                       <User className="h-3.5 w-3.5" />
-                      <span>{ext.contactName || 'N/A'}</span>
+                      <span>{ext.contactName || "N/A"}</span>
                     </div>
                   </div>
 
@@ -213,9 +226,9 @@ export function ExtensionList({
 
                 <div className="pt-2 border-t flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    Recorded by{' '}
+                    Recorded by{" "}
                     <span className="font-medium text-foreground">
-                      {ext.createdByUser?.name || 'Unknown'}
+                      {ext.createdByUser?.name || "Unknown"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -251,7 +264,9 @@ export function ExtensionList({
         extension={editExtensionData}
         isLatestExtension={isEditingLatestExtension}
         open={editExtensionId !== null}
-        onOpenChange={(open) => { if (!open) setEditExtensionId(null); }}
+        onOpenChange={(open) => {
+          if (!open) setEditExtensionId(null);
+        }}
         trigger={<span />}
       />
 
@@ -259,7 +274,11 @@ export function ExtensionList({
         isOpen={deleteDialogId !== null}
         onClose={() => setDeleteDialogId(null)}
         onConfirm={handleDeleteConfirm}
-        itemName={extToDelete ? format(new Date(extToDelete.extensionDate), 'PPP') : 'this extension'}
+        itemName={
+          extToDelete
+            ? format(new Date(extToDelete.extensionDate), "PPP")
+            : "this extension"
+        }
         itemType="Extension"
       />
     </div>

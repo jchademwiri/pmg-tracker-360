@@ -1,13 +1,13 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { member, organization } from '@pmg/db/schema';
-import type { Role } from '@pmg/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { getCurrentUser } from './users';
-import { getUserOrganizationMembership } from './organizations';
-import { StorageService } from '@/lib/storage';
-import { revalidatePath } from 'next/cache';
+import { db } from "@pmg/db";
+import { member, organization } from "@pmg/db/schema";
+import type { Role } from "@pmg/db/schema";
+import { eq, and } from "drizzle-orm";
+import { getCurrentUser } from "./users";
+import { getUserOrganizationMembership } from "./organizations";
+import { StorageService } from "@/lib/storage";
+import { revalidatePath } from "next/cache";
 
 export interface ServerActionResult<T = unknown> {
   success: boolean;
@@ -22,7 +22,7 @@ export interface ServerActionResult<T = unknown> {
 function createServerActionError(
   code: string,
   message: string,
-  details?: unknown
+  details?: unknown,
 ): ServerActionResult<never> {
   return {
     success: false,
@@ -45,32 +45,32 @@ function createServerActionSuccess<T>(data: T): ServerActionResult<T> {
 export async function updateMemberRole(
   organizationId: string,
   memberId: string,
-  newRole: Role
+  newRole: Role,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to update member roles
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners and admins can change roles
-    if (!['owner', 'admin'].includes(userMembership.role)) {
+    if (!["owner", "admin"].includes(userMembership.role)) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Insufficient permissions to change member roles'
+        "FORBIDDEN",
+        "Insufficient permissions to change member roles",
       );
     }
 
@@ -78,35 +78,35 @@ export async function updateMemberRole(
     const targetMember = await db.query.member.findFirst({
       where: and(
         eq(member.id, memberId),
-        eq(member.organizationId, organizationId)
+        eq(member.organizationId, organizationId),
       ),
     });
 
     if (!targetMember) {
-      return createServerActionError('NOT_FOUND', 'Member not found');
+      return createServerActionError("NOT_FOUND", "Member not found");
     }
 
     // Prevent changing owner role unless current user is owner
-    if (targetMember.role === 'owner' && userMembership.role !== 'owner') {
+    if (targetMember.role === "owner" && userMembership.role !== "owner") {
       return createServerActionError(
-        'FORBIDDEN',
-        'Only owners can change owner roles'
+        "FORBIDDEN",
+        "Only owners can change owner roles",
       );
     }
 
     // Prevent non-owners from assigning owner role
-    if (newRole === 'owner' && userMembership.role !== 'owner') {
+    if (newRole === "owner" && userMembership.role !== "owner") {
       return createServerActionError(
-        'FORBIDDEN',
-        'Only owners can assign owner role'
+        "FORBIDDEN",
+        "Only owners can assign owner role",
       );
     }
 
     // Prevent users from changing their own role
     if (targetMember.userId === currentUser.id) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Cannot change your own role'
+        "FORBIDDEN",
+        "Cannot change your own role",
       );
     }
 
@@ -117,14 +117,14 @@ export async function updateMemberRole(
       .where(eq(member.id, memberId));
 
     // Revalidate the organization page
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error updating member role:', error);
+    console.error("Error updating member role:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to update member role'
+      "INTERNAL_ERROR",
+      "Failed to update member role",
     );
   }
 }
@@ -132,32 +132,32 @@ export async function updateMemberRole(
 // Remove a member from an organization
 export async function removeMemberFromOrganization(
   organizationId: string,
-  memberId: string
+  memberId: string,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to remove members
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners, admins, and managers can remove members
-    if (!['owner', 'admin', 'manager'].includes(userMembership.role)) {
+    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Insufficient permissions to remove members'
+        "FORBIDDEN",
+        "Insufficient permissions to remove members",
       );
     }
 
@@ -165,38 +165,38 @@ export async function removeMemberFromOrganization(
     const targetMember = await db.query.member.findFirst({
       where: and(
         eq(member.id, memberId),
-        eq(member.organizationId, organizationId)
+        eq(member.organizationId, organizationId),
       ),
     });
 
     if (!targetMember) {
-      return createServerActionError('NOT_FOUND', 'Member not found');
+      return createServerActionError("NOT_FOUND", "Member not found");
     }
 
     // Prevent removing owner
-    if (targetMember.role === 'owner') {
+    if (targetMember.role === "owner") {
       return createServerActionError(
-        'FORBIDDEN',
-        'Cannot remove organization owner'
+        "FORBIDDEN",
+        "Cannot remove organization owner",
       );
     }
 
     // Prevent users from removing themselves
     if (targetMember.userId === currentUser.id) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Cannot remove yourself from the organization'
+        "FORBIDDEN",
+        "Cannot remove yourself from the organization",
       );
     }
 
     // Managers can only remove members, not admins or other managers
     if (
-      userMembership.role === 'manager' &&
-      ['admin', 'manager'].includes(targetMember.role)
+      userMembership.role === "manager" &&
+      ["admin", "manager"].includes(targetMember.role)
     ) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Managers can only remove members'
+        "FORBIDDEN",
+        "Managers can only remove members",
       );
     }
 
@@ -204,51 +204,51 @@ export async function removeMemberFromOrganization(
     await db.delete(member).where(eq(member.id, memberId));
 
     // Revalidate the organization page
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error removing member:', error);
-    return createServerActionError('INTERNAL_ERROR', 'Failed to remove member');
+    console.error("Error removing member:", error);
+    return createServerActionError("INTERNAL_ERROR", "Failed to remove member");
   }
 }
 
 // Bulk remove members from an organization
 export async function bulkRemoveMembersFromOrganization(
   organizationId: string,
-  memberIds: string[]
+  memberIds: string[],
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to remove members
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners, admins, and managers can remove members
-    if (!['owner', 'admin', 'manager'].includes(userMembership.role)) {
+    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Insufficient permissions to remove members'
+        "FORBIDDEN",
+        "Insufficient permissions to remove members",
       );
     }
 
     // Get all target members to validate permissions
     const targetMembers = await db.query.member.findMany({
       where: and(
-        eq(member.organizationId, organizationId)
+        eq(member.organizationId, organizationId),
         // Note: We'd need to use inArray here, but let's validate each member individually
       ),
     });
@@ -263,7 +263,7 @@ export async function bulkRemoveMembersFromOrganization(
       }
 
       // Skip owner
-      if (targetMember.role === 'owner') {
+      if (targetMember.role === "owner") {
         continue;
       }
 
@@ -274,8 +274,8 @@ export async function bulkRemoveMembersFromOrganization(
 
       // Managers can only remove members
       if (
-        userMembership.role === 'manager' &&
-        ['admin', 'manager'].includes(targetMember.role)
+        userMembership.role === "manager" &&
+        ["admin", "manager"].includes(targetMember.role)
       ) {
         continue;
       }
@@ -285,8 +285,8 @@ export async function bulkRemoveMembersFromOrganization(
 
     if (validMemberIds.length === 0) {
       return createServerActionError(
-        'INVALID_REQUEST',
-        'No valid members to remove'
+        "INVALID_REQUEST",
+        "No valid members to remove",
       );
     }
 
@@ -294,16 +294,15 @@ export async function bulkRemoveMembersFromOrganization(
     for (const memberId of validMemberIds) {
       await db.delete(member).where(eq(member.id, memberId));
     }
-// Revalidate the organization page
-revalidatePath('/organization', 'layout');
-
+    // Revalidate the organization page
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error bulk removing members:', error);
+    console.error("Error bulk removing members:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to remove members'
+      "INTERNAL_ERROR",
+      "Failed to remove members",
     );
   }
 }
@@ -318,32 +317,32 @@ export async function updateOrganizationDetails(
     website?: string;
     phone?: string;
     address?: string;
-  }
+  },
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to update organization details
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners, admins, and managers can update organization details
-    if (!['owner', 'admin', 'manager'].includes(userMembership.role)) {
+    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Insufficient permissions to update organization details'
+        "FORBIDDEN",
+        "Insufficient permissions to update organization details",
       );
     }
 
@@ -358,10 +357,7 @@ export async function updateOrganizationDetails(
     // after 1h and are display-only representations of a storage key that is
     // already saved by the upload action). Only keys, external URLs, or an
     // empty string (remove) are stored.
-    if (
-      data.logo !== undefined &&
-      !StorageService.isOwnSignedUrl(data.logo)
-    ) {
+    if (data.logo !== undefined && !StorageService.isOwnSignedUrl(data.logo)) {
       updateData.logo = data.logo;
     }
 
@@ -381,14 +377,14 @@ export async function updateOrganizationDetails(
       let currentMetadata: Record<string, unknown> = {};
       try {
         if (currentOrg?.metadata) {
-          if (typeof currentOrg.metadata === 'string') {
+          if (typeof currentOrg.metadata === "string") {
             currentMetadata = JSON.parse(currentOrg.metadata);
-          } else if (typeof currentOrg.metadata === 'object') {
+          } else if (typeof currentOrg.metadata === "object") {
             currentMetadata = currentOrg.metadata as Record<string, unknown>;
           }
         }
       } catch (error) {
-        console.warn('Failed to parse existing metadata:', error);
+        console.warn("Failed to parse existing metadata:", error);
       }
 
       const newMetadata = {
@@ -412,14 +408,14 @@ export async function updateOrganizationDetails(
       .where(eq(organization.id, organizationId));
 
     // Revalidate the organization page
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error updating organization details:', error);
+    console.error("Error updating organization details:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to update organization details'
+      "INTERNAL_ERROR",
+      "Failed to update organization details",
     );
   }
 }
@@ -435,32 +431,32 @@ export async function updateOrganizationSettings(
     timezone?: string;
     dateFormat?: string;
     language?: string;
-  }
+  },
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to update organization settings
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners and admins can update organization settings
-    if (!['owner', 'admin'].includes(userMembership.role)) {
+    if (!["owner", "admin"].includes(userMembership.role)) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Insufficient permissions to update organization settings'
+        "FORBIDDEN",
+        "Insufficient permissions to update organization settings",
       );
     }
 
@@ -470,21 +466,21 @@ export async function updateOrganizationSettings(
     });
 
     if (!currentOrg) {
-      return createServerActionError('NOT_FOUND', 'Organization not found');
+      return createServerActionError("NOT_FOUND", "Organization not found");
     }
 
     // Parse existing metadata
     let currentMetadata: Record<string, unknown> = {};
     try {
       if (currentOrg.metadata) {
-        if (typeof currentOrg.metadata === 'string') {
+        if (typeof currentOrg.metadata === "string") {
           currentMetadata = JSON.parse(currentOrg.metadata);
-        } else if (typeof currentOrg.metadata === 'object') {
+        } else if (typeof currentOrg.metadata === "object") {
           currentMetadata = currentOrg.metadata as Record<string, unknown>;
         }
       }
     } catch (error) {
-      console.warn('Failed to parse existing metadata:', error);
+      console.warn("Failed to parse existing metadata:", error);
     }
 
     // Update the settings within metadata
@@ -503,14 +499,14 @@ export async function updateOrganizationSettings(
       .where(eq(organization.id, organizationId));
 
     // Revalidate the organization page
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error updating organization settings:', error);
+    console.error("Error updating organization settings:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to update organization settings'
+      "INTERNAL_ERROR",
+      "Failed to update organization settings",
     );
   }
 }

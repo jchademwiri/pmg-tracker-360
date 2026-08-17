@@ -1,4 +1,4 @@
-import { requireAdminPage } from '@/lib/require-admin-page';
+import { requireAdminPage } from "@/lib/require-admin-page";
 import {
   BarChart3,
   Building2,
@@ -10,21 +10,21 @@ import {
   PieChart,
   ShieldAlert,
   Layers,
-} from 'lucide-react';
-import MetricCard from '@/components/MetricCard';
+} from "lucide-react";
+import MetricCard from "@/components/MetricCard";
 import {
   getPlatformOverviewStats,
   getGrowthTrend,
   getStorageBreakdown,
   getAllTenantsUtilization,
-} from '@/lib/reports-queries';
-import { GrowthChart } from '@/components/reports/GrowthChart';
-import { StorageDonutChart } from '@/components/reports/StorageDonutChart';
-import { TopTenantsChart } from '@/components/reports/TopTenantsChart';
-import { ReportDownloadCards } from '@/components/reports/ReportDownloadCards';
-import { TenantUtilizationTable } from './TenantUtilizationTable';
+} from "@/lib/reports-queries";
+import { GrowthChart } from "@/components/reports/GrowthChart";
+import { StorageDonutChart } from "@/components/reports/StorageDonutChart";
+import { TopTenantsChart } from "@/components/reports/TopTenantsChart";
+import { ReportDownloadCards } from "@/components/reports/ReportDownloadCards";
+import { TenantUtilizationTable } from "./TenantUtilizationTable";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function AdminReportsPage() {
   // 1. Auth guard
@@ -42,7 +42,7 @@ export default async function AdminReportsPage() {
     if (v >= 1_000_000_000) return `R ${(v / 1_000_000_000).toFixed(2)}B`;
     if (v >= 1_000_000) return `R ${(v / 1_000_000).toFixed(2)}M`;
     if (v >= 1_000) return `R ${(v / 1_000).toFixed(1)}k`;
-    return `R ${v.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    return `R ${v.toLocaleString("en-ZA", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   return (
@@ -55,7 +55,8 @@ export default async function AdminReportsPage() {
             Platform Reports & Analytics
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            System-wide operational intelligence, tenant growth trajectories, platform performance, and downloadable master dossiers.
+            System-wide operational intelligence, tenant growth trajectories,
+            platform performance, and downloadable master dossiers.
           </p>
         </div>
       </div>
@@ -104,12 +105,17 @@ export default async function AdminReportsPage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-[#d4af37]" />
-              <h2 className="font-semibold text-zinc-100 text-sm">Tenant & User Acquisition</h2>
+              <h2 className="font-semibold text-zinc-100 text-sm">
+                Tenant & User Acquisition
+              </h2>
             </div>
-            <span className="text-xs text-zinc-500 font-mono">Last 6 Months</span>
+            <span className="text-xs text-zinc-500 font-mono">
+              Last 6 Months
+            </span>
           </div>
           <p className="text-xs text-zinc-400 mb-4">
-            Trajectory of newly created organizations and registered platform users.
+            Trajectory of newly created organizations and registered platform
+            users.
           </p>
           <div className="flex-1 min-h-[280px]">
             <GrowthChart data={growthData} />
@@ -121,12 +127,17 @@ export default async function AdminReportsPage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <PieChart className="h-4 w-4 text-emerald-400" />
-              <h2 className="font-semibold text-zinc-100 text-sm">Storage by Resource Type</h2>
+              <h2 className="font-semibold text-zinc-100 text-sm">
+                Storage by Resource Type
+              </h2>
             </div>
-            <span className="text-xs text-zinc-500 font-mono">Cloudflare R2</span>
+            <span className="text-xs text-zinc-500 font-mono">
+              Cloudflare R2
+            </span>
           </div>
           <p className="text-xs text-zinc-400 mb-4">
-            Distribution of file volume across tenders, contracts, POs, and extensions.
+            Distribution of file volume across tenders, contracts, POs, and
+            extensions.
           </p>
           <div className="flex-1 min-h-[280px]">
             <StorageDonutChart data={storageData.categories} />
@@ -139,7 +150,9 @@ export default async function AdminReportsPage() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-[#d4af37]" />
-            <h2 className="font-semibold text-zinc-100 text-sm">Top 6 Tenants by Storage Footprint</h2>
+            <h2 className="font-semibold text-zinc-100 text-sm">
+              Top 6 Tenants by Storage Footprint
+            </h2>
           </div>
           <span className="text-xs text-zinc-500">Ranked by megabytes</span>
         </div>
@@ -157,7 +170,8 @@ export default async function AdminReportsPage() {
             Downloadable Platform Reports
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Export structured Excel spreadsheets and formal PDF dossiers for audits, stakeholders, and capacity planning.
+            Export structured Excel spreadsheets and formal PDF dossiers for
+            audits, stakeholders, and capacity planning.
           </p>
         </div>
 
@@ -172,7 +186,8 @@ export default async function AdminReportsPage() {
             Complete Tenant Utilization Roster
           </h2>
           <p className="text-xs text-zinc-400 mt-0.5">
-            Detailed breakdown of every tenant with member count, tender volume, active projects, and file storage.
+            Detailed breakdown of every tenant with member count, tender volume,
+            active projects, and file storage.
           </p>
         </div>
 

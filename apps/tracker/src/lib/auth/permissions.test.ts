@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'bun:test';
-import { admin, owner, manager, member } from './permissions';
+import { describe, it, expect } from "bun:test";
+import { admin, owner, manager, member } from "./permissions";
 
 // Robust Helper to verify better-auth permissions
 function can(role: any, resource: string, action: string, data?: any) {
@@ -12,7 +12,7 @@ function can(role: any, resource: string, action: string, data?: any) {
 
   // Check object with condition
   const conditionalAction = actions.find(
-    (a: any) => typeof a === 'object' && a.action === action
+    (a: any) => typeof a === "object" && a.action === action,
   );
   if (conditionalAction) {
     if (!conditionalAction.condition) return true; // No condition = allowed
@@ -23,59 +23,59 @@ function can(role: any, resource: string, action: string, data?: any) {
   return false;
 }
 
-const OPEN_TENDER = { status: 'open' };
-const SUBMITTED_TENDER = { status: 'submitted' };
-const EVALUATION_TENDER = { status: 'evaluation' };
+const OPEN_TENDER = { status: "open" };
+const SUBMITTED_TENDER = { status: "submitted" };
+const EVALUATION_TENDER = { status: "evaluation" };
 
-describe('Access Control', () => {
+describe("Access Control", () => {
   // ... Phase 1 & 2 tests (abbreviated for brevity in edit, but full content in file)
-  describe('Phase 1: Owner & Admin', () => {
-    it('Owner: full access', () => {
-      expect(can(owner, 'organization', 'delete')).toBe(true);
+  describe("Phase 1: Owner & Admin", () => {
+    it("Owner: full access", () => {
+      expect(can(owner, "organization", "delete")).toBe(true);
     });
-    it('Admin: no org delete', () => {
-      expect(can(admin, 'organization', 'delete')).toBe(false);
-    });
-  });
-
-  describe('Phase 2: Manager Role', () => {
-    it('should have full Project access EXCEPT delete', () => {
-      expect(can(manager, 'project', 'create')).toBe(true);
-      expect(can(manager, 'project', 'read')).toBe(true);
-      expect(can(manager, 'project', 'update')).toBe(true);
-      expect(can(manager, 'project', 'delete')).toBe(false);
-    });
-
-    it('should be able to delete OPEN tenders', () => {
-      expect(can(manager, 'tender', 'delete', OPEN_TENDER)).toBe(true);
-    });
-
-    it('should NOT be able to delete SUBMITTED/EVALUATION tenders', () => {
-      expect(can(manager, 'tender', 'delete', SUBMITTED_TENDER)).toBe(false);
-      expect(can(manager, 'tender', 'delete', EVALUATION_TENDER)).toBe(false);
+    it("Admin: no org delete", () => {
+      expect(can(admin, "organization", "delete")).toBe(false);
     });
   });
 
-  describe('Phase 3: Member Role', () => {
-    it('should have READ ONLY Project access', () => {
-      expect(can(member, 'project', 'read')).toBe(true);
-      expect(can(member, 'project', 'create')).toBe(false);
-      expect(can(member, 'project', 'update')).toBe(false);
-      expect(can(member, 'project', 'delete')).toBe(false);
+  describe("Phase 2: Manager Role", () => {
+    it("should have full Project access EXCEPT delete", () => {
+      expect(can(manager, "project", "create")).toBe(true);
+      expect(can(manager, "project", "read")).toBe(true);
+      expect(can(manager, "project", "update")).toBe(true);
+      expect(can(manager, "project", "delete")).toBe(false);
     });
 
-    it('should have Tender Create/Update access', () => {
-      expect(can(member, 'tender', 'create')).toBe(true);
-      expect(can(member, 'tender', 'update')).toBe(true);
+    it("should be able to delete OPEN tenders", () => {
+      expect(can(manager, "tender", "delete", OPEN_TENDER)).toBe(true);
     });
 
-    it('should be able to delete OPEN tenders', () => {
-      expect(can(member, 'tender', 'delete', OPEN_TENDER)).toBe(true);
+    it("should NOT be able to delete SUBMITTED/EVALUATION tenders", () => {
+      expect(can(manager, "tender", "delete", SUBMITTED_TENDER)).toBe(false);
+      expect(can(manager, "tender", "delete", EVALUATION_TENDER)).toBe(false);
+    });
+  });
+
+  describe("Phase 3: Member Role", () => {
+    it("should have READ ONLY Project access", () => {
+      expect(can(member, "project", "read")).toBe(true);
+      expect(can(member, "project", "create")).toBe(false);
+      expect(can(member, "project", "update")).toBe(false);
+      expect(can(member, "project", "delete")).toBe(false);
     });
 
-    it('should NOT be able to delete SUBMITTED/EVALUATION tenders', () => {
-      expect(can(member, 'tender', 'delete', SUBMITTED_TENDER)).toBe(false);
-      expect(can(member, 'tender', 'delete', EVALUATION_TENDER)).toBe(false);
+    it("should have Tender Create/Update access", () => {
+      expect(can(member, "tender", "create")).toBe(true);
+      expect(can(member, "tender", "update")).toBe(true);
+    });
+
+    it("should be able to delete OPEN tenders", () => {
+      expect(can(member, "tender", "delete", OPEN_TENDER)).toBe(true);
+    });
+
+    it("should NOT be able to delete SUBMITTED/EVALUATION tenders", () => {
+      expect(can(member, "tender", "delete", SUBMITTED_TENDER)).toBe(false);
+      expect(can(member, "tender", "delete", EVALUATION_TENDER)).toBe(false);
     });
   });
 });

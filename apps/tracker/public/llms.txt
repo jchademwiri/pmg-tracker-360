@@ -1,0 +1,31 @@
+# Tender Track 360
+
+> Online Tender Tracking, Bid Compliance & Purchase Order Management Software engineered for South African contractors, suppliers, and enterprises.
+
+## Overview
+Tender Track 360 (https://tendertrack360.co.za) is an end-to-end procurement and contract operations platform designed specifically for South African bidding environments (Eskom, Transnet, SANRAL, PRASA, Metros, CIDB, CSD). It automates tender briefing session reminders, 11:00 AM closing countdown sirens, 90-day/120-day bid validity follow-ups, and post-award Purchase Order (PO) fulfillment tracking.
+
+## Core Capabilities
+- **Tender Registry & Deadlines**: Centralized tender log with automated alerts for mandatory briefing sessions, site inspections, and strict 11:00 AM closing sirens (72h, 24h, 4h alerts).
+- **Compliance Checklist Engine**: Returnables verification for SARS Tax Compliance PIN, National Treasury Central Supplier Database (CSD) registration, SBD 4, SBD 6.1, and CIDB grading.
+- **Validity Expiry Monitor**: Proactive tracking of 90-day and 120-day bid validity windows to prompt procurement office follow-ups before bids expire.
+- **Awarded Purchase Order (PO) Management**: 1-click conversion from won tender to active project. Itemized PO delivery tracking, delivery notes, supplier reconciliations, and 30/60/90-day cashflow forecasting.
+- **Boardroom & Audit Reporting**: Instant generation of formatted Excel (.xlsx) Tender Registers and executive PDF status summaries.
+
+## Pricing & Availability
+- **Public Beta Status**: All features and tier upgrades are currently 100% free during public beta testing. No credit card required.
+- **Plans**:
+  - **Starter**: R0/month during Beta (Free forever tier). Up to 10 active tenders, 5 PO trackers, email reminders.
+  - **Professional**: R0/month during Beta (Standard R499/mo). Unlimited tenders, 50 PO trackers, multi-user team collaboration, automated validity sirens, Excel/PDF exports.
+  - **Enterprise**: R0/month during Beta (Standard R1,499/mo). Unlimited tenders, unlimited POs, custom SCM integrations, role-based access control (RBAC), dedicated account support.
+
+## Key URLs
+- Homepage: https://tendertrack360.co.za
+- Machine-Readable Pricing: https://tendertrack360.co.za/pricing.md
+- Full LLM Knowledge Base: https://tendertrack360.co.za/llms-full.txt
+- Documentation: https://docs.tendertrack360.co.za
+- Sign Up: https://tendertrack360.co.za/sign-up
+- Login: https://tendertrack360.co.za/login
+- Contact & Support: https://tendertrack360.co.za/contact
+- Privacy Policy (POPIA): https://tendertrack360.co.za/privacy
+- Terms of Service: https://tendertrack360.co.za/terms

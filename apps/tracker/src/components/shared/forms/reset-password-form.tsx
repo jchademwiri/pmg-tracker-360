@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-import Link from 'next/link';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import Link from "next/link";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -16,48 +16,48 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { toast } from 'sonner';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
 import {
   Loader,
   ArrowLeft,
   CheckCircle,
   AlertCircle,
   Shield,
-} from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
+} from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 const resetPasswordFormSchema = z
   .object({
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(100, 'Password must be less than 100 characters'),
+      .min(8, "Password must be at least 8 characters")
+      .max(100, "Password must be less than 100 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ['confirmPassword'],
+    path: ["confirmPassword"],
   });
 
 function ResetPasswordFormContent({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof resetPasswordFormSchema>>({
     resolver: zodResolver(resetPasswordFormSchema),
     defaultValues: {
-      password: '',
-      confirmPassword: '',
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -65,7 +65,7 @@ function ResetPasswordFormContent({
   async function onSubmit(values: z.infer<typeof resetPasswordFormSchema>) {
     if (!token) {
       toast.error(
-        'Invalid reset token. Please request a new password reset link.'
+        "Invalid reset token. Please request a new password reset link.",
       );
       return;
     }
@@ -81,11 +81,11 @@ function ResetPasswordFormContent({
         toast.error(error.message);
       } else {
         setPasswordReset(true);
-        toast.success('Password has been reset successfully!');
+        toast.success("Password has been reset successfully!");
       }
     } catch (err) {
-      console.error('Password reset error:', err);
-      toast.error('Something went wrong. Please try again.');
+      console.error("Password reset error:", err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -96,8 +96,8 @@ function ResetPasswordFormContent({
     return (
       <div
         className={cn(
-          'min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4',
-          className
+          "min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4",
+          className,
         )}
         {...props}
       >
@@ -123,7 +123,7 @@ function ResetPasswordFormContent({
 
                   <div className="space-y-3">
                     <Button
-                      onClick={() => router.push('/forgot-password')}
+                      onClick={() => router.push("/forgot-password")}
                       className="w-full h-12 text-base font-semibold cursor-pointer"
                       size="lg"
                     >
@@ -132,7 +132,7 @@ function ResetPasswordFormContent({
 
                     <Button
                       variant="outline"
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push("/login")}
                       className="w-full h-12 text-base cursor-pointer"
                       size="lg"
                     >
@@ -168,8 +168,8 @@ function ResetPasswordFormContent({
     return (
       <div
         className={cn(
-          'min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 p-4',
-          className
+          "min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 p-4",
+          className,
         )}
         {...props}
       >
@@ -194,7 +194,7 @@ function ResetPasswordFormContent({
                   </div>
 
                   <Button
-                    onClick={() => router.push('/login')}
+                    onClick={() => router.push("/login")}
                     className="w-full h-12 text-base font-semibold bg-green-600 hover:bg-green-700 cursor-pointer"
                     size="lg"
                   >
@@ -224,8 +224,8 @@ function ResetPasswordFormContent({
   return (
     <div
       className={cn(
-        'min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4',
-        className
+        "min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4",
+        className,
       )}
       {...props}
     >
@@ -310,14 +310,14 @@ function ResetPasswordFormContent({
                             Resetting Password...
                           </>
                         ) : (
-                          'Reset Password'
+                          "Reset Password"
                         )}
                       </Button>
 
                       <Button
                         variant="outline"
                         type="button"
-                        onClick={() => router.push('/login')}
+                        onClick={() => router.push("/login")}
                         className="w-full h-12 text-base cursor-pointer"
                         size="lg"
                       >
@@ -328,7 +328,7 @@ function ResetPasswordFormContent({
 
                     <div className="text-center text-base">
                       <span className="text-muted-foreground">
-                        Remember your password?{' '}
+                        Remember your password?{" "}
                       </span>
                       <Link
                         href="/login"
@@ -443,7 +443,7 @@ function ResetPasswordFormFallback() {
 export function ResetPasswordForm({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<"div">) {
   return (
     <Suspense fallback={<ResetPasswordFormFallback />}>
       <ResetPasswordFormContent className={className} {...props} />

@@ -1,26 +1,35 @@
-import { Twitter, Linkedin, Github, BookOpen } from 'lucide-react';
-import Link from 'next/link';
-import { CONTACT_INFO, DOCS_URL } from '@/lib/constants';
+import { Twitter, Linkedin, Github, BookOpen, Mail, Phone } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { CONTACT_INFO, DOCS_URL } from "@/lib/constants";
 
 export function FooterSection() {
   return (
-    <footer className="bg-muted border-t py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
-          <div>
-            <h3 className="text-xl font-bold mb-4 text-foreground">
-              Tender Track 360
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              Streamline your tender management process with our comprehensive
-              platform.
+    <footer className="bg-muted/60 border-t border-border/80 py-14">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+          {/* Col 1: Brand & Social */}
+          <div className="space-y-4">
+            <Link href="/" className="inline-block">
+              <Image
+                src="/logo.svg"
+                alt="Tender Track 360"
+                width={140}
+                height={28}
+                className="h-7 w-auto"
+              />
+            </Link>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              All-in-one tender management, validity tracking, and purchase
+              order system engineered for South African contractors and
+              enterprises.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex space-x-3 pt-1">
               <a
                 href="https://twitter.com/tendertrack360"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 bg-secondary rounded flex items-center justify-center hover:bg-secondary/80 transition-colors text-secondary-foreground"
+                className="w-8 h-8 bg-secondary/80 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-foreground"
                 aria-label="Follow us on Twitter"
               >
                 <Twitter className="w-4 h-4" />
@@ -29,7 +38,7 @@ export function FooterSection() {
                 href="https://linkedin.com/organization/tendertrack360"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 bg-secondary rounded flex items-center justify-center hover:bg-secondary/80 transition-colors text-secondary-foreground"
+                className="w-8 h-8 bg-secondary/80 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-foreground"
                 aria-label="Follow us on LinkedIn"
               >
                 <Linkedin className="w-4 h-4" />
@@ -38,23 +47,46 @@ export function FooterSection() {
                 href="https://github.com/tendertrack360"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 bg-secondary rounded flex items-center justify-center hover:bg-secondary/80 transition-colors text-secondary-foreground"
+                className="w-8 h-8 bg-secondary/80 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-foreground"
                 aria-label="View our GitHub"
               >
                 <Github className="w-4 h-4" />
               </a>
             </div>
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-4 text-foreground">Product</h4>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>
-                <Link
-                  href="#features"
+            <div className="text-xs text-muted-foreground space-y-1 pt-1">
+              <div className="flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                <a
+                  href={`mailto:${CONTACT_INFO.email}`}
                   className="hover:text-foreground transition-colors"
                 >
-                  Features
+                  {CONTACT_INFO.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <a
+                  href={`tel:${CONTACT_INFO.phone.replace(/\s+/g, "")}`}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {CONTACT_INFO.phone}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Col 2: Product */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-4 font-mono">
+              Product
+            </h4>
+            <ul className="space-y-2.5 text-xs text-muted-foreground">
+              <li>
+                <Link
+                  href="#how-it-works"
+                  className="hover:text-foreground transition-colors"
+                >
+                  How It Works
                 </Link>
               </li>
               <li>
@@ -62,31 +94,42 @@ export function FooterSection() {
                   href="#pricing"
                   className="hover:text-foreground transition-colors"
                 >
-                  Pricing
+                  Pricing Plans
                 </Link>
               </li>
               <li>
                 <Link
-                  href="#security"
+                  href="/modules"
                   className="hover:text-foreground transition-colors"
                 >
-                  Security
+                  Platform Modules
                 </Link>
               </li>
               <li>
                 <Link
-                  href="#integrations"
+                  href="#faq"
                   className="hover:text-foreground transition-colors"
                 >
-                  Integrations
+                  Frequently Asked Questions
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/waitlist"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Early Access Waitlist
                 </Link>
               </li>
             </ul>
           </div>
 
+          {/* Col 3: Support & Docs */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground">Support</h4>
-            <ul className="space-y-2 text-muted-foreground">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-4 font-mono">
+              Support & Docs
+            </h4>
+            <ul className="space-y-2.5 text-xs text-muted-foreground">
               <li>
                 <Link
                   href={DOCS_URL}
@@ -111,7 +154,7 @@ export function FooterSection() {
                   href="/contact"
                   className="hover:text-foreground transition-colors"
                 >
-                  Contact Us
+                  Contact Support Desk
                 </Link>
               </li>
               <li>
@@ -119,21 +162,24 @@ export function FooterSection() {
                   href="/training"
                   className="hover:text-foreground transition-colors"
                 >
-                  Training
+                  Bidding Training
                 </Link>
               </li>
             </ul>
           </div>
 
+          {/* Col 4: Company & Legal */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground">Company</h4>
-            <ul className="space-y-2 text-muted-foreground">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground mb-4 font-mono">
+              Company & Legal
+            </h4>
+            <ul className="space-y-2.5 text-xs text-muted-foreground">
               <li>
                 <Link
                   href="/about"
                   className="hover:text-foreground transition-colors"
                 >
-                  About
+                  About Tender Track 360
                 </Link>
               </li>
               <li>
@@ -149,50 +195,47 @@ export function FooterSection() {
                   href="/blog"
                   className="hover:text-foreground transition-colors"
                 >
-                  Blog
+                  Procurement Blog
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/privacy"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Privacy Policy (POPIA)
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="hover:text-foreground transition-colors"
+                >
+                  Terms of Service
                 </Link>
               </li>
             </ul>
           </div>
-
-          {/* Quick Nav Links */}
-          <div className="flex items-center gap-6">
-            <Link href="#how-it-works" className="hover:text-foreground transition-colors">
-              How It Works
-            </Link>
-            <Link href="#pricing" className="hover:text-foreground transition-colors">
-              Pricing
-            </Link>
-            <Link href="#faq" className="hover:text-foreground transition-colors">
-              FAQ
-            </Link>
-            <Link
-              href={DOCS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground transition-colors inline-flex items-center gap-1"
-            >
-              <BookOpen className="h-3 w-3" aria-hidden="true" />
-              <span>Docs</span>
-            </Link>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </Link>
-          </div>
         </div>
 
         {/* Bottom Status & Copyright */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p className="text-muted-foreground">
-            &copy; {new Date().getFullYear()} Tender Track 360. All rights reserved. Built in South Africa.
+        <div className="pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+          <p>
+            &copy; {new Date().getFullYear()} Tender Track 360. All rights
+            reserved. Built in South Africa.
           </p>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
-              <span className="text-foreground font-medium">All Systems Operational</span>
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"
+                aria-hidden="true"
+              />
+              <span className="text-foreground font-medium">
+                All Systems Operational
+              </span>
             </div>
             <span className="text-muted-foreground/60">&bull;</span>
-            <span className="text-muted-foreground">POPIA Compliant</span>
+            <span>POPIA Compliant</span>
           </div>
         </div>
       </div>

@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import { runAutomatedBackup } from '@/lib/backup';
+import { NextResponse } from "next/server";
+import { runAutomatedBackup } from "@/lib/backup";
 
 /**
  * Vercel Cron Job endpoint for automatic daily backups.
- * 
+ *
  * To enable, add to vercel.json in the project root:
  * {
  *   "crons": [
@@ -13,25 +13,25 @@ import { runAutomatedBackup } from '@/lib/backup';
  *     }
  *   ]
  * }
- * 
+ *
  * Requires CRON_SECRET environment variable to be set.
  * Send as: Authorization: Bearer <CRON_SECRET>
  */
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
-  
+
   if (!cronSecret) {
     return NextResponse.json(
-      { success: false, message: 'CRON_SECRET not configured on server' },
-      { status: 500 }
+      { success: false, message: "CRON_SECRET not configured on server" },
+      { status: 500 },
     );
   }
 
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers.get("authorization");
   if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json(
-      { success: false, message: 'Unauthorized' },
-      { status: 401 }
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
     );
   }
 
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   } catch (err) {
     return NextResponse.json(
       { success: false, message: (err as Error).message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

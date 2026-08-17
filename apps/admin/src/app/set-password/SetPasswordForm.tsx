@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { setOwnPassword } from '../actions';
-import { ShieldAlert, Loader, Lock, ShieldCheck } from 'lucide-react';
+import React, { useState } from "react";
+import { setOwnPassword } from "../actions";
+import { ShieldAlert, Loader, Lock, ShieldCheck } from "lucide-react";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function SetPasswordForm({ email }: { email: string }) {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function SetPasswordForm({ email }: { email: string }) {
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError("Passwords do not match.");
       return;
     }
 
@@ -32,13 +32,13 @@ export default function SetPasswordForm({ email }: { email: string }) {
       if (response.success) {
         setSuccess(response.message);
         setTimeout(() => {
-          window.location.replace('/');
+          window.location.replace("/");
         }, 1500);
       } else {
         setError(response.error);
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -51,10 +51,14 @@ export default function SetPasswordForm({ email }: { email: string }) {
           <ShieldCheck className="h-8 w-8" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Password Set</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Password Set
+          </h1>
           <p className="text-sm text-zinc-400">{success}</p>
         </div>
-        <div className="text-xs text-zinc-500 animate-pulse">Taking you to the console...</div>
+        <div className="text-xs text-zinc-500 animate-pulse">
+          Taking you to the console...
+        </div>
       </div>
     );
   }
@@ -66,9 +70,12 @@ export default function SetPasswordForm({ email }: { email: string }) {
           <Lock className="h-5 w-5" />
         </div>
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Set Your Password</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Set Your Password
+          </h1>
           <p className="text-sm text-zinc-400">
-            Choose a password for <span className="text-zinc-300">{email}</span> before continuing.
+            Choose a password for <span className="text-zinc-300">{email}</span>{" "}
+            before continuing.
           </p>
         </div>
       </div>
@@ -124,7 +131,11 @@ export default function SetPasswordForm({ email }: { email: string }) {
           disabled={loading}
           className="w-full py-4 bg-zinc-100 hover:bg-white text-black font-semibold rounded-xl text-sm tracking-wider cursor-pointer shadow-lg hover:shadow-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          {loading ? <Loader className="h-4 w-4 animate-spin text-black" /> : 'SET PASSWORD'}
+          {loading ? (
+            <Loader className="h-4 w-4 animate-spin text-black" />
+          ) : (
+            "SET PASSWORD"
+          )}
         </button>
       </form>
     </div>

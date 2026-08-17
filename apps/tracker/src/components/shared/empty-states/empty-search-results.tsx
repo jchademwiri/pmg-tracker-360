@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Search, RotateCcw, Building2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Search, RotateCcw, Building2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EmptySearchResultsProps {
   searchTerm: string;
@@ -19,7 +19,7 @@ export function EmptySearchResults({
   className,
 }: EmptySearchResultsProps) {
   return (
-    <div className={cn('w-full max-w-lg mx-auto', className)}>
+    <div className={cn("w-full max-w-lg mx-auto", className)}>
       <Card className="border-muted bg-muted/20">
         <CardContent className="flex flex-col items-center justify-center p-8 text-center">
           {/* Search icon */}
@@ -34,11 +34,9 @@ export function EmptySearchResults({
 
           {/* Description with search term */}
           <p className="text-muted-foreground mb-6 max-w-sm">
-            We couldn&#x27;t find any organizations matching{' '}
-            <span className="font-medium text-foreground">
-              "{searchTerm}"
-            </span>
-            . Try adjusting your search or create a new organization.
+            We couldn&#x27;t find any organizations matching{" "}
+            <span className="font-medium text-foreground">"{searchTerm}"</span>.
+            Try adjusting your search or create a new organization.
           </p>
 
           {/* Action buttons */}

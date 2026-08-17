@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, PackagePlus, Save } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { createProjectLineItem, updateProjectLineItem } from '@/server/purchase-orders';
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, PackagePlus, Save } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  createProjectLineItem,
+  updateProjectLineItem,
+} from "@/server/purchase-orders";
 
 interface ProjectLineItemFormProps {
   organizationId: string;
@@ -18,7 +21,7 @@ interface ProjectLineItemFormProps {
     projectNumber: string;
     description: string | null;
   };
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   lineItem?: {
     id: string;
     itemNumber: string;
@@ -38,26 +41,42 @@ export function ProjectLineItemForm({
 }: ProjectLineItemFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [itemNumber, setItemNumber] = useState(lineItem?.itemNumber || '');
-  const [sapReference, setSapReference] = useState(lineItem?.sapReference || '');
-  const [description, setDescription] = useState(lineItem?.description || '');
-  const [unit, setUnit] = useState(lineItem?.unit || 'unit');
-  const [unitPrice, setUnitPrice] = useState(lineItem?.unitPrice || '0.00');
+  const [itemNumber, setItemNumber] = useState(lineItem?.itemNumber || "");
+  const [sapReference, setSapReference] = useState(
+    lineItem?.sapReference || "",
+  );
+  const [description, setDescription] = useState(lineItem?.description || "");
+  const [unit, setUnit] = useState(lineItem?.unit || "unit");
+  const [unitPrice, setUnitPrice] = useState(lineItem?.unitPrice || "0.00");
 
   const handleSubmit = () => {
     startTransition(async () => {
-      const payload = { projectId: project.id, itemNumber, sapReference, description, unit, unitPrice };
+      const payload = {
+        projectId: project.id,
+        itemNumber,
+        sapReference,
+        description,
+        unit,
+        unitPrice,
+      };
       const result =
-        mode === 'edit' && lineItem
-          ? await updateProjectLineItem(organizationId, project.id, lineItem.id, payload)
+        mode === "edit" && lineItem
+          ? await updateProjectLineItem(
+              organizationId,
+              project.id,
+              lineItem.id,
+              payload,
+            )
           : await createProjectLineItem(organizationId, payload);
 
       if (result.success) {
-        toast.success(mode === 'edit' ? 'Project item updated' : 'Project item created');
+        toast.success(
+          mode === "edit" ? "Project item updated" : "Project item created",
+        );
         router.push(`/projects/${project.id}/items`);
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to save project item');
+        toast.error(result.error || "Failed to save project item");
       }
     });
   };
@@ -74,15 +93,22 @@ export function ProjectLineItemForm({
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="w-fit">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="w-fit"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
         <div className="text-left sm:text-right">
           <h1 className="text-2xl font-bold">
-            {mode === 'edit' ? 'Edit Project Item' : 'Add Project Item'}
+            {mode === "edit" ? "Edit Project Item" : "Add Project Item"}
           </h1>
-          <p className="text-sm text-muted-foreground">{project.projectNumber.toUpperCase()}</p>
+          <p className="text-sm text-muted-foreground">
+            {project.projectNumber.toUpperCase()}
+          </p>
         </div>
       </div>
 
@@ -101,7 +127,9 @@ export function ProjectLineItemForm({
                 <Input
                   id="item-number"
                   value={itemNumber}
-                  onChange={(event) => setItemNumber(event.target.value.toUpperCase())}
+                  onChange={(event) =>
+                    setItemNumber(event.target.value.toUpperCase())
+                  }
                   placeholder="ITEM-001"
                   disabled={isPending}
                 />
@@ -171,10 +199,16 @@ export function ProjectLineItemForm({
           <CardContent className="space-y-4 text-sm">
             <div>
               <p className="text-muted-foreground">Project</p>
-              <p className="font-semibold">{project.projectNumber.toUpperCase()}</p>
-              {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
+              <p className="font-semibold">
+                {project.projectNumber.toUpperCase()}
+              </p>
+              {project.description && (
+                <p className="mt-1 text-muted-foreground">
+                  {project.description}
+                </p>
+              )}
             </div>
-            {mode === 'edit' && (
+            {mode === "edit" && (
               <div>
                 <p className="text-muted-foreground">Used on PO lines</p>
                 <p className="font-semibold">{lineItem?.usageCount || 0}</p>
@@ -186,7 +220,11 @@ export function ProjectLineItemForm({
               disabled={isPending || !canSubmit}
             >
               <Save className="mr-2 h-4 w-4" />
-              {isPending ? 'Saving...' : mode === 'edit' ? 'Save Changes' : 'Create Item'}
+              {isPending
+                ? "Saving..."
+                : mode === "edit"
+                  ? "Save Changes"
+                  : "Create Item"}
             </Button>
           </CardContent>
         </Card>

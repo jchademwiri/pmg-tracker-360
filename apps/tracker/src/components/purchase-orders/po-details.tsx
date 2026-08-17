@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useTransition, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTransition, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Edit,
@@ -15,16 +15,16 @@ import {
   Plus,
   FileUp,
   FileDown,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -32,19 +32,27 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   deletePurchaseOrder,
   updatePurchaseOrderStatus,
   verifyDeliveryNote,
   voidDeliveryNote,
-} from '@/server/purchase-orders';
-import { formatCurrency, formatDate, formatDateTime, toTitleCase } from '@/lib/format';
-import { MobileActionBar, MobileActionBarSpacer } from '@/components/ui/mobile-action-bar';
-import { toast } from 'sonner';
-import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { DocumentManager } from '@/components/documents/document-manager';
+} from "@/server/purchase-orders";
+import {
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  toTitleCase,
+} from "@/lib/format";
+import {
+  MobileActionBar,
+  MobileActionBarSpacer,
+} from "@/components/ui/mobile-action-bar";
+import { toast } from "sonner";
+import { DeleteConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { DocumentManager } from "@/components/documents/document-manager";
 
 interface LineItem {
   id: string;
@@ -110,7 +118,11 @@ interface PODetailsProps {
   initialDocuments?: any[];
 }
 
-export function PODetails({ po, organizationId, initialDocuments = [] }: PODetailsProps) {
+export function PODetails({
+  po,
+  organizationId,
+  initialDocuments = [],
+}: PODetailsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -119,10 +131,10 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
     startTransition(async () => {
       const result = await verifyDeliveryNote(organizationId, noteId);
       if (result.success) {
-        toast.success('Delivery note verified successfully');
+        toast.success("Delivery note verified successfully");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to verify delivery note');
+        toast.error(result.error || "Failed to verify delivery note");
       }
     });
   };
@@ -131,10 +143,10 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
     startTransition(async () => {
       const result = await voidDeliveryNote(organizationId, noteId);
       if (result.success) {
-        toast.success('Delivery note voided successfully');
+        toast.success("Delivery note voided successfully");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to void delivery note');
+        toast.error(result.error || "Failed to void delivery note");
       }
     });
   };
@@ -152,14 +164,14 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
   };
 
   const handleExportPdf = async () => {
-    const toastId = toast.loading('Generating PDF...');
+    const toastId = toast.loading("Generating PDF...");
     try {
       const response = await fetch(`/api/purchase-orders/${po.id}/pdf`);
-      if (!response.ok) throw new Error('PDF generation failed');
+      if (!response.ok) throw new Error("PDF generation failed");
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `PO-${po.poNumber}.pdf`;
       document.body.appendChild(link);
@@ -169,10 +181,10 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
       // and will cancel the download if the URL is revoked synchronously.
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      toast.success('PDF downloaded successfully', { id: toastId });
+      toast.success("PDF downloaded successfully", { id: toastId });
     } catch (error) {
-      console.error('PO PDF export failed:', error);
-      toast.error('Failed to generate PDF. Please try again.', { id: toastId });
+      console.error("PO PDF export failed:", error);
+      toast.error("Failed to generate PDF. Please try again.", { id: toastId });
     }
   };
 
@@ -180,18 +192,25 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
     startTransition(async () => {
       const result = await deletePurchaseOrder(organizationId, po.id);
       if (result.success) {
-        toast.success('Purchase order deleted successfully');
+        toast.success("Purchase order deleted successfully");
         setIsDeleteDialogOpen(false);
-        router.push('/projects/purchase-orders');
+        router.push("/projects/purchase-orders");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to delete purchase order');
+        toast.error(result.error || "Failed to delete purchase order");
       }
     });
   };
 
   const handleStatusUpdate = async (
-    newStatus: 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed'
+    newStatus:
+      | "open"
+      | "sent"
+      | "partially_delivered"
+      | "delivered"
+      | "completed"
+      | "cancelled"
+      | "disputed",
   ) => {
     startTransition(async () => {
       const result = await updatePurchaseOrderStatus(organizationId, po.id, {
@@ -201,28 +220,28 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
         toast.success(`Purchase order status updated to ${newStatus}`);
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to update purchase order status');
+        toast.error(result.error || "Failed to update purchase order status");
       }
     });
   };
 
   const handleBack = () => {
-    router.push('/projects/purchase-orders');
+    router.push("/projects/purchase-orders");
   };
 
   const formatDateWithTime = (date: Date | null) => {
-    if (!date) return 'Not set';
-    return formatDateTime(date, 'Not set');
+    if (!date) return "Not set";
+    return formatDateTime(date, "Not set");
   };
 
   const steps = [
-    { label: 'Open', statuses: ['open'] },
-    { label: 'Sent', statuses: ['sent'] },
-    { label: 'Partially Delivered', statuses: ['partially_delivered'] },
-    { label: 'Completed', statuses: ['delivered', 'completed'] },
+    { label: "Open", statuses: ["open"] },
+    { label: "Sent", statuses: ["sent"] },
+    { label: "Partially Delivered", statuses: ["partially_delivered"] },
+    { label: "Completed", statuses: ["delivered", "completed"] },
   ];
   const activeIndex = steps.findIndex((s) => s.statuses.includes(po.status));
-  const isSpecialStatus = ['cancelled', 'disputed'].includes(po.status);
+  const isSpecialStatus = ["cancelled", "disputed"].includes(po.status);
 
   return (
     <div className="w-full space-y-6">
@@ -274,7 +293,10 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Purchase Order
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={handleExportPdf}
+                className="cursor-pointer"
+              >
                 <FileDown className="h-4 w-4 mr-2" />
                 Export PDF
               </DropdownMenuItem>
@@ -296,48 +318,57 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div>
-              <div className="text-sm text-muted-foreground">Purchase Order Status</div>
+              <div className="text-sm text-muted-foreground">
+                Purchase Order Status
+              </div>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-xl font-bold tracking-tight">{po.poNumber}</span>
+                <span className="text-xl font-bold tracking-tight">
+                  {po.poNumber}
+                </span>
                 <StatusBadge status={po.status} domain="purchaseOrder" />
               </div>
             </div>
           </div>
-          
+
           {!isSpecialStatus && (
             <div className="flex-1 max-w-2xl">
               <div className="relative flex items-center justify-between w-full">
                 {/* Background Line */}
                 <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-muted -translate-y-1/2 -z-10" />
-                
+
                 {/* Active Progress Line */}
-                <div 
-                  className="absolute left-0 top-1/2 h-0.5 bg-primary -translate-y-1/2 -z-10 transition-all duration-500" 
-                  style={{ width: `${activeIndex >= 0 ? (activeIndex / (steps.length - 1)) * 100 : 0}%` }}
+                <div
+                  className="absolute left-0 top-1/2 h-0.5 bg-primary -translate-y-1/2 -z-10 transition-all duration-500"
+                  style={{
+                    width: `${activeIndex >= 0 ? (activeIndex / (steps.length - 1)) * 100 : 0}%`,
+                  }}
                 />
-                
+
                 {steps.map((step, idx) => {
                   const isCompleted = idx <= activeIndex;
                   const isActive = idx === activeIndex;
-                  
+
                   return (
-                    <div key={step.label} className="flex flex-col items-center">
-                      <div 
+                    <div
+                      key={step.label}
+                      className="flex flex-col items-center"
+                    >
+                      <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 ${
-                          isActive 
-                            ? 'bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110' 
-                            : isCompleted 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-muted text-muted-foreground border'
+                          isActive
+                            ? "bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110"
+                            : isCompleted
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground border"
                         }`}
                       >
                         {idx + 1}
                       </div>
-                      <span 
+                      <span
                         className={`text-xs mt-2 font-medium hidden sm:inline ${
-                          isActive 
-                            ? 'text-foreground font-semibold' 
-                            : 'text-muted-foreground'
+                          isActive
+                            ? "text-foreground font-semibold"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {step.label}
@@ -354,8 +385,16 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="bg-muted p-1 rounded-lg">
-          <TabsTrigger value="overview" className="px-4 py-2 text-sm font-medium">Overview</TabsTrigger>
-          <TabsTrigger value="deliveries" className="px-4 py-2 text-sm font-medium flex items-center gap-1.5">
+          <TabsTrigger
+            value="overview"
+            className="px-4 py-2 text-sm font-medium"
+          >
+            Overview
+          </TabsTrigger>
+          <TabsTrigger
+            value="deliveries"
+            className="px-4 py-2 text-sm font-medium flex items-center gap-1.5"
+          >
             <Truck className="h-4 w-4" />
             Deliveries
             {po.deliveryNotes?.length > 0 && (
@@ -364,7 +403,12 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="documents" className="px-4 py-2 text-sm font-medium">Documents</TabsTrigger>
+          <TabsTrigger
+            value="documents"
+            className="px-4 py-2 text-sm font-medium"
+          >
+            Documents
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -404,25 +448,37 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                         Supplier Name
                       </label>
                       <p className="text-lg font-medium">
-                        {po.supplierName || 'Not specified'}
+                        {po.supplierName || "Not specified"}
                       </p>
                     </div>
 
                     <div className="space-y-2 p-4 bg-muted/40 rounded-lg border border-border/50">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">VAT Exclusive Total:</span>
-                        <span className="font-semibold text-foreground">{formatCurrency(po.totalAmount)}</span>
+                        <span className="text-muted-foreground">
+                          VAT Exclusive Total:
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {formatCurrency(po.totalAmount)}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">VAT (15%):</span>
+                        <span className="text-muted-foreground">
+                          VAT (15%):
+                        </span>
                         <span className="font-semibold text-foreground">
-                          {formatCurrency((parseFloat(po.totalAmount) || 0) * 0.15)}
+                          {formatCurrency(
+                            (parseFloat(po.totalAmount) || 0) * 0.15,
+                          )}
                         </span>
                       </div>
                       <div className="flex justify-between text-base font-bold border-t pt-2 mt-1">
-                        <span className="text-indigo-600">Total (VAT Inclusive):</span>
+                        <span className="text-indigo-600">
+                          Total (VAT Inclusive):
+                        </span>
                         <span className="text-foreground text-lg">
-                          {formatCurrency((parseFloat(po.totalAmount) || 0) * 1.15)}
+                          {formatCurrency(
+                            (parseFloat(po.totalAmount) || 0) * 1.15,
+                          )}
                         </span>
                       </div>
                     </div>
@@ -475,43 +531,79 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                       <TableRow>
                         <TableHead className="pl-6 w-[12%]">Item #</TableHead>
                         <TableHead className="w-[30%]">Description</TableHead>
-                        <TableHead className="w-[11%] text-right">Ordered</TableHead>
-                        <TableHead className="w-[11%] text-right">Delivered</TableHead>
-                        <TableHead className="w-[11%] text-right">Outstanding</TableHead>
-                        <TableHead className="w-[12%] text-right">Unit Price</TableHead>
+                        <TableHead className="w-[11%] text-right">
+                          Ordered
+                        </TableHead>
+                        <TableHead className="w-[11%] text-right">
+                          Delivered
+                        </TableHead>
+                        <TableHead className="w-[11%] text-right">
+                          Outstanding
+                        </TableHead>
+                        <TableHead className="w-[12%] text-right">
+                          Unit Price
+                        </TableHead>
                         <TableHead className="pr-6 w-[13%]">Progress</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(!po.lineItems || po.lineItems.length === 0) ? (
+                      {!po.lineItems || po.lineItems.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-8 text-muted-foreground italic">
+                          <TableCell
+                            colSpan={7}
+                            className="text-center py-8 text-muted-foreground italic"
+                          >
                             No line items associated with this purchase order.
                           </TableCell>
                         </TableRow>
                       ) : (
                         po.lineItems.map((item) => {
                           const ordered = parseFloat(item.quantity) || 0;
-                          const delivered = po.deliveryNotes?.reduce((sum, note) => {
-                            const dItem = note.items?.find((di) => di.lineItemId === item.id);
-                            return sum + (dItem ? parseFloat(dItem.quantityDelivered) || 0 : 0);
-                          }, 0) || 0;
+                          const delivered =
+                            po.deliveryNotes?.reduce((sum, note) => {
+                              const dItem = note.items?.find(
+                                (di) => di.lineItemId === item.id,
+                              );
+                              return (
+                                sum +
+                                (dItem
+                                  ? parseFloat(dItem.quantityDelivered) || 0
+                                  : 0)
+                              );
+                            }, 0) || 0;
                           const outstanding = Math.max(0, ordered - delivered);
-                          const percentage = ordered > 0 ? Math.min(100, (delivered / ordered) * 100) : 0;
-                          
+                          const percentage =
+                            ordered > 0
+                              ? Math.min(100, (delivered / ordered) * 100)
+                              : 0;
+
                           return (
                             <TableRow key={item.id} className="cursor-default">
-                              <TableCell className="pl-6 font-mono font-bold text-xs text-sky-400">{item.itemNumber.toUpperCase()}</TableCell>
-                              <TableCell className="font-medium text-foreground text-xs">{toTitleCase(item.description)}</TableCell>
-                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">{ordered}</TableCell>
-                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-emerald-400">{delivered}</TableCell>
-                              <TableCell className={`text-right font-mono font-bold text-xs tabular-nums ${outstanding > 0 ? 'text-amber-400' : 'text-muted-foreground'}`}>{outstanding}</TableCell>
-                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">{formatCurrency(item.unitPrice)}</TableCell>
+                              <TableCell className="pl-6 font-mono font-bold text-xs text-sky-400">
+                                {item.itemNumber.toUpperCase()}
+                              </TableCell>
+                              <TableCell className="font-medium text-foreground text-xs">
+                                {toTitleCase(item.description)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">
+                                {ordered}
+                              </TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-emerald-400">
+                                {delivered}
+                              </TableCell>
+                              <TableCell
+                                className={`text-right font-mono font-bold text-xs tabular-nums ${outstanding > 0 ? "text-amber-400" : "text-muted-foreground"}`}
+                              >
+                                {outstanding}
+                              </TableCell>
+                              <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">
+                                {formatCurrency(item.unitPrice)}
+                              </TableCell>
                               <TableCell className="pr-6">
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-zinc-800 h-1.5 rounded-full overflow-hidden border border-white/5">
-                                    <div 
-                                      className={`h-full rounded-full transition-all duration-300 ${percentage >= 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-300 ${percentage >= 100 ? "bg-emerald-500" : "bg-blue-500"}`}
                                       style={{ width: `${percentage}%` }}
                                     />
                                   </div>
@@ -545,7 +637,7 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                       </label>
                       <p className="text-lg font-medium text-blue-600">
                         {po.project?.projectNumber.toUpperCase() ||
-                          'Unknown Project'}
+                          "Unknown Project"}
                       </p>
                     </div>
 
@@ -554,7 +646,9 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                         <label className="text-sm font-medium text-muted-foreground">
                           Project Description
                         </label>
-                        <p className="text-foreground">{po.project.description}</p>
+                        <p className="text-foreground">
+                          {po.project.description}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -596,16 +690,15 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="text-sm text-muted-foreground mb-3">
-                    Current Status:{' '}
-                    <StatusBadge status={po.status} />
+                    Current Status: <StatusBadge status={po.status} />
                   </div>
 
-                  {po.status === 'open' && (
+                  {po.status === "open" && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('sent')}
+                      onClick={() => handleStatusUpdate("sent")}
                       disabled={isPending}
                     >
                       <Truck className="h-4 w-4 mr-2" />
@@ -613,12 +706,12 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                     </Button>
                   )}
 
-                  {po.status === 'sent' && (
+                  {po.status === "sent" && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('partially_delivered')}
+                      onClick={() => handleStatusUpdate("partially_delivered")}
                       disabled={isPending}
                     >
                       <Package className="h-4 w-4 mr-2" />
@@ -626,12 +719,13 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                     </Button>
                   )}
 
-                  {(po.status === 'sent' || po.status === 'partially_delivered') && (
+                  {(po.status === "sent" ||
+                    po.status === "partially_delivered") && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('delivered')}
+                      onClick={() => handleStatusUpdate("delivered")}
                       disabled={isPending}
                     >
                       <Package className="h-4 w-4 mr-2" />
@@ -639,24 +733,24 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                     </Button>
                   )}
 
-                  {po.status === 'delivered' && (
+                  {po.status === "delivered" && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer"
-                      onClick={() => handleStatusUpdate('completed')}
+                      onClick={() => handleStatusUpdate("completed")}
                       disabled={isPending}
                     >
                       Mark as Completed
                     </Button>
                   )}
 
-                  {po.status !== 'cancelled' && po.status !== 'completed' && (
+                  {po.status !== "cancelled" && po.status !== "completed" && (
                     <Button
                       variant="outline"
                       size="sm"
                       className="w-full justify-start cursor-pointer text-destructive hover:text-destructive"
-                      onClick={() => handleStatusUpdate('cancelled')}
+                      onClick={() => handleStatusUpdate("cancelled")}
                       disabled={isPending}
                     >
                       Mark as Cancelled
@@ -678,7 +772,9 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                     <label className="text-sm font-medium text-muted-foreground">
                       Created
                     </label>
-                    <p className="text-sm">{formatDateWithTime(po.createdAt)}</p>
+                    <p className="text-sm">
+                      {formatDateWithTime(po.createdAt)}
+                    </p>
                   </div>
                   {po.poDate && (
                     <div>
@@ -692,7 +788,9 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                     <label className="text-sm font-medium text-muted-foreground">
                       Last Updated
                     </label>
-                    <p className="text-sm">{formatDateWithTime(po.updatedAt)}</p>
+                    <p className="text-sm">
+                      {formatDateWithTime(po.updatedAt)}
+                    </p>
                   </div>
                   {po.expectedDeliveryDate && (
                     <div>
@@ -709,7 +807,9 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                       <label className="text-sm font-medium text-muted-foreground">
                         Delivered At
                       </label>
-                      <p className="text-sm">{formatDateWithTime(po.deliveredAt)}</p>
+                      <p className="text-sm">
+                        {formatDateWithTime(po.deliveredAt)}
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -722,13 +822,16 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
             {/* Deliveries Stack */}
             <div className="xl:col-span-3 space-y-6">
-              {(!po.deliveryNotes || po.deliveryNotes.length === 0) ? (
+              {!po.deliveryNotes || po.deliveryNotes.length === 0 ? (
                 <Card className="rounded-lg shadow-sm border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                     <Truck className="h-10 w-10 text-muted-foreground mb-4 opacity-50" />
-                    <h3 className="font-semibold text-lg mb-1">No deliveries recorded</h3>
+                    <h3 className="font-semibold text-lg mb-1">
+                      No deliveries recorded
+                    </h3>
                     <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                      No delivery notes have been logged for this purchase order yet.
+                      No delivery notes have been logged for this purchase order
+                      yet.
                     </p>
                     <Button
                       onClick={handleRecordDelivery}
@@ -742,21 +845,33 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
               ) : (
                 <div className="space-y-6">
                   {po.deliveryNotes.map((note) => (
-                    <Card key={note.id} className="rounded-lg shadow-sm border overflow-hidden">
+                    <Card
+                      key={note.id}
+                      className="rounded-lg shadow-sm border overflow-hidden"
+                    >
                       <CardHeader className="bg-muted/30 pb-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-base text-foreground">DN Number: {note.deliveryNoteNumber}</span>
-                              <StatusBadge status={note.status} domain="delivery" />
+                              <span className="font-bold text-base text-foreground">
+                                DN Number: {note.deliveryNoteNumber}
+                              </span>
+                              <StatusBadge
+                                status={note.status}
+                                domain="delivery"
+                              />
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              Received by <strong className="text-foreground">{note.recipientName}</strong> on {formatDate(note.receivedAt)}
+                              Received by{" "}
+                              <strong className="text-foreground">
+                                {note.recipientName}
+                              </strong>{" "}
+                              on {formatDate(note.receivedAt)}
                             </p>
                           </div>
-                          
+
                           <div className="flex flex-wrap gap-2 items-center">
-                            {note.status === 'received' && (
+                            {note.status === "received" && (
                               <>
                                 <Button
                                   variant="outline"
@@ -786,7 +901,11 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                                 asChild
                                 className="cursor-pointer bg-background"
                               >
-                                <a href={note.podFileUrl} target="_blank" rel="noopener noreferrer">
+                                <a
+                                  href={note.podFileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
                                   <FileUp className="h-4 w-4 mr-2 text-indigo-500" />
                                   View POD File
                                 </a>
@@ -798,7 +917,9 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                       <CardContent className="pt-4 space-y-4">
                         {note.notes && (
                           <div>
-                            <span className="text-xs font-semibold text-muted-foreground block mb-1">Notes / Remarks</span>
+                            <span className="text-xs font-semibold text-muted-foreground block mb-1">
+                              Notes / Remarks
+                            </span>
                             <p className="text-sm italic text-foreground bg-accent/30 p-2.5 rounded border border-accent">
                               {note.notes}
                             </p>
@@ -806,23 +927,40 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
                         )}
 
                         <div>
-                          <span className="text-xs font-semibold text-muted-foreground block mb-2">Items Received</span>
+                          <span className="text-xs font-semibold text-muted-foreground block mb-2">
+                            Items Received
+                          </span>
                           <div className="border rounded-lg overflow-hidden max-w-xl">
                             <Table>
                               <TableHeader className="bg-muted/10">
                                 <TableRow>
-                                  <TableHead className="pl-4 py-2">Item #</TableHead>
-                                  <TableHead className="py-2">Description</TableHead>
-                                  <TableHead className="py-2 text-right">Quantity Received</TableHead>
-                                  <TableHead className="pr-4 py-2 text-right">Delivery Value</TableHead>
+                                  <TableHead className="pl-4 py-2">
+                                    Item #
+                                  </TableHead>
+                                  <TableHead className="py-2">
+                                    Description
+                                  </TableHead>
+                                  <TableHead className="py-2 text-right">
+                                    Quantity Received
+                                  </TableHead>
+                                  <TableHead className="pr-4 py-2 text-right">
+                                    Delivery Value
+                                  </TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {note.items?.map((item) => (
                                   <TableRow key={item.id}>
-                                    <TableCell className="pl-4 py-2 font-semibold text-blue-600">{item.lineItem?.itemNumber || '-'}</TableCell>
-                                    <TableCell className="py-2 font-medium">{item.lineItem?.description || 'Unknown Item'}</TableCell>
-                                    <TableCell className="py-2 text-right font-bold text-emerald-600">{item.quantityDelivered}</TableCell>
+                                    <TableCell className="pl-4 py-2 font-semibold text-blue-600">
+                                      {item.lineItem?.itemNumber || "-"}
+                                    </TableCell>
+                                    <TableCell className="py-2 font-medium">
+                                      {item.lineItem?.description ||
+                                        "Unknown Item"}
+                                    </TableCell>
+                                    <TableCell className="py-2 text-right font-bold text-emerald-600">
+                                      {item.quantityDelivered}
+                                    </TableCell>
                                     <TableCell className="pr-4 py-2 text-right font-semibold">
                                       {formatCurrency(item.deliveryValue || 0)}
                                     </TableCell>
@@ -874,8 +1012,12 @@ export function PODetails({ po, organizationId, initialDocuments = [] }: PODetai
       {/* Mobile Sticky Action Bar */}
       <MobileActionBar
         actions={[
-          { label: 'Record Delivery', onClick: handleRecordDelivery, variant: 'default' },
-          { label: 'Edit PO', onClick: handleEdit },
+          {
+            label: "Record Delivery",
+            onClick: handleRecordDelivery,
+            variant: "default",
+          },
+          { label: "Edit PO", onClick: handleEdit },
         ]}
       />
       <MobileActionBarSpacer />

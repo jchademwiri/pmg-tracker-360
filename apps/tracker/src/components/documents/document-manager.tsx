@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useDropzone, type FileRejection } from 'react-dropzone';
-import { toast } from 'sonner';
+import { useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useDropzone, type FileRejection } from "react-dropzone";
+import { toast } from "sonner";
 import {
   FileText,
   Download,
@@ -29,19 +29,25 @@ import {
   HardDrive,
   Maximize2,
   Filter,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,16 +57,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatDate, formatFileSize } from '@/lib/format';
-import { uploadDocument, deleteDocument } from '@/server/documents';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/tooltip";
+import { formatDate, formatFileSize } from "@/lib/format";
+import { uploadDocument, deleteDocument } from "@/server/documents";
+import { cn } from "@/lib/utils";
 
 export interface Document {
   id: string;
@@ -76,68 +82,142 @@ export interface Document {
 interface DocumentManagerProps {
   organizationId: string;
   entityId: string;
-  entityType: 'tender' | 'project' | 'purchaseOrder';
+  entityType: "tender" | "project" | "purchaseOrder";
   initialDocuments?: Document[];
 }
 
-type FilterCategory = 'all' | 'pdf' | 'spreadsheet' | 'image' | 'word';
-type ViewMode = 'list' | 'grid';
+type FilterCategory = "all" | "pdf" | "spreadsheet" | "image" | "word";
+type ViewMode = "list" | "grid";
 
 function getFileIcon(mimeType: string, fileName?: string) {
-  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
-  if (mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return ImageIcon;
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || ['xls', 'xlsx', 'csv'].includes(ext)) return FileSpreadsheet;
-  if (mimeType.includes('pdf') || ext === 'pdf') return FileText;
-  if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar') || ['zip', 'rar', '7z'].includes(ext)) return FileArchive;
-  if (mimeType.includes('text') || mimeType.includes('json') || mimeType.includes('xml') || ['txt', 'json', 'xml'].includes(ext)) return FileCode;
+  const ext = fileName?.split(".").pop()?.toLowerCase() || "";
+  if (
+    mimeType.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
+  )
+    return ImageIcon;
+  if (
+    mimeType.includes("spreadsheet") ||
+    mimeType.includes("excel") ||
+    ["xls", "xlsx", "csv"].includes(ext)
+  )
+    return FileSpreadsheet;
+  if (mimeType.includes("pdf") || ext === "pdf") return FileText;
+  if (
+    mimeType.includes("zip") ||
+    mimeType.includes("rar") ||
+    mimeType.includes("tar") ||
+    ["zip", "rar", "7z"].includes(ext)
+  )
+    return FileArchive;
+  if (
+    mimeType.includes("text") ||
+    mimeType.includes("json") ||
+    mimeType.includes("xml") ||
+    ["txt", "json", "xml"].includes(ext)
+  )
+    return FileCode;
   return File;
 }
 
 function getFileColor(mimeType: string, fileName?: string) {
-  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
-  if (mimeType.includes('pdf') || ext === 'pdf') return 'text-rose-600 bg-rose-500/10 border-rose-500/20 dark:text-rose-400';
-  if (mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'text-purple-600 bg-purple-500/10 border-purple-500/20 dark:text-purple-400';
-  if (mimeType.includes('word') || mimeType.includes('document') || ['doc', 'docx'].includes(ext)) return 'text-sky-600 bg-sky-500/10 border-sky-500/20 dark:text-sky-400';
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || ['xls', 'xlsx', 'csv'].includes(ext)) return 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20 dark:text-emerald-400';
-  return 'text-zinc-600 bg-zinc-500/10 border-zinc-500/20 dark:text-zinc-400';
+  const ext = fileName?.split(".").pop()?.toLowerCase() || "";
+  if (mimeType.includes("pdf") || ext === "pdf")
+    return "text-rose-600 bg-rose-500/10 border-rose-500/20 dark:text-rose-400";
+  if (
+    mimeType.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
+  )
+    return "text-purple-600 bg-purple-500/10 border-purple-500/20 dark:text-purple-400";
+  if (
+    mimeType.includes("word") ||
+    mimeType.includes("document") ||
+    ["doc", "docx"].includes(ext)
+  )
+    return "text-sky-600 bg-sky-500/10 border-sky-500/20 dark:text-sky-400";
+  if (
+    mimeType.includes("spreadsheet") ||
+    mimeType.includes("excel") ||
+    ["xls", "xlsx", "csv"].includes(ext)
+  )
+    return "text-emerald-600 bg-emerald-500/10 border-emerald-500/20 dark:text-emerald-400";
+  return "text-zinc-600 bg-zinc-500/10 border-zinc-500/20 dark:text-zinc-400";
 }
 
 function getCategory(doc: Document): FilterCategory {
-  const ext = doc.name.split('.').pop()?.toLowerCase() || '';
-  if (doc.type.includes('pdf') || ext === 'pdf') return 'pdf';
-  if (doc.type.includes('spreadsheet') || doc.type.includes('excel') || ['xls', 'xlsx', 'csv'].includes(ext)) return 'spreadsheet';
-  if (doc.type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
-  if (doc.type.includes('word') || doc.type.includes('document') || ['doc', 'docx'].includes(ext)) return 'word';
-  return 'all';
+  const ext = doc.name.split(".").pop()?.toLowerCase() || "";
+  if (doc.type.includes("pdf") || ext === "pdf") return "pdf";
+  if (
+    doc.type.includes("spreadsheet") ||
+    doc.type.includes("excel") ||
+    ["xls", "xlsx", "csv"].includes(ext)
+  )
+    return "spreadsheet";
+  if (
+    doc.type.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "gif", "webp"].includes(ext)
+  )
+    return "image";
+  if (
+    doc.type.includes("word") ||
+    doc.type.includes("document") ||
+    ["doc", "docx"].includes(ext)
+  )
+    return "word";
+  return "all";
 }
 
 function isPreviewable(mimeType: string, fileName?: string): boolean {
-  const ext = fileName?.split('.').pop()?.toLowerCase() || '';
+  const ext = fileName?.split(".").pop()?.toLowerCase() || "";
   return (
-    mimeType.startsWith('image/') ||
-    mimeType.includes('pdf') ||
-    ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'].includes(ext)
+    mimeType.startsWith("image/") ||
+    mimeType.includes("pdf") ||
+    ["jpg", "jpeg", "png", "gif", "webp", "pdf"].includes(ext)
   );
 }
 
 function getDocumentTypeBadge(fileName: string) {
-  if (fileName.startsWith('Appointment-Letter-')) {
-    return { label: 'Appointment Letter', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400' };
+  if (fileName.startsWith("Appointment-Letter-")) {
+    return {
+      label: "Appointment Letter",
+      className:
+        "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
+    };
   }
-  if (fileName.startsWith('Contract-') || fileName.startsWith('SLA-')) {
-    return { label: 'Contract / SLA', className: 'bg-indigo-500/10 text-indigo-700 border-indigo-500/30 dark:text-indigo-400' };
+  if (fileName.startsWith("Contract-") || fileName.startsWith("SLA-")) {
+    return {
+      label: "Contract / SLA",
+      className:
+        "bg-indigo-500/10 text-indigo-700 border-indigo-500/30 dark:text-indigo-400",
+    };
   }
-  if (fileName.startsWith('Extension-')) {
-    return { label: 'Extension', className: 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400' };
+  if (fileName.startsWith("Extension-")) {
+    return {
+      label: "Extension",
+      className:
+        "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400",
+    };
   }
-  if (fileName.startsWith('Briefing-')) {
-    return { label: 'Briefing', className: 'bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-400' };
+  if (fileName.startsWith("Briefing-")) {
+    return {
+      label: "Briefing",
+      className:
+        "bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-400",
+    };
   }
-  if (fileName.startsWith('Tender-')) {
-    return { label: 'Tender Spec', className: 'bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400' };
+  if (fileName.startsWith("Tender-")) {
+    return {
+      label: "Tender Spec",
+      className:
+        "bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400",
+    };
   }
-  if (fileName.startsWith('POD-')) {
-    return { label: 'POD', className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400' };
+  if (fileName.startsWith("POD-")) {
+    return {
+      label: "POD",
+      className:
+        "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-400",
+    };
   }
   return null;
 }
@@ -152,18 +232,18 @@ export function DocumentManager({
   const [documents, setDocuments] = useState<Document[]>(initialDocuments);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<FilterCategory>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<FilterCategory>("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [previewTarget, setPreviewTarget] = useState<Document | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDropzone, setShowDropzone] = useState(false);
   const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
   const [uploadCategory, setUploadCategory] = useState<string>(
-    entityType === 'project' ? 'general' : 'tender'
+    entityType === "project" ? "general" : "tender",
   );
-  const [extensionDate, setExtensionDate] = useState<string>('');
+  const [extensionDate, setExtensionDate] = useState<string>("");
 
   const handleUploadFiles = useCallback(
     async (filesToUpload: File[]) => {
@@ -173,11 +253,11 @@ export function DocumentManager({
       setUploadProgress(10);
 
       const targetPayload: any = {
-        [entityType === 'tender'
-          ? 'tenderId'
-          : entityType === 'project'
-            ? 'projectId'
-            : 'purchaseOrderId']: entityId,
+        [entityType === "tender"
+          ? "tenderId"
+          : entityType === "project"
+            ? "projectId"
+            : "purchaseOrderId"]: entityId,
         category: uploadCategory,
         extensionDate: extensionDate || undefined,
       };
@@ -188,10 +268,14 @@ export function DocumentManager({
       for (let i = 0; i < filesToUpload.length; i++) {
         const file = filesToUpload[i];
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
         try {
-          const result = await uploadDocument(organizationId, formData, targetPayload);
+          const result = await uploadDocument(
+            organizationId,
+            formData,
+            targetPayload,
+          );
 
           if (result.success && result.document) {
             successCount++;
@@ -200,12 +284,16 @@ export function DocumentManager({
               name: result.document.name,
               size: result.document.size,
               type: result.document.type,
-              createdAt: result.document.createdAt ? new Date(result.document.createdAt) : new Date(),
+              createdAt: result.document.createdAt
+                ? new Date(result.document.createdAt)
+                : new Date(),
               url: result.document.url,
               signedUrl: (result.document as any).signedUrl,
             });
           } else {
-            toast.error(`Failed to upload ${file.name}: ${result.error || 'Unknown error'}`);
+            toast.error(
+              `Failed to upload ${file.name}: ${result.error || "Unknown error"}`,
+            );
           }
         } catch (err: any) {
           toast.error(`Failed to upload ${file.name}`);
@@ -218,8 +306,8 @@ export function DocumentManager({
         setDocuments((prev) => [...uploadedDocs, ...prev]);
         toast.success(
           successCount === 1
-            ? 'Document uploaded successfully'
-            : `${successCount} documents uploaded successfully`
+            ? "Document uploaded successfully"
+            : `${successCount} documents uploaded successfully`,
         );
         router.refresh();
       }
@@ -227,24 +315,38 @@ export function DocumentManager({
       setIsUploading(false);
       setUploadProgress(null);
     },
-    [organizationId, entityId, entityType, uploadCategory, extensionDate, router]
+    [
+      organizationId,
+      entityId,
+      entityType,
+      uploadCategory,
+      extensionDate,
+      router,
+    ],
   );
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
       if (rejectedFiles.length > 0) {
         rejectedFiles.forEach((rej) => {
-          toast.error(`${rej.file.name}: ${rej.errors[0]?.message || 'Invalid file'}`);
+          toast.error(
+            `${rej.file.name}: ${rej.errors[0]?.message || "Invalid file"}`,
+          );
         });
       }
       if (acceptedFiles.length > 0) {
         handleUploadFiles(acceptedFiles);
       }
     },
-    [handleUploadFiles]
+    [handleUploadFiles],
   );
 
-  const { getRootProps, getInputProps, isDragActive, open: openFileDialog } = useDropzone({
+  const {
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    open: openFileDialog,
+  } = useDropzone({
     onDrop,
     maxSize: 10 * 1024 * 1024, // 10MB
     noClick: documents.length > 0 && !showDropzone,
@@ -260,13 +362,13 @@ export function DocumentManager({
       const result = await deleteDocument(organizationId, deleteTarget.id);
       if (result.success) {
         setDocuments((prev) => prev.filter((d) => d.id !== deleteTarget.id));
-        toast.success('Document deleted');
+        toast.success("Document deleted");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to delete document');
+        toast.error(result.error || "Failed to delete document");
       }
     } catch (err) {
-      toast.error('Failed to delete document');
+      toast.error("Failed to delete document");
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -274,22 +376,22 @@ export function DocumentManager({
   };
 
   const copyDownloadUrl = async (doc: Document) => {
-    const url = doc.signedUrl || doc.url || '';
+    const url = doc.signedUrl || doc.url || "";
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
       setCopiedDocId(doc.id);
-      toast.success('Direct link copied to clipboard');
+      toast.success("Direct link copied to clipboard");
       setTimeout(() => setCopiedDocId(null), 2000);
     } catch {
-      toast.error('Failed to copy link');
+      toast.error("Failed to copy link");
     }
   };
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((d) => {
       // Category filter
-      if (activeCategory !== 'all') {
+      if (activeCategory !== "all") {
         const cat = getCategory(d);
         if (cat !== activeCategory) return false;
       }
@@ -308,10 +410,16 @@ export function DocumentManager({
   }, [documents, activeCategory, searchQuery]);
 
   const categoryCounts = useMemo(() => {
-    const counts = { all: documents.length, pdf: 0, spreadsheet: 0, image: 0, word: 0 };
+    const counts = {
+      all: documents.length,
+      pdf: 0,
+      spreadsheet: 0,
+      image: 0,
+      word: 0,
+    };
     documents.forEach((d) => {
       const cat = getCategory(d);
-      if (cat in counts && cat !== 'all') {
+      if (cat in counts && cat !== "all") {
         counts[cat as keyof typeof counts]++;
       }
     });
@@ -323,7 +431,7 @@ export function DocumentManager({
   }, [documents]);
 
   const getDownloadUrl = (doc: Document) => {
-    return doc.signedUrl || doc.url || '#';
+    return doc.signedUrl || doc.url || "#";
   };
 
   return (
@@ -332,9 +440,14 @@ export function DocumentManager({
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/40 bg-card">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <CardTitle className="text-lg font-semibold tracking-tight">Documents & Attachments</CardTitle>
-              <Badge variant="secondary" className="font-mono text-xs font-normal">
-                {documents.length} {documents.length === 1 ? 'file' : 'files'}
+              <CardTitle className="text-lg font-semibold tracking-tight">
+                Documents & Attachments
+              </CardTitle>
+              <Badge
+                variant="secondary"
+                className="font-mono text-xs font-normal"
+              >
+                {documents.length} {documents.length === 1 ? "file" : "files"}
               </Badge>
               {documents.length > 0 && (
                 <span className="text-xs text-muted-foreground font-mono">
@@ -343,7 +456,8 @@ export function DocumentManager({
               )}
             </div>
             <CardDescription>
-              Secure, centralized repository for tender specifications, pricing schedules, and compliance proofs
+              Secure, centralized repository for tender specifications, pricing
+              schedules, and compliance proofs
             </CardDescription>
           </div>
 
@@ -412,71 +526,89 @@ export function DocumentManager({
               {/* Upload Category Selector */}
               <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-border/40">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-semibold text-muted-foreground mr-1">Upload As:</span>
-                  {entityType === 'project' ? (
+                  <span className="text-xs font-semibold text-muted-foreground mr-1">
+                    Upload As:
+                  </span>
+                  {entityType === "project" ? (
                     <>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'general' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "general" ? "default" : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('general')}
+                        onClick={() => setUploadCategory("general")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         📄 General Document
                       </Button>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'appointment_letter' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "appointment_letter"
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('appointment_letter')}
+                        onClick={() => setUploadCategory("appointment_letter")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         📜 Appointment Letter
                       </Button>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'contract' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "contract" ? "default" : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('contract')}
+                        onClick={() => setUploadCategory("contract")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         📝 Contract / SLA
                       </Button>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'extension' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "extension" ? "default" : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('extension')}
+                        onClick={() => setUploadCategory("extension")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         ⏳ Extension
                       </Button>
                     </>
-                  ) : entityType === 'tender' ? (
+                  ) : entityType === "tender" ? (
                     <>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'tender' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "tender" ? "default" : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('tender')}
+                        onClick={() => setUploadCategory("tender")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         📄 Tender Document
                       </Button>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'briefing' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "briefing" ? "default" : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('briefing')}
+                        onClick={() => setUploadCategory("briefing")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         📋 Site Briefing
                       </Button>
                       <Button
                         type="button"
-                        variant={uploadCategory === 'extension' ? 'default' : 'outline'}
+                        variant={
+                          uploadCategory === "extension" ? "default" : "outline"
+                        }
                         size="sm"
-                        onClick={() => setUploadCategory('extension')}
+                        onClick={() => setUploadCategory("extension")}
                         className="text-xs h-7 px-2.5 rounded-full"
                       >
                         ⏳ Extension Letter
@@ -485,7 +617,7 @@ export function DocumentManager({
                   ) : null}
                 </div>
 
-                {uploadCategory === 'extension' && (
+                {uploadCategory === "extension" && (
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-muted-foreground whitespace-nowrap font-medium">
                       Extension Date:
@@ -503,22 +635,32 @@ export function DocumentManager({
               <div
                 {...getRootProps()}
                 className={cn(
-                  'border-2 border-dashed rounded-xl p-6 cursor-pointer text-center transition-all duration-200 bg-background/50',
+                  "border-2 border-dashed rounded-xl p-6 cursor-pointer text-center transition-all duration-200 bg-background/50",
                   isDragActive
-                    ? 'border-primary bg-primary/10 scale-[0.99] ring-4 ring-primary/20'
-                    : 'border-border/70 hover:border-primary/50 hover:bg-muted/30',
-                  isUploading && 'opacity-50 pointer-events-none'
+                    ? "border-primary bg-primary/10 scale-[0.99] ring-4 ring-primary/20"
+                    : "border-border/70 hover:border-primary/50 hover:bg-muted/30",
+                  isUploading && "opacity-50 pointer-events-none",
                 )}
               >
                 <input {...getInputProps()} />
                 <div className="mx-auto w-10 h-10 rounded-full border border-border/60 bg-background flex items-center justify-center shadow-sm mb-2">
-                  <UploadCloud className={cn('h-5 w-5', isDragActive ? 'text-primary animate-bounce' : 'text-muted-foreground')} />
+                  <UploadCloud
+                    className={cn(
+                      "h-5 w-5",
+                      isDragActive
+                        ? "text-primary animate-bounce"
+                        : "text-muted-foreground",
+                    )}
+                  />
                 </div>
                 <p className="font-medium text-sm text-foreground">
-                  {isDragActive ? 'Drop files here to upload...' : 'Click to upload or drag & drop files here'}
+                  {isDragActive
+                    ? "Drop files here to upload..."
+                    : "Click to upload or drag & drop files here"}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 max-w-sm mx-auto">
-                  PDF, Word (.docx), Excel (.xlsx), Images (.png, .jpg), and Text (up to 10MB per file)
+                  PDF, Word (.docx), Excel (.xlsx), Images (.png, .jpg), and
+                  Text (up to 10MB per file)
                 </p>
               </div>
             </div>
@@ -530,18 +672,18 @@ export function DocumentManager({
               {/* Category Pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
                 <Button
-                  variant={activeCategory === 'all' ? 'secondary' : 'ghost'}
+                  variant={activeCategory === "all" ? "secondary" : "ghost"}
                   size="sm"
-                  onClick={() => setActiveCategory('all')}
+                  onClick={() => setActiveCategory("all")}
                   className="text-xs h-8 px-2.5 rounded-full"
                 >
                   All ({categoryCounts.all})
                 </Button>
                 {categoryCounts.pdf > 0 && (
                   <Button
-                    variant={activeCategory === 'pdf' ? 'secondary' : 'ghost'}
+                    variant={activeCategory === "pdf" ? "secondary" : "ghost"}
                     size="sm"
-                    onClick={() => setActiveCategory('pdf')}
+                    onClick={() => setActiveCategory("pdf")}
                     className="text-xs h-8 px-2.5 rounded-full gap-1"
                   >
                     <span className="h-2 w-2 rounded-full bg-rose-500" />
@@ -550,9 +692,11 @@ export function DocumentManager({
                 )}
                 {categoryCounts.spreadsheet > 0 && (
                   <Button
-                    variant={activeCategory === 'spreadsheet' ? 'secondary' : 'ghost'}
+                    variant={
+                      activeCategory === "spreadsheet" ? "secondary" : "ghost"
+                    }
                     size="sm"
-                    onClick={() => setActiveCategory('spreadsheet')}
+                    onClick={() => setActiveCategory("spreadsheet")}
                     className="text-xs h-8 px-2.5 rounded-full gap-1"
                   >
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -561,9 +705,9 @@ export function DocumentManager({
                 )}
                 {categoryCounts.image > 0 && (
                   <Button
-                    variant={activeCategory === 'image' ? 'secondary' : 'ghost'}
+                    variant={activeCategory === "image" ? "secondary" : "ghost"}
                     size="sm"
-                    onClick={() => setActiveCategory('image')}
+                    onClick={() => setActiveCategory("image")}
                     className="text-xs h-8 px-2.5 rounded-full gap-1"
                   >
                     <span className="h-2 w-2 rounded-full bg-purple-500" />
@@ -572,9 +716,9 @@ export function DocumentManager({
                 )}
                 {categoryCounts.word > 0 && (
                   <Button
-                    variant={activeCategory === 'word' ? 'secondary' : 'ghost'}
+                    variant={activeCategory === "word" ? "secondary" : "ghost"}
                     size="sm"
-                    onClick={() => setActiveCategory('word')}
+                    onClick={() => setActiveCategory("word")}
                     className="text-xs h-8 px-2.5 rounded-full gap-1"
                   >
                     <span className="h-2 w-2 rounded-full bg-sky-500" />
@@ -596,7 +740,7 @@ export function DocumentManager({
                   {searchQuery && (
                     <button
                       type="button"
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => setSearchQuery("")}
                       className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -608,9 +752,9 @@ export function DocumentManager({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                        variant={viewMode === "list" ? "secondary" : "ghost"}
                         size="icon"
-                        onClick={() => setViewMode('list')}
+                        onClick={() => setViewMode("list")}
                         className="h-7 w-7 rounded-md"
                       >
                         <List className="h-3.5 w-3.5" />
@@ -623,9 +767,9 @@ export function DocumentManager({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                        variant={viewMode === "grid" ? "secondary" : "ghost"}
                         size="icon"
-                        onClick={() => setViewMode('grid')}
+                        onClick={() => setViewMode("grid")}
                         className="h-7 w-7 rounded-md"
                       >
                         <LayoutGrid className="h-3.5 w-3.5" />
@@ -643,21 +787,25 @@ export function DocumentManager({
           {documents.length === 0 ? null : filteredDocuments.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground border rounded-xl bg-muted/5">
               <Search className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-              <p className="text-sm font-medium">No documents match your filters</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Try clearing search or switching categories</p>
+              <p className="text-sm font-medium">
+                No documents match your filters
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Try clearing search or switching categories
+              </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setSearchQuery('');
-                  setActiveCategory('all');
+                  setSearchQuery("");
+                  setActiveCategory("all");
                 }}
                 className="mt-3 text-xs h-8"
               >
                 Reset Filters
               </Button>
             </div>
-          ) : viewMode === 'list' ? (
+          ) : viewMode === "list" ? (
             /* LIST VIEW */
             <div className="space-y-2">
               {filteredDocuments.map((doc) => {
@@ -676,7 +824,12 @@ export function DocumentManager({
                       className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
                       onClick={() => canPreview && setPreviewTarget(doc)}
                     >
-                      <div className={cn('p-2.5 rounded-lg border shrink-0', colorClass)}>
+                      <div
+                        className={cn(
+                          "p-2.5 rounded-lg border shrink-0",
+                          colorClass,
+                        )}
+                      >
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1 pr-2">
@@ -685,19 +838,28 @@ export function DocumentManager({
                             {doc.name}
                           </p>
                           {typeBadge && (
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-md font-medium shrink-0 border leading-none', typeBadge.className)}>
+                            <span
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-md font-medium shrink-0 border leading-none",
+                                typeBadge.className,
+                              )}
+                            >
                               {typeBadge.label}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                          <span className="font-mono">{formatFileSize(doc.size)}</span>
+                          <span className="font-mono">
+                            {formatFileSize(doc.size)}
+                          </span>
                           <span>•</span>
                           <span>{formatDate(doc.createdAt)}</span>
                           {doc.uploadedBy?.name && (
                             <>
                               <span>•</span>
-                              <span className="truncate">by {doc.uploadedBy.name}</span>
+                              <span className="truncate">
+                                by {doc.uploadedBy.name}
+                              </span>
                             </>
                           )}
                         </div>
@@ -802,22 +964,37 @@ export function DocumentManager({
                       className="flex items-start gap-3 cursor-pointer"
                       onClick={() => canPreview && setPreviewTarget(doc)}
                     >
-                      <div className={cn('p-3 rounded-lg border shrink-0', colorClass)}>
+                      <div
+                        className={cn(
+                          "p-3 rounded-lg border shrink-0",
+                          colorClass,
+                        )}
+                      >
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors" title={doc.name}>
+                        <p
+                          className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors"
+                          title={doc.name}
+                        >
                           {doc.name}
                         </p>
                         {typeBadge && (
                           <div className="mt-1">
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-md font-medium border leading-none', typeBadge.className)}>
+                            <span
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded-md font-medium border leading-none",
+                                typeBadge.className,
+                              )}
+                            >
                               {typeBadge.label}
                             </span>
                           </div>
                         )}
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
-                          <span className="font-mono">{formatFileSize(doc.size)}</span>
+                          <span className="font-mono">
+                            {formatFileSize(doc.size)}
+                          </span>
                           <span>•</span>
                           <span>{formatDate(doc.createdAt)}</span>
                         </div>
@@ -842,7 +1019,7 @@ export function DocumentManager({
                         </Button>
                       ) : (
                         <span className="text-[11px] text-muted-foreground uppercase font-mono">
-                          {doc.name.split('.').pop() || 'FILE'}
+                          {doc.name.split(".").pop() || "FILE"}
                         </span>
                       )}
 
@@ -873,7 +1050,12 @@ export function DocumentManager({
                               className="h-7 w-7 text-muted-foreground hover:text-primary"
                               asChild
                             >
-                              <a href={downloadUrl} target="_blank" rel="noopener noreferrer" download={doc.name}>
+                              <a
+                                href={downloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={doc.name}
+                              >
                                 <Download className="h-3.5 w-3.5" />
                               </a>
                             </Button>
@@ -904,18 +1086,28 @@ export function DocumentManager({
         </CardContent>
 
         {/* In-App Interactive Preview Modal with Metadata Drawer */}
-        <Dialog open={!!previewTarget} onOpenChange={(open) => !open && setPreviewTarget(null)}>
+        <Dialog
+          open={!!previewTarget}
+          onOpenChange={(open) => !open && setPreviewTarget(null)}
+        >
           <DialogContent className="max-w-4xl w-[95vw] max-h-[92vh] flex flex-col p-4 sm:p-6 overflow-hidden">
             <DialogHeader className="pb-3 border-b border-border/40">
               <div className="flex items-center justify-between gap-3 pr-6">
                 <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-base font-semibold truncate" title={previewTarget?.name}>
+                  <DialogTitle
+                    className="text-base font-semibold truncate"
+                    title={previewTarget?.name}
+                  >
                     {previewTarget?.name}
                   </DialogTitle>
                   <DialogDescription className="text-xs flex items-center gap-2 mt-0.5">
-                    <span>{previewTarget && formatFileSize(previewTarget.size)}</span>
+                    <span>
+                      {previewTarget && formatFileSize(previewTarget.size)}
+                    </span>
                     <span>•</span>
-                    <span>{previewTarget && formatDate(previewTarget.createdAt)}</span>
+                    <span>
+                      {previewTarget && formatDate(previewTarget.createdAt)}
+                    </span>
                     {previewTarget?.uploadedBy?.name && (
                       <>
                         <span>•</span>
@@ -946,7 +1138,12 @@ export function DocumentManager({
                       )}
                     </Button>
 
-                    <Button size="sm" variant="default" className="h-8 text-xs gap-1.5" asChild>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-8 text-xs gap-1.5"
+                      asChild
+                    >
                       <a
                         href={getDownloadUrl(previewTarget)}
                         target="_blank"
@@ -963,30 +1160,37 @@ export function DocumentManager({
             </DialogHeader>
 
             <div className="flex-1 min-h-[420px] max-h-[68vh] w-full overflow-auto bg-muted/20 rounded-xl flex items-center justify-center p-3">
-              {previewTarget?.type.startsWith('image/') ||
-              ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(
-                previewTarget?.name.split('.').pop()?.toLowerCase() || ''
+              {previewTarget?.type.startsWith("image/") ||
+              ["jpg", "jpeg", "png", "gif", "webp"].includes(
+                previewTarget?.name.split(".").pop()?.toLowerCase() || "",
               ) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={previewTarget ? getDownloadUrl(previewTarget) : ''}
-                  alt={previewTarget?.name || 'Document preview'}
+                  src={previewTarget ? getDownloadUrl(previewTarget) : ""}
+                  alt={previewTarget?.name || "Document preview"}
                   className="max-h-[62vh] max-w-full object-contain rounded-lg shadow-md"
                 />
-              ) : previewTarget?.type.includes('pdf') ||
-                previewTarget?.name.toLowerCase().endsWith('.pdf') ? (
+              ) : previewTarget?.type.includes("pdf") ||
+                previewTarget?.name.toLowerCase().endsWith(".pdf") ? (
                 <iframe
-                  src={previewTarget ? getDownloadUrl(previewTarget) : ''}
-                  title={previewTarget?.name || 'PDF preview'}
+                  src={previewTarget ? getDownloadUrl(previewTarget) : ""}
+                  title={previewTarget?.name || "PDF preview"}
                   className="w-full h-[62vh] rounded-lg border border-border/60 bg-white"
                 />
               ) : (
                 <div className="text-center p-8 space-y-3">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                  <p className="text-sm font-medium">In-app preview not available for this file format</p>
-                  <p className="text-xs text-muted-foreground">Download the file to inspect it on your device.</p>
+                  <p className="text-sm font-medium">
+                    In-app preview not available for this file format
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Download the file to inspect it on your device.
+                  </p>
                   <Button size="sm" asChild>
-                    <a href={previewTarget ? getDownloadUrl(previewTarget) : '#'} download={previewTarget?.name}>
+                    <a
+                      href={previewTarget ? getDownloadUrl(previewTarget) : "#"}
+                      download={previewTarget?.name}
+                    >
                       <Download className="h-4 w-4 mr-1.5" />
                       Download File
                     </a>
@@ -998,16 +1202,23 @@ export function DocumentManager({
         </Dialog>
 
         {/* Delete Confirmation Alert Dialog */}
-        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialog
+          open={!!deleteTarget}
+          onOpenChange={(open) => !open && setDeleteTarget(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Document</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to permanently delete &quot;{deleteTarget?.name}&quot;? This file will be removed from cloud storage and cannot be recovered.
+                Are you sure you want to permanently delete &quot;
+                {deleteTarget?.name}&quot;? This file will be removed from cloud
+                storage and cannot be recovered.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 disabled={isDeleting}
@@ -1019,7 +1230,7 @@ export function DocumentManager({
                     Deleting...
                   </>
                 ) : (
-                  'Delete Document'
+                  "Delete Document"
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>

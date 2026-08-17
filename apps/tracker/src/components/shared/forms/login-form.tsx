@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-import { signIn, sendVerificationEmail, verifyOTPAndGetToken } from '@/server';
-import Link from 'next/link';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { signIn, sendVerificationEmail, verifyOTPAndGetToken } from "@/server";
+import Link from "next/link";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -23,11 +23,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { toast } from 'sonner';
-import { useState } from 'react';
-import { Loader, LockKeyhole, Mail, Key, ShieldCheck } from 'lucide-react';
-import { signInWithGoogle, getRedirectPath, authClient } from '@/lib/auth-client';
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Loader, LockKeyhole, Mail, Key, ShieldCheck } from "lucide-react";
+import {
+  signInWithGoogle,
+  getRedirectPath,
+  authClient,
+} from "@/lib/auth-client";
 
 const loginFormSchema = z.object({
   email: z.string().email(),
@@ -37,23 +41,25 @@ const loginFormSchema = z.object({
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
-  const [activeTab, setActiveTab] = useState<'password' | 'passcode'>('password');
+}: React.ComponentProps<"div">) {
+  const [activeTab, setActiveTab] = useState<"password" | "passcode">(
+    "password",
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
-  const [emailToVerify, setEmailToVerify] = useState('');
-  
+  const [emailToVerify, setEmailToVerify] = useState("");
+
   // Passwordless state
-  const [emailForOtp, setEmailForOtp] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [emailForOtp, setEmailForOtp] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
 
   // 1. Define password form.
   const form = useForm<z.infer<typeof loginFormSchema>>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -65,7 +71,7 @@ export function LoginForm({
       toast.success(message as string);
       try {
         const params = new URLSearchParams(window.location.search);
-        const next = params.get('next') || params.get('callbackUrl');
+        const next = params.get("next") || params.get("callbackUrl");
         window.location.replace(next || getRedirectPath());
       } catch (e) {
         window.location.replace(getRedirectPath());
@@ -73,8 +79,8 @@ export function LoginForm({
     } else {
       toast.error(message as string);
       if (
-        (message as string).toLowerCase().includes('verify') ||
-        (message as string).toLowerCase().includes('verification')
+        (message as string).toLowerCase().includes("verify") ||
+        (message as string).toLowerCase().includes("verification")
       ) {
         setShowResend(true);
         setEmailToVerify(values.email);
@@ -86,8 +92,8 @@ export function LoginForm({
   // 3. Send Magic Link & OTP handler.
   async function handleSendMagicLink(e: React.FormEvent) {
     e.preventDefault();
-    if (!emailForOtp || !emailForOtp.includes('@')) {
-      toast.error('Please enter a valid email address.');
+    if (!emailForOtp || !emailForOtp.includes("@")) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
@@ -97,15 +103,19 @@ export function LoginForm({
         email: emailForOtp.trim().toLowerCase(),
         callbackURL: getRedirectPath(),
       });
-      
+
       if (response?.error) {
-        toast.error(response.error.message || 'Failed to send verification link.');
+        toast.error(
+          response.error.message || "Failed to send verification link.",
+        );
       } else {
         setIsOtpSent(true);
-        toast.success('Sign-in link and passcode successfully sent to your inbox!');
+        toast.success(
+          "Sign-in link and passcode successfully sent to your inbox!",
+        );
       }
     } catch (err) {
-      toast.error('Failed to trigger sign-in link. Please try again.');
+      toast.error("Failed to trigger sign-in link. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +125,7 @@ export function LoginForm({
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
     if (!otpCode || otpCode.length !== 6) {
-      toast.error('Please enter a valid 6-digit passcode.');
+      toast.error("Please enter a valid 6-digit passcode.");
       return;
     }
 
@@ -123,14 +133,16 @@ export function LoginForm({
     try {
       const response = await verifyOTPAndGetToken(emailForOtp, otpCode);
       if (response.success && response.token) {
-        toast.success('Code verified successfully! Redirecting...');
+        toast.success("Code verified successfully! Redirecting...");
         // Authenticate programmatically by navigating to standard verification endpoint
-        window.location.replace(`/api/auth/magic-link/verify?token=${response.token}&callbackURL=${encodeURIComponent(getRedirectPath())}`);
+        window.location.replace(
+          `/api/auth/magic-link/verify?token=${response.token}&callbackURL=${encodeURIComponent(getRedirectPath())}`,
+        );
       } else {
-        toast.error(response.error || 'Invalid or expired passcode.');
+        toast.error(response.error || "Invalid or expired passcode.");
       }
     } catch (err) {
-      toast.error('Verification failed. Please try again.');
+      toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +161,7 @@ export function LoginForm({
   }
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden border-white/10 bg-card/50 backdrop-blur-sm shadow-xl">
         <CardHeader className="text-center space-y-4 pb-2">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-3 text-primary">
@@ -163,20 +175,19 @@ export function LoginForm({
           </div>
         </CardHeader>
         <CardContent className="p-6 md:p-8 pt-0 space-y-6">
-          
           {/* TAB SELECTOR */}
           <div className="grid grid-cols-2 p-1 bg-background/60 border border-white/5 rounded-lg text-xs font-medium">
             <button
               type="button"
               onClick={() => {
-                setActiveTab('password');
+                setActiveTab("password");
                 setShowResend(false);
               }}
               className={cn(
                 "py-2 rounded-md transition-all cursor-pointer",
-                activeTab === 'password'
+                activeTab === "password"
                   ? "bg-card text-foreground shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               PASSWORD
@@ -184,24 +195,27 @@ export function LoginForm({
             <button
               type="button"
               onClick={() => {
-                setActiveTab('passcode');
+                setActiveTab("passcode");
                 setShowResend(false);
               }}
               className={cn(
                 "py-2 rounded-md transition-all cursor-pointer",
-                activeTab === 'passcode'
+                activeTab === "passcode"
                   ? "bg-card text-foreground shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               CODE & LINK
             </button>
           </div>
 
-          {activeTab === 'password' ? (
+          {activeTab === "password" ? (
             /* PASSWORD LOGIN FLOW */
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <div className="grid gap-4">
                   <FormField
                     control={form.control}
@@ -258,7 +272,7 @@ export function LoginForm({
                     {isLoading ? (
                       <Loader className="size-4 animate-spin" />
                     ) : (
-                      'Login'
+                      "Login"
                     )}
                   </Button>
 
@@ -283,7 +297,9 @@ export function LoginForm({
                 /* PHASE 1: Input email to request code */
                 <form onSubmit={handleSendMagicLink} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Email Address</label>
+                    <label className="text-sm font-medium text-foreground">
+                      Email Address
+                    </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -306,7 +322,7 @@ export function LoginForm({
                     {isLoading ? (
                       <Loader className="size-4 animate-spin" />
                     ) : (
-                      'Send Sign-in Link & Code'
+                      "Send Sign-in Link & Code"
                     )}
                   </Button>
                 </form>
@@ -319,7 +335,8 @@ export function LoginForm({
                       Code sent to {emailForOtp}
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Click the link in your email to sign in instantly, or enter the 6-digit passcode below:
+                      Click the link in your email to sign in instantly, or
+                      enter the 6-digit passcode below:
                     </p>
                   </div>
 
@@ -333,7 +350,9 @@ export function LoginForm({
                         required
                         disabled={isLoading}
                         value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) =>
+                          setOtpCode(e.target.value.replace(/[^0-9]/g, ""))
+                        }
                         placeholder="123456"
                         className="pl-9 text-center font-mono tracking-[0.2em] bg-background/50 text-lg font-bold"
                       />
@@ -349,10 +368,10 @@ export function LoginForm({
                       {isLoading ? (
                         <Loader className="size-4 animate-spin" />
                       ) : (
-                        'Verify Passcode'
+                        "Verify Passcode"
                       )}
                     </Button>
-                    
+
                     <Button
                       type="button"
                       variant="ghost"
@@ -381,8 +400,7 @@ export function LoginForm({
               type="button"
               onClick={() => {
                 const params = new URLSearchParams(window.location.search);
-                const next =
-                  params.get('next') || params.get('callbackUrl');
+                const next = params.get("next") || params.get("callbackUrl");
                 signInWithGoogle(next || undefined);
               }}
               className="w-full cursor-pointer bg-background/50 hover:bg-background/80"
@@ -401,7 +419,7 @@ export function LoginForm({
             </Button>
 
             <div className="text-center text-sm">
-              Don&#x27;t have an account?{' '}
+              Don&#x27;t have an account?{" "}
               <Link
                 href="/sign-up"
                 className="underline underline-offset-4 font-medium text-primary hover:text-primary/90"
@@ -410,15 +428,14 @@ export function LoginForm({
               </Link>
             </div>
           </div>
-
         </CardContent>
       </Card>
       <div className="text-muted-foreground/60 text-center text-xs text-balance">
-        By clicking continue, you agree to our{' '}
+        By clicking continue, you agree to our{" "}
         <Link href="/terms" className="underline hover:text-primary">
           Terms of Service
-        </Link>{' '}
-        and{' '}
+        </Link>{" "}
+        and{" "}
         <Link href="/privacy" className="underline hover:text-primary">
           Privacy Policy
         </Link>

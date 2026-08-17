@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -13,51 +13,51 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { authClient } from '@/lib/auth-client';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { authClient } from "@/lib/auth-client";
 import {
   checkOrganizationSlugAvailability,
   rememberActiveOrganization,
-} from '@/server/organizations';
-import { toast } from 'sonner';
-import { useState, useEffect, useCallback } from 'react';
-import { Loader, Check, X, AlertCircle, Eye } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { useDebounce } from '@/hooks/use-debounce';
+} from "@/server/organizations";
+import { toast } from "sonner";
+import { useState, useEffect, useCallback } from "react";
+import { Loader, Check, X, AlertCircle, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const createOrganizationFormSchema = z.object({
   name: z
     .string()
-    .min(2, 'Organization name must be at least 2 characters')
-    .max(50, 'Organization name must be less than 50 characters')
+    .min(2, "Organization name must be at least 2 characters")
+    .max(50, "Organization name must be less than 50 characters")
     .regex(
       /^[a-zA-Z0-9\s\-_]+$/,
-      'Organization name can only contain letters, numbers, spaces, hyphens, and underscores'
+      "Organization name can only contain letters, numbers, spaces, hyphens, and underscores",
     ),
   slug: z
     .string()
-    .min(2, 'Slug must be at least 2 characters')
-    .max(50, 'Slug must be less than 50 characters')
+    .min(2, "Slug must be at least 2 characters")
+    .max(50, "Slug must be less than 50 characters")
     .regex(
       /^[a-z0-9\-]+$/,
-      'Slug can only contain lowercase letters, numbers, and hyphens'
+      "Slug can only contain lowercase letters, numbers, and hyphens",
     )
     .refine(
-      (slug) => !slug.startsWith('-') && !slug.endsWith('-'),
-      'Slug cannot start or end with a hyphen'
+      (slug) => !slug.startsWith("-") && !slug.endsWith("-"),
+      "Slug cannot start or end with a hyphen",
     ),
-  logo: z.string().url('Logo must be a valid URL').optional().or(z.literal('')),
+  logo: z.string().url("Logo must be a valid URL").optional().or(z.literal("")),
 });
 
 type SlugValidationState =
-  | 'idle'
-  | 'checking'
-  | 'available'
-  | 'taken'
-  | 'error';
+  | "idle"
+  | "checking"
+  | "available"
+  | "taken"
+  | "error";
 
 type AuthErrorLike = {
   code?: unknown;
@@ -67,11 +67,11 @@ type AuthErrorLike = {
 };
 
 function getAuthErrorText(error: unknown) {
-  if (!error) return '';
-  if (typeof error === 'string') return error.toLowerCase();
+  if (!error) return "";
+  if (typeof error === "string") return error.toLowerCase();
   if (error instanceof Error) return error.message.toLowerCase();
 
-  if (typeof error === 'object') {
+  if (typeof error === "object") {
     const errorLike = error as AuthErrorLike;
     return [
       errorLike.code,
@@ -79,24 +79,25 @@ function getAuthErrorText(error: unknown) {
       errorLike.status,
       errorLike.statusText,
     ]
-      .filter((value): value is string | number =>
-        typeof value === 'string' || typeof value === 'number'
+      .filter(
+        (value): value is string | number =>
+          typeof value === "string" || typeof value === "number",
       )
-      .join(' ')
+      .join(" ")
       .toLowerCase();
   }
 
-  return '';
+  return "";
 }
 
 function isSlugTakenError(error: unknown) {
   const errorText = getAuthErrorText(error);
 
   return (
-    errorText.includes('organization_slug_already_taken') ||
-    errorText.includes('organization_already_exists') ||
-    (errorText.includes('slug') &&
-      (errorText.includes('taken') || errorText.includes('exists')))
+    errorText.includes("organization_slug_already_taken") ||
+    errorText.includes("organization_already_exists") ||
+    (errorText.includes("slug") &&
+      (errorText.includes("taken") || errorText.includes("exists")))
   );
 }
 
@@ -104,13 +105,13 @@ function isOrganizationLimitError(error: unknown) {
   const errorText = getAuthErrorText(error);
 
   return (
-    errorText.includes('maximum number of organizations') ||
-    errorText.includes('reached the maximum') ||
-    errorText.includes('not allowed to create') ||
+    errorText.includes("maximum number of organizations") ||
+    errorText.includes("reached the maximum") ||
+    errorText.includes("not allowed to create") ||
     errorText.includes(
-      'you_have_reached_the_maximum_number_of_organizations'
+      "you_have_reached_the_maximum_number_of_organizations",
     ) ||
-    errorText.includes('you_are_not_allowed_to_create_a_new_organization')
+    errorText.includes("you_are_not_allowed_to_create_a_new_organization")
   );
 }
 
@@ -126,30 +127,30 @@ export function CreateOrganizationForm({
   const [slugManuallyChanged, setSlugManuallyChanged] = useState(false);
   const [slugEditable, setSlugEditable] = useState(false);
   const [slugValidation, setSlugValidation] =
-    useState<SlugValidationState>('idle');
+    useState<SlugValidationState>("idle");
   const [slugCheckTimeout, setSlugCheckTimeout] =
     useState<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof createOrganizationFormSchema>>({
     resolver: zodResolver(createOrganizationFormSchema),
-    mode: 'onChange',
+    mode: "onChange",
     defaultValues: {
-      name: '',
-      slug: '',
-      logo: '',
+      name: "",
+      slug: "",
+      logo: "",
     },
   });
 
-  const watchedName = form.watch('name');
+  const watchedName = form.watch("name");
   const debouncedName = useDebounce(watchedName, 500);
 
   useEffect(() => {
     if (debouncedName) {
-      form.trigger('name');
+      form.trigger("name");
       if (!slugManuallyChanged) {
         const newSlug = slugify(debouncedName);
-        form.setValue('slug', newSlug, {
+        form.setValue("slug", newSlug, {
           shouldValidate: true,
         });
         if (newSlug) {
@@ -165,31 +166,31 @@ export function CreateOrganizationForm({
       .toString()
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   // Debounced slug validation
   const checkSlugAvailability = useCallback(async (slug: string) => {
     if (!slug || slug.length < 2) {
-      setSlugValidation('idle');
+      setSlugValidation("idle");
       return;
     }
 
-    setSlugValidation('checking');
+    setSlugValidation("checking");
 
     try {
       const result = await checkOrganizationSlugAvailability(slug);
 
       if (result.error) {
-        setSlugValidation('error');
+        setSlugValidation("error");
         return;
       }
 
-      setSlugValidation(result.available ? 'available' : 'taken');
+      setSlugValidation(result.available ? "available" : "taken");
     } catch (error) {
-      console.error('Error checking slug availability:', error);
-      setSlugValidation('error');
+      console.error("Error checking slug availability:", error);
+      setSlugValidation("error");
     }
   }, []);
 
@@ -206,7 +207,7 @@ export function CreateOrganizationForm({
 
       setSlugCheckTimeout(timeout);
     },
-    [checkSlugAvailability, slugCheckTimeout]
+    [checkSlugAvailability, slugCheckTimeout],
   );
 
   // Cleanup timeout on unmount
@@ -219,12 +220,12 @@ export function CreateOrganizationForm({
   }, [slugCheckTimeout]);
 
   async function onSubmit(
-    values: z.infer<typeof createOrganizationFormSchema>
+    values: z.infer<typeof createOrganizationFormSchema>,
   ) {
     // Final slug availability check before submission
-    if (slugValidation === 'taken') {
+    if (slugValidation === "taken") {
       toast.error(
-        'This organization slug is already taken. Please choose a different one.'
+        "This organization slug is already taken. Please choose a different one.",
       );
       return;
     }
@@ -232,20 +233,20 @@ export function CreateOrganizationForm({
     setIsLoading(true);
     try {
       const slugAvailability = await checkOrganizationSlugAvailability(
-        values.slug
+        values.slug,
       );
 
       if (slugAvailability.error) {
         toast.error(slugAvailability.error);
-        setSlugValidation('error');
+        setSlugValidation("error");
         return;
       }
 
       if (!slugAvailability.available) {
         toast.error(
-          'This organization slug is already taken. Please choose a different one.'
+          "This organization slug is already taken. Please choose a different one.",
         );
-        setSlugValidation('taken');
+        setSlugValidation("taken");
         return;
       }
 
@@ -260,7 +261,7 @@ export function CreateOrganizationForm({
       }
 
       if (!result.data?.id) {
-        throw new Error('Organization creation did not return an id.');
+        throw new Error("Organization creation did not return an id.");
       }
 
       // Set the newly created organization as active
@@ -271,25 +272,25 @@ export function CreateOrganizationForm({
 
       // Show success state with animation
       setIsSuccess(true);
-      toast.success('Organization created successfully!');
+      toast.success("Organization created successfully!");
 
       // Navigate immediately for production responsiveness
       router.push(`/dashboard`);
       router.refresh();
     } catch (error: unknown) {
-      console.error('Organization creation error:', error);
+      console.error("Organization creation error:", error);
 
       if (isSlugTakenError(error)) {
         toast.error(
-          'This organization slug is already taken. Please choose a different one.'
+          "This organization slug is already taken. Please choose a different one.",
         );
-        setSlugValidation('taken');
+        setSlugValidation("taken");
       } else if (isOrganizationLimitError(error)) {
         toast.error(
-          'You have reached your organization limit for your current plan.'
+          "You have reached your organization limit for your current plan.",
         );
       } else {
-        toast.error('Failed to create organization. Please try again.');
+        toast.error("Failed to create organization. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -299,13 +300,13 @@ export function CreateOrganizationForm({
   // Get slug validation icon and color
   const getSlugValidationIcon = () => {
     switch (slugValidation) {
-      case 'checking':
+      case "checking":
         return <Loader className="size-4 animate-spin text-muted-foreground" />;
-      case 'available':
+      case "available":
         return <Check className="size-4 text-green-600" />;
-      case 'taken':
+      case "taken":
         return <X className="size-4 text-red-600" />;
-      case 'error':
+      case "error":
         return <AlertCircle className="size-4 text-yellow-600" />;
       default:
         return null;
@@ -314,14 +315,14 @@ export function CreateOrganizationForm({
 
   const getSlugValidationMessage = () => {
     switch (slugValidation) {
-      case 'checking':
-        return 'Checking availability...';
-      case 'available':
-        return 'This slug is available!';
-      case 'taken':
-        return 'This slug is already taken';
-      case 'error':
-        return 'Unable to check availability right now. You can still try creating the organization.';
+      case "checking":
+        return "Checking availability...";
+      case "available":
+        return "This slug is available!";
+      case "taken":
+        return "This slug is already taken";
+      case "error":
+        return "Unable to check availability right now. You can still try creating the organization.";
       default:
         return null;
     }
@@ -394,9 +395,9 @@ export function CreateOrganizationForm({
                 <Input
                   placeholder="Enter your organization name"
                   className={cn(
-                    'transition-all duration-200',
-                    fieldState.error && 'border-red-500 focus:border-red-500',
-                    !fieldState.error && field.value && 'border-green-500'
+                    "transition-all duration-200",
+                    fieldState.error && "border-red-500 focus:border-red-500",
+                    !fieldState.error && field.value && "border-green-500",
                   )}
                   {...field}
                   onChange={(e) => {
@@ -427,32 +428,32 @@ export function CreateOrganizationForm({
                       <Input
                         placeholder="organization-slug"
                         className={cn(
-                          'transition-all duration-200 pr-10',
+                          "transition-all duration-200 pr-10",
                           fieldState.error &&
-                            'border-red-500 focus:border-red-500',
+                            "border-red-500 focus:border-red-500",
                           !fieldState.error &&
                             field.value &&
-                            slugValidation === 'available' &&
-                            'border-green-500',
+                            slugValidation === "available" &&
+                            "border-green-500",
                           !fieldState.error &&
                             field.value &&
-                            slugValidation === 'taken' &&
-                            'border-red-500'
+                            slugValidation === "taken" &&
+                            "border-red-500",
                         )}
                         {...field}
                         disabled={!slugEditable}
                         onChange={(e) => {
                           const value = e.target.value
                             .toLowerCase()
-                            .replace(/[^a-z0-9\-]/g, '');
+                            .replace(/[^a-z0-9\-]/g, "");
                           field.onChange(value);
                           setSlugManuallyChanged(
-                            value !== slugify(debouncedName)
+                            value !== slugify(debouncedName),
                           );
                           if (value) {
                             debouncedSlugCheck(value);
                           } else {
-                            setSlugValidation('idle');
+                            setSlugValidation("idle");
                           }
                         }}
                       />
@@ -491,11 +492,11 @@ export function CreateOrganizationForm({
                 {getSlugValidationMessage() && (
                   <p
                     className={cn(
-                      'text-xs',
-                      slugValidation === 'available' && 'text-green-600',
-                      slugValidation === 'taken' && 'text-red-600',
-                      slugValidation === 'checking' && 'text-muted-foreground',
-                      slugValidation === 'error' && 'text-yellow-600'
+                      "text-xs",
+                      slugValidation === "available" && "text-green-600",
+                      slugValidation === "taken" && "text-red-600",
+                      slugValidation === "checking" && "text-muted-foreground",
+                      slugValidation === "error" && "text-yellow-600",
                     )}
                   >
                     {getSlugValidationMessage()}
@@ -523,9 +524,9 @@ export function CreateOrganizationForm({
                 <Input
                   placeholder="https://example.com/logo.png"
                   className={cn(
-                    'transition-all duration-200',
-                    fieldState.error && 'border-red-500 focus:border-red-500',
-                    !fieldState.error && field.value && 'border-green-500'
+                    "transition-all duration-200",
+                    fieldState.error && "border-red-500 focus:border-red-500",
+                    !fieldState.error && field.value && "border-green-500",
                   )}
                   {...field}
                 />
@@ -542,8 +543,8 @@ export function CreateOrganizationForm({
           disabled={
             !form.formState.isValid ||
             isLoading ||
-            slugValidation === 'taken' ||
-            slugValidation === 'checking' ||
+            slugValidation === "taken" ||
+            slugValidation === "checking" ||
             currentOrganizationCount >= 2
           }
           type="submit"

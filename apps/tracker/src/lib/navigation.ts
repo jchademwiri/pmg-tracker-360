@@ -9,11 +9,11 @@ export function getOrgAwareUrl(path: string, orgSlug?: string): string {
   }
 
   // Organization-specific pages should use the org slug
-  if (path.startsWith('/dashboard') || path === '/dashboard') {
+  if (path.startsWith("/dashboard") || path === "/dashboard") {
     return `/organization/${orgSlug}`;
   }
 
-  if (path.startsWith('/organization')) {
+  if (path.startsWith("/organization")) {
     // Replace any existing org slug with the current one
     return path.replace(/\/organization\/[^\/]+/, `/organization/${orgSlug}`);
   }
@@ -25,9 +25,9 @@ export function getOrgAwareUrl(path: string, orgSlug?: string): string {
 // Check if a path is organization-specific
 export function isOrgSpecificPath(path: string): boolean {
   return (
-    path.includes('/organization/') ||
-    path.startsWith('/dashboard') ||
-    path === '/dashboard'
+    path.includes("/organization/") ||
+    path.startsWith("/dashboard") ||
+    path === "/dashboard"
   );
 }
 

@@ -1,4 +1,4 @@
-import { db } from '@pmg/db';
+import { db } from "@pmg/db";
 import {
   organization,
   member,
@@ -8,15 +8,15 @@ import {
   tenderExtension,
   type Organization,
   type Member,
-} from '@pmg/db/schema';
-import { eq, and, isNotNull, count } from 'drizzle-orm';
+} from "@pmg/db/schema";
+import { eq, and, isNotNull, count } from "drizzle-orm";
 
 export interface DeletionConfirmation {
   organizationName: string;
   confirmationPhrase: string;
   dataExportRequested: boolean;
-  exportFormat?: 'json' | 'csv';
-  deletionType: 'soft' | 'permanent';
+  exportFormat?: "json" | "csv";
+  deletionType: "soft" | "permanent";
   reason?: string;
 }
 
@@ -35,7 +35,7 @@ export interface DeletionValidationResult {
 export interface OrganizationDeletionResult {
   success: boolean;
   deletionId?: string;
-  deletionType: 'soft' | 'permanent';
+  deletionType: "soft" | "permanent";
   exportUrl?: string;
   permanentDeletionScheduledAt?: Date;
   affectedRecords: {
@@ -66,13 +66,13 @@ export interface SoftDeletedOrganization {
 }
 
 class OrganizationDeletionManager {
-  private readonly CONFIRMATION_PHRASE = 'DELETE ORGANIZATION';
+  private readonly CONFIRMATION_PHRASE = "DELETE ORGANIZATION";
   private readonly DEFAULT_SOFT_DELETE_GRACE_PERIOD_DAYS = 30;
 
   async validateDeletionRequest(
     organizationId: string,
     _confirmation: DeletionConfirmation,
-    _userRole: string
+    _userRole: string,
   ): Promise<DeletionValidationResult> {
     try {
       // 1. Check if organization exists
@@ -86,7 +86,7 @@ class OrganizationDeletionManager {
       if (!org) {
         return {
           isValid: false,
-          errors: ['Organization not found'],
+          errors: ["Organization not found"],
           warnings: [],
           relatedDataCount: {
             tenders: 0,
@@ -124,7 +124,7 @@ class OrganizationDeletionManager {
 
       // 3. Check for active interactions (contracts/projects)
       // This maps to "Active Contracts" in the requirements
-      const activeProjects = org.projects.filter((p) => p.status === 'active');
+      const activeProjects = org.projects.filter((p) => p.status === "active");
 
       const warnings: string[] = [];
       if (activeProjects.length > 0) {
@@ -133,7 +133,7 @@ class OrganizationDeletionManager {
 
       if (relatedDataCount.members > 1) {
         warnings.push(
-          `There are ${relatedDataCount.members} members in this organization.`
+          `There are ${relatedDataCount.members} members in this organization.`,
         );
       }
 
@@ -144,10 +144,10 @@ class OrganizationDeletionManager {
         relatedDataCount,
       };
     } catch (error) {
-      console.error('Error validating deletion request:', error);
+      console.error("Error validating deletion request:", error);
       return {
         isValid: false,
-        errors: ['An unexpected error occurred during validation'],
+        errors: ["An unexpected error occurred during validation"],
         warnings: [],
         relatedDataCount: {
           tenders: 0,
@@ -165,8 +165,8 @@ class OrganizationDeletionManager {
 
   async exportOrganizationData(
     organizationId: string,
-    format: 'json' | 'csv',
-    userId: string
+    format: "json" | "csv",
+    userId: string,
   ): Promise<string | null> {
     try {
       console.log(`Exporting data for org ${organizationId} by ${userId}`);
@@ -190,27 +190,27 @@ class OrganizationDeletionManager {
 
       if (!orgData) return null;
 
-      if (format === 'json') {
+      if (format === "json") {
         const jsonString = JSON.stringify(orgData, null, 2);
         // Create a Data URI for immediate download
-        const base64Data = Buffer.from(jsonString).toString('base64');
+        const base64Data = Buffer.from(jsonString).toString("base64");
         return `data:application/json;base64,${base64Data}`;
       } else {
         // Simple CSV implementation for MVP (Organization details only)
         // In a real app, we'd probably want multiple CSVs (zip) or a complex flattening
-        const headers = ['id', 'name', 'slug', 'createdAt'].join(',');
+        const headers = ["id", "name", "slug", "createdAt"].join(",");
         const row = [
           orgData.id,
           orgData.name,
           orgData.slug,
           orgData.createdAt,
-        ].join(',');
+        ].join(",");
         const csvContent = `${headers}\n${row}`;
-        const base64Data = Buffer.from(csvContent).toString('base64');
+        const base64Data = Buffer.from(csvContent).toString("base64");
         return `data:text/csv;base64,${base64Data}`;
       }
     } catch (error) {
-      console.error('Error exporting data', error);
+      console.error("Error exporting data", error);
       return null;
     }
   }
@@ -218,7 +218,7 @@ class OrganizationDeletionManager {
   async softDeleteOrganization(
     organizationId: string,
     userId: string,
-    confirmation: DeletionConfirmation
+    confirmation: DeletionConfirmation,
   ): Promise<OrganizationDeletionResult> {
     try {
       // Check if organization exists and is not already deleted
@@ -229,35 +229,35 @@ class OrganizationDeletionManager {
       if (!org) {
         return {
           success: false,
-          deletionType: 'soft',
+          deletionType: "soft",
           affectedRecords: {
             tenders: 0,
             projects: 0,
             members: 0,
             extensions: 0,
           },
-          error: 'Organization not found',
+          error: "Organization not found",
         };
       }
 
       if (org.deletedAt) {
         return {
           success: false,
-          deletionType: 'soft',
+          deletionType: "soft",
           affectedRecords: {
             tenders: 0,
             projects: 0,
             members: 0,
             extensions: 0,
           },
-          error: 'Organization is already deleted',
+          error: "Organization is already deleted",
         };
       }
 
       // Calculate permanent deletion date (30 days from now)
       const permanentDeletionDate = new Date(
         Date.now() +
-          this.DEFAULT_SOFT_DELETE_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+          this.DEFAULT_SOFT_DELETE_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
       );
 
       // Update organization with soft deletion fields
@@ -274,17 +274,17 @@ class OrganizationDeletionManager {
       return {
         success: true,
         deletionId: crypto.randomUUID(),
-        deletionType: 'soft',
+        deletionType: "soft",
         permanentDeletionScheduledAt: permanentDeletionDate,
         affectedRecords: { tenders: 0, projects: 0, members: 0, extensions: 0 },
       };
     } catch (error) {
-      console.error('Error soft deleting organization:', error);
+      console.error("Error soft deleting organization:", error);
       return {
         success: false,
-        deletionType: 'soft',
+        deletionType: "soft",
         affectedRecords: { tenders: 0, projects: 0, members: 0, extensions: 0 },
-        error: 'Failed to delete organization',
+        error: "Failed to delete organization",
       };
     }
   }
@@ -292,11 +292,11 @@ class OrganizationDeletionManager {
   async restoreOrganization(
     organizationId: string,
     userId: string,
-    reason?: string
+    reason?: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
       console.log(
-        `Restoring organization ${organizationId} by user ${userId} with reason: ${reason}`
+        `Restoring organization ${organizationId} by user ${userId} with reason: ${reason}`,
       );
 
       // Check if organization exists and is actually deleted
@@ -305,11 +305,11 @@ class OrganizationDeletionManager {
       });
 
       if (!org) {
-        return { success: false, error: 'Organization not found' };
+        return { success: false, error: "Organization not found" };
       }
 
       if (!org.deletedAt) {
-        return { success: false, error: 'Organization is not deleted' };
+        return { success: false, error: "Organization is not deleted" };
       }
 
       await db
@@ -324,19 +324,19 @@ class OrganizationDeletionManager {
 
       return { success: true };
     } catch (error) {
-      console.error('Error restoring organization:', error);
-      return { success: false, error: 'Failed to restore organization' };
+      console.error("Error restoring organization:", error);
+      return { success: false, error: "Failed to restore organization" };
     }
   }
 
   async permanentlyDeleteOrganization(
     organizationId: string,
     userId: string,
-    reason?: string
+    reason?: string,
   ): Promise<OrganizationDeletionResult> {
     try {
       console.log(
-        `Permanently deleting organization ${organizationId} by user ${userId} with reason: ${reason}`
+        `Permanently deleting organization ${organizationId} by user ${userId} with reason: ${reason}`,
       );
 
       // Check if organization exists
@@ -347,14 +347,14 @@ class OrganizationDeletionManager {
       if (!org) {
         return {
           success: false,
-          deletionType: 'permanent',
+          deletionType: "permanent",
           affectedRecords: {
             tenders: 0,
             projects: 0,
             members: 0,
             extensions: 0,
           },
-          error: 'Organization not found',
+          error: "Organization not found",
         };
       }
 
@@ -384,7 +384,7 @@ class OrganizationDeletionManager {
 
         return {
           success: true,
-          deletionType: 'permanent',
+          deletionType: "permanent",
           affectedRecords: {
             tenders: tendersCount?.count || 0,
             projects: projectsCount?.count || 0,
@@ -394,24 +394,24 @@ class OrganizationDeletionManager {
         };
       });
     } catch (error) {
-      console.error('Error permanently deleting organization:', error);
+      console.error("Error permanently deleting organization:", error);
       return {
         success: false,
-        deletionType: 'permanent',
+        deletionType: "permanent",
         affectedRecords: { tenders: 0, projects: 0, members: 0, extensions: 0 },
-        error: 'Failed to permanently delete organization',
+        error: "Failed to permanently delete organization",
       };
     }
   }
 
   async getSoftDeletedOrganizations(
-    userId: string
+    userId: string,
   ): Promise<SoftDeletedOrganization[]> {
     try {
       const deletedOrgs = await db.query.organization.findMany({
         where: and(
           isNotNull(organization.deletedAt),
-          eq(organization.deletedBy, userId) // Only show orgs deleted by this user? Or maybe all deleted orgs if they are owner?
+          eq(organization.deletedBy, userId), // Only show orgs deleted by this user? Or maybe all deleted orgs if they are owner?
           // Since we don't have a clear "owner" link after deletion (member table might be cleared or relations invalid),
           // relying on `deletedBy` is a safe bet for "My Deleted Organizations"
         ),
@@ -428,8 +428,8 @@ class OrganizationDeletionManager {
           0,
           Math.ceil(
             (org.permanentDeletionScheduledAt!.getTime() - Date.now()) /
-              (1000 * 60 * 60 * 24)
-          )
+              (1000 * 60 * 60 * 24),
+          ),
         ),
         canRestore: true,
         canPermanentlyDelete: true,
@@ -441,7 +441,7 @@ class OrganizationDeletionManager {
         }, // Fetch real counts if needed
       }));
     } catch (error) {
-      console.error('Error fetching soft deleted orgs', error);
+      console.error("Error fetching soft deleted orgs", error);
       return [];
     }
   }
@@ -450,21 +450,21 @@ class OrganizationDeletionManager {
     organizationId: string,
     userId: string,
     userRole: string,
-    reason: string
+    reason: string,
   ): Promise<OrganizationDeletionResult> {
-    if (userRole !== 'owner') {
+    if (userRole !== "owner") {
       return {
         success: false,
-        deletionType: 'permanent',
+        deletionType: "permanent",
         affectedRecords: { tenders: 0, projects: 0, members: 0, extensions: 0 },
-        error: 'Only organization owners can force permanent deletion',
+        error: "Only organization owners can force permanent deletion",
       };
     }
 
     return await this.permanentlyDeleteOrganization(
       organizationId,
       userId,
-      reason
+      reason,
     );
   }
 }

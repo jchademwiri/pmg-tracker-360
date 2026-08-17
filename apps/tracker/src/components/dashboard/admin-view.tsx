@@ -1,7 +1,7 @@
-import { Suspense } from 'react';
-import { DashboardMetrics } from '@/components/dashboard/dashboard-metrics';
-import { DashboardDeadlines } from '@/components/dashboard/dashboard-deadlines';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Suspense } from "react";
+import { DashboardMetrics } from "@/components/dashboard/dashboard-metrics";
+import { DashboardDeadlines } from "@/components/dashboard/dashboard-deadlines";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminViewProps {
   organizationId: string;
@@ -25,7 +25,11 @@ export async function AdminView({ organizationId }: AdminViewProps) {
 
       {/* Actionable Deadlines, Briefings & Follow-Ups Stream */}
       <div className="w-full">
-        <Suspense fallback={<Skeleton className="h-[400px] rounded-3xl bg-card/50 border border-border/20" />}>
+        <Suspense
+          fallback={
+            <Skeleton className="h-[400px] rounded-3xl bg-card/50 border border-border/20" />
+          }
+        >
           <DashboardDeadlines organizationId={organizationId} />
         </Suspense>
       </div>
