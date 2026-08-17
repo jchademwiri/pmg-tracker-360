@@ -1,12 +1,16 @@
-import 'server-only';
+import "server-only";
 
-import { jsPDF } from 'jspdf';
-import { StorageService } from '@/lib/storage';
+import { jsPDF } from "jspdf";
+import { StorageService } from "@/lib/storage";
 
 export const PAGE = { width: 210, height: 297, margin: 14, bottom: 280 };
 
-export function splitText(doc: jsPDF, text: string | undefined | null, width: number) {
-  return doc.splitTextToSize(text || '', width) as string[];
+export function splitText(
+  doc: jsPDF,
+  text: string | undefined | null,
+  width: number,
+) {
+  return doc.splitTextToSize(text || "", width) as string[];
 }
 
 export function ensurePage(doc: jsPDF, y: number, needed = 16) {
@@ -32,10 +36,12 @@ function getAllowedLogoHost(): string | null {
 }
 
 function isAllowedLogoUrl(url: URL): boolean {
-  if (url.protocol !== 'https:') return false;
+  if (url.protocol !== "https:") return false;
   const allowedHost = getAllowedLogoHost();
   if (!allowedHost) return false;
-  return url.hostname === allowedHost || url.hostname.endsWith(`.${allowedHost}`);
+  return (
+    url.hostname === allowedHost || url.hostname.endsWith(`.${allowedHost}`)
+  );
 }
 
 /**
@@ -50,10 +56,12 @@ async function resolveLogoUrl(logo: string | null): Promise<string | null> {
   if (!logo) return null;
   if (/^https?:\/\//i.test(logo)) return logo;
   const signedUrl = await StorageService.getSignedUrl(logo);
-  return signedUrl.startsWith('http') ? signedUrl : null;
+  return signedUrl.startsWith("http") ? signedUrl : null;
 }
 
-export async function fetchLogoBase64(logo: string | null): Promise<string | null> {
+export async function fetchLogoBase64(
+  logo: string | null,
+): Promise<string | null> {
   const logoUrl = await resolveLogoUrl(logo);
   if (!logoUrl) return null;
 
@@ -72,7 +80,7 @@ export async function fetchLogoBase64(logo: string | null): Promise<string | nul
   try {
     const response = await fetch(parsed.toString(), {
       signal: AbortSignal.timeout(LOGO_FETCH_TIMEOUT_MS),
-      redirect: 'manual',
+      redirect: "manual",
     });
     if (response.status !== 200 || !response.body) return null;
 
@@ -84,9 +92,9 @@ export async function fetchLogoBase64(logo: string | null): Promise<string | nul
       chunks.push(chunk);
     }
 
-    const contentType = response.headers.get('content-type') || 'image/png';
+    const contentType = response.headers.get("content-type") || "image/png";
     const buffer = Buffer.concat(chunks);
-    return `data:${contentType};base64,${buffer.toString('base64')}`;
+    return `data:${contentType};base64,${buffer.toString("base64")}`;
   } catch {
     // Logo fetch is best-effort; fall back to text header if it fails,
     // times out, or exceeds the size cap.
@@ -100,11 +108,11 @@ export async function fetchLogoBase64(logo: string | null): Promise<string | nul
  * already-parsed or as a JSON string depending on the caller.
  */
 export function parseOrganizationMetadata(
-  metadata: Record<string, unknown> | string | null | undefined
+  metadata: Record<string, unknown> | string | null | undefined,
 ): { phone?: string; address?: string; website?: string } {
   if (!metadata) return {};
   const parsed =
-    typeof metadata === 'string'
+    typeof metadata === "string"
       ? (() => {
           try {
             return JSON.parse(metadata);
@@ -114,9 +122,9 @@ export function parseOrganizationMetadata(
         })()
       : metadata;
   return {
-    phone: typeof parsed?.phone === 'string' ? parsed.phone : undefined,
-    address: typeof parsed?.address === 'string' ? parsed.address : undefined,
-    website: typeof parsed?.website === 'string' ? parsed.website : undefined,
+    phone: typeof parsed?.phone === "string" ? parsed.phone : undefined,
+    address: typeof parsed?.address === "string" ? parsed.address : undefined,
+    website: typeof parsed?.website === "string" ? parsed.website : undefined,
   };
 }
 
@@ -134,7 +142,7 @@ export type OrgBranding = {
  */
 function fitText(doc: jsPDF, text: string, maxWidth: number): string {
   if (doc.getTextWidth(text) <= maxWidth) return text;
-  const ellipsis = '…';
+  const ellipsis = "…";
   let low = 0;
   let high = text.length;
   while (low < high) {
@@ -156,16 +164,16 @@ export function drawStandardHeader(
     titleLabel: string;
     primaryLine: string;
     secondaryLine?: string;
-  }
+  },
 ) {
   const { org, titleLabel, primaryLine, secondaryLine } = opts;
 
   doc.setFillColor(79, 70, 229); // indigo-600, matches app accent
-  doc.rect(0, 0, PAGE.width, 3, 'F');
+  doc.rect(0, 0, PAGE.width, 3, "F");
 
   if (org.logoDataUri) {
     try {
-      doc.addImage(org.logoDataUri, PAGE.margin, 10, 20, 20, undefined, 'FAST');
+      doc.addImage(org.logoDataUri, PAGE.margin, 10, 20, 20, undefined, "FAST");
     } catch {
       // Corrupt/unsupported image format — fall back to text below.
     }
@@ -177,10 +185,10 @@ export function drawStandardHeader(
   // Measure the right-hand title block first so the left-hand org identity
   // block can be constrained to never run into it, regardless of how long
   // the organization name or title text is.
-  doc.setFont('helvetica', 'bold');
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   const titleWidth = doc.getTextWidth(titleLabel);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   const primaryWidth = doc.getTextWidth(primaryLine);
   let secondaryWidth = 0;
@@ -192,39 +200,39 @@ export function drawStandardHeader(
   const gap = 8;
   const leftMaxWidth = rightX - rightBlockWidth - gap - textX;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(24, 24, 27);
   doc.text(fitText(doc, org.name, leftMaxWidth), textX, 18);
 
   const detailLines = [org.phone, org.address, org.website].filter(
-    (line): line is string => Boolean(line)
+    (line): line is string => Boolean(line),
   );
   if (detailLines.length > 0) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
     detailLines
       .slice(0, 3)
       .forEach((line, index) =>
-        doc.text(fitText(doc, line, leftMaxWidth), textX, 24 + index * 4.5)
+        doc.text(fitText(doc, line, leftMaxWidth), textX, 24 + index * 4.5),
       );
   }
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(63, 63, 70);
-  doc.text(titleLabel, rightX, 17, { align: 'right' });
+  doc.text(titleLabel, rightX, 17, { align: "right" });
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(39, 39, 42);
-  doc.text(primaryLine, rightX, 23, { align: 'right' });
+  doc.text(primaryLine, rightX, 23, { align: "right" });
 
   if (secondaryLine) {
     doc.setFontSize(8);
     doc.setTextColor(82, 82, 91);
-    doc.text(secondaryLine, rightX, 28, { align: 'right' });
+    doc.text(secondaryLine, rightX, 28, { align: "right" });
   }
 
   doc.setDrawColor(229, 231, 235);
@@ -239,11 +247,17 @@ export function drawStandardFooter(doc: jsPDF, orgName: string) {
     doc.setPage(i);
     doc.setDrawColor(229, 231, 235);
     doc.line(PAGE.margin, 282, PAGE.width - PAGE.margin, 282);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(113, 113, 122);
-    doc.text(orgName ? `Tender Tracker 360 - ${orgName}` : 'Tender Tracker 360', PAGE.margin, 288);
-    doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, { align: 'right' });
+    doc.text(
+      orgName ? `Tender Tracker 360 - ${orgName}` : "Tender Tracker 360",
+      PAGE.margin,
+      288,
+    );
+    doc.text(`Page ${i} of ${pageCount}`, PAGE.width - PAGE.margin, 288, {
+      align: "right",
+    });
   }
 }
 
@@ -252,19 +266,24 @@ export type TableColumn = {
   label: string;
   widthMm: number;
   x: number;
-  align?: 'left' | 'right';
+  align?: "left" | "right";
   wrap?: boolean;
   bold?: boolean;
 };
 
 function drawTableHeaderRow(doc: jsPDF, y: number, columns: TableColumn[]) {
   doc.setFillColor(249, 250, 251);
-  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 9, 'F');
-  doc.setFont('helvetica', 'bold');
+  doc.rect(PAGE.margin, y, PAGE.width - PAGE.margin * 2, 9, "F");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   doc.setTextColor(113, 113, 122);
   for (const col of columns) {
-    doc.text(col.label, col.x, y + 6, col.align === 'right' ? { align: 'right' } : undefined);
+    doc.text(
+      col.label,
+      col.x,
+      y + 6,
+      col.align === "right" ? { align: "right" } : undefined,
+    );
   }
   return y + 12;
 }
@@ -281,43 +300,58 @@ export function drawTable(
     columns: TableColumn[];
     rows: Record<string, string>[];
     emptyMessage?: string;
-  }
+  },
 ) {
   const { columns, rows, emptyMessage } = opts;
   let y = drawTableHeaderRow(doc, opts.startY, columns);
 
   if (rows.length === 0) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(113, 113, 122);
-    doc.text(emptyMessage || 'No records.', PAGE.margin + 2, y + 4);
+    doc.text(emptyMessage || "No records.", PAGE.margin + 2, y + 4);
     return y + 12;
   }
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   for (const row of rows) {
     const wrappedCells = columns.map((col) =>
-      col.wrap ? splitText(doc, row[col.key], col.widthMm) : [row[col.key] ?? '']
+      col.wrap
+        ? splitText(doc, row[col.key], col.widthMm)
+        : [row[col.key] ?? ""],
     );
-    const rowHeight = Math.max(10, Math.max(...wrappedCells.map((lines) => lines.length)) * 4 + 4);
+    const rowHeight = Math.max(
+      10,
+      Math.max(...wrappedCells.map((lines) => lines.length)) * 4 + 4,
+    );
 
     const pageBefore = doc.getNumberOfPages();
     y = ensurePage(doc, y, rowHeight);
     if (doc.getNumberOfPages() !== pageBefore) {
       y = drawTableHeaderRow(doc, y, columns);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
     }
 
     columns.forEach((col, i) => {
       doc.setTextColor(24, 24, 27);
-      doc.setFont('helvetica', col.bold ? 'bold' : 'normal');
-      doc.text(wrappedCells[i]!, col.x, y + 4, col.align === 'right' ? { align: 'right' } : undefined);
+      doc.setFont("helvetica", col.bold ? "bold" : "normal");
+      doc.text(
+        wrappedCells[i]!,
+        col.x,
+        y + 4,
+        col.align === "right" ? { align: "right" } : undefined,
+      );
     });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
     doc.setDrawColor(244, 244, 245);
-    doc.line(PAGE.margin, y + rowHeight, PAGE.width - PAGE.margin, y + rowHeight);
+    doc.line(
+      PAGE.margin,
+      y + rowHeight,
+      PAGE.width - PAGE.margin,
+      y + rowHeight,
+    );
     y += rowHeight;
   }
 

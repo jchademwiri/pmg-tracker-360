@@ -4,10 +4,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
-import { UpcomingDeadlinesList } from '@/components/dashboard/upcoming-deadlines-list';
-import { getUpcomingDeadlines } from '@/server/tenders';
+} from "@/components/ui/card";
+import { Calendar } from "lucide-react";
+import { UpcomingDeadlinesList } from "@/components/dashboard/upcoming-deadlines-list";
+import { getUpcomingDeadlines } from "@/server/tenders";
 
 interface DashboardDeadlinesProps {
   organizationId: string;

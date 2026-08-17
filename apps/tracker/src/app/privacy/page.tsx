@@ -1,12 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import type { Metadata } from 'next';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
+  title: "Privacy Policy",
   description:
-    'Read the Tender Track 360 Privacy Policy. Learn how we handle your data in compliance with POPIA.',
+    "Read the Tender Track 360 Privacy Policy. Learn how we handle your data in compliance with POPIA.",
 };
 
 export default function PrivacyPage() {
@@ -42,8 +42,8 @@ export default function PrivacyPage() {
               </h2>
               <p>
                 At Tender Track 360, we respect your privacy and are committed
-                to protecting your personal data in accordance with the{' '}
-                <strong>Protection of Personal Information Act (POPIA)</strong>{' '}
+                to protecting your personal data in accordance with the{" "}
+                <strong>Protection of Personal Information Act (POPIA)</strong>{" "}
                 of South Africa. This privacy policy will inform you as to how
                 we look after your personal data when you visit our website and
                 tell you about your privacy rights.
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
             <section className="pt-4 border-t border-white/10">
               <p className="text-sm">
                 If you have any questions about this Privacy Policy, please
-                contact us at{' '}
+                contact us at{" "}
                 <a
                   href="mailto:info@tendertrack360.co.za"
                   className="text-primary hover:underline"

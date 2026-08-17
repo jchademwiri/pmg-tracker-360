@@ -3,7 +3,7 @@
  * All date operations in this app use SAST as the canonical timezone.
  */
 
-export const SAST_TIMEZONE = 'Africa/Johannesburg';
+export const SAST_TIMEZONE = "Africa/Johannesburg";
 export const SAST_OFFSET_HOURS = 2;
 export const SAST_OFFSET_MS = SAST_OFFSET_HOURS * 60 * 60 * 1000;
 
@@ -20,17 +20,17 @@ export function nowInSAST(): Date {
  * Safe for date inputs and database storage.
  */
 export function toSASTDateString(
-  date: Date | string | null | undefined
+  date: Date | string | null | undefined,
 ): string {
-  if (!date) return '';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (isNaN(d.getTime())) return '';
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "";
 
-  return new Intl.DateTimeFormat('en-CA', {
+  return new Intl.DateTimeFormat("en-CA", {
     timeZone: SAST_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).format(d);
 }
 
@@ -39,19 +39,19 @@ export function toSASTDateString(
  * Safe for datetime-local inputs.
  */
 export function toSASTDateTimeString(
-  date: Date | string | null | undefined
+  date: Date | string | null | undefined,
 ): string {
-  if (!date) return '';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  if (isNaN(d.getTime())) return '';
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "";
 
-  return new Intl.DateTimeFormat('sv-SE', {
+  return new Intl.DateTimeFormat("sv-SE", {
     timeZone: SAST_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: false,
   }).format(d);
 }
@@ -61,10 +61,10 @@ export function toSASTDateTimeString(
  * Prevents timezone offset issues when storing date-only values.
  */
 export function parseDateToUTC(
-  dateStr: string | null | undefined
+  dateStr: string | null | undefined,
 ): Date | null {
   if (!dateStr) return null;
-  const [year, month, day] = dateStr.split('-').map(Number);
+  const [year, month, day] = dateStr.split("-").map(Number);
   if (!year || !month || !day) return null;
   return new Date(Date.UTC(year, month - 1, day));
 }
@@ -74,20 +74,20 @@ export function parseDateToUTC(
  * The input is assumed to be in SAST (UTC+2).
  */
 export function parseDateTimeToUTC(
-  dateTimeStr: string | null | undefined
+  dateTimeStr: string | null | undefined,
 ): Date | null {
   if (!dateTimeStr) return null;
-  const [datePart, timePart] = dateTimeStr.split('T');
+  const [datePart, timePart] = dateTimeStr.split("T");
   if (!datePart || !timePart) return null;
 
-  const [year, month, day] = datePart.split('-').map(Number);
-  const [hours, minutes] = timePart.split(':').map(Number);
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hours, minutes] = timePart.split(":").map(Number);
 
   if (!year || !month || !day) return null;
 
   // Create a UTC date from the SAST values, then subtract the offset
   const utcDate = new Date(
-    Date.UTC(year, month - 1, day, hours || 0, minutes || 0)
+    Date.UTC(year, month - 1, day, hours || 0, minutes || 0),
   );
   utcDate.setUTCHours(utcDate.getUTCHours() - SAST_OFFSET_HOURS);
   return utcDate;

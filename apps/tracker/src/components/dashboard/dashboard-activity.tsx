@@ -4,8 +4,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { getRecentActivity } from '@/server/tenders';
+} from "@/components/ui/card";
+import { getRecentActivity } from "@/server/tenders";
 
 interface DashboardActivityProps {
   organizationId: string;
@@ -13,7 +13,7 @@ interface DashboardActivityProps {
 
 interface ActivityItem {
   id: string;
-  type: 'tender_created' | 'status_updated';
+  type: "tender_created" | "status_updated";
   description: string;
   timestamp: Date;
 }
@@ -23,19 +23,19 @@ export async function DashboardActivity({
 }: DashboardActivityProps) {
   const { activity: activityData } = await getRecentActivity(
     organizationId,
-    10
+    10,
   );
 
   const recentActivity: ActivityItem[] = [
     ...activityData.recentTenders.map((t) => ({
       id: `create-${t.id}`,
-      type: 'tender_created' as const,
+      type: "tender_created" as const,
       description: `New tender ${t.tenderNumber.toUpperCase()}`,
       timestamp: t.createdAt,
     })),
     ...activityData.recentChanges.map((t) => ({
       id: `update-${t.id}`,
-      type: 'status_updated' as const,
+      type: "status_updated" as const,
       description: `Tender ${t.tenderNumber.toUpperCase()} updated to ${t.status}`,
       timestamp: t.updatedAt || t.createdAt,
     })),
@@ -59,17 +59,21 @@ export async function DashboardActivity({
               >
                 <div
                   className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type.includes('created')
-                      ? 'bg-green-500'
-                      : activity.type.includes('status')
-                        ? 'bg-blue-500'
-                        : 'bg-gray-500'
+                    activity.type.includes("created")
+                      ? "bg-green-500"
+                      : activity.type.includes("status")
+                        ? "bg-blue-500"
+                        : "bg-gray-500"
                   }`}
                 />
                 <div className="flex-1">
                   <p className="text-sm font-medium">{activity.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(activity.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {new Date(activity.timestamp).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </p>
                 </div>
               </div>

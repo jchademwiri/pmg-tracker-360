@@ -1,7 +1,7 @@
-import { getCurrentUser } from '@/server';
-import { ClientForm } from '@/components/clients/client-form';
+import { getCurrentUser } from "@/server";
+import { ClientForm } from "@/components/clients/client-form";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function NewClientPage() {
   const { session } = await getCurrentUser();

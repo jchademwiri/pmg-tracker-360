@@ -1,10 +1,10 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { tender, client, organization } from '@pmg/db/schema';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { db } from "@pmg/db";
+import { tender, client, organization } from "@pmg/db/schema";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
-import { validateSessionAndOrg } from './utils';
+import { validateSessionAndOrg } from "./utils";
 
 export type TenderWinLossReportData = {
   org: { name: string; logo: string | null; metadata: unknown };
@@ -40,7 +40,7 @@ export async function getTenderWinLossReport(organizationId: string) {
       where: eq(organization.id, organizationId),
     });
     if (!org) {
-      return { success: false as const, error: 'Organization not found' };
+      return { success: false as const, error: "Organization not found" };
     }
 
     const decided = await db
@@ -59,13 +59,13 @@ export async function getTenderWinLossReport(organizationId: string) {
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          inArray(tender.status, ['awarded', 'lost'])
-        )
+          inArray(tender.status, ["awarded", "lost"]),
+        ),
       )
       .orderBy(tender.tenderNumber);
 
     const awarded = decided
-      .filter((row) => row.status === 'awarded')
+      .filter((row) => row.status === "awarded")
       .map((row) => ({
         tenderNumber: row.tenderNumber,
         clientName: row.clientName,
@@ -74,7 +74,7 @@ export async function getTenderWinLossReport(organizationId: string) {
       }));
 
     const lost = decided
-      .filter((row) => row.status === 'lost')
+      .filter((row) => row.status === "lost")
       .map((row) => ({
         tenderNumber: row.tenderNumber,
         clientName: row.clientName,
@@ -83,14 +83,21 @@ export async function getTenderWinLossReport(organizationId: string) {
         lossReason: row.lossReason,
       }));
 
-    const totalWonValue = awarded.reduce((sum, row) => sum + (parseFloat(row.awardValue || '0') || 0), 0);
-    const totalLostValue = lost.reduce((sum, row) => sum + (parseFloat(row.value || '0') || 0), 0);
+    const totalWonValue = awarded.reduce(
+      (sum, row) => sum + (parseFloat(row.awardValue || "0") || 0),
+      0,
+    );
+    const totalLostValue = lost.reduce(
+      (sum, row) => sum + (parseFloat(row.value || "0") || 0),
+      0,
+    );
     const decidedCount = awarded.length + lost.length;
-    const winRate = decidedCount > 0 ? Math.round((awarded.length / decidedCount) * 100) : 0;
+    const winRate =
+      decidedCount > 0 ? Math.round((awarded.length / decidedCount) * 100) : 0;
 
     const reasonCounts = new Map<string, number>();
     for (const row of lost) {
-      const reason = row.lossReason?.trim() || 'Not specified';
+      const reason = row.lossReason?.trim() || "Not specified";
       reasonCounts.set(reason, (reasonCounts.get(reason) || 0) + 1);
     }
     const lossReasons = Array.from(reasonCounts.entries())
@@ -114,7 +121,7 @@ export async function getTenderWinLossReport(organizationId: string) {
 
     return { success: true as const, data };
   } catch (error: unknown) {
-    console.error('Error building tender win/loss report:', error);
-    return { success: false as const, error: 'Failed to build report' };
+    console.error("Error building tender win/loss report:", error);
+    return { success: false as const, error: "Failed to build report" };
   }
 }

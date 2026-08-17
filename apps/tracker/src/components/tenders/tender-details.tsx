@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useTransition, useState, useEffect, useMemo } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import React, { useTransition, useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   FileText,
   Calendar,
@@ -24,27 +24,37 @@ import {
   Lightbulb,
   Edit,
   Sparkles,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   deleteTender,
   updateTenderStatus,
   createTenderFollowUp,
   getTenderActivities,
-} from '@/server/tenders';
-import { formatCurrency, formatDate as sharedFormatDate, formatDateTime } from '@/lib/format';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DocumentManager } from '@/components/documents/document-manager';
-import { toast } from 'sonner';
-import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
+} from "@/server/tenders";
+import {
+  formatCurrency,
+  formatDate as sharedFormatDate,
+  formatDateTime,
+} from "@/lib/format";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DocumentManager } from "@/components/documents/document-manager";
+import { toast } from "sonner";
+import { DeleteConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
-import { ExtensionList, ExtendedTenderExtension } from './extension-list';
-import { TenderOutcomeDialog } from './tender-outcome-dialog';
-import { TenderFollowUpDialog } from './tender-follow-up-dialog';
-import { TenderHeroHeader } from './tender-hero-header';
-import { TenderStakeholdersCard } from './tender-stakeholders-card';
+import { ExtensionList, ExtendedTenderExtension } from "./extension-list";
+import { TenderOutcomeDialog } from "./tender-outcome-dialog";
+import { TenderFollowUpDialog } from "./tender-follow-up-dialog";
+import { TenderHeroHeader } from "./tender-hero-header";
+import { TenderStakeholdersCard } from "./tender-stakeholders-card";
 
 interface TenderWithClient {
   id: string;
@@ -104,16 +114,22 @@ interface TenderDetailsProps {
   followUps: FollowUp[];
 }
 
-const VALID_TABS = ['overview', 'documents', 'extensions', 'follow-ups', 'activities'];
+const VALID_TABS = [
+  "overview",
+  "documents",
+  "extensions",
+  "follow-ups",
+  "activities",
+];
 
 const LOSS_REASON_LABELS: Record<string, string> = {
-  price: 'Pricing too high / Competitor undercut',
-  compliance: 'Compliance / Missing returnable document',
-  specs: 'Technical specs shortfall / Non-responsive',
-  experience: 'Track record / Insufficient references',
-  score: 'Functionality scorecard threshold not met',
-  cancelled: 'Tender cancelled / Re-advertised by client',
-  other: 'Other reason',
+  price: "Pricing too high / Competitor undercut",
+  compliance: "Compliance / Missing returnable document",
+  specs: "Technical specs shortfall / Non-responsive",
+  experience: "Track record / Insufficient references",
+  score: "Functionality scorecard threshold not met",
+  cancelled: "Tender cancelled / Re-advertised by client",
+  other: "Other reason",
 };
 
 export function TenderDetails({
@@ -135,19 +151,19 @@ export function TenderDetails({
 
   // Tab state synchronized with URL query params
   const activeTab = useMemo(() => {
-    const tabParam = searchParams.get('tab');
+    const tabParam = searchParams.get("tab");
     if (tabParam && VALID_TABS.includes(tabParam)) {
       return tabParam;
     }
-    return 'overview';
+    return "overview";
   }, [searchParams]);
 
   const handleTabChange = (newTab: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (newTab === 'overview') {
-      params.delete('tab');
+    if (newTab === "overview") {
+      params.delete("tab");
     } else {
-      params.set('tab', newTab);
+      params.set("tab", newTab);
     }
     const query = params.toString();
     const newUrl = query ? `${pathname}?${query}` : pathname;
@@ -158,7 +174,7 @@ export function TenderDetails({
   const [loadingActivities, setLoadingActivities] = useState(false);
 
   useEffect(() => {
-    if (activeTab === 'activities') {
+    if (activeTab === "activities") {
       const fetchActivities = async () => {
         setLoadingActivities(true);
         try {
@@ -167,7 +183,7 @@ export function TenderDetails({
             setActivities(result.activities);
           }
         } catch (error) {
-          console.error('Error loading tender activities:', error);
+          console.error("Error loading tender activities:", error);
         } finally {
           setLoadingActivities(false);
         }
@@ -178,13 +194,13 @@ export function TenderDetails({
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'tender_created':
+      case "tender_created":
         return <Plus className="h-4 w-4 text-emerald-400" />;
-      case 'status_change':
+      case "status_change":
         return <TrendingUp className="h-4 w-4 text-sky-400" />;
-      case 'extension_added':
+      case "extension_added":
         return <Calendar className="h-4 w-4 text-amber-400" />;
-      case 'follow_up_added':
+      case "follow_up_added":
         return <ClipboardCheck className="h-4 w-4 text-violet-400" />;
       default:
         return <Activity className="h-4 w-4 text-zinc-400" />;
@@ -199,10 +215,10 @@ export function TenderDetails({
       });
       if (result.success) {
         setShowFollowUpDialog(false);
-        toast.success('Follow-up logged successfully');
+        toast.success("Follow-up logged successfully");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to create follow-up');
+        toast.error(result.error || "Failed to create follow-up");
       }
     });
   };
@@ -219,30 +235,30 @@ export function TenderDetails({
     startTransition(async () => {
       const result = await deleteTender(organizationId, tender.id);
       if (result.success) {
-        toast.success('Tender deleted successfully');
+        toast.success("Tender deleted successfully");
         setIsDeleteDialogOpen(false);
-        router.push('/tenders');
+        router.push("/tenders");
         router.refresh();
       } else {
-        toast.error(result.error || 'Failed to delete tender');
+        toast.error(result.error || "Failed to delete tender");
       }
     });
   };
 
   const handleStatusUpdate = async (
     newStatus:
-      | 'new'
-      | 'review'
-      | 'approved_to_prepare'
-      | 'preparation'
-      | 'ready'
-      | 'submitted'
-      | 'evaluation'
-      | 'awarded'
-      | 'lost'
-      | 'cancelled'
-      | 'closed'
-      | 'open',
+      | "new"
+      | "review"
+      | "approved_to_prepare"
+      | "preparation"
+      | "ready"
+      | "submitted"
+      | "evaluation"
+      | "awarded"
+      | "lost"
+      | "cancelled"
+      | "closed"
+      | "open",
     details?: {
       awardValue?: string | null;
       contractStartDate?: Date | null;
@@ -251,7 +267,7 @@ export function TenderDetails({
       lossReason?: string | null;
       lossDetails?: string | null;
       evaluationNotes?: string | null;
-    }
+    },
   ) => {
     startTransition(async () => {
       const result = await updateTenderStatus(organizationId, tender.id, {
@@ -266,26 +282,26 @@ export function TenderDetails({
       });
       if (result.success) {
         toast.success(`Tender status updated to ${newStatus}`);
-        if (newStatus === 'awarded' && result.projectId) {
+        if (newStatus === "awarded" && result.projectId) {
           router.push(`/projects/${result.projectId}/edit`);
         } else {
           router.refresh();
         }
       } else {
-        toast.error(result.error || 'Failed to update tender status');
+        toast.error(result.error || "Failed to update tender status");
       }
     });
   };
 
   const handleExportPdf = async () => {
-    const toastId = toast.loading('Generating PDF...');
+    const toastId = toast.loading("Generating PDF...");
     try {
       const response = await fetch(`/api/tenders/${tender.id}/pdf`);
-      if (!response.ok) throw new Error('PDF generation failed');
+      if (!response.ok) throw new Error("PDF generation failed");
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `Tender-${tender.tenderNumber}.pdf`;
       document.body.appendChild(link);
@@ -293,10 +309,10 @@ export function TenderDetails({
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      toast.success('PDF downloaded successfully', { id: toastId });
+      toast.success("PDF downloaded successfully", { id: toastId });
     } catch (error) {
-      console.error('Tender PDF export failed:', error);
-      toast.error('Failed to generate PDF. Please try again.', { id: toastId });
+      console.error("Tender PDF export failed:", error);
+      toast.error("Failed to generate PDF. Please try again.", { id: toastId });
     }
   };
 
@@ -320,7 +336,11 @@ export function TenderDetails({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         {/* Left Column (2/3 width on large screens) - Holds the Tabbed Interface */}
         <div className="xl:col-span-2 space-y-6 min-w-0">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="w-full"
+          >
             <div className="flex items-center justify-between border-b border-border/60 pb-px">
               <TabsList className="bg-transparent h-auto p-0 gap-2 flex-wrap">
                 <TabsTrigger
@@ -336,7 +356,10 @@ export function TenderDetails({
                 >
                   Documents
                   {documents.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0 h-4 font-bold"
+                    >
                       {documents.length}
                     </Badge>
                   )}
@@ -348,7 +371,10 @@ export function TenderDetails({
                 >
                   Extensions
                   {extensions.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0 h-4 font-bold"
+                    >
                       {extensions.length}
                     </Badge>
                   )}
@@ -360,7 +386,10 @@ export function TenderDetails({
                 >
                   Follow-ups
                   {followUps.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-bold">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0 h-4 font-bold"
+                    >
                       {followUps.length}
                     </Badge>
                   )}
@@ -378,7 +407,7 @@ export function TenderDetails({
             {/* ── OVERVIEW TAB ── */}
             <TabsContent value="overview" className="mt-5 space-y-5">
               {/* Option A: Award / Appointment Outcome Card (if awarded) */}
-              {tender.status === 'awarded' && (
+              {tender.status === "awarded" && (
                 <Card className="rounded-xl border-emerald-500/40 bg-emerald-500/[0.03] shadow-xs">
                   <CardHeader className="py-3 px-5 border-b border-emerald-500/20 bg-emerald-500/10 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
@@ -433,7 +462,7 @@ export function TenderDetails({
               )}
 
               {/* Option B: Loss / Rejection Debrief & Team Learnings Card (if lost) */}
-              {tender.status === 'lost' && (
+              {tender.status === "lost" && (
                 <Card className="rounded-xl border-red-500/40 bg-red-500/[0.03] shadow-xs overflow-hidden">
                   <CardHeader className="py-3 px-5 border-b border-red-500/20 bg-red-500/10 flex flex-row items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -461,11 +490,14 @@ export function TenderDetails({
                           Primary Rejection Reason
                         </span>
                         <div className="flex items-center gap-2">
-                          <Badge variant="destructive" className="text-xs font-semibold px-2 py-0.5">
+                          <Badge
+                            variant="destructive"
+                            className="text-xs font-semibold px-2 py-0.5"
+                          >
                             {tender.lossReason
                               ? LOSS_REASON_LABELS[tender.lossReason] ||
-                                tender.lossReason.replace('_', ' ')
-                              : 'Not specified'}
+                                tender.lossReason.replace("_", " ")
+                              : "Not specified"}
                           </Badge>
                         </div>
                       </div>
@@ -486,7 +518,9 @@ export function TenderDetails({
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                         <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-                        <span>Debrief Feedback & Continuous Improvement Learnings</span>
+                        <span>
+                          Debrief Feedback & Continuous Improvement Learnings
+                        </span>
                       </div>
                       {tender.evaluationNotes ? (
                         <div className="rounded-lg bg-background/80 p-3.5 border border-border/60 text-xs text-foreground/90 whitespace-pre-wrap leading-relaxed">
@@ -494,7 +528,10 @@ export function TenderDetails({
                         </div>
                       ) : (
                         <div className="rounded-lg bg-background/40 p-3 border border-dashed border-border/60 text-xs text-muted-foreground italic flex items-center justify-between">
-                          <span>No debrief notes recorded yet. Record feedback from the client to help the team learn.</span>
+                          <span>
+                            No debrief notes recorded yet. Record feedback from
+                            the client to help the team learn.
+                          </span>
                           <Button
                             variant="link"
                             size="sm"
@@ -511,7 +548,9 @@ export function TenderDetails({
               )}
 
               {/* Option C: In-Progress Pending Decision Banner (if in review, ready, submitted, evaluation) */}
-              {!['awarded', 'lost', 'closed', 'cancelled'].includes(tender.status) && (
+              {!["awarded", "lost", "closed", "cancelled"].includes(
+                tender.status,
+              ) && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.04] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                   <div className="flex items-center gap-2.5">
                     <div className="h-8 w-8 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
@@ -522,7 +561,8 @@ export function TenderDetails({
                         Final Decision Pending
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        Once client feedback or contract announcement is received, record the outcome below.
+                        Once client feedback or contract announcement is
+                        received, record the outcome below.
                       </p>
                     </div>
                   </div>
@@ -557,7 +597,9 @@ export function TenderDetails({
                   ) : (
                     <div className="rounded-lg border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">
                       <FileText className="h-6 w-6 mx-auto mb-1 text-muted-foreground/30" />
-                      <p className="italic">No description or scope notes added for this tender.</p>
+                      <p className="italic">
+                        No description or scope notes added for this tender.
+                      </p>
                       <Button
                         variant="link"
                         size="sm"
@@ -581,7 +623,7 @@ export function TenderDetails({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleTabChange('follow-ups')}
+                    onClick={() => handleTabChange("follow-ups")}
                     className="h-7 text-xs text-blue-600 hover:text-blue-700 px-2 cursor-pointer"
                   >
                     View All Logs
@@ -598,22 +640,33 @@ export function TenderDetails({
                           </span>
                           {latestFollowUp.contactPerson && (
                             <span className="text-muted-foreground">
-                              with <span className="text-foreground font-medium">{latestFollowUp.contactPerson}</span>
+                              with{" "}
+                              <span className="text-foreground font-medium">
+                                {latestFollowUp.contactPerson}
+                              </span>
                             </span>
                           )}
                         </div>
                         {latestFollowUp.nextFollowUpDate && (
-                          <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/30 bg-amber-500/5">
-                            Next: {sharedFormatDate(latestFollowUp.nextFollowUpDate)}
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] text-amber-600 border-amber-500/30 bg-amber-500/5"
+                          >
+                            Next:{" "}
+                            {sharedFormatDate(latestFollowUp.nextFollowUpDate)}
                           </Badge>
                         )}
                       </div>
                       {latestFollowUp.notes && (
-                        <p className="text-foreground/80 whitespace-pre-wrap">{latestFollowUp.notes}</p>
+                        <p className="text-foreground/80 whitespace-pre-wrap">
+                          {latestFollowUp.notes}
+                        </p>
                       )}
                       {latestFollowUp.outcome && (
                         <div className="pt-1.5 text-[11px] text-muted-foreground flex items-center gap-1">
-                          <span className="font-semibold text-foreground">Outcome:</span>
+                          <span className="font-semibold text-foreground">
+                            Outcome:
+                          </span>
                           <span>{latestFollowUp.outcome}</span>
                         </div>
                       )}
@@ -660,9 +713,12 @@ export function TenderDetails({
               <Card className="rounded-xl shadow-xs border border-border/50">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <div>
-                    <CardTitle className="text-base font-semibold">Follow-up Log Workspace</CardTitle>
+                    <CardTitle className="text-base font-semibold">
+                      Follow-up Log Workspace
+                    </CardTitle>
                     <CardDescription className="text-xs">
-                      Keep track of all client communication and bid status queries
+                      Keep track of all client communication and bid status
+                      queries
                     </CardDescription>
                   </div>
                   <Button
@@ -676,9 +732,12 @@ export function TenderDetails({
                   {followUps.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground border border-dashed rounded-lg">
                       <PhoneCall className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-                      <p className="font-semibold text-sm">No follow-ups logged yet</p>
+                      <p className="font-semibold text-sm">
+                        No follow-ups logged yet
+                      </p>
                       <p className="text-xs mt-1 text-muted-foreground">
-                        Keep a digital trail of updates to ensure you stay aligned on validities.
+                        Keep a digital trail of updates to ensure you stay
+                        aligned on validities.
                       </p>
                     </div>
                   ) : (
@@ -697,7 +756,7 @@ export function TenderDetails({
                                 </span>
                                 {f.contactPerson && (
                                   <p className="text-xs font-medium text-muted-foreground mt-0.5">
-                                    Contact:{' '}
+                                    Contact:{" "}
                                     <span className="text-foreground font-semibold">
                                       {f.contactPerson}
                                     </span>
@@ -720,7 +779,9 @@ export function TenderDetails({
                             )}
                             {f.outcome && (
                               <div className="mt-2.5 flex items-start gap-1.5 bg-muted/40 p-2 rounded-lg text-xs text-muted-foreground">
-                                <span className="font-semibold text-foreground shrink-0">Outcome:</span>
+                                <span className="font-semibold text-foreground shrink-0">
+                                  Outcome:
+                                </span>
                                 <span>{f.outcome}</span>
                               </div>
                             )}
@@ -748,7 +809,9 @@ export function TenderDetails({
                     <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
                       <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <span className="font-medium text-muted-foreground block text-[11px]">Created</span>
+                        <span className="font-medium text-muted-foreground block text-[11px]">
+                          Created
+                        </span>
                         <span className="text-foreground font-semibold">
                           {formatDateTime(tender.createdAt)}
                         </span>
@@ -758,7 +821,9 @@ export function TenderDetails({
                     <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
                       <RefreshCw className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <span className="font-medium text-muted-foreground block text-[11px]">Last Modified</span>
+                        <span className="font-medium text-muted-foreground block text-[11px]">
+                          Last Modified
+                        </span>
                         <span className="text-foreground font-semibold">
                           {formatDateTime(tender.updatedAt)}
                         </span>
@@ -768,9 +833,13 @@ export function TenderDetails({
                     <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
                       <Calendar className="h-4 w-4 text-sky-500 mt-0.5 shrink-0" />
                       <div>
-                        <span className="font-medium text-muted-foreground block text-[11px]">Closing Timestamp</span>
+                        <span className="font-medium text-muted-foreground block text-[11px]">
+                          Closing Timestamp
+                        </span>
                         <span className="text-foreground font-semibold">
-                          {tender.submissionDate ? formatDateTime(tender.submissionDate) : 'Not specified'}
+                          {tender.submissionDate
+                            ? formatDateTime(tender.submissionDate)
+                            : "Not specified"}
                         </span>
                       </div>
                     </div>
@@ -778,9 +847,13 @@ export function TenderDetails({
                     <div className="p-2.5 rounded-lg border border-border/50 bg-background/50 flex items-start gap-2.5">
                       <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
                       <div>
-                        <span className="font-medium text-muted-foreground block text-[11px]">Validity Target</span>
+                        <span className="font-medium text-muted-foreground block text-[11px]">
+                          Validity Target
+                        </span>
                         <span className="text-foreground font-semibold">
-                          {sharedFormatDate(tender.evaluationDate || tender.validityDate)}
+                          {sharedFormatDate(
+                            tender.evaluationDate || tender.validityDate,
+                          )}
                         </span>
                       </div>
                     </div>
@@ -791,9 +864,12 @@ export function TenderDetails({
               {/* Activity Stream */}
               <Card className="rounded-xl shadow-xs border border-border/50">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-base font-semibold">Tender Event Feed</CardTitle>
+                  <CardTitle className="text-base font-semibold">
+                    Tender Event Feed
+                  </CardTitle>
                   <CardDescription className="text-xs">
-                    Chronological audit log of all status transitions, follow-ups, and extensions
+                    Chronological audit log of all status transitions,
+                    follow-ups, and extensions
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-6 pb-8">
@@ -812,11 +888,14 @@ export function TenderDetails({
                           <div className="space-y-1">
                             <div className="flex items-center space-x-2">
                               <span className="text-xs text-muted-foreground">
-                                {sharedFormatDate(act.createdAt)} •{' '}
-                                {new Date(act.createdAt).toLocaleTimeString('en-GB', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {sharedFormatDate(act.createdAt)} •{" "}
+                                {new Date(act.createdAt).toLocaleTimeString(
+                                  "en-GB",
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )}
                               </span>
                               {act.user?.name && (
                                 <span className="inline-flex items-center text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
@@ -835,8 +914,13 @@ export function TenderDetails({
                   ) : (
                     <div className="text-center py-12 text-muted-foreground border border-dashed border-border/40 rounded-xl">
                       <Activity className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-                      <p className="text-sm font-semibold">No logged activities for this tender</p>
-                      <p className="text-xs mt-1">Actions like status changes, extensions, and follow-ups will log here.</p>
+                      <p className="text-sm font-semibold">
+                        No logged activities for this tender
+                      </p>
+                      <p className="text-xs mt-1">
+                        Actions like status changes, extensions, and follow-ups
+                        will log here.
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -870,11 +954,11 @@ export function TenderDetails({
         initialLossDetails={tender.lossDetails}
         initialEvaluationNotes={tender.evaluationNotes}
         onAwardSubmit={(data) => {
-          handleStatusUpdate('awarded', data);
+          handleStatusUpdate("awarded", data);
           setShowOutcomeDialog(false);
         }}
         onLostSubmit={(data) => {
-          handleStatusUpdate('lost', data);
+          handleStatusUpdate("lost", data);
           setShowOutcomeDialog(false);
         }}
         isPending={isPending}

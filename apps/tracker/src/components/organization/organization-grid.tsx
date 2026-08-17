@@ -1,5 +1,5 @@
-import { OrganizationCard } from '../organization-card';
-import type { OrganizationWithStats } from '@/server/organizations';
+import { OrganizationCard } from "../organization-card";
+import type { OrganizationWithStats } from "@/server/organizations";
 
 interface OrganizationGridProps {
   organizations: OrganizationWithStats[];

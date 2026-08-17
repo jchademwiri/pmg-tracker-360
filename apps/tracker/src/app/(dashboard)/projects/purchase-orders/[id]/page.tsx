@@ -1,12 +1,12 @@
-import { getCurrentUser } from '@/server';
-import { getPurchaseOrderById } from '@/server/purchase-orders';
-import { PODetails } from '@/components/purchase-orders/po-details';
-import { getDocuments } from '@/server/documents';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { getPurchaseOrderById } from "@/server/purchase-orders";
+import { PODetails } from "@/components/purchase-orders/po-details";
+import { getDocuments } from "@/server/documents";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface PurchaseOrderPageProps {
   params: Promise<{ id: string }>;
@@ -23,13 +23,13 @@ export default async function PurchaseOrderPage({
     headers: await headers(),
     body: {
       permissions: {
-        purchase_order: ['read'],
+        purchase_order: ["read"],
       },
     },
   });
 
   if (!hasPermission) {
-    redirect('/dashboard');
+    redirect("/dashboard");
   }
 
   if (!session.activeOrganizationId) {
@@ -49,7 +49,7 @@ export default async function PurchaseOrderPage({
 
   const [poResult, docsResult] = await Promise.all([
     getPurchaseOrderById(session.activeOrganizationId, id),
-    getDocuments(session.activeOrganizationId, 'purchaseOrder', id)
+    getDocuments(session.activeOrganizationId, "purchaseOrder", id),
   ]);
 
   if (!poResult.success || !poResult.purchaseOrder) {
@@ -68,7 +68,7 @@ export default async function PurchaseOrderPage({
     );
   }
 
-  const initialDocuments = docsResult.success ? (docsResult.documents || []) : [];
+  const initialDocuments = docsResult.success ? docsResult.documents || [] : [];
 
   return (
     <PODetails

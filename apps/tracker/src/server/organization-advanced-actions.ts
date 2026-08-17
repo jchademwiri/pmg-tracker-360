@@ -1,22 +1,22 @@
-'use server';
+"use server";
 
-import { getCurrentUser } from './users';
-import { getUserOrganizationMembership } from './organizations';
+import { getCurrentUser } from "./users";
+import { getUserOrganizationMembership } from "./organizations";
 import {
   organizationDeletionManager,
   type DeletionConfirmation,
-} from '@/lib/organization-deletion';
+} from "@/lib/organization-deletion";
 import {
   ownershipTransferManager,
   type OwnershipTransferRequest,
-} from '@/lib/ownership-transfer';
+} from "@/lib/ownership-transfer";
 import {
   bulkOperationsManager,
   type BulkMemberUpdate,
   type BulkInvitation,
-} from '@/lib/bulk-operations';
+} from "@/lib/bulk-operations";
 // import { auditLogger } from '@/lib/audit-logger'; // TODO: Use for additional logging if needed
-import { revalidatePath } from 'next/cache';
+import { revalidatePath } from "next/cache";
 
 export interface ServerActionResult<T = unknown> {
   success: boolean;
@@ -31,7 +31,7 @@ export interface ServerActionResult<T = unknown> {
 function createServerActionError(
   code: string,
   message: string,
-  details?: unknown
+  details?: unknown,
 ): ServerActionResult<never> {
   return {
     success: false,
@@ -53,7 +53,7 @@ function createServerActionSuccess<T>(data: T): ServerActionResult<T> {
 // Organization Deletion Actions
 export async function initiateOrganizationDeletion(
   organizationId: string,
-  confirmation: DeletionConfirmation
+  confirmation: DeletionConfirmation,
 ): Promise<
   ServerActionResult<{
     deletionId: string;
@@ -65,26 +65,26 @@ export async function initiateOrganizationDeletion(
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to delete organization
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners can delete organizations
-    if (userMembership.role !== 'owner') {
+    if (userMembership.role !== "owner") {
       return createServerActionError(
-        'FORBIDDEN',
-        'Only organization owners can delete organizations'
+        "FORBIDDEN",
+        "Only organization owners can delete organizations",
       );
     }
 
@@ -93,35 +93,35 @@ export async function initiateOrganizationDeletion(
       await organizationDeletionManager.validateDeletionRequest(
         organizationId,
         confirmation,
-        userMembership.role
+        userMembership.role,
       );
 
     if (!validation.isValid) {
       return createServerActionError(
-        'VALIDATION_ERROR',
-        'Deletion validation failed',
-        { errors: validation.errors, warnings: validation.warnings }
+        "VALIDATION_ERROR",
+        "Deletion validation failed",
+        { errors: validation.errors, warnings: validation.warnings },
       );
     }
 
     // Execute soft deletion
-    if (confirmation.deletionType === 'soft') {
+    if (confirmation.deletionType === "soft") {
       const result = await organizationDeletionManager.softDeleteOrganization(
         organizationId,
         currentUser.id,
-        confirmation
+        confirmation,
       );
 
       if (!result.success) {
         return createServerActionError(
-          'DELETION_FAILED',
-          result.error || 'Failed to delete organization'
+          "DELETION_FAILED",
+          result.error || "Failed to delete organization",
         );
       }
 
       // Revalidate organization pages and dashboard layout
-      revalidatePath('/organization', 'layout');
-      revalidatePath('/dashboard'); // Revalidate dashboard to update sidebar
+      revalidatePath("/organization", "layout");
+      revalidatePath("/dashboard"); // Revalidate dashboard to update sidebar
 
       return createServerActionSuccess({
         deletionId: result.deletionId!,
@@ -134,92 +134,92 @@ export async function initiateOrganizationDeletion(
         await organizationDeletionManager.permanentlyDeleteOrganization(
           organizationId,
           currentUser.id,
-          confirmation.reason
+          confirmation.reason,
         );
 
       if (!result.success) {
         return createServerActionError(
-          'DELETION_FAILED',
-          result.error || 'Failed to permanently delete organization'
+          "DELETION_FAILED",
+          result.error || "Failed to permanently delete organization",
         );
       }
 
       // Revalidate organization pages and dashboard layout
-      revalidatePath('/organization', 'layout');
-      revalidatePath('/dashboard'); // Revalidate dashboard to update sidebar
-      revalidatePath('/settings'); // Revalidate settings layout
+      revalidatePath("/organization", "layout");
+      revalidatePath("/dashboard"); // Revalidate dashboard to update sidebar
+      revalidatePath("/settings"); // Revalidate settings layout
 
       return createServerActionSuccess({
-        deletionId: result.deletionId || 'permanent',
+        deletionId: result.deletionId || "permanent",
       });
     }
   } catch (error) {
-    console.error('Error initiating organization deletion:', error);
+    console.error("Error initiating organization deletion:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to initiate organization deletion'
+      "INTERNAL_ERROR",
+      "Failed to initiate organization deletion",
     );
   }
 }
 
 export async function restoreOrganization(
   organizationId: string,
-  reason?: string
+  reason?: string,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Restore the organization
     const result = await organizationDeletionManager.restoreOrganization(
       organizationId,
       currentUser.id,
-      reason
+      reason,
     );
 
     if (!result.success) {
       return createServerActionError(
-        'RESTORATION_FAILED',
-        result.error || 'Failed to restore organization'
+        "RESTORATION_FAILED",
+        result.error || "Failed to restore organization",
       );
     }
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error restoring organization:', error);
+    console.error("Error restoring organization:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to restore organization'
+      "INTERNAL_ERROR",
+      "Failed to restore organization",
     );
   }
 }
 
 export async function forcePermanentDeletion(
   organizationId: string,
-  reason: string
+  reason: string,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to force permanent deletion
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
@@ -228,25 +228,25 @@ export async function forcePermanentDeletion(
       organizationId,
       currentUser.id,
       userMembership.role,
-      reason
+      reason,
     );
 
     if (!result.success) {
       return createServerActionError(
-        'DELETION_FAILED',
-        result.error || 'Failed to force permanent deletion'
+        "DELETION_FAILED",
+        result.error || "Failed to force permanent deletion",
       );
     }
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error forcing permanent deletion:', error);
+    console.error("Error forcing permanent deletion:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to force permanent deletion'
+      "INTERNAL_ERROR",
+      "Failed to force permanent deletion",
     );
   }
 }
@@ -258,183 +258,183 @@ export async function getSoftDeletedOrganizations(): Promise<
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     const softDeletedOrgs =
       await organizationDeletionManager.getSoftDeletedOrganizations(
-        currentUser.id
+        currentUser.id,
       );
 
     return createServerActionSuccess(softDeletedOrgs);
   } catch (error) {
-    console.error('Error getting soft deleted organizations:', error);
+    console.error("Error getting soft deleted organizations:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to get soft deleted organizations'
+      "INTERNAL_ERROR",
+      "Failed to get soft deleted organizations",
     );
   }
 }
 
 // Ownership Transfer Actions
 export async function initiateOwnershipTransfer(
-  request: OwnershipTransferRequest
+  request: OwnershipTransferRequest,
 ): Promise<ServerActionResult<{ transferId: string }>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to initiate transfer
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      request.organizationId
+      request.organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners can initiate ownership transfer
-    if (userMembership.role !== 'owner') {
+    if (userMembership.role !== "owner") {
       return createServerActionError(
-        'FORBIDDEN',
-        'Only organization owners can initiate ownership transfer'
+        "FORBIDDEN",
+        "Only organization owners can initiate ownership transfer",
       );
     }
 
     const result = await ownershipTransferManager.initiateOwnershipTransfer(
       request,
-      currentUser.id
+      currentUser.id,
     );
 
     if (!result.success) {
       return createServerActionError(
-        'TRANSFER_FAILED',
-        result.error || 'Failed to initiate ownership transfer'
+        "TRANSFER_FAILED",
+        result.error || "Failed to initiate ownership transfer",
       );
     }
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess({
       transferId: result.transferId!,
     });
   } catch (error) {
-    console.error('Error initiating ownership transfer:', error);
+    console.error("Error initiating ownership transfer:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to initiate ownership transfer'
+      "INTERNAL_ERROR",
+      "Failed to initiate ownership transfer",
     );
   }
 }
 
 export async function acceptOwnershipTransfer(
-  transferId: string
+  transferId: string,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     const result = await ownershipTransferManager.acceptOwnershipTransfer(
       transferId,
-      currentUser.id
+      currentUser.id,
     );
 
     if (!result.success) {
       return createServerActionError(
-        'TRANSFER_FAILED',
-        result.error || 'Failed to accept ownership transfer'
+        "TRANSFER_FAILED",
+        result.error || "Failed to accept ownership transfer",
       );
     }
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error accepting ownership transfer:', error);
+    console.error("Error accepting ownership transfer:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to accept ownership transfer'
+      "INTERNAL_ERROR",
+      "Failed to accept ownership transfer",
     );
   }
 }
 
 export async function cancelOwnershipTransfer(
-  transferId: string
+  transferId: string,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     const result = await ownershipTransferManager.cancelOwnershipTransfer(
       transferId,
-      currentUser.id
+      currentUser.id,
     );
 
     if (!result.success) {
       return createServerActionError(
-        'TRANSFER_FAILED',
-        result.error || 'Failed to cancel ownership transfer'
+        "TRANSFER_FAILED",
+        result.error || "Failed to cancel ownership transfer",
       );
     }
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error cancelling ownership transfer:', error);
+    console.error("Error cancelling ownership transfer:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to cancel ownership transfer'
+      "INTERNAL_ERROR",
+      "Failed to cancel ownership transfer",
     );
   }
 }
 
 export async function acceptOwnershipTransferByToken(
-  token: string
+  token: string,
 ): Promise<ServerActionResult<void>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     const result = await ownershipTransferManager.acceptTransferByToken(
       token,
-      currentUser.id
+      currentUser.id,
     );
 
     if (!result.success) {
       return createServerActionError(
-        'TRANSFER_FAILED',
-        result.error || 'Failed to accept ownership transfer'
+        "TRANSFER_FAILED",
+        result.error || "Failed to accept ownership transfer",
       );
     }
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(undefined);
   } catch (error) {
-    console.error('Error accepting ownership transfer by token:', error);
+    console.error("Error accepting ownership transfer by token:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to accept ownership transfer'
+      "INTERNAL_ERROR",
+      "Failed to accept ownership transfer",
     );
   }
 }
@@ -446,19 +446,19 @@ export async function getPendingTransfers(): Promise<
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     const pendingTransfers = await ownershipTransferManager.getPendingTransfers(
-      currentUser.id
+      currentUser.id,
     );
 
     return createServerActionSuccess(pendingTransfers);
   } catch (error) {
-    console.error('Error getting pending transfers:', error);
+    console.error("Error getting pending transfers:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to get pending transfers'
+      "INTERNAL_ERROR",
+      "Failed to get pending transfers",
     );
   }
 }
@@ -466,24 +466,24 @@ export async function getPendingTransfers(): Promise<
 // Bulk Operations Actions
 export async function bulkUpdateMemberRoles(
   organizationId: string,
-  updates: BulkMemberUpdate[]
+  updates: BulkMemberUpdate[],
 ): Promise<ServerActionResult<unknown>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to update member roles
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
@@ -491,18 +491,18 @@ export async function bulkUpdateMemberRoles(
       organizationId,
       updates,
       currentUser.id,
-      userMembership.role
+      userMembership.role,
     );
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(result);
   } catch (error) {
-    console.error('Error in bulk member role update:', error);
+    console.error("Error in bulk member role update:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to update member roles'
+      "INTERNAL_ERROR",
+      "Failed to update member roles",
     );
   }
 }
@@ -510,24 +510,24 @@ export async function bulkUpdateMemberRoles(
 export async function bulkRemoveMembers(
   organizationId: string,
   memberIds: string[],
-  reason?: string
+  reason?: string,
 ): Promise<ServerActionResult<unknown>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to remove members
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
@@ -536,42 +536,42 @@ export async function bulkRemoveMembers(
       memberIds,
       currentUser.id,
       userMembership.role,
-      reason
+      reason,
     );
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(result);
   } catch (error) {
-    console.error('Error in bulk member removal:', error);
+    console.error("Error in bulk member removal:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to remove members'
+      "INTERNAL_ERROR",
+      "Failed to remove members",
     );
   }
 }
 
 export async function bulkInviteMembers(
   organizationId: string,
-  invitations: BulkInvitation[]
+  invitations: BulkInvitation[],
 ): Promise<ServerActionResult<unknown>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to invite members
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
@@ -579,18 +579,18 @@ export async function bulkInviteMembers(
       organizationId,
       invitations,
       currentUser.id,
-      userMembership.role
+      userMembership.role,
     );
 
     // Revalidate organization pages
-    revalidatePath('/organization', 'layout');
+    revalidatePath("/organization", "layout");
 
     return createServerActionSuccess(result);
   } catch (error) {
-    console.error('Error in bulk member invitations:', error);
+    console.error("Error in bulk member invitations:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to invite members'
+      "INTERNAL_ERROR",
+      "Failed to invite members",
     );
   }
 }
@@ -598,54 +598,54 @@ export async function bulkInviteMembers(
 // Data Export Action
 export async function exportOrganizationData(
   organizationId: string,
-  format: 'json' | 'csv'
+  format: "json" | "csv",
 ): Promise<ServerActionResult<{ exportUrl: string }>> {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      return createServerActionError('UNAUTHORIZED', 'User not authenticated');
+      return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
     // Check if user has permission to export data
     const userMembership = await getUserOrganizationMembership(
       currentUser.id,
-      organizationId
+      organizationId,
     );
     if (!userMembership) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Access denied to this organization'
+        "FORBIDDEN",
+        "Access denied to this organization",
       );
     }
 
     // Only owners, admins, and managers can export data
-    if (!['owner', 'admin', 'manager'].includes(userMembership.role)) {
+    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
       return createServerActionError(
-        'FORBIDDEN',
-        'Insufficient permissions to export organization data'
+        "FORBIDDEN",
+        "Insufficient permissions to export organization data",
       );
     }
 
     const exportUrl = await organizationDeletionManager.exportOrganizationData(
       organizationId,
       format,
-      currentUser.id
+      currentUser.id,
     );
 
     if (!exportUrl) {
       return createServerActionError(
-        'EXPORT_FAILED',
-        'Failed to export organization data'
+        "EXPORT_FAILED",
+        "Failed to export organization data",
       );
     }
 
     return createServerActionSuccess({ exportUrl });
   } catch (error) {
-    console.error('Error exporting organization data:', error);
+    console.error("Error exporting organization data:", error);
     return createServerActionError(
-      'INTERNAL_ERROR',
-      'Failed to export organization data'
+      "INTERNAL_ERROR",
+      "Failed to export organization data",
     );
   }
 }

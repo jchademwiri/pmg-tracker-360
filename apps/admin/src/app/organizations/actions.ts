@@ -1,11 +1,11 @@
-'use server';
+"use server";
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { db } from '@pmg/db';
-import { organization, member, user, invitation } from '@pmg/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { db } from "@pmg/db";
+import { organization, member, user, invitation } from "@pmg/db/schema";
+import { eq, and, inArray } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 
 /* ─── Return Types ─────────────────────────────────────────────────────── */
 
@@ -66,8 +66,8 @@ export type OrgDetail = {
 export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
   // Re-verify admin session on every call
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    throw new Error('Unauthorized');
+  if (!session || (session.user as any).role !== "admin") {
+    throw new Error("Unauthorized");
   }
 
   // 1. Fetch org record
@@ -90,7 +90,7 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     .where(eq(organization.id, orgId));
 
   if (!org) {
-    throw new Error('Organisation not found');
+    throw new Error("Organisation not found");
   }
 
   // 2. Fetch all members joined to user for name/email
@@ -106,13 +106,13 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     .innerJoin(user, eq(member.userId, user.id))
     .where(eq(member.organizationId, orgId));
 
-  const ownerRow = memberRows.find((m) => m.role === 'owner') || memberRows[0];
+  const ownerRow = memberRows.find((m) => m.role === "owner") || memberRows[0];
   const owner = ownerRow
     ? {
         id: ownerRow.userId,
         name: ownerRow.userName,
         email: ownerRow.userEmail,
-        plan: ownerRow.userPlan || 'free',
+        plan: ownerRow.userPlan || "free",
       }
     : null;
 
@@ -129,8 +129,8 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     .where(
       and(
         eq(invitation.organizationId, orgId),
-        eq(invitation.status, 'pending')
-      )
+        eq(invitation.status, "pending"),
+      ),
     );
 
   // 4. Fetch Tenders belonging to this org
@@ -167,8 +167,8 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     .where(eq(purchaseOrder.organizationId, orgId));
 
   const poTotalZar = poRows.reduce(
-    (acc, cur) => acc + (parseFloat(cur.amount ?? '0') || 0),
-    0
+    (acc, cur) => acc + (parseFloat(cur.amount ?? "0") || 0),
+    0,
   );
 
   return {
@@ -183,23 +183,27 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     invitations: invitationRows.map((inv) => ({
       id: inv.id,
       email: inv.email,
-      role: inv.role ?? 'member',
+      role: inv.role ?? "member",
       expiresAt: inv.expiresAt,
       status: inv.status,
     })),
     tenders: tenderRows.map((t) => ({
       id: t.id,
-      title: t.tenderNumber ? `${t.tenderNumber} - ${t.description || 'Tender'}` : t.description || t.id,
+      title: t.tenderNumber
+        ? `${t.tenderNumber} - ${t.description || "Tender"}`
+        : t.description || t.id,
       status: t.status,
-      valueZar: parseFloat(t.valueZar ?? '0') || 0,
+      valueZar: parseFloat(t.valueZar ?? "0") || 0,
       closingDate: t.submissionDate,
       createdAt: t.createdAt,
     })),
     projects: projectRows.map((p) => ({
       id: p.id,
-      name: p.projectNumber ? `${p.projectNumber} - ${p.description || 'Project'}` : p.description || p.id,
+      name: p.projectNumber
+        ? `${p.projectNumber} - ${p.description || "Project"}`
+        : p.description || p.id,
       status: p.status,
-      budgetZar: parseFloat(p.awardValue ?? '0') || 0,
+      budgetZar: parseFloat(p.awardValue ?? "0") || 0,
       createdAt: p.createdAt,
     })),
     poTotalZar,
@@ -212,11 +216,11 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
 export async function updateOrgDetails(
   orgId: string,
   name: string,
-  slug?: string
+  slug?: string,
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -224,7 +228,7 @@ export async function updateOrgDetails(
     const trimmedSlug = slug?.trim() || null;
 
     if (!trimmedName) {
-      return { success: false, error: 'Organization name is required.' };
+      return { success: false, error: "Organization name is required." };
     }
 
     await db
@@ -235,10 +239,13 @@ export async function updateOrgDetails(
       })
       .where(eq(organization.id, orgId));
 
-    return { success: true, message: 'Organization updated successfully.' };
+    return { success: true, message: "Organization updated successfully." };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to update organization.' };
+    return {
+      success: false,
+      error: e.message || "Failed to update organization.",
+    };
   }
 }
 
@@ -246,16 +253,16 @@ import {
   sendAccountSuspendedEmail,
   sendPurgeScheduledEmail,
   sendDeletionCancelledEmail,
-} from '@/lib/email';
-import { tender, project, purchaseOrder } from '@pmg/db/schema';
+} from "@/lib/email";
+import { tender, project, purchaseOrder } from "@pmg/db/schema";
 
 /**
  * Suspends an organization (revokes access without scheduling deletion).
  */
 export async function suspendOrg(orgId: string, reason?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -266,14 +273,14 @@ export async function suspendOrg(orgId: string, reason?: string) {
       .set({
         deletedAt: now,
         deletedBy: session.user.id,
-        deletionReason: reason?.trim() || 'Suspended by system administrator',
+        deletionReason: reason?.trim() || "Suspended by system administrator",
         permanentDeletionScheduledAt: null, // Suspension does NOT schedule deletion
       })
       .where(eq(organization.id, orgId));
 
     // Get owner email for notification
     const ownerMember = await db.query.member.findFirst({
-      where: and(eq(member.organizationId, orgId), eq(member.role, 'owner')),
+      where: and(eq(member.organizationId, orgId), eq(member.role, "owner")),
       with: { user: true },
     });
 
@@ -281,17 +288,20 @@ export async function suspendOrg(orgId: string, reason?: string) {
       await sendAccountSuspendedEmail(
         ownerMember.user.email,
         ownerMember.user.name,
-        'Organization Workspace',
-        reason
+        "Organization Workspace",
+        reason,
       );
     }
 
-    revalidatePath('/organizations');
+    revalidatePath("/organizations");
     revalidatePath(`/organizations/${orgId}`);
-    return { success: true, message: 'Organization suspended successfully.' };
+    return { success: true, message: "Organization suspended successfully." };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to suspend organization.' };
+    return {
+      success: false,
+      error: e.message || "Failed to suspend organization.",
+    };
   }
 }
 
@@ -300,8 +310,8 @@ export async function suspendOrg(orgId: string, reason?: string) {
  */
 export async function restoreOrg(orgId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -312,18 +322,24 @@ export async function restoreOrg(orgId: string) {
         deletedBy: null,
         deletionReason: null,
         permanentDeletionScheduledAt: null,
-        appealStatus: 'none',
+        appealStatus: "none",
         appealReason: null,
         appealedAt: null,
       })
       .where(eq(organization.id, orgId));
 
-    revalidatePath('/organizations');
+    revalidatePath("/organizations");
     revalidatePath(`/organizations/${orgId}`);
-    return { success: true, message: 'Organization fully restored to active status.' };
+    return {
+      success: true,
+      message: "Organization fully restored to active status.",
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to restore organization.' };
+    return {
+      success: false,
+      error: e.message || "Failed to restore organization.",
+    };
   }
 }
 
@@ -332,8 +348,8 @@ export async function restoreOrg(orgId: string) {
  */
 export async function purgeOrg(orgId: string, reason?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -345,14 +361,15 @@ export async function purgeOrg(orgId: string, reason?: string) {
       .set({
         deletedAt: now,
         deletedBy: session.user.id,
-        deletionReason: reason?.trim() || 'Scheduled for 30-day permanent deletion',
+        deletionReason:
+          reason?.trim() || "Scheduled for 30-day permanent deletion",
         permanentDeletionScheduledAt: purgeDate,
       })
       .where(eq(organization.id, orgId));
 
     // Send 30-day purge alert email
     const ownerMember = await db.query.member.findFirst({
-      where: and(eq(member.organizationId, orgId), eq(member.role, 'owner')),
+      where: and(eq(member.organizationId, orgId), eq(member.role, "owner")),
       with: { user: true },
     });
 
@@ -360,17 +377,20 @@ export async function purgeOrg(orgId: string, reason?: string) {
       await sendPurgeScheduledEmail(
         ownerMember.user.email,
         ownerMember.user.name,
-        'Organization Workspace',
-        30
+        "Organization Workspace",
+        30,
       );
     }
 
-    revalidatePath('/organizations');
+    revalidatePath("/organizations");
     revalidatePath(`/organizations/${orgId}`);
-    return { success: true, message: '30-day permanent deletion countdown initiated.' };
+    return {
+      success: true,
+      message: "30-day permanent deletion countdown initiated.",
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to schedule purge.' };
+    return { success: false, error: e.message || "Failed to schedule purge." };
   }
 }
 
@@ -380,8 +400,8 @@ export async function purgeOrg(orgId: string, reason?: string) {
  */
 export async function cancelPendingDeletion(orgId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -389,12 +409,12 @@ export async function cancelPendingDeletion(orgId: string) {
       .update(organization)
       .set({
         permanentDeletionScheduledAt: null,
-        appealStatus: 'approved',
+        appealStatus: "approved",
       })
       .where(eq(organization.id, orgId));
 
     const ownerMember = await db.query.member.findFirst({
-      where: and(eq(member.organizationId, orgId), eq(member.role, 'owner')),
+      where: and(eq(member.organizationId, orgId), eq(member.role, "owner")),
       with: { user: true },
     });
 
@@ -402,16 +422,20 @@ export async function cancelPendingDeletion(orgId: string) {
       await sendDeletionCancelledEmail(
         ownerMember.user.email,
         ownerMember.user.name,
-        'Organization Workspace'
+        "Organization Workspace",
       );
     }
 
-    revalidatePath('/organizations');
+    revalidatePath("/organizations");
     revalidatePath(`/organizations/${orgId}`);
-    return { success: true, message: 'Pending 30-day deletion cancelled. Organization remains suspended.' };
+    return {
+      success: true,
+      message:
+        "Pending 30-day deletion cancelled. Organization remains suspended.",
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to cancel deletion.' };
+    return { success: false, error: e.message || "Failed to cancel deletion." };
   }
 }
 
@@ -420,25 +444,28 @@ export async function cancelPendingDeletion(orgId: string) {
  */
 export async function submitDeletionAppeal(orgId: string, reason: string) {
   if (!reason.trim()) {
-    return { success: false, error: 'Please provide an appeal explanation.' };
+    return { success: false, error: "Please provide an appeal explanation." };
   }
 
   try {
     await db
       .update(organization)
       .set({
-        appealStatus: 'pending',
+        appealStatus: "pending",
         appealReason: reason.trim(),
         appealedAt: new Date(),
       })
       .where(eq(organization.id, orgId));
 
-    revalidatePath('/organizations');
+    revalidatePath("/organizations");
     revalidatePath(`/organizations/${orgId}`);
-    return { success: true, message: 'Appeal submitted for administrator review.' };
+    return {
+      success: true,
+      message: "Appeal submitted for administrator review.",
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to submit appeal.' };
+    return { success: false, error: e.message || "Failed to submit appeal." };
   }
 }
 
@@ -447,8 +474,8 @@ export async function submitDeletionAppeal(orgId: string, reason: string) {
  */
 export async function removeOrgMember(orgId: string, userId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
@@ -456,10 +483,10 @@ export async function removeOrgMember(orgId: string, userId: string) {
       .delete(member)
       .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)));
 
-    return { success: true, message: 'Member removed from organization.' };
+    return { success: true, message: "Member removed from organization." };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed to remove member.' };
+    return { success: false, error: e.message || "Failed to remove member." };
   }
 }
 
@@ -468,11 +495,11 @@ export async function removeOrgMember(orgId: string, userId: string) {
  */
 export async function bulkSuspendOrgs(orgIds: string[], reason?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
   if (!orgIds || orgIds.length === 0) {
-    return { success: false, error: 'No organizations selected.' };
+    return { success: false, error: "No organizations selected." };
   }
 
   try {
@@ -484,16 +511,23 @@ export async function bulkSuspendOrgs(orgIds: string[], reason?: string) {
       .set({
         deletedAt: now,
         deletedBy: session.user.id,
-        deletionReason: reason?.trim() || 'Bulk suspended by system administrator',
+        deletionReason:
+          reason?.trim() || "Bulk suspended by system administrator",
         permanentDeletionScheduledAt: purgeDate,
       })
       .where(inArray(organization.id, orgIds));
 
-    revalidatePath('/organizations');
-    return { success: true, message: `Suspended ${orgIds.length} organization(s).` };
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: `Suspended ${orgIds.length} organization(s).`,
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed bulk org suspension.' };
+    return {
+      success: false,
+      error: e.message || "Failed bulk org suspension.",
+    };
   }
 }
 
@@ -502,11 +536,11 @@ export async function bulkSuspendOrgs(orgIds: string[], reason?: string) {
  */
 export async function bulkRestoreOrgs(orgIds: string[]) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
   if (!orgIds || orgIds.length === 0) {
-    return { success: false, error: 'No organizations selected.' };
+    return { success: false, error: "No organizations selected." };
   }
 
   try {
@@ -520,11 +554,17 @@ export async function bulkRestoreOrgs(orgIds: string[]) {
       })
       .where(inArray(organization.id, orgIds));
 
-    revalidatePath('/organizations');
-    return { success: true, message: `Restored ${orgIds.length} organization(s).` };
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: `Restored ${orgIds.length} organization(s).`,
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed bulk org restoration.' };
+    return {
+      success: false,
+      error: e.message || "Failed bulk org restoration.",
+    };
   }
 }
 
@@ -533,21 +573,22 @@ export async function bulkRestoreOrgs(orgIds: string[]) {
  */
 export async function bulkPurgeOrgs(orgIds: string[]) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { success: false, error: 'Unauthorized' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
   }
   if (!orgIds || orgIds.length === 0) {
-    return { success: false, error: 'No organizations selected.' };
+    return { success: false, error: "No organizations selected." };
   }
 
   try {
     await db.delete(organization).where(inArray(organization.id, orgIds));
-    revalidatePath('/organizations');
-    return { success: true, message: `Permanently purged ${orgIds.length} organization(s).` };
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: `Permanently purged ${orgIds.length} organization(s).`,
+    };
   } catch (err) {
     const e = err as Error;
-    return { success: false, error: e.message || 'Failed bulk org purge.' };
+    return { success: false, error: e.message || "Failed bulk org purge." };
   }
 }
-
-

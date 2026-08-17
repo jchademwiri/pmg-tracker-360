@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Role } from '@pmg/db/schema';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, Settings, ExternalLink, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import type { OrganizationWithStats } from '@/server/organizations';
-import { switchOrganization } from '@/lib/organization-utils';
+import { useState } from "react";
+import { Role } from "@pmg/db/schema";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Users, Calendar, Settings, ExternalLink, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import type { OrganizationWithStats } from "@/server/organizations";
+import { switchOrganization } from "@/lib/organization-utils";
 
 interface OrganizationCardProps {
   organization: OrganizationWithStats;
@@ -34,7 +34,7 @@ export function OrganizationCard({
 
   const handleOpenDashboard = async () => {
     if (isActive) {
-      window.location.href = '/dashboard';
+      window.location.href = "/dashboard";
       return;
     }
 
@@ -42,7 +42,7 @@ export function OrganizationCard({
     const result = await switchOrganization({
       organizationId: organization.id,
       organizationName: organization.name,
-      redirectUrl: '/dashboard',
+      redirectUrl: "/dashboard",
     });
 
     if (!result.success) {
@@ -52,29 +52,29 @@ export function OrganizationCard({
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((word) => word.charAt(0))
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      year: "numeric",
     }).format(new Date(date));
   };
 
   return (
     <Card
       className={cn(
-        'group relative overflow-hidden transition-all duration-300 ease-out border',
-        'before:absolute before:inset-0 before:bg-linear-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none',
+        "group relative overflow-hidden transition-all duration-300 ease-out border",
+        "before:absolute before:inset-0 before:bg-linear-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none",
         isActive
-          ? 'border-primary/60 bg-primary/[0.03] ring-2 ring-primary/20 ring-offset-1 shadow-md'
-          : 'hover:border-border/80',
-        className
+          ? "border-primary/60 bg-primary/[0.03] ring-2 ring-primary/20 ring-offset-1 shadow-md"
+          : "hover:border-border/80",
+        className,
       )}
     >
       <CardHeader className="pb-4">
@@ -96,13 +96,16 @@ export function OrganizationCard({
               </h3>
               <div className="flex items-center gap-2 mt-1">
                 <Badge
-                  variant={isActive ? 'default' : 'secondary'}
+                  variant={isActive ? "default" : "secondary"}
                   className="text-xs uppercase tracking-wider font-semibold"
                 >
                   {actualUserRole}
                 </Badge>
                 {isActive && (
-                  <Badge variant="outline" className="text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
+                  <Badge
+                    variant="outline"
+                    className="text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium"
+                  >
                     Active Workspace
                   </Badge>
                 )}
@@ -119,7 +122,7 @@ export function OrganizationCard({
             <div className="flex items-center gap-1.5">
               <Users className="size-4 text-muted-foreground" />
               <span>
-                {actualMemberCount} member{actualMemberCount !== 1 ? 's' : ''}
+                {actualMemberCount} member{actualMemberCount !== 1 ? "s" : ""}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -142,9 +145,9 @@ export function OrganizationCard({
               ) : (
                 <ExternalLink className="size-4 mr-2 transition-transform duration-200 group-hover:translate-x-0.5" />
               )}
-              {isActive ? 'Current Dashboard' : 'Switch Workspace'}
+              {isActive ? "Current Dashboard" : "Switch Workspace"}
             </Button>
-            {(actualUserRole === 'owner' || actualUserRole === 'admin') && (
+            {(actualUserRole === "owner" || actualUserRole === "admin") && (
               <Button
                 asChild
                 variant="outline"

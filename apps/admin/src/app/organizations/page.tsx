@@ -1,7 +1,7 @@
-import { requireAdminPage } from '@/lib/require-admin-page';
-import { Building2 } from 'lucide-react';
-import { getOrganizationsWithCounts } from '@/lib/admin-queries';
-import OrgListClient from './OrgListClient';
+import { requireAdminPage } from "@/lib/require-admin-page";
+import { Building2 } from "lucide-react";
+import { getOrganizationsWithCounts } from "@/lib/admin-queries";
+import OrgListClient from "./OrgListClient";
 
 export default async function AdminOrganizationsPage() {
   // 1. Auth guard
@@ -19,7 +19,8 @@ export default async function AdminOrganizationsPage() {
           Organizations
         </h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Monitor, audit, and manage tenant workspaces across the Tender Track 360 platform.
+          Monitor, audit, and manage tenant workspaces across the Tender Track
+          360 platform.
         </p>
       </div>
 

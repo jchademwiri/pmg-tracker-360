@@ -1,8 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useCallback, useState } from 'react';
-import { AlertCircle, X, ShieldAlert, Trash2, ShieldCheck, Zap, User, Loader } from 'lucide-react';
-import StatusBadge from './StatusBadge';
+import { useEffect, useCallback, useState } from "react";
+import {
+  AlertCircle,
+  X,
+  ShieldAlert,
+  Trash2,
+  ShieldCheck,
+  Zap,
+  User,
+  Loader,
+} from "lucide-react";
+import StatusBadge from "./StatusBadge";
 import {
   getUserDetail,
   updateUserRole,
@@ -10,14 +19,14 @@ import {
   toggleUserSuspension,
   deleteUserAccount,
   type UserDetail,
-} from '../app/users/actions';
-import { useRouter } from 'next/navigation';
+} from "../app/users/actions";
+import { useRouter } from "next/navigation";
 
 type DrawerState =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'loaded'; data: UserDetail };
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "loaded"; data: UserDetail };
 
 type UserDrawerProps = {
   userId: string | null;
@@ -25,11 +34,11 @@ type UserDrawerProps = {
 };
 
 function formatDate(date: Date | null | undefined): string {
-  if (!date) return '—';
-  return new Date(date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 }
 
@@ -46,7 +55,7 @@ function DrawerSkeleton() {
   );
 }
 
-import ConfirmDialog from './ConfirmDialog';
+import ConfirmDialog from "./ConfirmDialog";
 
 function UserDrawerBody({
   data,
@@ -67,20 +76,20 @@ function UserDrawerBody({
     title: string;
     description: string;
     confirmText: string;
-    variant: 'danger' | 'warning' | 'info';
+    variant: "danger" | "warning" | "info";
     requireValue?: string;
     onConfirm: () => Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    description: '',
-    confirmText: 'Confirm',
-    variant: 'danger',
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
     onConfirm: async () => {},
   });
 
   async function executeToggleRole() {
-    const targetRole = data.role === 'admin' ? 'user' : 'admin';
+    const targetRole = data.role === "admin" ? "user" : "admin";
     setActionLoading(true);
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -92,11 +101,11 @@ function UserDrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to update role.');
+      setErrorMsg(res.error ?? "Failed to update role.");
     }
   }
 
-  async function executeSetPlan(targetPlan: 'free' | 'starter' | 'pro') {
+  async function executeSetPlan(targetPlan: "free" | "starter" | "pro") {
     setActionLoading(true);
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -108,7 +117,7 @@ function UserDrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to update plan.');
+      setErrorMsg(res.error ?? "Failed to update plan.");
     }
   }
 
@@ -124,7 +133,7 @@ function UserDrawerBody({
       onRefresh();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to suspend user.');
+      setErrorMsg(res.error ?? "Failed to suspend user.");
     }
   }
 
@@ -139,7 +148,7 @@ function UserDrawerBody({
       onClose();
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to delete user.');
+      setErrorMsg(res.error ?? "Failed to delete user.");
     }
   }
 
@@ -168,22 +177,22 @@ function UserDrawerBody({
             onClick={() =>
               setConfirmDialog({
                 isOpen: true,
-                title: 'Change User Role',
-                description: `Change ${data.name}'s system role to ${data.role === 'admin' ? 'USER' : 'ADMIN'}?`,
-                confirmText: `Set as ${data.role === 'admin' ? 'User' : 'Admin'}`,
-                variant: 'info',
+                title: "Change User Role",
+                description: `Change ${data.name}'s system role to ${data.role === "admin" ? "USER" : "ADMIN"}?`,
+                confirmText: `Set as ${data.role === "admin" ? "User" : "Admin"}`,
+                variant: "info",
                 onConfirm: executeToggleRole,
               })
             }
             className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
           >
             <User className="w-3.5 h-3.5" />
-            Set {data.role === 'admin' ? 'User' : 'Admin'}
+            Set {data.role === "admin" ? "User" : "Admin"}
           </button>
 
           {/* Plan selectors */}
           <div className="flex items-center gap-1.5">
-            {(['free', 'starter', 'pro'] as const).map((p) => (
+            {(["free", "starter", "pro"] as const).map((p) => (
               <button
                 key={p}
                 type="button"
@@ -194,14 +203,14 @@ function UserDrawerBody({
                     title: `Switch to ${p.toUpperCase()} Plan`,
                     description: `Change ${data.name}'s plan from ${data.plan.toUpperCase()} to ${p.toUpperCase()}?`,
                     confirmText: `Set ${p.toUpperCase()}`,
-                    variant: 'info',
+                    variant: "info",
                     onConfirm: () => executeSetPlan(p),
                   })
                 }
                 className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors capitalize cursor-pointer disabled:opacity-40 ${
                   data.plan === p
-                    ? 'bg-indigo-950 text-indigo-300 border border-indigo-800'
-                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
+                    ? "bg-indigo-950 text-indigo-300 border border-indigo-800"
+                    : "bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
                 }`}
               >
                 Set {p}
@@ -217,10 +226,10 @@ function UserDrawerBody({
             onClick={() =>
               setConfirmDialog({
                 isOpen: true,
-                title: 'Suspend User Account',
+                title: "Suspend User Account",
                 description: `Revoke all active sessions and suspend access for ${data.name} (${data.email})?`,
-                confirmText: 'Suspend Account',
-                variant: 'warning',
+                confirmText: "Suspend Account",
+                variant: "warning",
                 onConfirm: executeSuspend,
               })
             }
@@ -236,11 +245,11 @@ function UserDrawerBody({
             onClick={() =>
               setConfirmDialog({
                 isOpen: true,
-                title: 'Delete User Account',
+                title: "Delete User Account",
                 description: `Permanently delete ${data.name} (${data.email})? This action cannot be undone.`,
-                confirmText: 'Delete Account',
-                variant: 'danger',
-                requireValue: 'DELETE',
+                confirmText: "Delete Account",
+                variant: "danger",
+                requireValue: "DELETE",
                 onConfirm: executeDelete,
               })
             }
@@ -270,7 +279,9 @@ function UserDrawerBody({
 
         <div className="flex justify-between">
           <span className="text-zinc-500">Email Verified</span>
-          <StatusBadge status={data.emailVerified ? 'verified' : 'unverified'} />
+          <StatusBadge
+            status={data.emailVerified ? "verified" : "unverified"}
+          />
         </div>
 
         <div className="flex justify-between">
@@ -291,7 +302,9 @@ function UserDrawerBody({
         <div className="flex justify-between">
           <span className="text-zinc-500">Auth Provider</span>
           <span className="text-zinc-400 text-xs font-mono">
-            {data.providerId === 'credential' ? 'Password' : data.providerId ?? '—'}
+            {data.providerId === "credential"
+              ? "Password"
+              : (data.providerId ?? "—")}
           </span>
         </div>
       </section>
@@ -305,17 +318,27 @@ function UserDrawerBody({
         </h3>
 
         {data.sessions.length === 0 ? (
-          <p className="text-xs text-zinc-500">No active sessions (User is currently signed out or suspended).</p>
+          <p className="text-xs text-zinc-500">
+            No active sessions (User is currently signed out or suspended).
+          </p>
         ) : (
           <ul className="space-y-2">
             {data.sessions.map((s) => (
-              <li key={s.id} className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-1 text-xs">
+              <li
+                key={s.id}
+                className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl space-y-1 text-xs"
+              >
                 <div className="flex justify-between text-zinc-300 font-mono">
-                  <span>IP: {s.ipAddress ?? 'Unknown'}</span>
-                  <span className="text-zinc-500">Expires {formatDate(s.expiresAt)}</span>
+                  <span>IP: {s.ipAddress ?? "Unknown"}</span>
+                  <span className="text-zinc-500">
+                    Expires {formatDate(s.expiresAt)}
+                  </span>
                 </div>
-                <div className="text-zinc-500 truncate" title={s.userAgent ?? ''}>
-                  {s.userAgent ?? 'No user agent'}
+                <div
+                  className="text-zinc-500 truncate"
+                  title={s.userAgent ?? ""}
+                >
+                  {s.userAgent ?? "No user agent"}
                 </div>
               </li>
             ))}
@@ -336,7 +359,10 @@ function UserDrawerBody({
         ) : (
           <ul className="space-y-2">
             {data.memberships.map((m) => (
-              <li key={m.orgId} className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs">
+              <li
+                key={m.orgId}
+                className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs"
+              >
                 <span className="text-white font-medium">{m.orgName}</span>
                 <StatusBadge status={m.role} />
               </li>
@@ -362,24 +388,24 @@ function UserDrawerBody({
 }
 
 export default function UserDrawer({ userId, onClose }: UserDrawerProps) {
-  const [state, setState] = useState<DrawerState>({ status: 'idle' });
+  const [state, setState] = useState<DrawerState>({ status: "idle" });
 
   const fetchUserDetail = useCallback(async (id: string) => {
-    setState({ status: 'loading' });
+    setState({ status: "loading" });
     try {
       const data = await getUserDetail(id);
-      setState({ status: 'loaded', data });
+      setState({ status: "loaded", data });
     } catch (err) {
       setState({
-        status: 'error',
-        message: err instanceof Error ? err.message : 'Unknown error',
+        status: "error",
+        message: err instanceof Error ? err.message : "Unknown error",
       });
     }
   }, []);
 
   useEffect(() => {
     if (userId === null) {
-      setState({ status: 'idle' });
+      setState({ status: "idle" });
     } else {
       fetchUserDetail(userId);
     }
@@ -387,20 +413,20 @@ export default function UserDrawer({ userId, onClose }: UserDrawerProps) {
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  if (state.status === 'idle') return null;
+  if (state.status === "idle") return null;
 
   const title =
-    state.status === 'loaded'
+    state.status === "loaded"
       ? state.data.name
-      : state.status === 'error'
-      ? 'Error'
-      : 'Loading…';
+      : state.status === "error"
+        ? "Error"
+        : "Loading…";
 
   return (
     <>
@@ -424,9 +450,9 @@ export default function UserDrawer({ userId, onClose }: UserDrawerProps) {
           </button>
         </div>
 
-        {state.status === 'loading' && <DrawerSkeleton />}
+        {state.status === "loading" && <DrawerSkeleton />}
 
-        {state.status === 'error' && (
+        {state.status === "error" && (
           <div className="flex flex-col items-center gap-2 py-8 text-zinc-500 p-6">
             <AlertCircle className="w-6 h-6 text-red-400" />
             <p className="text-sm">Failed to load user details.</p>
@@ -439,7 +465,7 @@ export default function UserDrawer({ userId, onClose }: UserDrawerProps) {
           </div>
         )}
 
-        {state.status === 'loaded' && (
+        {state.status === "loaded" && (
           <UserDrawerBody
             data={state.data}
             onRefresh={() => userId && fetchUserDetail(userId)}

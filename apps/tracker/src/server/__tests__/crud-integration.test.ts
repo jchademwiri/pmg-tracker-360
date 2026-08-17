@@ -1,37 +1,37 @@
 /**
  * @jest-environment node
  */
-import { db } from '@pmg/db';
+import { db } from "@pmg/db";
 import {
   organization,
   client,
   tender,
   project,
   purchaseOrder,
-} from '@pmg/db/schema';
+} from "@pmg/db/schema";
 import {
   createClient,
   getClients,
   getClientById,
   updateClient,
   deleteClient,
-} from '@/server/clients';
-import { deleteTender, updateTenderStatus } from '@/server/tenders';
-import { deleteProject } from '@/server/projects';
-import { eq } from 'drizzle-orm';
+} from "@/server/clients";
+import { deleteTender, updateTenderStatus } from "@/server/tenders";
+import { deleteProject } from "@/server/projects";
+import { eq } from "drizzle-orm";
 
 // Mock revalidatePath to avoid Next.js errors in test environment
-jest.mock('next/cache', () => ({
+jest.mock("next/cache", () => ({
   revalidatePath: jest.fn(),
 }));
 
 // Mock validateSessionAndOrg for integration tests
-jest.mock('@/server/utils', () => ({
-  ...jest.requireActual('@/server/utils'),
+jest.mock("@/server/utils", () => ({
+  ...jest.requireActual("@/server/utils"),
   validateSessionAndOrg: jest.fn(async () => ({
-    userId: 'test_user_id',
-    role: 'owner',
-    session: { user: { id: 'test_user_id', name: 'Test User' } },
+    userId: "test_user_id",
+    role: "owner",
+    session: { user: { id: "test_user_id", name: "Test User" } },
   })),
 }));
 
@@ -44,9 +44,9 @@ afterAll(() => {
   console.error = originalConsoleError;
 });
 
-describe('Client CRUD Integration Tests', () => {
+describe("Client CRUD Integration Tests", () => {
   let testOrgId: string;
-  const TEST_PREFIX = 'TEST_RUN_' + Date.now();
+  const TEST_PREFIX = "TEST_RUN_" + Date.now();
 
   beforeAll(async () => {
     // Create a test organization
@@ -65,13 +65,13 @@ describe('Client CRUD Integration Tests', () => {
     }
   });
 
-  describe('Create Client', () => {
-    it('should create a new client successfully', async () => {
+  describe("Create Client", () => {
+    it("should create a new client successfully", async () => {
       const clientData = {
         name: `${TEST_PREFIX}_Client`,
-        contactName: 'John Doe',
-        contactEmail: 'john@example.com',
-        contactPhone: '1234567890',
+        contactName: "John Doe",
+        contactEmail: "john@example.com",
+        contactPhone: "1234567890",
       };
 
       const result = await createClient(testOrgId, clientData);
@@ -89,20 +89,20 @@ describe('Client CRUD Integration Tests', () => {
       expect(dbClient?.name).toBe(clientData.name);
     });
 
-    it('should fail validation with invalid email', async () => {
+    it("should fail validation with invalid email", async () => {
       const clientData = {
         name: `${TEST_PREFIX}_Invalid`,
-        contactEmail: 'invalid-email',
+        contactEmail: "invalid-email",
       };
 
       const result = await createClient(testOrgId, clientData as any);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Invalid input data');
+      expect(result.error).toBe("Invalid input data");
     });
   });
 
-  describe('Read Client', () => {
+  describe("Read Client", () => {
     let clientId: string;
 
     beforeAll(async () => {
@@ -113,13 +113,13 @@ describe('Client CRUD Integration Tests', () => {
       if (res.client) clientId = res.client.id;
     });
 
-    it('should get client by ID', async () => {
+    it("should get client by ID", async () => {
       const result = await getClientById(testOrgId, clientId);
       expect(result.success).toBe(true);
       expect(result.client?.id).toBe(clientId);
     });
 
-    it('should list clients with pagination', async () => {
+    it("should list clients with pagination", async () => {
       const result = await getClients(testOrgId);
       expect(result.clients.length).toBeGreaterThan(0);
       const found = result.clients.find((c) => c.id === clientId);
@@ -127,7 +127,7 @@ describe('Client CRUD Integration Tests', () => {
     });
   });
 
-  describe('Update Client', () => {
+  describe("Update Client", () => {
     let clientId: string;
 
     beforeAll(async () => {
@@ -137,10 +137,10 @@ describe('Client CRUD Integration Tests', () => {
       if (res.client) clientId = res.client.id;
     });
 
-    it('should update client details', async () => {
+    it("should update client details", async () => {
       const updateData = {
         name: `${TEST_PREFIX}_Updated_Name`,
-        notes: 'Updated notes',
+        notes: "Updated notes",
       };
 
       const result = await updateClient(testOrgId, clientId, updateData);
@@ -157,7 +157,7 @@ describe('Client CRUD Integration Tests', () => {
     });
   });
 
-  describe('Delete Client', () => {
+  describe("Delete Client", () => {
     let clientId: string;
 
     beforeAll(async () => {
@@ -167,7 +167,7 @@ describe('Client CRUD Integration Tests', () => {
       if (res.client) clientId = res.client.id;
     });
 
-    it('should soft delete client', async () => {
+    it("should soft delete client", async () => {
       const result = await deleteClient(testOrgId, clientId);
 
       expect(result.success).toBe(true);
@@ -185,7 +185,7 @@ describe('Client CRUD Integration Tests', () => {
     });
   });
 
-  describe('Safe Deletion Constraints', () => {
+  describe("Safe Deletion Constraints", () => {
     let clientId: string;
     let tenderId: string;
     let projectId: string;
@@ -205,7 +205,7 @@ describe('Client CRUD Integration Tests', () => {
         organizationId: testOrgId,
         tenderNumber: `TND_${Date.now()}`,
         clientId: clientId,
-        description: 'Safe Deletion Test Tender',
+        description: "Safe Deletion Test Tender",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -218,7 +218,7 @@ describe('Client CRUD Integration Tests', () => {
         projectNumber: `PRJ_${Date.now()}`,
         clientId: clientId,
         tenderId: tenderId,
-        description: 'Safe Deletion Test Project',
+        description: "Safe Deletion Test Project",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -230,33 +230,33 @@ describe('Client CRUD Integration Tests', () => {
         organizationId: testOrgId,
         projectId: projectId,
         poNumber: `PO_${Date.now()}`,
-        description: 'Safe Deletion Test PO',
-        totalAmount: '1000',
-        status: 'sent', // Active status
+        description: "Safe Deletion Test PO",
+        totalAmount: "1000",
+        status: "sent", // Active status
         createdAt: new Date(),
         updatedAt: new Date(),
       });
     });
 
-    it('should prevent deleting Project with active Purchase Orders', async () => {
+    it("should prevent deleting Project with active Purchase Orders", async () => {
       const result = await deleteProject(testOrgId, projectId);
       expect(result.success).toBe(false);
-      expect(result.error).toContain('active purchase orders');
+      expect(result.error).toContain("active purchase orders");
     });
 
-    it('should prevent deleting Tender with active Projects', async () => {
+    it("should prevent deleting Tender with active Projects", async () => {
       const result = await deleteTender(testOrgId, tenderId);
       expect(result.success).toBe(false);
-      expect(result.error).toContain('active projects');
+      expect(result.error).toContain("active projects");
     });
 
-    it('should prevent deleting Client with active Tenders', async () => {
+    it("should prevent deleting Client with active Tenders", async () => {
       const result = await deleteClient(testOrgId, clientId);
       expect(result.success).toBe(false);
-      expect(result.error).toContain('active tenders');
+      expect(result.error).toContain("active tenders");
     });
 
-    it('should allow deletion after dependencies are removed', async () => {
+    it("should allow deletion after dependencies are removed", async () => {
       // 1. Delete PO
       await db
         .update(purchaseOrder)
@@ -277,7 +277,7 @@ describe('Client CRUD Integration Tests', () => {
     }, 15000);
   });
 
-  describe('Tender-to-Project Transition', () => {
+  describe("Tender-to-Project Transition", () => {
     let clientId: string;
     let tenderId: string;
 
@@ -295,23 +295,28 @@ describe('Client CRUD Integration Tests', () => {
         organizationId: testOrgId,
         tenderNumber: `TND_TRANS_${Date.now()}`,
         clientId: clientId,
-        description: 'Transition Test Tender',
-        value: '120000.50',
+        description: "Transition Test Tender",
+        value: "120000.50",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
     });
 
-    it('should transition tender to awarded and create project with custom contract details', async () => {
+    it("should transition tender to awarded and create project with custom contract details", async () => {
       const awardDetails = {
-        status: 'awarded' as const,
-        awardValue: '150000.00',
-        contractStartDate: new Date('2026-06-01'),
-        contractEndDate: new Date('2027-06-01'),
-        signedContractUrl: 'https://storage.example.com/contracts/signed_sla.pdf',
+        status: "awarded" as const,
+        awardValue: "150000.00",
+        contractStartDate: new Date("2026-06-01"),
+        contractEndDate: new Date("2027-06-01"),
+        signedContractUrl:
+          "https://storage.example.com/contracts/signed_sla.pdf",
       };
 
-      const result = await updateTenderStatus(testOrgId, tenderId, awardDetails);
+      const result = await updateTenderStatus(
+        testOrgId,
+        tenderId,
+        awardDetails,
+      );
 
       expect(result.success).toBe(true);
       expect(result.projectId).toBeDefined();
@@ -323,8 +328,12 @@ describe('Client CRUD Integration Tests', () => {
 
       expect(dbProject).toBeDefined();
       expect(dbProject?.awardValue).toBe(awardDetails.awardValue);
-      expect(dbProject?.contractStartDate?.toISOString()).toBe(awardDetails.contractStartDate.toISOString());
-      expect(dbProject?.contractEndDate?.toISOString()).toBe(awardDetails.contractEndDate.toISOString());
+      expect(dbProject?.contractStartDate?.toISOString()).toBe(
+        awardDetails.contractStartDate.toISOString(),
+      );
+      expect(dbProject?.contractEndDate?.toISOString()).toBe(
+        awardDetails.contractEndDate.toISOString(),
+      );
       expect(dbProject?.signedContractUrl).toBe(awardDetails.signedContractUrl);
     });
   });

@@ -1,6 +1,6 @@
-import 'server-only';
+import "server-only";
 
-import { db } from '@pmg/db';
+import { db } from "@pmg/db";
 import {
   user,
   session,
@@ -18,19 +18,9 @@ import {
   supportTicketMessages,
   feedback,
   waitlist,
-} from '@pmg/db/schema';
-import {
-  eq,
-  and,
-  lt,
-  gt,
-  isNull,
-  sql,
-  count,
-  desc,
-  asc,
-} from 'drizzle-orm';
-import { PLATFORM_ORG_ID } from './constants';
+} from "@pmg/db/schema";
+import { eq, and, lt, gt, isNull, sql, count, desc, asc } from "drizzle-orm";
+import { PLATFORM_ORG_ID } from "./constants";
 
 /* =============================================================================
    Return Types
@@ -51,8 +41,11 @@ export type DashboardMetrics = {
   inProgressTickets: number;
   waitlistTotal: number;
   newWaitlistThisWeek: number;
-  tenderByStatus: Record<'draft' | 'submitted' | 'won' | 'lost' | 'pending', number>;
-  planDistribution: Record<'free' | 'pro', number>;
+  tenderByStatus: Record<
+    "draft" | "submitted" | "won" | "lost" | "pending",
+    number
+  >;
+  planDistribution: Record<"free" | "pro", number>;
 };
 
 export type AlertCounts = {
@@ -140,7 +133,7 @@ export type TicketMessageItem = {
   id: string;
   ticketId: string;
   senderId: string | null;
-  senderType: 'user' | 'admin' | 'system';
+  senderType: "user" | "admin" | "system";
   senderName: string;
   senderEmail: string;
   message: string;
@@ -193,55 +186,94 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     // totalUsers
     db.select({ value: count() }).from(user),
     // newUsersThisWeek
-    db.select({ value: count() }).from(user).where(gt(user.createdAt, sevenDaysAgo)),
+    db
+      .select({ value: count() })
+      .from(user)
+      .where(gt(user.createdAt, sevenDaysAgo)),
     // activeOrgs (not soft-deleted, excluding sentinel)
-    db.select({ value: count() }).from(organization).where(
-      and(isNull(organization.deletedAt), sql`${organization.id} != ${PLATFORM_ORG_ID}`)
-    ),
+    db
+      .select({ value: count() })
+      .from(organization)
+      .where(
+        and(
+          isNull(organization.deletedAt),
+          sql`${organization.id} != ${PLATFORM_ORG_ID}`,
+        ),
+      ),
     // newOrgsThisWeek (not soft-deleted, excluding sentinel)
-    db.select({ value: count() }).from(organization).where(
-      and(
-        gt(organization.createdAt, sevenDaysAgo),
-        isNull(organization.deletedAt),
-        sql`${organization.id} != ${PLATFORM_ORG_ID}`
-      )
-    ),
+    db
+      .select({ value: count() })
+      .from(organization)
+      .where(
+        and(
+          gt(organization.createdAt, sevenDaysAgo),
+          isNull(organization.deletedAt),
+          sql`${organization.id} != ${PLATFORM_ORG_ID}`,
+        ),
+      ),
     // totalTenders
     db.select({ value: count() }).from(tender),
     // activeProjects
-    db.select({ value: count() }).from(project).where(eq(project.status, 'active')),
+    db
+      .select({ value: count() })
+      .from(project)
+      .where(eq(project.status, "active")),
     // liveSessions (expiresAt > now)
-    db.select({ value: count() }).from(session).where(gt(session.expiresAt, now)),
+    db
+      .select({ value: count() })
+      .from(session)
+      .where(gt(session.expiresAt, now)),
     // suspiciousCount
-    db.select({ value: count() }).from(sessionTracking).where(
-      and(eq(sessionTracking.isSuspicious, true), isNull(sessionTracking.logoutTime))
-    ),
+    db
+      .select({ value: count() })
+      .from(sessionTracking)
+      .where(
+        and(
+          eq(sessionTracking.isSuspicious, true),
+          isNull(sessionTracking.logoutTime),
+        ),
+      ),
     // verifiedCount
-    db.select({ value: count() }).from(user).where(eq(user.emailVerified, true)),
+    db
+      .select({ value: count() })
+      .from(user)
+      .where(eq(user.emailVerified, true)),
     // unverifiedCount
-    db.select({ value: count() }).from(user).where(eq(user.emailVerified, false)),
+    db
+      .select({ value: count() })
+      .from(user)
+      .where(eq(user.emailVerified, false)),
     // openTickets
-    db.select({ value: count() }).from(supportTickets).where(eq(supportTickets.status, 'open')),
+    db
+      .select({ value: count() })
+      .from(supportTickets)
+      .where(eq(supportTickets.status, "open")),
     // inProgressTickets
-    db.select({ value: count() }).from(supportTickets).where(eq(supportTickets.status, 'in_progress')),
+    db
+      .select({ value: count() })
+      .from(supportTickets)
+      .where(eq(supportTickets.status, "in_progress")),
     // waitlistTotal
     db.select({ value: count() }).from(waitlist),
     // newWaitlistThisWeek
-    db.select({ value: count() }).from(waitlist).where(gt(waitlist.createdAt, sevenDaysAgo)),
+    db
+      .select({ value: count() })
+      .from(waitlist)
+      .where(gt(waitlist.createdAt, sevenDaysAgo)),
     // tenderByStatus
     db
       .select({ status: tender.status, cnt: count() })
       .from(tender)
       .groupBy(tender.status),
     // planDistribution
-    db
-      .select({ plan: user.plan, cnt: count() })
-      .from(user)
-      .groupBy(user.plan),
+    db.select({ plan: user.plan, cnt: count() }).from(user).groupBy(user.plan),
   ]);
 
   // Build tenderByStatus record
-  const tenderByStatus: Record<'draft' | 'submitted' | 'won' | 'lost' | 'pending', number> = {
+  const tenderByStatus: Record<
+    "draft" | "submitted" | "won" | "lost" | "pending",
+    number
+  > = {
     draft: 0,
     submitted: 0,
     won: 0,
@@ -256,7 +288,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   }
 
   // Build planDistribution record
-  const planDistribution: Record<'free' | 'pro', number> = {
+  const planDistribution: Record<"free" | "pro", number> = {
     free: 0,
     pro: 0,
   };
@@ -306,30 +338,54 @@ export async function getAlertCounts(): Promise<AlertCounts> {
     openTicketsResult,
   ] = await Promise.all([
     // suspiciousSessions: isSuspicious=true AND logoutTime IS NULL
-    db.select({ value: count() }).from(sessionTracking).where(
-      and(eq(sessionTracking.isSuspicious, true), isNull(sessionTracking.logoutTime))
-    ),
+    db
+      .select({ value: count() })
+      .from(sessionTracking)
+      .where(
+        and(
+          eq(sessionTracking.isSuspicious, true),
+          isNull(sessionTracking.logoutTime),
+        ),
+      ),
     // unverifiedRecentUsers: emailVerified=false AND createdAt > NOW()-7days
-    db.select({ value: count() }).from(user).where(
-      and(eq(user.emailVerified, false), gt(user.createdAt, sevenDaysAgo))
-    ),
+    db
+      .select({ value: count() })
+      .from(user)
+      .where(
+        and(eq(user.emailVerified, false), gt(user.createdAt, sevenDaysAgo)),
+      ),
     // expiringInvitations: status='pending' AND expiresAt < NOW()+48h
-    db.select({ value: count() }).from(invitation).where(
-      and(eq(invitation.status, 'pending'), lt(invitation.expiresAt, in48h))
-    ),
+    db
+      .select({ value: count() })
+      .from(invitation)
+      .where(
+        and(eq(invitation.status, "pending"), lt(invitation.expiresAt, in48h)),
+      ),
     // expiringTransfers: status='pending' AND expiresAt < NOW()+24h
-    db.select({ value: count() }).from(ownershipTransfer).where(
-      and(eq(ownershipTransfer.status, 'pending'), lt(ownershipTransfer.expiresAt, in24h))
-    ),
+    db
+      .select({ value: count() })
+      .from(ownershipTransfer)
+      .where(
+        and(
+          eq(ownershipTransfer.status, "pending"),
+          lt(ownershipTransfer.expiresAt, in24h),
+        ),
+      ),
     // pendingPurgeOrgs: permanentDeletionScheduledAt < NOW()+72h (and not null)
-    db.select({ value: count() }).from(organization).where(
-      and(
-        sql`${organization.permanentDeletionScheduledAt} IS NOT NULL`,
-        lt(organization.permanentDeletionScheduledAt, in72h)
-      )
-    ),
+    db
+      .select({ value: count() })
+      .from(organization)
+      .where(
+        and(
+          sql`${organization.permanentDeletionScheduledAt} IS NOT NULL`,
+          lt(organization.permanentDeletionScheduledAt, in72h),
+        ),
+      ),
     // openTickets: status='open'
-    db.select({ value: count() }).from(supportTickets).where(eq(supportTickets.status, 'open')),
+    db
+      .select({ value: count() })
+      .from(supportTickets)
+      .where(eq(supportTickets.status, "open")),
   ]);
 
   return {
@@ -345,7 +401,9 @@ export async function getAlertCounts(): Promise<AlertCounts> {
 /**
  * getRecentActivity — left join securityAuditLog with user, order by createdAt DESC
  */
-export async function getRecentActivity(limit: number): Promise<ActivityEntry[]> {
+export async function getRecentActivity(
+  limit: number,
+): Promise<ActivityEntry[]> {
   const rows = await db
     .select({
       id: securityAuditLog.id,
@@ -435,7 +493,9 @@ export async function getOrganizationsWithCounts(): Promise<OrgWithCounts[]> {
  * Ghost = user has no rows in member table.
  * Assembles in JS from three separate queries to avoid N+1.
  */
-export async function getUsersWithMemberships(): Promise<UserWithMemberships[]> {
+export async function getUsersWithMemberships(): Promise<
+  UserWithMemberships[]
+> {
   const [allUsers, allMembers, allAccounts, allOrgs] = await Promise.all([
     db
       .select({
@@ -476,16 +536,21 @@ export async function getUsersWithMemberships(): Promise<UserWithMemberships[]> 
   ]);
 
   // Build lookup maps
-  const orgNameById = new Map<string, string>(allOrgs.map((o) => [o.id, o.name]));
+  const orgNameById = new Map<string, string>(
+    allOrgs.map((o) => [o.id, o.name]),
+  );
 
   // membersByUserId: Map<userId, membership[]>
-  const membersByUserId = new Map<string, Array<{ orgId: string; orgName: string; role: string }>>();
+  const membersByUserId = new Map<
+    string,
+    Array<{ orgId: string; orgName: string; role: string }>
+  >();
   for (const m of allMembers) {
     if (!m.userId) continue;
     const existing = membersByUserId.get(m.userId) ?? [];
     existing.push({
       orgId: m.orgId,
-      orgName: m.orgName ?? '',
+      orgName: m.orgName ?? "",
       role: m.role,
     });
     membersByUserId.set(m.userId, existing);
@@ -546,7 +611,10 @@ export async function getSuspiciousSessions(): Promise<SuspiciousSession[]> {
     .innerJoin(session, eq(sessionTracking.sessionId, session.id))
     .leftJoin(user, eq(session.userId, user.id))
     .where(
-      and(eq(sessionTracking.isSuspicious, true), isNull(sessionTracking.logoutTime))
+      and(
+        eq(sessionTracking.isSuspicious, true),
+        isNull(sessionTracking.logoutTime),
+      ),
     )
     .orderBy(desc(sessionTracking.loginTime));
 
@@ -625,20 +693,25 @@ export async function getOpenTickets(): Promise<TicketWithUser[]> {
     })
     .from(supportTickets)
     .leftJoin(user, eq(supportTickets.userId, user.id))
-    .leftJoin(supportTicketMessages, eq(supportTickets.id, supportTicketMessages.ticketId))
+    .leftJoin(
+      supportTicketMessages,
+      eq(supportTickets.id, supportTicketMessages.ticketId),
+    )
     .groupBy(supportTickets.id, user.name)
     .orderBy(desc(supportTickets.createdAt));
 
   return rows.map((row) => ({
     id: row.id,
     ticketNumber: row.ticketNumber,
-    ticketCode: row.ticketNumber ? `TICK-${row.ticketNumber}` : `TICK-${row.id.slice(0, 8).toUpperCase()}`,
+    ticketCode: row.ticketNumber
+      ? `TICK-${row.ticketNumber}`
+      : `TICK-${row.id.slice(0, 8).toUpperCase()}`,
     name: row.name,
     email: row.email,
-    subject: row.subject || 'Support Request',
+    subject: row.subject || "Support Request",
     message: row.message,
     status: row.status,
-    priority: row.priority ?? 'medium',
+    priority: row.priority ?? "medium",
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     userId: row.userId,
@@ -651,7 +724,9 @@ export async function getOpenTickets(): Promise<TicketWithUser[]> {
 /**
  * getTicketMessages — messages for a ticket, ordered by createdAt ASC
  */
-export async function getTicketMessages(ticketId: string): Promise<TicketMessageItem[]> {
+export async function getTicketMessages(
+  ticketId: string,
+): Promise<TicketMessageItem[]> {
   const rows = await db
     .select({
       id: supportTicketMessages.id,
@@ -673,7 +748,7 @@ export async function getTicketMessages(ticketId: string): Promise<TicketMessage
     id: r.id,
     ticketId: r.ticketId,
     senderId: r.senderId,
-    senderType: r.senderType as 'user' | 'admin' | 'system',
+    senderType: r.senderType as "user" | "admin" | "system",
     senderName: r.senderName,
     senderEmail: r.senderEmail,
     message: r.message,
@@ -686,7 +761,9 @@ export async function getTicketMessages(ticketId: string): Promise<TicketMessage
 /**
  * getFeedback — feedback left joined with user, optional type filter, ordered by createdAt DESC
  */
-export async function getFeedback(typeFilter?: string): Promise<FeedbackWithUser[]> {
+export async function getFeedback(
+  typeFilter?: string,
+): Promise<FeedbackWithUser[]> {
   const rows = await db
     .select({
       id: feedback.id,

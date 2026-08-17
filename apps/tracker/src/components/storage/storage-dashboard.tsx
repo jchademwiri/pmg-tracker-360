@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   HardDrive,
   Database,
@@ -25,7 +25,7 @@ import {
   Zap,
   Loader2,
   Crown,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -36,19 +36,19 @@ import {
   Bar,
   XAxis,
   YAxis,
-} from 'recharts';
-import { toast } from 'sonner';
+} from "recharts";
+import { toast } from "sonner";
 
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -56,15 +56,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { formatFileSize, formatDate } from '@/lib/format';
+} from "@/components/ui/table";
+import { formatFileSize, formatDate } from "@/lib/format";
 import {
   type StorageAnalyticsData,
   type StorageDocumentItem,
   updateOrganizationPlan,
-} from '@/server/storage';
+} from "@/server/storage";
 
-import { type SubscriptionPlan, DEFAULT_SUBSCRIPTION_PLANS } from '@pmg/db/plans-constants';
+import {
+  type SubscriptionPlan,
+  DEFAULT_SUBSCRIPTION_PLANS,
+} from "@pmg/db/plans-constants";
 
 interface StorageDashboardProps {
   organizationId: string;
@@ -73,23 +76,23 @@ interface StorageDashboardProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  tenders: '#3b82f6', // blue
-  projects: '#10b981', // emerald
-  purchase_orders: '#8b5cf6', // purple
-  extensions: '#f59e0b', // amber
-  general: '#64748b', // slate
+  tenders: "#3b82f6", // blue
+  projects: "#10b981", // emerald
+  purchase_orders: "#8b5cf6", // purple
+  extensions: "#f59e0b", // amber
+  general: "#64748b", // slate
 };
 
 const FILE_TYPE_COLORS: Record<string, string> = {
-  pdf: '#ef4444', // red
-  excel: '#10b981', // emerald
-  word: '#2563eb', // blue
-  image: '#ec4899', // pink
-  other: '#6b7280', // gray
+  pdf: "#ef4444", // red
+  excel: "#10b981", // emerald
+  word: "#2563eb", // blue
+  image: "#ec4899", // pink
+  other: "#6b7280", // gray
 };
 
 interface PlanTier {
-  id: 'free' | 'starter' | 'pro';
+  id: "free" | "starter" | "pro";
   name: string;
   price: string;
   period: string;
@@ -102,16 +105,20 @@ interface PlanTier {
 
 function getFileIcon(mimeType: string) {
   const mime = mimeType.toLowerCase();
-  if (mime.includes('pdf')) {
+  if (mime.includes("pdf")) {
     return <FileText className="h-4 w-4 text-rose-500 shrink-0" />;
   }
-  if (mime.includes('excel') || mime.includes('spreadsheet') || mime.includes('csv')) {
+  if (
+    mime.includes("excel") ||
+    mime.includes("spreadsheet") ||
+    mime.includes("csv")
+  ) {
     return <FileSpreadsheet className="h-4 w-4 text-emerald-500 shrink-0" />;
   }
-  if (mime.includes('word') || mime.includes('wordprocessingml')) {
+  if (mime.includes("word") || mime.includes("wordprocessingml")) {
     return <FileCode className="h-4 w-4 text-blue-500 shrink-0" />;
   }
-  if (mime.includes('image/')) {
+  if (mime.includes("image/")) {
     return <ImageIcon className="h-4 w-4 text-pink-500 shrink-0" />;
   }
   return <File className="h-4 w-4 text-slate-400 shrink-0" />;
@@ -119,32 +126,32 @@ function getFileIcon(mimeType: string) {
 
 function getEntityBadge(doc: StorageDocumentItem) {
   switch (doc.entityType) {
-    case 'tender':
+    case "tender":
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
           <ClipboardList className="h-3 w-3" />
-          <span>{doc.entityLabel || 'Tender'}</span>
+          <span>{doc.entityLabel || "Tender"}</span>
         </span>
       );
-    case 'project':
+    case "project":
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
           <FolderKanban className="h-3 w-3" />
-          <span>{doc.entityLabel || 'Project'}</span>
+          <span>{doc.entityLabel || "Project"}</span>
         </span>
       );
-    case 'purchaseOrder':
+    case "purchaseOrder":
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
           <Truck className="h-3 w-3" />
-          <span>{doc.entityLabel || 'PO'}</span>
+          <span>{doc.entityLabel || "PO"}</span>
         </span>
       );
-    case 'extension':
+    case "extension":
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
           <Clock className="h-3 w-3" />
-          <span>{doc.entityLabel || 'Extension'}</span>
+          <span>{doc.entityLabel || "Extension"}</span>
         </span>
       );
     default:
@@ -164,13 +171,15 @@ export function StorageDashboard({
 }: StorageDashboardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [selectedPlanAction, setSelectedPlanAction] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'recent' | 'largest'>('recent');
+  const [selectedPlanAction, setSelectedPlanAction] = useState<string | null>(
+    null,
+  );
+  const [activeTab, setActiveTab] = useState<"recent" | "largest">("recent");
 
   const activePlans = plans.filter((p) => p.isActive);
 
   const planTiers: PlanTier[] = activePlans.map((p) => {
-    const id = p.id as 'free' | 'starter' | 'pro';
+    const id = p.id as "free" | "starter" | "pro";
     const storageLabel =
       p.maxStorageMb >= 1000
         ? `${(p.maxStorageMb / 1000).toFixed(0)} GB Storage (${p.maxStorageMb.toLocaleString()} MB)`
@@ -189,23 +198,27 @@ export function StorageDashboard({
     };
   });
 
-  const currentPlanId = data.plan.toLowerCase() as PlanTier['id'];
+  const currentPlanId = data.plan.toLowerCase() as PlanTier["id"];
   const isWarning = data.usedPercentage >= 75 && data.usedPercentage < 90;
   const isCritical = data.usedPercentage >= 90;
 
-  const handlePlanChange = (targetPlan: PlanTier['id']) => {
+  const handlePlanChange = (targetPlan: PlanTier["id"]) => {
     setSelectedPlanAction(targetPlan);
     startTransition(async () => {
       try {
         const result = await updateOrganizationPlan(organizationId, targetPlan);
         if (result.success) {
-          toast.success(result.message || `Plan updated to ${targetPlan.toUpperCase()}`);
+          toast.success(
+            result.message || `Plan updated to ${targetPlan.toUpperCase()}`,
+          );
           router.refresh();
         } else {
-          toast.error(result.error || 'Failed to update plan.');
+          toast.error(result.error || "Failed to update plan.");
         }
       } catch (err: any) {
-        toast.error(err.message || 'An error occurred while changing subscription plan.');
+        toast.error(
+          err.message || "An error occurred while changing subscription plan.",
+        );
       } finally {
         setSelectedPlanAction(null);
       }
@@ -220,7 +233,7 @@ export function StorageDashboard({
       value: cat.totalBytes,
       formattedSize: formatFileSize(cat.totalBytes),
       fileCount: cat.fileCount,
-      color: CATEGORY_COLORS[cat.category] || '#64748b',
+      color: CATEGORY_COLORS[cat.category] || "#64748b",
     }));
 
   // Prepare chart data for File Type Bar Chart
@@ -231,7 +244,7 @@ export function StorageDashboard({
       sizeMb: Math.round((ft.totalBytes / (1024 * 1024)) * 10) / 10,
       formattedSize: formatFileSize(ft.totalBytes),
       fileCount: ft.fileCount,
-      color: FILE_TYPE_COLORS[ft.fileType] || '#6b7280',
+      color: FILE_TYPE_COLORS[ft.fileType] || "#6b7280",
     }));
 
   return (
@@ -244,11 +257,17 @@ export function StorageDashboard({
             <span>Storage & Documents</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Monitor organization storage capacity, breakdown by workspace, file types, and manage 1-click subscription tiers.
+            Monitor organization storage capacity, breakdown by workspace, file
+            types, and manage 1-click subscription tiers.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline" size="sm" className="h-9 font-medium shadow-xs">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-9 font-medium shadow-xs"
+          >
             <Link href="/billing">
               <Sparkles className="h-4 w-4 mr-1.5 text-amber-400" />
               Manage Billing
@@ -270,7 +289,10 @@ export function StorageDashboard({
             <div className="space-y-2 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Current Storage Tier: <strong className="text-foreground uppercase">{data.plan}</strong>
+                  Current Storage Tier:{" "}
+                  <strong className="text-foreground uppercase">
+                    {data.plan}
+                  </strong>
                 </span>
                 {isCritical ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
@@ -295,7 +317,8 @@ export function StorageDashboard({
                   {formatFileSize(data.usedBytes)}
                 </span>
                 <span className="text-sm text-muted-foreground font-medium">
-                  of {formatFileSize(data.planLimitBytes)} limit ({data.usedPercentage}% used)
+                  of {formatFileSize(data.planLimitBytes)} limit (
+                  {data.usedPercentage}% used)
                 </span>
               </div>
 
@@ -314,7 +337,9 @@ export function StorageDashboard({
 
             <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-center gap-2 border-t md:border-t-0 md:border-l border-border/40 pt-4 md:pt-0 md:pl-6">
               <div className="text-left md:text-right">
-                <span className="text-xs text-muted-foreground">Available Space</span>
+                <span className="text-xs text-muted-foreground">
+                  Available Space
+                </span>
                 <p className="text-xl font-bold text-emerald-400 tabular-nums">
                   {formatFileSize(data.availableBytes)}
                 </p>
@@ -337,11 +362,15 @@ export function StorageDashboard({
                 <span>Subscription & Storage Tier Management</span>
               </CardTitle>
               <CardDescription className="text-xs mt-1">
-                Instantly upgrade or adjust your organization's storage volume with 1-click tier switching.
+                Instantly upgrade or adjust your organization's storage volume
+                with 1-click tier switching.
               </CardDescription>
             </div>
             <div className="text-xs text-muted-foreground font-medium bg-muted/60 px-2.5 py-1 rounded-md border border-border/50 w-fit">
-              Current Plan: <strong className="text-foreground uppercase">{currentPlanId}</strong>
+              Current Plan:{" "}
+              <strong className="text-foreground uppercase">
+                {currentPlanId}
+              </strong>
             </div>
           </div>
         </CardHeader>
@@ -351,8 +380,9 @@ export function StorageDashboard({
             {planTiers.map((tier) => {
               const isCurrent = currentPlanId === tier.id;
               const isDowngrade =
-                (currentPlanId === 'pro' && (tier.id === 'starter' || tier.id === 'free')) ||
-                (currentPlanId === 'starter' && tier.id === 'free');
+                (currentPlanId === "pro" &&
+                  (tier.id === "starter" || tier.id === "free")) ||
+                (currentPlanId === "starter" && tier.id === "free");
               const isUpgrade = !isCurrent && !isDowngrade;
               const isActing = selectedPlanAction === tier.id && isPending;
 
@@ -361,10 +391,10 @@ export function StorageDashboard({
                   key={tier.id}
                   className={`relative rounded-xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
                     isCurrent
-                      ? 'border-primary shadow-sm bg-primary/5 ring-1 ring-primary/40'
+                      ? "border-primary shadow-sm bg-primary/5 ring-1 ring-primary/40"
                       : tier.popular
-                        ? 'border-amber-500/50 shadow-xs bg-amber-500/5'
-                        : 'border-border/70 bg-background/50 hover:border-border'
+                        ? "border-amber-500/50 shadow-xs bg-amber-500/5"
+                        : "border-border/70 bg-background/50 hover:border-border"
                   }`}
                 >
                   {tier.popular && !isCurrent && (
@@ -381,14 +411,18 @@ export function StorageDashboard({
 
                   <div>
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-foreground">{tier.name}</h3>
+                      <h3 className="text-sm font-bold text-foreground">
+                        {tier.name}
+                      </h3>
                     </div>
 
                     <div className="flex items-baseline gap-1 mt-1.5">
                       <span className="text-xl font-extrabold tracking-tight text-foreground">
                         {tier.price}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">/{tier.period}</span>
+                      <span className="text-[11px] text-muted-foreground">
+                        /{tier.period}
+                      </span>
                     </div>
 
                     <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-muted/60 text-foreground w-fit mt-2">
@@ -402,7 +436,10 @@ export function StorageDashboard({
 
                     <ul className="space-y-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3 my-3">
                       {tier.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5 text-[11px]">
+                        <li
+                          key={idx}
+                          className="flex items-start gap-1.5 text-[11px]"
+                        >
                           <Check className="h-3 w-3 text-emerald-400 shrink-0 mt-0.5" />
                           <span>{feat}</span>
                         </li>
@@ -413,14 +450,20 @@ export function StorageDashboard({
                   <Button
                     type="button"
                     disabled={isCurrent || isPending}
-                    variant={isCurrent ? 'secondary' : isUpgrade ? 'default' : 'outline'}
+                    variant={
+                      isCurrent
+                        ? "secondary"
+                        : isUpgrade
+                          ? "default"
+                          : "outline"
+                    }
                     size="sm"
                     className={`w-full text-xs font-semibold cursor-pointer h-8.5 ${
                       isUpgrade && tier.popular
-                        ? 'bg-amber-500 hover:bg-amber-600 text-black shadow-xs'
+                        ? "bg-amber-500 hover:bg-amber-600 text-black shadow-xs"
                         : isUpgrade
-                          ? 'shadow-xs'
-                          : ''
+                          ? "shadow-xs"
+                          : ""
                     }`}
                     onClick={() => handlePlanChange(tier.id)}
                   >
@@ -457,9 +500,15 @@ export function StorageDashboard({
             <Database className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight">{formatFileSize(data.usedBytes)}</div>
+            <div className="text-2xl font-bold tracking-tight">
+              {formatFileSize(data.usedBytes)}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {data.usedPercentage}% of {data.planLimitMb >= 1000 ? `${data.planLimitMb / 1000} GB` : `${data.planLimitMb} MB`} quota
+              {data.usedPercentage}% of{" "}
+              {data.planLimitMb >= 1000
+                ? `${data.planLimitMb / 1000} GB`
+                : `${data.planLimitMb} MB`}{" "}
+              quota
             </p>
           </CardContent>
         </Card>
@@ -489,7 +538,9 @@ export function StorageDashboard({
             <FileText className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight">{data.totalFiles}</div>
+            <div className="text-2xl font-bold tracking-tight">
+              {data.totalFiles}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Stored across all workspaces
             </p>
@@ -519,7 +570,9 @@ export function StorageDashboard({
         {/* Category Breakdown Donut */}
         <Card className="border-border/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Workspace Distribution</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Workspace Distribution
+            </CardTitle>
             <CardDescription className="text-xs">
               Storage consumption categorized by business area
             </CardDescription>
@@ -548,12 +601,15 @@ export function StorageDashboard({
                         ))}
                       </Pie>
                       <RechartsTooltip
-                        formatter={(value: any) => [formatFileSize(Number(value)), 'Storage']}
+                        formatter={(value: any) => [
+                          formatFileSize(Number(value)),
+                          "Storage",
+                        ]}
                         contentStyle={{
-                          backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                          borderColor: 'rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          fontSize: '12px',
+                          backgroundColor: "rgba(15, 23, 42, 0.95)",
+                          borderColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
                         }}
                       />
                     </PieChart>
@@ -575,7 +631,8 @@ export function StorageDashboard({
                           <span
                             className="size-2.5 rounded-full shrink-0"
                             style={{
-                              backgroundColor: CATEGORY_COLORS[cat.category] || '#64748b',
+                              backgroundColor:
+                                CATEGORY_COLORS[cat.category] || "#64748b",
                             }}
                           />
                           <span className="font-medium text-foreground truncate">
@@ -583,7 +640,9 @@ export function StorageDashboard({
                           </span>
                         </div>
                         <div className="flex items-center gap-3 font-mono text-[11px] shrink-0">
-                          <span className="text-muted-foreground">{cat.fileCount} files</span>
+                          <span className="text-muted-foreground">
+                            {cat.fileCount} files
+                          </span>
                           <span className="font-bold text-foreground">
                             {formatFileSize(cat.totalBytes)} ({percentage}%)
                           </span>
@@ -600,7 +659,9 @@ export function StorageDashboard({
         {/* File Type Distribution Bar */}
         <Card className="border-border/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">File Format Breakdown</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              File Format Breakdown
+            </CardTitle>
             <CardDescription className="text-xs">
               Storage consumption by file MIME type
             </CardDescription>
@@ -614,16 +675,25 @@ export function StorageDashboard({
               <div className="space-y-4">
                 <div className="h-44 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={fileTypeChartData} layout="vertical" margin={{ left: 10, right: 20, top: 10, bottom: 10 }}>
+                    <BarChart
+                      data={fileTypeChartData}
+                      layout="vertical"
+                      margin={{ left: 10, right: 20, top: 10, bottom: 10 }}
+                    >
                       <XAxis type="number" hide />
-                      <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        width={110}
+                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                      />
                       <RechartsTooltip
-                        formatter={(value: any) => [`${value} MB`, 'Size']}
+                        formatter={(value: any) => [`${value} MB`, "Size"]}
                         contentStyle={{
-                          backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                          borderColor: 'rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          fontSize: '12px',
+                          backgroundColor: "rgba(15, 23, 42, 0.95)",
+                          borderColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
                         }}
                       />
                       <Bar dataKey="sizeMb" radius={[0, 4, 4, 0]}>
@@ -637,15 +707,24 @@ export function StorageDashboard({
 
                 <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/40 pt-3">
                   {data.fileTypeStats.map((ft) => (
-                    <div key={ft.fileType} className="flex items-center justify-between p-1">
+                    <div
+                      key={ft.fileType}
+                      className="flex items-center justify-between p-1"
+                    >
                       <div className="flex items-center gap-1.5">
                         <span
                           className="size-2 rounded-full shrink-0"
-                          style={{ backgroundColor: FILE_TYPE_COLORS[ft.fileType] }}
+                          style={{
+                            backgroundColor: FILE_TYPE_COLORS[ft.fileType],
+                          }}
                         />
-                        <span className="text-muted-foreground truncate">{ft.label}</span>
+                        <span className="text-muted-foreground truncate">
+                          {ft.label}
+                        </span>
                       </div>
-                      <span className="font-mono font-medium">{formatFileSize(ft.totalBytes)}</span>
+                      <span className="font-mono font-medium">
+                        {formatFileSize(ft.totalBytes)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -659,12 +738,19 @@ export function StorageDashboard({
       <Card className="border-border/60">
         <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <CardTitle className="text-base font-semibold">Document Inventory</CardTitle>
+            <CardTitle className="text-base font-semibold">
+              Document Inventory
+            </CardTitle>
             <CardDescription className="text-xs">
-              Explore your organization's recent uploads and largest stored files.
+              Explore your organization's recent uploads and largest stored
+              files.
             </CardDescription>
           </div>
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-fit">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as any)}
+            className="w-fit"
+          >
             <TabsList className="h-8 p-0.5 bg-muted/60 text-xs">
               <TabsTrigger value="recent" className="h-7 text-xs px-3">
                 Recent Uploads ({data.recentUploads.length})
@@ -678,7 +764,10 @@ export function StorageDashboard({
         <CardContent className="p-0">
           <Tabs value={activeTab} className="w-full">
             {/* Recent Uploads Table */}
-            <TabsContent value="recent" className="m-0 border-t border-border/40">
+            <TabsContent
+              value="recent"
+              className="m-0 border-t border-border/40"
+            >
               {data.recentUploads.length === 0 ? (
                 <div className="p-8 text-center text-xs text-muted-foreground italic">
                   No document records found in this organization.
@@ -688,7 +777,9 @@ export function StorageDashboard({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[40%]">File Name</TableHead>
-                      <TableHead className="w-[20%]">Workspace Entity</TableHead>
+                      <TableHead className="w-[20%]">
+                        Workspace Entity
+                      </TableHead>
                       <TableHead className="w-[15%]">Uploaded By</TableHead>
                       <TableHead className="w-[12%]">Size</TableHead>
                       <TableHead className="w-[13%]">Upload Date</TableHead>
@@ -707,7 +798,7 @@ export function StorageDashboard({
                         </TableCell>
                         <TableCell>{getEntityBadge(doc)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {doc.uploadedByName || 'System'}
+                          {doc.uploadedByName || "System"}
                         </TableCell>
                         <TableCell className="font-mono text-xs font-semibold tabular-nums">
                           {formatFileSize(doc.size)}
@@ -723,7 +814,10 @@ export function StorageDashboard({
             </TabsContent>
 
             {/* Largest Files Table */}
-            <TabsContent value="largest" className="m-0 border-t border-border/40">
+            <TabsContent
+              value="largest"
+              className="m-0 border-t border-border/40"
+            >
               {data.largestFiles.length === 0 ? (
                 <div className="p-8 text-center text-xs text-muted-foreground italic">
                   No document records found in this organization.
@@ -733,7 +827,9 @@ export function StorageDashboard({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[40%]">File Name</TableHead>
-                      <TableHead className="w-[20%]">Workspace Entity</TableHead>
+                      <TableHead className="w-[20%]">
+                        Workspace Entity
+                      </TableHead>
                       <TableHead className="w-[15%]">Uploaded By</TableHead>
                       <TableHead className="w-[12%]">Size</TableHead>
                       <TableHead className="w-[13%]">Upload Date</TableHead>
@@ -752,7 +848,7 @@ export function StorageDashboard({
                         </TableCell>
                         <TableCell>{getEntityBadge(doc)}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {doc.uploadedByName || 'System'}
+                          {doc.uploadedByName || "System"}
                         </TableCell>
                         <TableCell className="font-mono text-xs font-bold text-amber-400 tabular-nums">
                           {formatFileSize(doc.size)}

@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   ConfirmationDialog,
   RemoveMemberConfirmationDialog,
-} from '@/components/ui/confirmation-dialog';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/confirmation-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Users,
   Crown,
@@ -32,19 +32,19 @@ import {
   Trash2,
   UserMinus,
   UserPlus,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { InviteMemberModal } from '@/components/shared/modals/invite-member-modal';
-import type { Role } from '@pmg/db/schema';
+} from "lucide-react";
+import { toast } from "sonner";
+import { InviteMemberModal } from "@/components/shared/modals/invite-member-modal";
+import type { Role } from "@pmg/db/schema";
 import {
   getOrganizationMembers,
   type OrganizationMember,
-} from '@/server/organizations';
+} from "@/server/organizations";
 import {
   updateMemberRole,
   removeMemberFromOrganization,
   bulkRemoveMembersFromOrganization,
-} from '@/server/organization-members';
+} from "@/server/organization-members";
 
 interface MembersTabProps {
   organization: {
@@ -64,37 +64,37 @@ interface MembersTabProps {
 // Helper function to get role display info
 function getRoleDisplay(role: Role) {
   switch (role) {
-    case 'owner':
+    case "owner":
       return {
         color:
-          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+          "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
         icon: Crown,
-        label: 'Owner',
+        label: "Owner",
       };
-    case 'admin':
+    case "admin":
       return {
-        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
         icon: UserCheck,
-        label: 'Admin',
+        label: "Admin",
       };
-    case 'manager':
+    case "manager":
       return {
         color:
-          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+          "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
         icon: UserCog,
-        label: 'Manager',
+        label: "Manager",
       };
-    case 'member':
+    case "member":
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: User,
-        label: 'Member',
+        label: "Member",
       };
     default:
       return {
-        color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
         icon: User,
-        label: 'Member',
+        label: "Member",
       };
   }
 }
@@ -102,38 +102,38 @@ function getRoleDisplay(role: Role) {
 // Helper function to get user initials
 function getUserInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
 
 // Helper function to check if user can manage members
 function canManageMembers(role: Role): boolean {
-  return ['owner', 'admin', 'manager'].includes(role);
+  return ["owner", "admin", "manager"].includes(role);
 }
 
 // Helper function to check if user can change roles
 function canChangeRole(
   userRole: Role,
   targetRole: Role,
-  isCurrentUser: boolean
+  isCurrentUser: boolean,
 ): boolean {
   if (isCurrentUser) return false; // Can't change own role
-  if (targetRole === 'owner') return userRole === 'owner'; // Only owners can change owner role
-  return ['owner', 'admin'].includes(userRole); // Owners and admins can change other roles
+  if (targetRole === "owner") return userRole === "owner"; // Only owners can change owner role
+  return ["owner", "admin"].includes(userRole); // Owners and admins can change other roles
 }
 
 // Helper function to check if user can remove member
 function canRemoveMember(
   userRole: Role,
   targetRole: Role,
-  isCurrentUser: boolean
+  isCurrentUser: boolean,
 ): boolean {
   if (isCurrentUser) return false; // Can't remove self
-  if (targetRole === 'owner') return false; // Can't remove owner
-  return ['owner', 'admin', 'manager'].includes(userRole);
+  if (targetRole === "owner") return false; // Can't remove owner
+  return ["owner", "admin", "manager"].includes(userRole);
 }
 
 export function MembersTab({
@@ -157,12 +157,12 @@ export function MembersTab({
       try {
         setIsLoading(true);
         const organizationMembers = await getOrganizationMembers(
-          organization.id
+          organization.id,
         );
         setMembers(organizationMembers);
       } catch (error) {
-        console.error('Error fetching members:', error);
-        toast.error('Failed to load organization members');
+        console.error("Error fetching members:", error);
+        toast.error("Failed to load organization members");
       } finally {
         setIsLoading(false);
       }
@@ -179,16 +179,16 @@ export function MembersTab({
         // Update local state optimistically
         setMembers((prev) =>
           prev.map((member) =>
-            member.id === memberId ? { ...member, role: newRole } : member
-          )
+            member.id === memberId ? { ...member, role: newRole } : member,
+          ),
         );
-        toast.success('Member role updated successfully');
+        toast.success("Member role updated successfully");
       } else {
-        toast.error(result.error?.message || 'Failed to update member role');
+        toast.error(result.error?.message || "Failed to update member role");
       }
     } catch (error) {
-      console.error('Error updating member role:', error);
-      toast.error('Failed to update member role');
+      console.error("Error updating member role:", error);
+      toast.error("Failed to update member role");
     }
   };
 
@@ -196,19 +196,19 @@ export function MembersTab({
     try {
       const result = await removeMemberFromOrganization(
         organization.id,
-        memberId
+        memberId,
       );
 
       if (result.success) {
         // Update local state optimistically
         setMembers((prev) => prev.filter((member) => member.id !== memberId));
-        toast.success('Member removed successfully');
+        toast.success("Member removed successfully");
       } else {
-        toast.error(result.error?.message || 'Failed to remove member');
+        toast.error(result.error?.message || "Failed to remove member");
       }
     } catch (error) {
-      console.error('Error removing member:', error);
-      toast.error('Failed to remove member');
+      console.error("Error removing member:", error);
+      toast.error("Failed to remove member");
     }
   };
 
@@ -218,22 +218,22 @@ export function MembersTab({
     try {
       const result = await bulkRemoveMembersFromOrganization(
         organization.id,
-        selectedMembers
+        selectedMembers,
       );
 
       if (result.success) {
         // Update local state optimistically
         setMembers((prev) =>
-          prev.filter((member) => !selectedMembers.includes(member.id))
+          prev.filter((member) => !selectedMembers.includes(member.id)),
         );
         setSelectedMembers([]);
         toast.success(`${selectedMembers.length} members removed successfully`);
       } else {
-        toast.error(result.error?.message || 'Failed to remove members');
+        toast.error(result.error?.message || "Failed to remove members");
       }
     } catch (error) {
-      console.error('Error bulk removing members:', error);
-      toast.error('Failed to remove members');
+      console.error("Error bulk removing members:", error);
+      toast.error("Failed to remove members");
     }
   };
 
@@ -241,13 +241,13 @@ export function MembersTab({
     setSelectedMembers((prev) =>
       prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
+        : [...prev, memberId],
     );
   };
 
   const selectAllMembers = () => {
     const selectableMembers = members.filter((member) =>
-      canRemoveMember(userRole, member.role, member.userId === currentUser.id)
+      canRemoveMember(userRole, member.role, member.userId === currentUser.id),
     );
     setSelectedMembers(selectableMembers.map((member) => member.id));
   };
@@ -342,8 +342,8 @@ export function MembersTab({
                     canRemoveMember(
                       userRole,
                       member.role,
-                      member.userId === currentUser.id
-                    )
+                      member.userId === currentUser.id,
+                    ),
                   ).length
                 }
                 onCheckedChange={(checked) => {
@@ -368,12 +368,12 @@ export function MembersTab({
               const canChangeThisRole = canChangeRole(
                 userRole,
                 member.role,
-                isCurrentUser
+                isCurrentUser,
               );
               const canRemoveThisMember = canRemoveMember(
                 userRole,
                 member.role,
-                isCurrentUser
+                isCurrentUser,
               );
 
               return (
@@ -390,7 +390,7 @@ export function MembersTab({
 
                   <Avatar className="h-10 w-10">
                     <AvatarImage
-                      src={member.image || ''}
+                      src={member.image || ""}
                       alt={`${member.name} avatar`}
                     />
                     <AvatarFallback>
@@ -411,11 +411,11 @@ export function MembersTab({
                       {member.email}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Joined{' '}
-                      {new Intl.DateTimeFormat('en-GB', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
+                      Joined{" "}
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
                       }).format(member.joinedAt)}
                     </p>
                   </div>
@@ -500,7 +500,7 @@ export function MembersTab({
             setMemberToRemove(null);
           }
         }}
-        memberName={memberToRemove?.name || ''}
+        memberName={memberToRemove?.name || ""}
       />
 
       <ConfirmationDialog

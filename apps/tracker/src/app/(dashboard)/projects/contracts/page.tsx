@@ -1,7 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { FileText } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ContractsPage() {
   return (

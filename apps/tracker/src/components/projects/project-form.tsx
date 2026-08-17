@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, ArrowLeft, FileText, User, Building } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useTransition, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, ArrowLeft, FileText, User, Building } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -16,24 +16,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-import { createProject, updateProject } from '@/server/projects';
-import { getClients } from '@/server/clients';
-import { getAvailableTendersForProjects } from '@/server/tenders';
+import { createProject, updateProject } from "@/server/projects";
+import { getClients } from "@/server/clients";
+import { getAvailableTendersForProjects } from "@/server/tenders";
 import {
   ProjectCreateSchema,
   type ProjectCreateInput,
-} from '@/lib/validations/project';
-import { sanitizeTenderNumber } from '@/lib/tender-utils';
-import { ClientCreateDialog } from '@/components/clients/client-create-dialog';
+} from "@/lib/validations/project";
+import { sanitizeTenderNumber } from "@/lib/tender-utils";
+import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 
 interface ProjectWithRelations {
   id: string;
@@ -77,7 +77,7 @@ interface Tender {
 interface ProjectFormProps {
   organizationId: string;
   project?: ProjectWithRelations;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
 }
 
 export function ProjectForm({
@@ -96,12 +96,12 @@ export function ProjectForm({
   const form = useForm<ProjectCreateInput>({
     resolver: zodResolver(ProjectCreateSchema),
     defaultValues: {
-      projectNumber: project?.projectNumber || '',
-      description: project?.description || '',
-      clientId: project?.client?.id || 'none',
-      tenderId: project?.tender?.id || 'none',
+      projectNumber: project?.projectNumber || "",
+      description: project?.description || "",
+      clientId: project?.client?.id || "none",
+      tenderId: project?.tender?.id || "none",
       status:
-        (project?.status as 'active' | 'completed' | 'cancelled') || 'active',
+        (project?.status as "active" | "completed" | "cancelled") || "active",
     },
   });
 
@@ -109,10 +109,10 @@ export function ProjectForm({
   useEffect(() => {
     const loadClients = async () => {
       try {
-        const result = await getClients(organizationId, '', 1, 100); // Get first 100 clients
+        const result = await getClients(organizationId, "", 1, 100); // Get first 100 clients
         setClients(result.clients);
       } catch (error) {
-        console.error('Error loading clients:', error);
+        console.error("Error loading clients:", error);
       } finally {
         setLoadingClients(false);
       }
@@ -122,7 +122,7 @@ export function ProjectForm({
   }, [organizationId]);
 
   // Load tenders on component mount and when client changes
-  const selectedClientId = form.watch('clientId');
+  const selectedClientId = form.watch("clientId");
 
   const loadTenders = useCallback(
     async (clientId?: string) => {
@@ -134,42 +134,42 @@ export function ProjectForm({
           1,
           100,
           project?.id,
-          project?.tender?.id
+          project?.tender?.id,
         );
         setTenders(result.tenders);
       } catch (error) {
-        console.error('Error loading tenders:', error);
+        console.error("Error loading tenders:", error);
       } finally {
         setLoadingTenders(false);
       }
     },
-    [organizationId, project?.id, project?.tender?.id]
+    [organizationId, project?.id, project?.tender?.id],
   );
 
   useEffect(() => {
     const clientId =
-      selectedClientId && selectedClientId !== 'none'
+      selectedClientId && selectedClientId !== "none"
         ? selectedClientId
         : undefined;
     loadTenders(clientId);
   }, [selectedClientId, loadTenders]);
 
   // Prefill form when tender is selected
-  const selectedTenderId = form.watch('tenderId');
+  const selectedTenderId = form.watch("tenderId");
   useEffect(() => {
-    if (selectedTenderId && selectedTenderId !== 'none') {
+    if (selectedTenderId && selectedTenderId !== "none") {
       const selectedTender = tenders.find((t) => t.id === selectedTenderId);
       if (selectedTender) {
         // Prefill project number and description from tender
-        form.setValue('projectNumber', selectedTender.tenderNumber);
-        form.setValue('description', selectedTender.description || '');
+        form.setValue("projectNumber", selectedTender.tenderNumber);
+        form.setValue("description", selectedTender.description || "");
 
         // Prefill client if not already set
         if (
-          !form.getValues('clientId') ||
-          form.getValues('clientId') === 'none'
+          !form.getValues("clientId") ||
+          form.getValues("clientId") === "none"
         ) {
-          form.setValue('clientId', selectedTender.client?.id || 'none');
+          form.setValue("clientId", selectedTender.client?.id || "none");
         }
       }
     }
@@ -181,33 +181,33 @@ export function ProjectForm({
     // Convert "none" values to undefined
     const processedData = {
       ...data,
-      clientId: data.clientId === 'none' ? undefined : data.clientId,
-      tenderId: data.tenderId === 'none' ? undefined : data.tenderId,
+      clientId: data.clientId === "none" ? undefined : data.clientId,
+      tenderId: data.tenderId === "none" ? undefined : data.tenderId,
     };
 
     startTransition(async () => {
       try {
         let result;
 
-        if (mode === 'create') {
+        if (mode === "create") {
           result = await createProject(organizationId, processedData);
         } else if (project) {
           result = await updateProject(
             organizationId,
             project.id,
-            processedData
+            processedData,
           );
         }
 
         if (result?.success) {
-          router.push('/projects');
+          router.push("/projects");
           router.refresh();
         } else {
-          setError(result?.error || 'An error occurred');
+          setError(result?.error || "An error occurred");
         }
       } catch (err) {
-        setError('An unexpected error occurred');
-        console.error('Form submission error:', err);
+        setError("An unexpected error occurred");
+        console.error("Form submission error:", err);
       }
     });
   };
@@ -226,12 +226,12 @@ export function ProjectForm({
         </Button>
         <div className="text-right">
           <h1 className="text-2xl font-bold">
-            {mode === 'create' ? 'Add New Project' : 'Edit Project'}
+            {mode === "create" ? "Add New Project" : "Edit Project"}
           </h1>
           <p className="text-muted-foreground">
-            {mode === 'create'
-              ? 'Create a new project with client and tender details'
-              : 'Update project information and details'}
+            {mode === "create"
+              ? "Create a new project with client and tender details"
+              : "Update project information and details"}
           </p>
         </div>
       </div>
@@ -266,7 +266,9 @@ export function ProjectForm({
                           placeholder="Enter unique project number"
                           {...field}
                           onChange={(e) => {
-                            const sanitized = sanitizeTenderNumber(e.target.value);
+                            const sanitized = sanitizeTenderNumber(
+                              e.target.value,
+                            );
                             field.onChange(sanitized);
                           }}
                           disabled={isPending}
@@ -327,7 +329,7 @@ export function ProjectForm({
                                 contactPhone: null,
                               },
                             ]);
-                            form.setValue('clientId', newClient.id);
+                            form.setValue("clientId", newClient.id);
                           }}
                         />
                       </div>
@@ -438,14 +440,14 @@ export function ProjectForm({
               </CardHeader>
               <CardContent className="space-y-6 p-6">
                 {/* Client Information Display */}
-                {form.watch('clientId') && (
+                {form.watch("clientId") && (
                   <div className="bg-accent rounded-md p-4">
                     <h4 className="text-sm font-medium text-foreground mb-2">
                       Selected Client Information
                     </h4>
                     {(() => {
                       const selectedClient = clients.find(
-                        (c) => c.id === form.watch('clientId')
+                        (c) => c.id === form.watch("clientId"),
                       );
                       if (!selectedClient) return null;
 
@@ -471,14 +473,14 @@ export function ProjectForm({
                 )}
 
                 {/* Tender Information Display */}
-                {form.watch('tenderId') && (
+                {form.watch("tenderId") && (
                   <div className="bg-accent rounded-md p-4">
                     <h4 className="text-sm font-medium text-foreground mb-2">
                       Selected Tender Information
                     </h4>
                     {(() => {
                       const selectedTender = tenders.find(
-                        (t) => t.id === form.watch('tenderId')
+                        (t) => t.id === form.watch("tenderId"),
                       );
                       if (!selectedTender) return null;
 
@@ -527,7 +529,7 @@ export function ProjectForm({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {mode === 'create' ? 'Create Project' : 'Save Changes'}
+                  {mode === "create" ? "Create Project" : "Save Changes"}
                 </>
               )}
             </Button>

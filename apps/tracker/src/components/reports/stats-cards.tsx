@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Target, Briefcase, TrendingUp, Banknote } from 'lucide-react';
-import { formatCurrency } from '@/lib/format';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trophy, Target, Briefcase, TrendingUp, Banknote } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
 
 interface ReportStatsProps {
   stats: {

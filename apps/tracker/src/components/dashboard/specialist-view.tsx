@@ -1,8 +1,8 @@
-import { Suspense } from 'react';
-import { DashboardMetrics } from '@/components/dashboard/dashboard-metrics';
-import { DashboardDeadlines } from '@/components/dashboard/dashboard-deadlines';
-import { DashboardBriefings } from '@/components/dashboard/dashboard-briefings';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Suspense } from "react";
+import { DashboardMetrics } from "@/components/dashboard/dashboard-metrics";
+import { DashboardDeadlines } from "@/components/dashboard/dashboard-deadlines";
+import { DashboardBriefings } from "@/components/dashboard/dashboard-briefings";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SpecialistViewProps {
   organizationId: string;
@@ -26,11 +26,19 @@ export async function SpecialistView({ organizationId }: SpecialistViewProps) {
 
       {/* Deadlines & Briefings */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Suspense fallback={<Skeleton className="h-[350px] rounded-3xl bg-card/50 border border-border/20" />}>
+        <Suspense
+          fallback={
+            <Skeleton className="h-[350px] rounded-3xl bg-card/50 border border-border/20" />
+          }
+        >
           <DashboardDeadlines organizationId={organizationId} />
         </Suspense>
 
-        <Suspense fallback={<Skeleton className="h-[350px] rounded-3xl bg-card/50 border border-border/20" />}>
+        <Suspense
+          fallback={
+            <Skeleton className="h-[350px] rounded-3xl bg-card/50 border border-border/20" />
+          }
+        >
           <DashboardBriefings organizationId={organizationId} />
         </Suspense>
       </div>

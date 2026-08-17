@@ -1,41 +1,41 @@
-import type { Metadata } from 'next';
-import { Header } from '@/components/home-page/Header';
-import { FooterSection } from '@/components/home-page/FooterSection';
-import { Button } from '@/components/ui';
-import Link from 'next/link';
-import { ShieldCheck, Target, Award, Rocket, ArrowRight } from 'lucide-react';
+import type { Metadata } from "next";
+import { Header } from "@/components/home-page/Header";
+import { FooterSection } from "@/components/home-page/FooterSection";
+import { Button } from "@/components/ui";
+import Link from "next/link";
+import { ShieldCheck, Target, Award, Rocket, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: 'About Us | Tender Track 360',
+  title: "About Us | Tender Track 360",
   description:
-    'Discover the story behind Tender Track 360, South Africa’s leading tender management system. Learn how we empower local businesses to track, bid, and win.',
+    "Discover the story behind Tender Track 360, South Africa’s leading tender management system. Learn how we empower local businesses to track, bid, and win.",
 };
 
 export default function AboutPage() {
   const values = [
     {
       icon: Target,
-      title: 'Precision Targeting',
+      title: "Precision Targeting",
       description:
-        'Eliminate noise. We map opportunity signals so South African enterprises focus their bidding energy exactly where their margins are highest.',
+        "Eliminate noise. We map opportunity signals so South African enterprises focus their bidding energy exactly where their margins are highest.",
     },
     {
       icon: ShieldCheck,
-      title: 'Uncompromised Compliance',
+      title: "Uncompromised Compliance",
       description:
-        'With integrated checks for B-BBEE levels, tax clearances, and CSD documentation, we ensure your bidding credentials are always audit-ready.',
+        "With integrated checks for B-BBEE levels, tax clearances, and CSD documentation, we ensure your bidding credentials are always audit-ready.",
     },
     {
       icon: Award,
-      title: 'Operational Excellence',
+      title: "Operational Excellence",
       description:
-        'Transition seamlessly. Win the tender, and watch the platform auto-create the project board instantly, maintaining full continuity from bid to delivery.',
+        "Transition seamlessly. Win the tender, and watch the platform auto-create the project board instantly, maintaining full continuity from bid to delivery.",
     },
     {
       icon: Rocket,
-      title: 'Velocity & Scale',
+      title: "Velocity & Scale",
       description:
-        'From quick quote deadlines to multi-million Rand public sector bids, our automated deadline notifications accelerate your operational response time.',
+        "From quick quote deadlines to multi-million Rand public sector bids, our automated deadline notifications accelerate your operational response time.",
     },
   ];
 
@@ -59,8 +59,9 @@ export default function AboutPage() {
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
             Tender Track 360 is built to eliminate the complexity of public and
-            private sector procurement, empowering local businesses to track deadlines,
-            manage critical compliance, and scale operations seamlessly.
+            private sector procurement, empowering local businesses to track
+            deadlines, manage critical compliance, and scale operations
+            seamlessly.
           </p>
         </section>
 
@@ -72,8 +73,8 @@ export default function AboutPage() {
                 What Guides Us
               </h2>
               <p className="text-muted-foreground">
-                We believe that unlocking business potential starts with transparent
-                procurement workflows and automated intelligence.
+                We believe that unlocking business potential starts with
+                transparent procurement workflows and automated intelligence.
               </p>
             </div>
 
@@ -104,27 +105,33 @@ export default function AboutPage() {
         {/* Narrative / Story */}
         <section className="container mx-auto px-4 py-24 max-w-4xl space-y-12">
           <div className="space-y-6">
-            <h2 className="text-3xl font-bold tracking-tight">The Story Behind the System</h2>
+            <h2 className="text-3xl font-bold tracking-tight">
+              The Story Behind the System
+            </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Tender Track 360 was founded with a single, clear purpose: to bridge the gap
-              between secure procurement and backend operations. In the South African market,
-              businesses often spend hundreds of hours preparing bids, only to lose them due
-              to missed deadlines or expired compliance files. 
+              Tender Track 360 was founded with a single, clear purpose: to
+              bridge the gap between secure procurement and backend operations.
+              In the South African market, businesses often spend hundreds of
+              hours preparing bids, only to lose them due to missed deadlines or
+              expired compliance files.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              We set out to change that by designing a platform that serves as a single source
-              of truth. Today, Tender Track 360 not only handles active opportunity tracking,
-              document management, and notifications, but automatically establishes full project
-              boards and purchase order pipelines the second a bid is won.
+              We set out to change that by designing a platform that serves as a
+              single source of truth. Today, Tender Track 360 not only handles
+              active opportunity tracking, document management, and
+              notifications, but automatically establishes full project boards
+              and purchase order pipelines the second a bid is won.
             </p>
           </div>
 
           <div className="rounded-2xl bg-linear-to-r from-primary to-secondary p-8 md:p-12 text-white flex flex-col md:flex-row md:items-center justify-between gap-8 shadow-xl">
             <div className="space-y-3 max-w-md">
-              <h3 className="text-2xl font-bold">Ready to secure your pipeline?</h3>
+              <h3 className="text-2xl font-bold">
+                Ready to secure your pipeline?
+              </h3>
               <p className="text-primary-foreground/90 text-sm leading-relaxed">
-                Join our exclusive waitlist for early access features or get in touch
-                with our SA sales team today.
+                Join our exclusive waitlist for early access features or get in
+                touch with our SA sales team today.
               </p>
             </div>
             <div className="flex flex-wrap gap-4">
@@ -134,7 +141,12 @@ export default function AboutPage() {
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="bg-transparent text-white border-white/30 hover:bg-white/10 hover:border-white">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="bg-transparent text-white border-white/30 hover:bg-white/10 hover:border-white"
+              >
                 <Link href="/contact">Contact Sales</Link>
               </Button>
             </div>

@@ -1,14 +1,14 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from "react";
 
 import {
   filterMembers,
   filterInvitations,
   hasActiveFilters,
   getNoResultsMessage,
-} from '@/lib/filter-utils';
-import type { MemberWithUser } from '@/lib/filter-utils';
-import type { PendingInvitation } from '@/server/organizations';
-import { FilterState } from '@/components/shared/search';
+} from "@/lib/filter-utils";
+import type { MemberWithUser } from "@/lib/filter-utils";
+import type { PendingInvitation } from "@/server/organizations";
+import { FilterState } from "@/components/shared/search";
 
 export interface UseSearchAndFilterProps {
   members?: MemberWithUser[];
@@ -27,9 +27,9 @@ export interface UseSearchAndFilterReturn {
 }
 
 const DEFAULT_FILTERS: FilterState = {
-  search: '',
-  role: 'all',
-  status: 'all',
+  search: "",
+  role: "all",
+  status: "all",
 };
 
 export function useSearchAndFilter({
@@ -56,14 +56,14 @@ export function useSearchAndFilter({
     const hasMembers = members.length > 0;
     const hasInvitations = invitations.length > 0;
 
-    let type: 'members' | 'invitations' | 'both';
+    let type: "members" | "invitations" | "both";
 
     if (hasMembers && hasInvitations) {
-      type = 'both';
+      type = "both";
     } else if (hasMembers) {
-      type = 'members';
+      type = "members";
     } else {
-      type = 'invitations';
+      type = "invitations";
     }
 
     return getNoResultsMessage(filters, type);

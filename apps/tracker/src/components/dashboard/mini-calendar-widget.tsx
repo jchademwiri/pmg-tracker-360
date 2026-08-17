@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo, useState, useTransition } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import type { DatesSetArg, EventInput } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { getCalendarEvents } from '@/server';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { useCallback, useMemo, useState, useTransition } from "react";
+import FullCalendar from "@fullcalendar/react";
+import type { DatesSetArg, EventInput } from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { getCalendarEvents } from "@/server";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 type CalendarType =
-  | 'tender_submission'
-  | 'po_expected_delivery'
-  | 'po_delivered';
+  | "tender_submission"
+  | "po_expected_delivery"
+  | "po_delivered";
 
 interface MiniCalendarWidgetProps {
   className?: string;
@@ -25,19 +25,19 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const today = new Date();
-    return today.toLocaleString('default', {
-      month: 'long',
-      year: 'numeric',
+    return today.toLocaleString("default", {
+      month: "long",
+      year: "numeric",
     });
   });
 
   const headerToolbar = useMemo(
     () => ({
-      left: 'prev',
-      center: '',
-      right: 'next',
+      left: "prev",
+      center: "",
+      right: "next",
     }),
-    []
+    [],
   );
 
   const handleDatesSet = useCallback(
@@ -49,7 +49,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
         const calendarEvents = await getCalendarEvents({
           start: startIso,
           end: endIso,
-          types: ['tender_submission', 'po_expected_delivery', 'po_delivered'],
+          types: ["tender_submission", "po_expected_delivery", "po_delivered"],
         });
         const fullcalendarEvents = calendarEvents.map((e) => ({
           id: e.id,
@@ -61,7 +61,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
         setEvents(fullcalendarEvents);
       });
     },
-    [startTransition]
+    [startTransition],
   );
 
   const today = new Date();
@@ -83,8 +83,8 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
             title: event.title as string,
             date: event.start as string,
             type:
-              (event.classNames?.[0]?.replace('event-', '') as CalendarType) ||
-              'tender_submission',
+              (event.classNames?.[0]?.replace("event-", "") as CalendarType) ||
+              "tender_submission",
           });
         }
       }
@@ -97,19 +97,19 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
 
   const getEventBadge = (type: CalendarType) => {
     switch (type) {
-      case 'tender_submission':
+      case "tender_submission":
         return (
           <Badge className="text-xs bg-primary text-primary-foreground">
             Tender
           </Badge>
         );
-      case 'po_expected_delivery':
+      case "po_expected_delivery":
         return (
           <Badge className="text-xs bg-yellow-500/15 text-yellow-600 border-yellow-500/20">
             PO Expected
           </Badge>
         );
-      case 'po_delivered':
+      case "po_delivered":
         return (
           <Badge className="text-xs bg-emerald-500/15 text-emerald-600 border-emerald-500/20">
             PO Delivered
@@ -120,7 +120,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
   const getDaysUntil = (dateStr: string) => {
@@ -132,10 +132,14 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
 
   const getEventEmoji = (type: CalendarType) => {
     switch (type) {
-      case 'tender_submission': return '📝';
-      case 'po_expected_delivery': return '🚚';
-      case 'po_delivered': return '✅';
-      default: return '📅';
+      case "tender_submission":
+        return "📝";
+      case "po_expected_delivery":
+        return "🚚";
+      case "po_delivered":
+        return "✅";
+      default:
+        return "📅";
     }
   };
 
@@ -169,7 +173,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
   };
 
   return (
-    <div className={cn('flex flex-col md:flex-row gap-4 h-full', className)}>
+    <div className={cn("flex flex-col md:flex-row gap-4 h-full", className)}>
       {/* Mini Calendar */}
       <div className="w-full md:w-1/2 min-w-[200px] h-full">
         <Card className="h-full border-white/10 bg-card/45 backdrop-blur-md shadow-2xl overflow-hidden flex flex-col">
@@ -187,7 +191,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                 plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 headerToolbar={headerToolbar}
-                dayHeaderFormat={{ weekday: 'short' }}
+                dayHeaderFormat={{ weekday: "short" }}
                 events={events}
                 datesSet={handleDatesSet}
                 height="auto"
@@ -241,7 +245,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                 .mini-calendar .fc-daygrid-day-number {
                   font-size: 0.7rem;
                   padding: 2px;
-                  color: hsl(var(--foreground)/0.8);
+                  color: hsl(var(--foreground) / 0.8);
                 }
                 .mini-calendar .fc-event {
                   font-size: 0.6rem;
@@ -302,7 +306,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                     <Link
                       key={event.id}
                       href={
-                        event.type === 'tender_submission'
+                        event.type === "tender_submission"
                           ? `/tenders/${event.id}`
                           : `/projects/purchase-orders/${event.id}`
                       }
@@ -311,7 +315,9 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                       <div className="group flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-background/30 hover:bg-muted/30 hover:border-white/10 hover:-translate-y-0.5 transform transition-all duration-300 ease-out">
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold truncate flex items-center gap-1.5 text-foreground group-hover:text-primary transition-colors">
-                            <span className="text-sm shrink-0">{getEventEmoji(event.type)}</span>
+                            <span className="text-sm shrink-0">
+                              {getEventEmoji(event.type)}
+                            </span>
                             <span className="truncate">{event.title}</span>
                           </p>
                           <p className="text-xs text-muted-foreground ml-6 mt-0.5">

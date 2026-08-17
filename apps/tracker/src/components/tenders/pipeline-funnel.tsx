@@ -1,8 +1,14 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart3 } from 'lucide-react';
-import Link from 'next/link';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { BarChart3 } from "lucide-react";
+import Link from "next/link";
 
 interface PipelineFunnelProps {
   statusCounts: {
@@ -16,15 +22,56 @@ interface PipelineFunnelProps {
 }
 
 const PIPELINE_STAGES = [
-  { key: 'open', label: 'Open', href: '/tenders?status=open', color: 'bg-blue-500', textColor: 'text-blue-600', lightBg: 'bg-blue-500/10' },
-  { key: 'evaluation', label: 'Under Evaluation', href: '/tenders?status=evaluation', color: 'bg-amber-500', textColor: 'text-amber-600', lightBg: 'bg-amber-500/10' },
-  { key: 'closed', label: 'Closed / Cancelled', href: '/tenders?status=closed', color: 'bg-zinc-400', textColor: 'text-zinc-500', lightBg: 'bg-zinc-400/10' },
-  { key: 'awarded', label: 'Awarded', href: '/tenders?status=awarded', color: 'bg-green-500', textColor: 'text-green-600', lightBg: 'bg-green-500/10' },
-  { key: 'lost', label: 'Lost / Rejected', href: '/tenders?status=lost', color: 'bg-red-500', textColor: 'text-red-600', lightBg: 'bg-red-500/10' },
+  {
+    key: "open",
+    label: "Open",
+    href: "/tenders?status=open",
+    color: "bg-blue-500",
+    textColor: "text-blue-600",
+    lightBg: "bg-blue-500/10",
+  },
+  {
+    key: "evaluation",
+    label: "Under Evaluation",
+    href: "/tenders?status=evaluation",
+    color: "bg-amber-500",
+    textColor: "text-amber-600",
+    lightBg: "bg-amber-500/10",
+  },
+  {
+    key: "closed",
+    label: "Closed / Cancelled",
+    href: "/tenders?status=closed",
+    color: "bg-zinc-400",
+    textColor: "text-zinc-500",
+    lightBg: "bg-zinc-400/10",
+  },
+  {
+    key: "awarded",
+    label: "Awarded",
+    href: "/tenders?status=awarded",
+    color: "bg-green-500",
+    textColor: "text-green-600",
+    lightBg: "bg-green-500/10",
+  },
+  {
+    key: "lost",
+    label: "Lost / Rejected",
+    href: "/tenders?status=lost",
+    color: "bg-red-500",
+    textColor: "text-red-600",
+    lightBg: "bg-red-500/10",
+  },
 ] as const;
 
-export function PipelineFunnel({ statusCounts, className = '' }: PipelineFunnelProps) {
-  const total = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
+export function PipelineFunnel({
+  statusCounts,
+  className = "",
+}: PipelineFunnelProps) {
+  const total = Object.values(statusCounts).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
 
   if (total === 0) {
     return (
@@ -55,14 +102,17 @@ export function PipelineFunnel({ statusCounts, className = '' }: PipelineFunnelP
           Pipeline Overview
         </CardTitle>
         <CardDescription>
-          {total} tenders across {Object.values(statusCounts).filter((c) => c > 0).length} stages
+          {total} tenders across{" "}
+          {Object.values(statusCounts).filter((c) => c > 0).length} stages
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {PIPELINE_STAGES.map((stage) => {
-            const count = statusCounts[stage.key as keyof typeof statusCounts] ?? 0;
-            const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+            const count =
+              statusCounts[stage.key as keyof typeof statusCounts] ?? 0;
+            const percentage =
+              total > 0 ? Math.round((count / total) * 100) : 0;
             const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
 
             return (
@@ -86,7 +136,7 @@ export function PipelineFunnel({ statusCounts, className = '' }: PipelineFunnelP
                         className={`absolute inset-y-0 left-0 ${stage.color} transition-all duration-500 ease-out`}
                         style={{
                           width: `${Math.max(barWidth, 3)}%`,
-                          clipPath: 'polygon(0 0, 100% 4%, 100% 96%, 0 100%)',
+                          clipPath: "polygon(0 0, 100% 4%, 100% 96%, 0 100%)",
                         }}
                       />
                     )}
@@ -106,15 +156,22 @@ export function PipelineFunnel({ statusCounts, className = '' }: PipelineFunnelP
         {/* Win rate indicator */}
         <div className="mt-4 pt-4 border-t">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Pipeline → Project Conversion</span>
+            <span className="text-muted-foreground">
+              Pipeline → Project Conversion
+            </span>
             <span className="font-semibold text-green-600">
-              {total > 0 ? Math.round(((statusCounts.awarded || 0) / total) * 100) : 0}%
+              {total > 0
+                ? Math.round(((statusCounts.awarded || 0) / total) * 100)
+                : 0}
+              %
             </span>
           </div>
           <div className="mt-1.5 w-full bg-muted rounded-full h-2">
             <div
               className="h-2 rounded-full bg-green-500 transition-all duration-500"
-              style={{ width: `${total > 0 ? ((statusCounts.awarded || 0) / total) * 100 : 0}%` }}
+              style={{
+                width: `${total > 0 ? ((statusCounts.awarded || 0) / total) * 100 : 0}%`,
+              }}
             />
           </div>
         </div>

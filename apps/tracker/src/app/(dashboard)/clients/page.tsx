@@ -1,11 +1,23 @@
-import { getCurrentUser, getClients, getClientStats, getClientsExportCsv } from '@/server';
-import { ClientList } from '@/components/clients/client-list';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { Users, UserCheck, UserPlus, TrendingUp, Download, Plus } from 'lucide-react';
+import {
+  getCurrentUser,
+  getClients,
+  getClientStats,
+  getClientsExportCsv,
+} from "@/server";
+import { ClientList } from "@/components/clients/client-list";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import {
+  Users,
+  UserCheck,
+  UserPlus,
+  TrendingUp,
+  Download,
+  Plus,
+} from "lucide-react";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
   const { session } = await getCurrentUser();
@@ -27,7 +39,7 @@ export default async function ClientsPage() {
 
   // Fetch initial clients and stats
   const [clientsResult, statsResult] = await Promise.all([
-    getClients(session.activeOrganizationId, '', 1, 10),
+    getClients(session.activeOrganizationId, "", 1, 10),
     getClientStats(session.activeOrganizationId),
   ]);
 
@@ -43,7 +55,9 @@ export default async function ClientsPage() {
   // Generate CSV export link
   const csvResult = await getClientsExportCsv(session.activeOrganizationId);
   const csvData = csvResult.success ? csvResult.csv : null;
-  const csvFilename = csvResult.success ? csvResult.filename : 'clients-export.csv';
+  const csvFilename = csvResult.success
+    ? csvResult.filename
+    : "clients-export.csv";
 
   return (
     <div className="space-y-6">
@@ -57,7 +71,12 @@ export default async function ClientsPage() {
         </div>
         <div className="flex items-center gap-2">
           {csvData && (
-            <Button asChild variant="outline" size="sm" className="h-9 font-medium shadow-xs">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-9 font-medium shadow-xs"
+            >
               <a
                 href={`data:text/csv;charset=utf-8,${encodeURIComponent(csvData)}`}
                 download={csvFilename}
@@ -103,7 +122,7 @@ export default async function ClientsPage() {
             <p className="text-xs text-muted-foreground">
               {stats.totalClients > 0
                 ? `${Math.round((stats.clientsWithContact / stats.totalClients) * 100)}% complete`
-                : 'No clients yet'}
+                : "No clients yet"}
             </p>
           </CardContent>
         </Card>
@@ -132,7 +151,9 @@ export default async function ClientsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{stats.clientsThisMonth}</div>
-            <p className="text-xs text-muted-foreground">Clients added this month</p>
+            <p className="text-xs text-muted-foreground">
+              Clients added this month
+            </p>
           </CardContent>
         </Card>
       </div>

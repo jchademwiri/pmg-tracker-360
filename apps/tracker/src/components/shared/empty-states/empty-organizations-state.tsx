@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Building2, Plus, Users, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Building2, Plus, Users, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EmptyOrganizationsStateProps {
   onCreateOrganization?: () => void;
@@ -15,7 +15,7 @@ export function EmptyOrganizationsState({
   className,
 }: EmptyOrganizationsStateProps) {
   return (
-    <div className={cn('w-full max-w-2xl mx-auto', className)}>
+    <div className={cn("w-full max-w-2xl mx-auto", className)}>
       <Card className="border-dashed border-2 border-muted-foreground/25 bg-muted/20">
         <CardContent className="flex flex-col items-center justify-center p-12 text-center">
           {/* Icon with gradient background */}

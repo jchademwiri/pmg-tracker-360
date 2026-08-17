@@ -1,17 +1,48 @@
-'use server';
+"use server";
 
-import { db, getPlanLimits } from '@pmg/db';
-import { validateSessionAndOrg, getOrganizationOwnerPlan } from './utils';
-import { tender, client, project, tenderExtension, tenderFollowUp, tenderActivity } from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, gte, lte, ne, lt, sql, inArray, notInArray, isNotNull } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
-import { URGENCY_WINDOWS, daysAgo, daysFromNow } from '@/lib/urgency-windows';
-import { TenderCreateSchema, TenderUpdateSchema, TenderStatusUpdateSchema, TenderSearchSchema, type TenderCreateInput, type TenderUpdateInput, type TenderStatusUpdateInput, type TenderSearchInput } from '@/lib/validations/tender';
-import { randomUUID } from 'crypto';
-import { getServerSession } from '@/lib/auth';
-import { nowInSAST } from '@/lib/timezone';
-import { sanitizeTenderNumber } from '@/lib/tender-utils';
+import { db, getPlanLimits } from "@pmg/db";
+import { validateSessionAndOrg, getOrganizationOwnerPlan } from "./utils";
+import {
+  tender,
+  client,
+  project,
+  tenderExtension,
+  tenderFollowUp,
+  tenderActivity,
+} from "@pmg/db/schema";
+import {
+  eq,
+  and,
+  isNull,
+  ilike,
+  or,
+  desc,
+  gte,
+  lte,
+  ne,
+  lt,
+  sql,
+  inArray,
+  notInArray,
+  isNotNull,
+} from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { URGENCY_WINDOWS, daysAgo, daysFromNow } from "@/lib/urgency-windows";
+import {
+  TenderCreateSchema,
+  TenderUpdateSchema,
+  TenderStatusUpdateSchema,
+  TenderSearchSchema,
+  type TenderCreateInput,
+  type TenderUpdateInput,
+  type TenderStatusUpdateInput,
+  type TenderSearchInput,
+} from "@/lib/validations/tender";
+import { randomUUID } from "crypto";
+import { getServerSession } from "@/lib/auth";
+import { nowInSAST } from "@/lib/timezone";
+import { sanitizeTenderNumber } from "@/lib/tender-utils";
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -28,7 +59,7 @@ async function autoCreateProjectForTender(
     contractStartDate?: Date | null;
     contractEndDate?: Date | null;
     signedContractUrl?: string | null;
-  }
+  },
 ) {
   try {
     // Check if project already exists for this tender
@@ -47,10 +78,12 @@ async function autoCreateProjectForTender(
       id: projectId,
       organizationId,
       projectNumber: tenderData.tenderNumber.toLowerCase(),
-      description: tenderData.description || `Project for Tender ${tenderData.tenderNumber}`,
+      description:
+        tenderData.description ||
+        `Project for Tender ${tenderData.tenderNumber}`,
       tenderId,
       clientId: tenderData.clientId,
-      status: 'active',
+      status: "active",
       contractStartDate: tenderData.contractStartDate,
       contractEndDate: tenderData.contractEndDate,
       awardValue: tenderData.awardValue,
@@ -59,10 +92,10 @@ async function autoCreateProjectForTender(
       updatedAt: new Date(),
     });
 
-    revalidatePath('/projects');
+    revalidatePath("/projects");
     return projectId;
   } catch (err) {
-    console.error('Failed to auto create project for tender:', err);
+    console.error("Failed to auto create project for tender:", err);
     return undefined;
   }
 }
@@ -71,13 +104,18 @@ async function resolveEvaluationDate(
   tenderId: string | undefined,
   submissionDate: Date | null | undefined,
   validityDays: number | null | undefined,
-  validityDate: Date | null | undefined
+  validityDate: Date | null | undefined,
 ): Promise<Date | null> {
   if (tenderId) {
     const latestExtension = await db
       .select()
       .from(tenderExtension)
-      .where(and(eq(tenderExtension.tenderId, tenderId), isNull(tenderExtension.deletedAt)))
+      .where(
+        and(
+          eq(tenderExtension.tenderId, tenderId),
+          isNull(tenderExtension.deletedAt),
+        ),
+      )
       .orderBy(desc(tenderExtension.newEvaluationDate))
       .limit(1);
 
@@ -103,7 +141,7 @@ export async function getTenders(
   search?: string,
   page: number = 1,
   limit: number = 10,
-  status?: string
+  status?: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -111,7 +149,7 @@ export async function getTenders(
 
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
-      isNull(tender.deletedAt)
+      isNull(tender.deletedAt),
     );
 
     // Add search condition if provided
@@ -121,18 +159,18 @@ export async function getTenders(
         whereCondition,
         or(
           ilike(tender.tenderNumber, searchTerm),
-          ilike(tender.description, searchTerm)
-        )
+          ilike(tender.description, searchTerm),
+        ),
       );
     }
 
     // Add status filter if provided
-    if (status === 'submitted-pending') {
+    if (status === "submitted-pending") {
       whereCondition = and(
         whereCondition,
-        or(eq(tender.status, 'evaluation'), eq(tender.status, 'closed'))
+        or(eq(tender.status, "evaluation"), eq(tender.status, "closed")),
       );
-    } else if (status && status !== 'all') {
+    } else if (status && status !== "all") {
       whereCondition = and(whereCondition, eq(tender.status, status as any));
     }
 
@@ -180,24 +218,24 @@ export async function getTenders(
       totalPages: Math.ceil(totalCount.length / limit),
     };
   } catch (error: any) {
-    console.error('Error fetching tenders:', error);
+    console.error("Error fetching tenders:", error);
     throw error;
   }
 }
 
-
-
 // Create a new tender with tender number validation
 export async function createTender(
   organizationId: string,
-  data: TenderCreateInput
+  data: TenderCreateInput,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
     // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderCreateSchema.parse(data);
     if (validatedData.tenderNumber) {
-      validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
+      validatedData.tenderNumber = sanitizeTenderNumber(
+        validatedData.tenderNumber,
+      );
     }
 
     // Server-side Tender Quota Check (Free: 10, Starter: 20, Pro: Unlimited)
@@ -209,7 +247,15 @@ export async function createTender(
 
     if (maxTendersAllowed !== Infinity) {
       const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      const startOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+        0,
+        0,
+        0,
+        0,
+      );
 
       const activeTendersCount = await db
         .select({ count: sql<number>`count(*)` })
@@ -218,8 +264,8 @@ export async function createTender(
           and(
             eq(tender.organizationId, organizationId),
             gte(tender.createdAt, startOfMonth),
-            isNull(tender.deletedAt)
-          )
+            isNull(tender.deletedAt),
+          ),
         );
 
       const currentCount = Number(activeTendersCount[0]?.count || 0);
@@ -239,15 +285,15 @@ export async function createTender(
         and(
           eq(tender.tenderNumber, validatedData.tenderNumber.toLowerCase()),
           eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
+          isNull(tender.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingTender.length > 0) {
       return {
         success: false,
-        error: 'Tender number already exists in this organization',
+        error: "Tender number already exists in this organization",
       };
     }
 
@@ -259,16 +305,16 @@ export async function createTender(
         and(
           eq(client.id, validatedData.clientId),
           eq(client.organizationId, organizationId),
-          isNull(client.deletedAt)
-        )
+          isNull(client.deletedAt),
+        ),
       )
       .limit(1);
 
     if (clientExists.length === 0) {
-      return { success: false, error: 'Client not found' };
+      return { success: false, error: "Client not found" };
     }
 
-    if (validatedData.status === 'awarded') {
+    if (validatedData.status === "awarded") {
       const existingProj = await db
         .select()
         .from(project)
@@ -276,8 +322,8 @@ export async function createTender(
           and(
             eq(project.projectNumber, validatedData.tenderNumber.toLowerCase()),
             eq(project.organizationId, organizationId),
-            isNull(project.deletedAt)
-          )
+            isNull(project.deletedAt),
+          ),
         )
         .limit(1);
 
@@ -293,7 +339,7 @@ export async function createTender(
       undefined,
       validatedData.submissionDate,
       validatedData.validityDays,
-      validatedData.validityDate
+      validatedData.validityDate,
     );
 
     const newTender = await db
@@ -308,22 +354,29 @@ export async function createTender(
       .returning();
 
     let projectId: string | undefined;
-    if (validatedData.status === 'awarded') {
-      projectId = await autoCreateProjectForTender(organizationId, newTender[0].id, newTender[0]);
+    if (validatedData.status === "awarded") {
+      projectId = await autoCreateProjectForTender(
+        organizationId,
+        newTender[0].id,
+        newTender[0],
+      );
     }
 
-    revalidatePath('/tenders');
+    revalidatePath("/tenders");
     return { success: true, tender: newTender[0], projectId };
   } catch (error: any) {
-    console.error('Error creating tender:', error);
+    console.error("Error creating tender:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid input data',
+        error: "Invalid input data",
         details: error.errors,
       };
     }
-    return { success: false, error: error.message || 'Failed to create tender' };
+    return {
+      success: false,
+      error: error.message || "Failed to create tender",
+    };
   }
 }
 
@@ -365,15 +418,15 @@ export async function getTenderById(organizationId: string, tenderId: string) {
         and(
           eq(tender.id, tenderId),
           eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
+          isNull(tender.deletedAt),
+        ),
       )
       .limit(1);
 
     return { success: true, tender: tenderData[0] };
   } catch (error: any) {
-    console.error('Error fetching tender:', error);
-    return { success: false, error: error.message || 'Failed to fetch tender' };
+    console.error("Error fetching tender:", error);
+    return { success: false, error: error.message || "Failed to fetch tender" };
   }
 }
 
@@ -397,14 +450,14 @@ export async function getTenderBreadcrumbLabel(tenderId: string) {
         and(
           eq(tender.id, tenderId),
           eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
+          isNull(tender.deletedAt),
+        ),
       )
       .limit(1);
 
     return tenderData[0]?.tenderNumber?.toUpperCase() ?? null;
   } catch (error) {
-    console.error('Error fetching tender breadcrumb label:', error);
+    console.error("Error fetching tender breadcrumb label:", error);
     return null;
   }
 }
@@ -413,14 +466,16 @@ export async function getTenderBreadcrumbLabel(tenderId: string) {
 export async function updateTender(
   organizationId: string,
   tenderId: string,
-  data: TenderUpdateInput
+  data: TenderUpdateInput,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
     // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderUpdateSchema.parse(data);
     if (validatedData.tenderNumber) {
-      validatedData.tenderNumber = sanitizeTenderNumber(validatedData.tenderNumber);
+      validatedData.tenderNumber = sanitizeTenderNumber(
+        validatedData.tenderNumber,
+      );
     }
 
     // Check if tender exists and belongs to organization
@@ -431,13 +486,13 @@ export async function updateTender(
         and(
           eq(tender.id, tenderId),
           eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
+          isNull(tender.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingTender.length === 0) {
-      return { success: false, error: 'Tender not found' };
+      return { success: false, error: "Tender not found" };
     }
 
     // If tender number is being updated, check uniqueness
@@ -451,15 +506,15 @@ export async function updateTender(
             eq(tender.organizationId, organizationId),
             isNull(tender.deletedAt),
             // Exclude current tender from uniqueness check
-            ne(tender.id, tenderId)
-          )
+            ne(tender.id, tenderId),
+          ),
         )
         .limit(1);
 
       if (duplicateTender.length > 0) {
         return {
           success: false,
-          error: 'Tender number already exists in this organization',
+          error: "Tender number already exists in this organization",
         };
       }
     }
@@ -473,50 +528,72 @@ export async function updateTender(
           and(
             eq(client.id, validatedData.clientId),
             eq(client.organizationId, organizationId),
-            isNull(client.deletedAt)
-          )
+            isNull(client.deletedAt),
+          ),
         )
         .limit(1);
 
       if (clientExists.length === 0) {
-        return { success: false, error: 'Client not found' };
+        return { success: false, error: "Client not found" };
       }
     }
 
     // Status transition guards
-    if (validatedData.status && existingTender[0].status !== validatedData.status) {
-      const finalizedStatuses = ['awarded', 'lost', 'closed', 'cancelled'];
-      const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'];
-      if (finalizedStatuses.includes(existingTender[0].status) && activeStatuses.includes(validatedData.status)) {
+    if (
+      validatedData.status &&
+      existingTender[0].status !== validatedData.status
+    ) {
+      const finalizedStatuses = ["awarded", "lost", "closed", "cancelled"];
+      const activeStatuses = [
+        "new",
+        "review",
+        "approved_to_prepare",
+        "preparation",
+        "ready",
+        "open",
+      ];
+      if (
+        finalizedStatuses.includes(existingTender[0].status) &&
+        activeStatuses.includes(validatedData.status)
+      ) {
         return {
           success: false,
-          error: `Cannot revert a finalized tender (${existingTender[0].status}) back to active status (${validatedData.status}).`
+          error: `Cannot revert a finalized tender (${existingTender[0].status}) back to active status (${validatedData.status}).`,
         };
       }
 
-      const checkSubmissionDate = validatedData.hasOwnProperty('submissionDate')
+      const checkSubmissionDate = validatedData.hasOwnProperty("submissionDate")
         ? validatedData.submissionDate
         : existingTender[0].submissionDate;
-      if (['submitted', 'evaluation'].includes(validatedData.status) && !checkSubmissionDate) {
+      if (
+        ["submitted", "evaluation"].includes(validatedData.status) &&
+        !checkSubmissionDate
+      ) {
         return {
           success: false,
-          error: 'Submission date is required before transitioning to submitted or evaluation status.'
+          error:
+            "Submission date is required before transitioning to submitted or evaluation status.",
         };
       }
 
-      const checkClientId = validatedData.hasOwnProperty('clientId')
+      const checkClientId = validatedData.hasOwnProperty("clientId")
         ? validatedData.clientId
         : existingTender[0].clientId;
-      if (['approved_to_prepare', 'preparation'].includes(validatedData.status) && !checkClientId) {
+      if (
+        ["approved_to_prepare", "preparation"].includes(validatedData.status) &&
+        !checkClientId
+      ) {
         return {
           success: false,
-          error: 'Client is required before transitioning to approved to prepare or preparation stages.'
+          error:
+            "Client is required before transitioning to approved to prepare or preparation stages.",
         };
       }
     }
 
-    if (validatedData.status === 'awarded') {
-      const tenderNum = validatedData.tenderNumber || existingTender[0].tenderNumber;
+    if (validatedData.status === "awarded") {
+      const tenderNum =
+        validatedData.tenderNumber || existingTender[0].tenderNumber;
       const existingProj = await db
         .select()
         .from(project)
@@ -524,8 +601,8 @@ export async function updateTender(
           and(
             eq(project.projectNumber, tenderNum.toLowerCase()),
             eq(project.organizationId, organizationId),
-            isNull(project.deletedAt)
-          )
+            isNull(project.deletedAt),
+          ),
         )
         .limit(1);
 
@@ -537,15 +614,15 @@ export async function updateTender(
       }
     }
 
-    const mergedSubmissionDate = validatedData.hasOwnProperty('submissionDate')
+    const mergedSubmissionDate = validatedData.hasOwnProperty("submissionDate")
       ? validatedData.submissionDate
       : existingTender[0].submissionDate;
 
-    const mergedValidityDays = validatedData.hasOwnProperty('validityDays')
+    const mergedValidityDays = validatedData.hasOwnProperty("validityDays")
       ? validatedData.validityDays
       : existingTender[0].validityDays;
 
-    const mergedValidityDate = validatedData.hasOwnProperty('validityDate')
+    const mergedValidityDate = validatedData.hasOwnProperty("validityDate")
       ? validatedData.validityDate
       : existingTender[0].validityDate;
 
@@ -553,7 +630,7 @@ export async function updateTender(
       tenderId,
       mergedSubmissionDate,
       mergedValidityDays,
-      mergedValidityDate
+      mergedValidityDate,
     );
 
     const updatedTender = await db
@@ -570,7 +647,7 @@ export async function updateTender(
       .returning();
 
     let projectId: string | undefined;
-    if (validatedData.status === 'awarded') {
+    if (validatedData.status === "awarded") {
       projectId = await autoCreateProjectForTender(organizationId, tenderId, {
         tenderNumber: updatedTender[0].tenderNumber,
         description: updatedTender[0].description,
@@ -581,29 +658,35 @@ export async function updateTender(
     const session = await getServerSession();
     const userId = session?.user?.id;
 
-    if (validatedData.status && existingTender[0].status !== validatedData.status) {
+    if (
+      validatedData.status &&
+      existingTender[0].status !== validatedData.status
+    ) {
       await logTenderActivity(
         organizationId,
         tenderId,
-        'status_change',
+        "status_change",
         `Status updated from ${existingTender[0].status} to ${validatedData.status}`,
-        userId
+        userId,
       );
     }
 
-    revalidatePath('/tenders');
+    revalidatePath("/tenders");
     revalidatePath(`/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0], projectId };
   } catch (error: any) {
-    console.error('Error updating tender:', error);
+    console.error("Error updating tender:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid input data',
+        error: "Invalid input data",
         details: error.errors,
       };
     }
-    return { success: false, error: error.message || 'Failed to update tender' };
+    return {
+      success: false,
+      error: error.message || "Failed to update tender",
+    };
   }
 }
 
@@ -611,7 +694,7 @@ export async function updateTender(
 export async function updateTenderStatus(
   organizationId: string,
   tenderId: string,
-  data: TenderStatusUpdateInput
+  data: TenderStatusUpdateInput,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -626,51 +709,75 @@ export async function updateTenderStatus(
         and(
           eq(tender.id, tenderId),
           eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
+          isNull(tender.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingTender.length === 0) {
-      return { success: false, error: 'Tender not found' };
+      return { success: false, error: "Tender not found" };
     }
 
     // Status transition guards
-    if (validatedData.status && existingTender[0].status !== validatedData.status) {
-      const finalizedStatuses = ['awarded', 'lost', 'closed', 'cancelled'];
-      const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'];
-      if (finalizedStatuses.includes(existingTender[0].status) && activeStatuses.includes(validatedData.status)) {
+    if (
+      validatedData.status &&
+      existingTender[0].status !== validatedData.status
+    ) {
+      const finalizedStatuses = ["awarded", "lost", "closed", "cancelled"];
+      const activeStatuses = [
+        "new",
+        "review",
+        "approved_to_prepare",
+        "preparation",
+        "ready",
+        "open",
+      ];
+      if (
+        finalizedStatuses.includes(existingTender[0].status) &&
+        activeStatuses.includes(validatedData.status)
+      ) {
         return {
           success: false,
-          error: `Cannot revert a finalized tender (${existingTender[0].status}) back to active status (${validatedData.status}).`
+          error: `Cannot revert a finalized tender (${existingTender[0].status}) back to active status (${validatedData.status}).`,
         };
       }
 
-      if (['submitted', 'evaluation'].includes(validatedData.status) && !existingTender[0].submissionDate) {
+      if (
+        ["submitted", "evaluation"].includes(validatedData.status) &&
+        !existingTender[0].submissionDate
+      ) {
         return {
           success: false,
-          error: 'Submission date is required before transitioning to submitted or evaluation status.'
+          error:
+            "Submission date is required before transitioning to submitted or evaluation status.",
         };
       }
 
-      if (['approved_to_prepare', 'preparation'].includes(validatedData.status) && !existingTender[0].clientId) {
+      if (
+        ["approved_to_prepare", "preparation"].includes(validatedData.status) &&
+        !existingTender[0].clientId
+      ) {
         return {
           success: false,
-          error: 'Client is required before transitioning to approved to prepare or preparation stages.'
+          error:
+            "Client is required before transitioning to approved to prepare or preparation stages.",
         };
       }
     }
 
-    if (validatedData.status === 'awarded') {
+    if (validatedData.status === "awarded") {
       const existingProj = await db
         .select()
         .from(project)
         .where(
           and(
-            eq(project.projectNumber, existingTender[0].tenderNumber.toLowerCase()),
+            eq(
+              project.projectNumber,
+              existingTender[0].tenderNumber.toLowerCase(),
+            ),
             eq(project.organizationId, organizationId),
-            isNull(project.deletedAt)
-          )
+            isNull(project.deletedAt),
+          ),
         )
         .limit(1);
 
@@ -686,9 +793,14 @@ export async function updateTenderStatus(
       .update(tender)
       .set({
         status: validatedData.status,
-        awardValue: validatedData.status === 'awarded' ? validatedData.awardValue ?? existingTender[0].value : null,
-        lossReason: validatedData.status === 'lost' ? validatedData.lossReason : null,
-        lossDetails: validatedData.status === 'lost' ? validatedData.lossDetails : null,
+        awardValue:
+          validatedData.status === "awarded"
+            ? (validatedData.awardValue ?? existingTender[0].value)
+            : null,
+        lossReason:
+          validatedData.status === "lost" ? validatedData.lossReason : null,
+        lossDetails:
+          validatedData.status === "lost" ? validatedData.lossDetails : null,
         evaluationNotes: validatedData.evaluationNotes ?? null,
         updatedAt: new Date(),
       })
@@ -696,7 +808,7 @@ export async function updateTenderStatus(
       .returning();
 
     let projectId: string | undefined;
-    if (validatedData.status === 'awarded') {
+    if (validatedData.status === "awarded") {
       projectId = await autoCreateProjectForTender(organizationId, tenderId, {
         tenderNumber: existingTender[0].tenderNumber,
         description: existingTender[0].description,
@@ -720,25 +832,28 @@ export async function updateTenderStatus(
       await logTenderActivity(
         organizationId,
         tenderId,
-        'status_change',
+        "status_change",
         `Status updated from ${existingTender[0].status} to ${validatedData.status}`,
-        userId
+        userId,
       );
     }
 
-    revalidatePath('/tenders');
+    revalidatePath("/tenders");
     revalidatePath(`/tenders/${tenderId}`);
     return { success: true, tender: updatedTender[0], projectId };
   } catch (error: any) {
-    console.error('Error updating tender status:', error);
+    console.error("Error updating tender status:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid input data',
+        error: "Invalid input data",
         details: error.errors,
       };
     }
-    return { success: false, error: error.message || 'Failed to update tender status' };
+    return {
+      success: false,
+      error: error.message || "Failed to update tender status",
+    };
   }
 }
 
@@ -754,13 +869,13 @@ export async function deleteTender(organizationId: string, tenderId: string) {
         and(
           eq(tender.id, tenderId),
           eq(tender.organizationId, organizationId),
-          isNull(tender.deletedAt)
-        )
+          isNull(tender.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingTender.length === 0) {
-      return { success: false, error: 'Tender not found' };
+      return { success: false, error: "Tender not found" };
     }
 
     // Check if tender has active projects before deletion
@@ -774,7 +889,7 @@ export async function deleteTender(organizationId: string, tenderId: string) {
       return {
         success: false,
         error:
-          'Cannot delete tender with active projects. Please delete the projects first.',
+          "Cannot delete tender with active projects. Please delete the projects first.",
       };
     }
 
@@ -786,11 +901,14 @@ export async function deleteTender(organizationId: string, tenderId: string) {
       })
       .where(eq(tender.id, tenderId));
 
-    revalidatePath('/tenders');
-    return { success: true, message: 'Tender deleted successfully' };
+    revalidatePath("/tenders");
+    return { success: true, message: "Tender deleted successfully" };
   } catch (error: any) {
-    console.error('Error deleting tender:', error);
-    return { success: false, error: error.message || 'Failed to delete tender' };
+    console.error("Error deleting tender:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete tender",
+    };
   }
 }
 
@@ -799,7 +917,7 @@ export async function searchTenders(
   organizationId: string,
   searchParams: TenderSearchInput,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -808,7 +926,7 @@ export async function searchTenders(
 
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
-      isNull(tender.deletedAt)
+      isNull(tender.deletedAt),
     );
 
     // Add search query condition
@@ -818,8 +936,8 @@ export async function searchTenders(
         whereCondition,
         or(
           ilike(tender.tenderNumber, searchTerm),
-          ilike(tender.description, searchTerm)
-        )
+          ilike(tender.description, searchTerm),
+        ),
       );
     }
 
@@ -827,7 +945,7 @@ export async function searchTenders(
     if (validatedParams.status) {
       whereCondition = and(
         whereCondition,
-        eq(tender.status, validatedParams.status)
+        eq(tender.status, validatedParams.status),
       );
     }
 
@@ -835,7 +953,7 @@ export async function searchTenders(
     if (validatedParams.clientId) {
       whereCondition = and(
         whereCondition,
-        eq(tender.clientId, validatedParams.clientId)
+        eq(tender.clientId, validatedParams.clientId),
       );
     }
 
@@ -843,14 +961,14 @@ export async function searchTenders(
     if (validatedParams.dateFrom) {
       whereCondition = and(
         whereCondition,
-        gte(tender.submissionDate, validatedParams.dateFrom)
+        gte(tender.submissionDate, validatedParams.dateFrom),
       );
     }
 
     if (validatedParams.dateTo) {
       whereCondition = and(
         whereCondition,
-        lte(tender.submissionDate, validatedParams.dateTo)
+        lte(tender.submissionDate, validatedParams.dateTo),
       );
     }
 
@@ -896,11 +1014,11 @@ export async function searchTenders(
       totalPages: Math.ceil(totalCount.length / limit),
     };
   } catch (error: any) {
-    console.error('Error searching tenders:', error);
+    console.error("Error searching tenders:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid search parameters',
+        error: "Invalid search parameters",
         details: error.errors,
         tenders: [],
         totalCount: 0,
@@ -910,7 +1028,7 @@ export async function searchTenders(
     }
     return {
       success: false,
-      error: error.message || 'Failed to search tenders',
+      error: error.message || "Failed to search tenders",
       tenders: [],
       totalCount: 0,
       currentPage: page,
@@ -923,13 +1041,13 @@ export async function searchTenders(
 export async function getTendersWithSorting(
   organizationId: string,
   sortBy:
-    | 'tenderNumber'
-    | 'createdAt'
-    | 'submissionDate'
-    | 'status' = 'createdAt',
-  sortOrder: 'asc' | 'desc' = 'desc',
+    | "tenderNumber"
+    | "createdAt"
+    | "submissionDate"
+    | "status" = "createdAt",
+  sortOrder: "asc" | "desc" = "desc",
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -937,19 +1055,19 @@ export async function getTendersWithSorting(
 
     const whereCondition = and(
       eq(tender.organizationId, organizationId),
-      isNull(tender.deletedAt)
+      isNull(tender.deletedAt),
     );
 
     // Determine sort column
     let sortColumn;
     switch (sortBy) {
-      case 'tenderNumber':
+      case "tenderNumber":
         sortColumn = tender.tenderNumber;
         break;
-      case 'submissionDate':
+      case "submissionDate":
         sortColumn = tender.submissionDate;
         break;
-      case 'status':
+      case "status":
         sortColumn = tender.status;
         break;
       default:
@@ -958,11 +1076,11 @@ export async function getTendersWithSorting(
 
     // Build order expression, handling nulls-last for submissionDate
     const orderByExpression =
-      sortBy === 'submissionDate'
-        ? sortOrder === 'desc'
+      sortBy === "submissionDate"
+        ? sortOrder === "desc"
           ? sql`${tender.submissionDate} desc nulls last`
           : sql`${tender.submissionDate} asc nulls last`
-        : sortOrder === 'desc'
+        : sortOrder === "desc"
           ? desc(sortColumn)
           : sortColumn;
 
@@ -1011,24 +1129,24 @@ export async function getTendersWithSorting(
       totalPages: Math.ceil(totalCount.length / limit),
     };
   } catch (error: any) {
-    console.error('Error fetching tenders with sorting:', error);
+    console.error("Error fetching tenders with sorting:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch tenders',
+      error: error.message || "Failed to fetch tenders",
       tenders: [],
       totalCount: 0,
       currentPage: page,
       totalPages: 0,
     };
   }
-}    // Get tenders available for project creation (awarded status, not linked to projects)
+} // Get tenders available for project creation (awarded status, not linked to projects)
 export async function getAvailableTendersForProjects(
   organizationId: string,
   clientId?: string,
   page: number = 1,
   limit: number = 100,
   currentProjectId?: string,
-  currentTenderId?: string
+  currentTenderId?: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1037,15 +1155,21 @@ export async function getAvailableTendersForProjects(
     const projectLinkCondition = currentProjectId
       ? or(isNull(project.tenderId), eq(project.id, currentProjectId))
       : currentTenderId
-      ? or(isNull(project.tenderId), eq(tender.id, currentTenderId))
-      : isNull(project.tenderId);
+        ? or(isNull(project.tenderId), eq(tender.id, currentTenderId))
+        : isNull(project.tenderId);
 
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
       isNull(tender.deletedAt),
       // Allow awarded tenders or in-progress/submitted tenders
-      inArray(tender.status, ['awarded', 'ready', 'submitted', 'evaluation', 'open']),
-      projectLinkCondition
+      inArray(tender.status, [
+        "awarded",
+        "ready",
+        "submitted",
+        "evaluation",
+        "open",
+      ]),
+      projectLinkCondition,
     );
 
     // Add client filter if provided
@@ -1096,26 +1220,37 @@ export async function getAvailableTendersForProjects(
       totalPages: Math.ceil(totalCount.length / limit),
     };
   } catch (error: any) {
-    console.error('Error fetching available tenders for projects:', error);
+    console.error("Error fetching available tenders for projects:", error);
     throw error;
   }
 }
 
 // Get tender statistics for dashboard
-function mapTenderStatusToStatsKey(status: string): 'open' | 'closed' | 'evaluation' | 'awarded' | 'lost' {
-  if (['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'].includes(status)) {
-    return 'open';
+function mapTenderStatusToStatsKey(
+  status: string,
+): "open" | "closed" | "evaluation" | "awarded" | "lost" {
+  if (
+    [
+      "new",
+      "review",
+      "approved_to_prepare",
+      "preparation",
+      "ready",
+      "open",
+    ].includes(status)
+  ) {
+    return "open";
   }
-  if (['submitted', 'evaluation'].includes(status)) {
-    return 'evaluation';
+  if (["submitted", "evaluation"].includes(status)) {
+    return "evaluation";
   }
-  if (status === 'awarded') {
-    return 'awarded';
+  if (status === "awarded") {
+    return "awarded";
   }
-  if (status === 'lost') {
-    return 'lost';
+  if (status === "lost") {
+    return "lost";
   }
-  return 'closed'; // closed, cancelled, or other fallback
+  return "closed"; // closed, cancelled, or other fallback
 }
 
 // Get tender statistics for dashboard
@@ -1136,7 +1271,10 @@ export async function getTenderStats(organizationId: string) {
         })
         .from(tender)
         .where(
-          and(eq(tender.organizationId, organizationId), isNull(tender.deletedAt))
+          and(
+            eq(tender.organizationId, organizationId),
+            isNull(tender.deletedAt),
+          ),
         ),
       db
         .select({ tenderId: tenderFollowUp.tenderId })
@@ -1151,8 +1289,8 @@ export async function getTenderStats(organizationId: string) {
         .where(
           and(
             eq(tenderExtension.organizationId, organizationId),
-            isNull(tenderExtension.deletedAt)
-          )
+            isNull(tenderExtension.deletedAt),
+          ),
         ),
     ]);
 
@@ -1170,7 +1308,10 @@ export async function getTenderStats(organizationId: string) {
         acc[key] = (acc[key] || 0) + 1;
         return acc;
       },
-      { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 } as Record<string, number>
+      { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 } as Record<
+        string,
+        number
+      >,
     );
 
     // 1. Tenders submitted this month (MTD)
@@ -1190,7 +1331,7 @@ export async function getTenderStats(organizationId: string) {
     // 3. Expired Validity with No Follow-up & No Extension
     const expiredValidityUncontactedCount = stats.filter((t) => {
       // Must not already be awarded or lost
-      if (t.status === 'awarded' || t.status === 'lost') return false;
+      if (t.status === "awarded" || t.status === "lost") return false;
 
       // Calculate effective validity expiration date
       let effectiveExpiry: Date | null = null;
@@ -1215,12 +1356,12 @@ export async function getTenderStats(organizationId: string) {
 
     // 4. Active Under Evaluation
     const underEvaluationCount = stats.filter(
-      (t) => t.status === 'evaluation' || t.status === 'submitted'
+      (t) => t.status === "evaluation" || t.status === "submitted",
     ).length;
 
     // Calculate total value (only for tenders with numeric values)
     const totalValue = stats.reduce((sum, tender) => {
-      const value = parseFloat(tender.value || '0');
+      const value = parseFloat(tender.value || "0");
       return sum + (isNaN(value) ? 0 : value);
     }, 0);
 
@@ -1232,17 +1373,19 @@ export async function getTenderStats(organizationId: string) {
     const averageValue = totalTenders > 0 ? totalValue / totalTenders : 0;
 
     // Count upcoming deadlines
-    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
+    const thirtyDaysFromNow = daysFromNow(
+      URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS,
+    );
     const upcomingDeadlines = stats.filter(
       (tender) =>
         tender.submissionDate &&
         tender.submissionDate > now &&
-        tender.submissionDate <= thirtyDaysFromNow
+        tender.submissionDate <= thirtyDaysFromNow,
     ).length;
 
     // Calculate overdue tenders
     const overdueCount = stats.filter(
-      (tender) => tender.submissionDate && tender.submissionDate < now
+      (tender) => tender.submissionDate && tender.submissionDate < now,
     ).length;
 
     // --- Trend Calculation (vs 30 days ago) ---
@@ -1250,7 +1393,7 @@ export async function getTenderStats(organizationId: string) {
 
     // Filter stats to represent the state 30 days ago
     const previousStats = stats.filter(
-      (t) => t.createdAt && t.createdAt < thirtyDaysAgo
+      (t) => t.createdAt && t.createdAt < thirtyDaysAgo,
     );
 
     const previousTotalTenders = previousStats.length;
@@ -1262,12 +1405,15 @@ export async function getTenderStats(organizationId: string) {
         acc[key] = (acc[key] || 0) + 1;
         return acc;
       },
-      { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 } as Record<string, number>
+      { open: 0, closed: 0, evaluation: 0, awarded: 0, lost: 0 } as Record<
+        string,
+        number
+      >,
     );
 
     // Previous Total Value
     const previousTotalValue = previousStats.reduce((sum, tender) => {
-      const value = parseFloat(tender.value || '0');
+      const value = parseFloat(tender.value || "0");
       return sum + (isNaN(value) ? 0 : value);
     }, 0);
 
@@ -1315,10 +1461,10 @@ export async function getTenderStats(organizationId: string) {
       },
     };
   } catch (error: any) {
-    console.error('Error fetching tender stats:', error);
+    console.error("Error fetching tender stats:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch tender statistics',
+      error: error.message || "Failed to fetch tender statistics",
       stats: {
         totalTenders: 0,
         statusCounts: {
@@ -1341,7 +1487,7 @@ export async function getTenderStats(organizationId: string) {
 // Get recent activity for dashboard
 export async function getRecentActivity(
   organizationId: string,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1361,7 +1507,10 @@ export async function getRecentActivity(
       .from(tender)
       .leftJoin(client, eq(tender.clientId, client.id))
       .where(
-        and(eq(tender.organizationId, organizationId), isNull(tender.deletedAt))
+        and(
+          eq(tender.organizationId, organizationId),
+          isNull(tender.deletedAt),
+        ),
       )
       .orderBy(desc(tender.createdAt))
       .limit(limit);
@@ -1386,8 +1535,8 @@ export async function getRecentActivity(
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          gte(tender.updatedAt, sevenDaysAgo)
-        )
+          gte(tender.updatedAt, sevenDaysAgo),
+        ),
       )
       .orderBy(desc(tender.updatedAt))
       .limit(limit);
@@ -1400,10 +1549,10 @@ export async function getRecentActivity(
       },
     };
   } catch (error: any) {
-    console.error('Error fetching recent activity:', error);
+    console.error("Error fetching recent activity:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch recent activity',
+      error: error.message || "Failed to fetch recent activity",
       activity: {
         recentTenders: [],
         recentChanges: [],
@@ -1415,12 +1564,14 @@ export async function getRecentActivity(
 // Get upcoming deadlines for dashboard
 export async function getUpcomingDeadlines(
   organizationId: string,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
+    const thirtyDaysFromNow = daysFromNow(
+      URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS,
+    );
 
     const upcomingTenders = await db
       .select({
@@ -1441,8 +1592,8 @@ export async function getUpcomingDeadlines(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
           gte(tender.submissionDate, now),
-          lte(tender.submissionDate, thirtyDaysFromNow)
-        )
+          lte(tender.submissionDate, thirtyDaysFromNow),
+        ),
       )
       .orderBy(tender.submissionDate)
       .limit(limit);
@@ -1453,7 +1604,7 @@ export async function getUpcomingDeadlines(
       daysUntilDeadline: tender.submissionDate
         ? Math.ceil(
             (tender.submissionDate.getTime() - now.getTime()) /
-              (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24),
           )
         : null,
     }));
@@ -1463,10 +1614,10 @@ export async function getUpcomingDeadlines(
       deadlines: tendersWithDays,
     };
   } catch (error: any) {
-    console.error('Error fetching upcoming deadlines:', error);
+    console.error("Error fetching upcoming deadlines:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch upcoming deadlines',
+      error: error.message || "Failed to fetch upcoming deadlines",
       deadlines: [],
     };
   }
@@ -1475,12 +1626,14 @@ export async function getUpcomingDeadlines(
 // Get upcoming briefing sessions for dashboard
 export async function getUpcomingBriefings(
   organizationId: string,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
     const now = nowInSAST();
-    const thirtyDaysFromNow = daysFromNow(URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS);
+    const thirtyDaysFromNow = daysFromNow(
+      URGENCY_WINDOWS.UPCOMING_DEADLINES_DAYS,
+    );
 
     const upcomingBriefings = await db
       .select({
@@ -1503,8 +1656,8 @@ export async function getUpcomingBriefings(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
           gte(tender.briefingDate, now),
-          lte(tender.briefingDate, thirtyDaysFromNow)
-        )
+          lte(tender.briefingDate, thirtyDaysFromNow),
+        ),
       )
       .orderBy(tender.briefingDate)
       .limit(limit);
@@ -1515,7 +1668,7 @@ export async function getUpcomingBriefings(
       daysUntilBriefing: briefing.briefingDate
         ? Math.ceil(
             (briefing.briefingDate.getTime() - now.getTime()) /
-              (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24),
           )
         : null,
     }));
@@ -1525,15 +1678,14 @@ export async function getUpcomingBriefings(
       briefings: briefingsWithDays,
     };
   } catch (error: any) {
-    console.error('Error fetching upcoming briefings:', error);
+    console.error("Error fetching upcoming briefings:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch upcoming briefings',
+      error: error.message || "Failed to fetch upcoming briefings",
       briefings: [],
     };
   }
 }
-
 
 // Get filtered tenders for overview table
 export async function getTendersOverview(
@@ -1542,13 +1694,13 @@ export async function getTendersOverview(
     status?: string;
     clientId?: string;
     search?: string;
-    sortBy?: 'tenderNumber' | 'createdAt' | 'submissionDate' | 'status';
-    sortOrder?: 'asc' | 'desc';
+    sortBy?: "tenderNumber" | "createdAt" | "submissionDate" | "status";
+    sortOrder?: "asc" | "desc";
     submitted?: string;
     filter?: string;
   },
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1560,30 +1712,33 @@ export async function getTendersOverview(
 
     let whereCondition = and(
       eq(tender.organizationId, organizationId),
-      isNull(tender.deletedAt)
+      isNull(tender.deletedAt),
     );
 
     // MTD / YTD Submission Date Filtering
-    if (filters.submitted === 'this-month' || filters.submitted === 'month') {
+    if (filters.submitted === "this-month" || filters.submitted === "month") {
       whereCondition = and(
         whereCondition,
         isNotNull(tender.submissionDate),
         gte(tender.submissionDate, startOfMonth),
-        lte(tender.submissionDate, now)
+        lte(tender.submissionDate, now),
       );
-    } else if (filters.submitted === 'this-year' || filters.submitted === 'year') {
+    } else if (
+      filters.submitted === "this-year" ||
+      filters.submitted === "year"
+    ) {
       whereCondition = and(
         whereCondition,
         isNotNull(tender.submissionDate),
         gte(tender.submissionDate, startOfYear),
-        lte(tender.submissionDate, now)
+        lte(tender.submissionDate, now),
       );
     }
 
     // Special Filter: Expired Validity with No Follow-up & No Extension
     if (
-      filters.status === 'validity_expired_uncontacted' ||
-      filters.filter === 'validity-expired-uncontacted'
+      filters.status === "validity_expired_uncontacted" ||
+      filters.filter === "validity-expired-uncontacted"
     ) {
       const [orgFollowUps, orgExtensions] = await Promise.all([
         db
@@ -1596,8 +1751,8 @@ export async function getTendersOverview(
           .where(
             and(
               eq(tenderExtension.organizationId, organizationId),
-              isNull(tenderExtension.deletedAt)
-            )
+              isNull(tenderExtension.deletedAt),
+            ),
           ),
       ]);
 
@@ -1605,59 +1760,79 @@ export async function getTendersOverview(
         new Set([
           ...orgFollowUps.map((f) => f.tenderId),
           ...orgExtensions.map((e) => e.tenderId),
-        ])
+        ]),
       );
 
       whereCondition = and(
         whereCondition,
-        ne(tender.status, 'awarded'),
-        ne(tender.status, 'lost'),
+        ne(tender.status, "awarded"),
+        ne(tender.status, "lost"),
         or(
           and(isNotNull(tender.validityDate), lt(tender.validityDate, now)),
-          and(isNotNull(tender.evaluationDate), lt(tender.evaluationDate, now))
+          and(isNotNull(tender.evaluationDate), lt(tender.evaluationDate, now)),
         ),
         contactedIds.length > 0
           ? notInArray(tender.id, contactedIds)
-          : undefined
+          : undefined,
       );
-    } else if (filters.status && filters.status !== 'all') {
-      if (filters.status === 'open') {
+    } else if (filters.status && filters.status !== "all") {
+      if (filters.status === "open") {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const)
+          inArray(tender.status, [
+            "new",
+            "review",
+            "approved_to_prepare",
+            "preparation",
+            "ready",
+            "open",
+          ] as const),
         );
-      } else if (filters.status === 'awarded') {
+      } else if (filters.status === "awarded") {
         whereCondition = and(
           whereCondition,
-          eq(tender.status, 'awarded'),
-          isNull(project.id)
+          eq(tender.status, "awarded"),
+          isNull(project.id),
         );
-      } else if (filters.status === 'closing_soon') {
+      } else if (filters.status === "closing_soon") {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const),
+          inArray(tender.status, [
+            "new",
+            "review",
+            "approved_to_prepare",
+            "preparation",
+            "ready",
+            "open",
+          ] as const),
           isNotNull(tender.submissionDate),
-          gte(tender.submissionDate, now)
+          gte(tender.submissionDate, now),
         );
-      } else if (filters.status === 'awaiting_results') {
+      } else if (filters.status === "awaiting_results") {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['submitted', 'evaluation'] as const)
+          inArray(tender.status, ["submitted", "evaluation"] as const),
         );
-      } else if (filters.status === 'under_preparation') {
+      } else if (filters.status === "under_preparation") {
         whereCondition = and(
           whereCondition,
-          inArray(tender.status, ['approved_to_prepare', 'preparation'] as const)
+          inArray(tender.status, [
+            "approved_to_prepare",
+            "preparation",
+          ] as const),
         );
       } else {
-        whereCondition = and(whereCondition, eq(tender.status, filters.status as any));
+        whereCondition = and(
+          whereCondition,
+          eq(tender.status, filters.status as any),
+        );
       }
     }
 
-    if (filters.clientId && filters.clientId !== 'all') {
+    if (filters.clientId && filters.clientId !== "all") {
       whereCondition = and(
         whereCondition,
-        eq(tender.clientId, filters.clientId)
+        eq(tender.clientId, filters.clientId),
       );
     }
 
@@ -1667,23 +1842,23 @@ export async function getTendersOverview(
         whereCondition,
         or(
           ilike(tender.tenderNumber, searchTerm),
-          ilike(tender.description, searchTerm)
-        )
+          ilike(tender.description, searchTerm),
+        ),
       );
     }
 
     // Determine sort column
-    const sortBy = filters.sortBy || 'createdAt';
-    const sortOrder = filters.sortOrder || 'desc';
+    const sortBy = filters.sortBy || "createdAt";
+    const sortOrder = filters.sortOrder || "desc";
     let sortColumn;
     switch (sortBy) {
-      case 'tenderNumber':
+      case "tenderNumber":
         sortColumn = tender.tenderNumber;
         break;
-      case 'submissionDate':
+      case "submissionDate":
         sortColumn = tender.submissionDate;
         break;
-      case 'status':
+      case "status":
         sortColumn = tender.status;
         break;
       default:
@@ -1691,30 +1866,30 @@ export async function getTendersOverview(
     }
 
     const orderByExpression =
-      sortBy === 'submissionDate'
-        ? sortOrder === 'desc'
+      sortBy === "submissionDate"
+        ? sortOrder === "desc"
           ? sql`${tender.submissionDate} desc nulls last`
           : sql`${tender.submissionDate} asc nulls last`
-        : sortOrder === 'desc'
+        : sortOrder === "desc"
           ? desc(sortColumn)
           : sortColumn;
 
     const isExpiredValidityView =
-      filters.filter === 'validity-expired-uncontacted' ||
-      filters.status === 'validity_expired_uncontacted';
+      filters.filter === "validity-expired-uncontacted" ||
+      filters.status === "validity_expired_uncontacted";
 
     const isRegisterDefaultSort =
-      (!filters.status || filters.status === 'all') &&
+      (!filters.status || filters.status === "all") &&
       !filters.filter &&
-      sortBy === 'submissionDate' &&
-      sortOrder === 'asc';
+      sortBy === "submissionDate" &&
+      sortOrder === "asc";
 
     let orderByExpressions;
     if (
       isExpiredValidityView &&
       (!filters.sortBy ||
-        filters.sortBy === 'submissionDate' ||
-        filters.sortBy === 'createdAt')
+        filters.sortBy === "submissionDate" ||
+        filters.sortBy === "createdAt")
     ) {
       // Most overdue first (earliest lapsed validity date to most recent)
       orderByExpressions = [
@@ -1781,10 +1956,10 @@ export async function getTendersOverview(
       totalPages: Math.ceil(totalCount / limit),
     };
   } catch (error: any) {
-    console.error('Error fetching tenders overview:', error);
+    console.error("Error fetching tenders overview:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch tenders',
+      error: error.message || "Failed to fetch tenders",
       tenders: [],
       totalCount: 0,
       currentPage: page,
@@ -1800,25 +1975,31 @@ export async function autoCloseExpiredTenders(organizationId: string) {
     const result = await db
       .update(tender)
       .set({
-        status: 'closed',
+        status: "closed",
         updatedAt: now,
       })
       .where(
         and(
           eq(tender.organizationId, organizationId),
-          eq(tender.status, 'open'),
+          eq(tender.status, "open"),
           isNull(tender.deletedAt),
-          lt(tender.submissionDate, now)
-        )
+          lt(tender.submissionDate, now),
+        ),
       );
     return { success: true };
   } catch (error: any) {
-    console.error('Error auto-closing expired tenders:', error);
-    return { success: false, error: error.message || 'Failed to auto-close expired tenders' };
+    console.error("Error auto-closing expired tenders:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to auto-close expired tenders",
+    };
   }
 }
 
-export async function getTenderFollowUps(organizationId: string, tenderId: string) {
+export async function getTenderFollowUps(
+  organizationId: string,
+  tenderId: string,
+) {
   try {
     await validateSessionAndOrg(organizationId);
     const data = await db
@@ -1827,14 +2008,17 @@ export async function getTenderFollowUps(organizationId: string, tenderId: strin
       .where(
         and(
           eq(tenderFollowUp.organizationId, organizationId),
-          eq(tenderFollowUp.tenderId, tenderId)
-        )
+          eq(tenderFollowUp.tenderId, tenderId),
+        ),
       )
       .orderBy(desc(tenderFollowUp.createdAt));
     return { success: true, followUps: data };
   } catch (error: any) {
-    console.error('Error fetching follow ups:', error);
-    return { success: false, error: error.message || 'Failed to fetch follow-ups' };
+    console.error("Error fetching follow ups:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch follow-ups",
+    };
   }
 }
 
@@ -1847,23 +2031,28 @@ export async function createTenderFollowUp(
     notes?: string | null;
     outcome?: string | null;
     nextFollowUpDate?: Date | null;
-  }
+  },
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    
-    const newFollowUp = await db.insert(tenderFollowUp).values({
-      id: randomUUID(),
-      organizationId,
-      tenderId: data.tenderId,
-      followUpDate: new Date(data.followUpDate),
-      contactPerson: data.contactPerson ?? null,
-      notes: data.notes ?? null,
-      outcome: data.outcome ?? null,
-      nextFollowUpDate: data.nextFollowUpDate ? new Date(data.nextFollowUpDate) : null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
+
+    const newFollowUp = await db
+      .insert(tenderFollowUp)
+      .values({
+        id: randomUUID(),
+        organizationId,
+        tenderId: data.tenderId,
+        followUpDate: new Date(data.followUpDate),
+        contactPerson: data.contactPerson ?? null,
+        notes: data.notes ?? null,
+        outcome: data.outcome ?? null,
+        nextFollowUpDate: data.nextFollowUpDate
+          ? new Date(data.nextFollowUpDate)
+          : null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
 
     const session = await getServerSession();
     const userId = session?.user?.id;
@@ -1871,16 +2060,19 @@ export async function createTenderFollowUp(
     await logTenderActivity(
       organizationId,
       data.tenderId,
-      'follow_up_added',
-      `Follow-up logged on ${new Date(data.followUpDate).toLocaleDateString()} with person: ${data.contactPerson || 'N/A'}. Notes: ${data.notes || 'No notes.'}`,
-      userId
+      "follow_up_added",
+      `Follow-up logged on ${new Date(data.followUpDate).toLocaleDateString()} with person: ${data.contactPerson || "N/A"}. Notes: ${data.notes || "No notes."}`,
+      userId,
     );
 
     revalidatePath(`/tenders/${data.tenderId}`);
     return { success: true, followUp: newFollowUp[0] };
   } catch (error: any) {
-    console.error('Error creating follow up:', error);
-    return { success: false, error: error.message || 'Failed to create follow-up' };
+    console.error("Error creating follow up:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to create follow-up",
+    };
   }
 }
 
@@ -1890,7 +2082,7 @@ export async function logTenderActivity(
   tenderId: string,
   activityType: string,
   description: string,
-  userId?: string
+  userId?: string,
 ) {
   try {
     await db.insert(tenderActivity).values({
@@ -1903,7 +2095,7 @@ export async function logTenderActivity(
     });
     return { success: true };
   } catch (error) {
-    console.error('Error logging tender activity:', error);
+    console.error("Error logging tender activity:", error);
     return { success: false, error };
   }
 }
@@ -1911,7 +2103,7 @@ export async function logTenderActivity(
 // Get activities for a specific tender
 export async function getTenderActivities(
   organizationId: string,
-  tenderId: string
+  tenderId: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1919,7 +2111,7 @@ export async function getTenderActivities(
     const activities = await db.query.tenderActivity.findMany({
       where: and(
         eq(tenderActivity.tenderId, tenderId),
-        eq(tenderActivity.organizationId, organizationId)
+        eq(tenderActivity.organizationId, organizationId),
       ),
       orderBy: [desc(tenderActivity.createdAt)],
       with: {
@@ -1935,8 +2127,11 @@ export async function getTenderActivities(
 
     return { success: true, activities };
   } catch (error: any) {
-    console.error('Error fetching tender activities:', error);
-    return { success: false, error: error.message || 'Failed to fetch tender activities' };
+    console.error("Error fetching tender activities:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch tender activities",
+    };
   }
 }
 
@@ -1944,11 +2139,18 @@ export async function getTenderActivities(
 export async function getTenderActionQueue(organizationId: string) {
   try {
     await validateSessionAndOrg(organizationId);
-    
+
     // Active pre-submission statuses
-    const activeStatuses = ['new', 'review', 'approved_to_prepare', 'preparation', 'ready', 'open'] as const;
+    const activeStatuses = [
+      "new",
+      "review",
+      "approved_to_prepare",
+      "preparation",
+      "ready",
+      "open",
+    ] as const;
     const now = nowInSAST();
-    
+
     // 1. Overdue Tenders: Active pre-submission status, and closing date (submissionDate) in the past.
     const overdue = await db
       .select({
@@ -1970,8 +2172,8 @@ export async function getTenderActionQueue(organizationId: string) {
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
           inArray(tender.status, activeStatuses),
-          lt(tender.submissionDate, now)
-        )
+          lt(tender.submissionDate, now),
+        ),
       )
       .orderBy(tender.submissionDate);
 
@@ -1998,8 +2200,8 @@ export async function getTenderActionQueue(organizationId: string) {
           isNull(tender.deletedAt),
           inArray(tender.status, activeStatuses),
           gte(tender.submissionDate, now),
-          lte(tender.submissionDate, fourteenDaysFromNow)
-        )
+          lte(tender.submissionDate, fourteenDaysFromNow),
+        ),
       )
       .orderBy(tender.submissionDate);
 
@@ -2026,8 +2228,8 @@ export async function getTenderActionQueue(organizationId: string) {
           isNull(tender.deletedAt),
           inArray(tender.status, activeStatuses),
           eq(tender.isBriefingMandatory, true),
-          eq(tender.briefingAttended, false)
-        )
+          eq(tender.briefingAttended, false),
+        ),
       )
       .orderBy(tender.briefingDate);
 
@@ -2051,8 +2253,8 @@ export async function getTenderActionQueue(organizationId: string) {
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          inArray(tender.status, ['submitted', 'evaluation'] as const)
-        )
+          inArray(tender.status, ["submitted", "evaluation"] as const),
+        ),
       )
       .orderBy(desc(tender.submissionDate));
 
@@ -2077,9 +2279,9 @@ export async function getTenderActionQueue(organizationId: string) {
         and(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
-          eq(tender.status, 'awarded'),
-          isNull(project.id)
-        )
+          eq(tender.status, "awarded"),
+          isNull(project.id),
+        ),
       )
       .orderBy(desc(tender.createdAt));
 
@@ -2094,10 +2296,10 @@ export async function getTenderActionQueue(organizationId: string) {
       },
     };
   } catch (error: any) {
-    console.error('Error fetching tender action queues:', error);
+    console.error("Error fetching tender action queues:", error);
     return {
       success: false,
-      error: error.message || 'Failed to fetch tender action queues',
+      error: error.message || "Failed to fetch tender action queues",
       queues: {
         overdue: [],
         closingSoon: [],

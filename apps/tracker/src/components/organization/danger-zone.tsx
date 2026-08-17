@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Trash2,
   UserX,
@@ -12,25 +12,25 @@ import {
   Clock,
   Shield,
   Users,
-} from 'lucide-react';
-import { OrganizationDeletionModal } from './deletion-modal';
-import { OwnershipTransferModal } from './ownership-transfer-modal';
-import { DataExportModal } from './data-export-modal';
-import type { Role } from '@pmg/db/schema';
+} from "lucide-react";
+import { OrganizationDeletionModal } from "./deletion-modal";
+import { OwnershipTransferModal } from "./ownership-transfer-modal";
+import { DataExportModal } from "./data-export-modal";
+import type { Role } from "@pmg/db/schema";
 import {
   initiateOrganizationDeletion,
   initiateOwnershipTransfer,
   exportOrganizationData,
-} from '@/server/organization-advanced-actions';
+} from "@/server/organization-advanced-actions";
 import {
   organization as orgToast,
   error as errorToast,
   success as successToast,
-} from '@/lib/toast-enhanced';
+} from "@/lib/toast-enhanced";
 import {
   getOrganizationMembers,
   type OrganizationMember,
-} from '@/server/organizations';
+} from "@/server/organizations";
 
 interface DangerZoneProps {
   organizationId: string;
@@ -51,10 +51,10 @@ export function DangerZone({
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [eligibleMembers, setEligibleMembers] = useState<OrganizationMember[]>(
-    []
+    [],
   );
 
-  const isOwner = userRole === 'owner';
+  const isOwner = userRole === "owner";
 
   // Fetch eligible members (admins and managers) when transfer modal is opened
   useEffect(() => {
@@ -66,12 +66,12 @@ export function DangerZone({
           // 1. Not the current owner (which is the current user since isOwner is true)
           // 2. Must be admin or manager (as per description text)
           const eligible = members.filter(
-            (m) => m.role !== 'owner' && ['admin', 'manager'].includes(m.role)
+            (m) => m.role !== "owner" && ["admin", "manager"].includes(m.role),
           );
           setEligibleMembers(eligible);
         } catch (error) {
-          console.error('Error fetching members for transfer:', error);
-          errorToast('Failed to load eligible members');
+          console.error("Error fetching members for transfer:", error);
+          errorToast("Failed to load eligible members");
         }
       };
       fetchMembers();
@@ -161,7 +161,7 @@ export function DangerZone({
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="h-3 w-3" />
-                  {memberCount} member{memberCount !== 1 ? 's' : ''}
+                  {memberCount} member{memberCount !== 1 ? "s" : ""}
                 </div>
                 {hasActiveProjects && (
                   <div className="flex items-center gap-1">
@@ -239,23 +239,23 @@ export function DangerZone({
           try {
             const result = await initiateOrganizationDeletion(
               organizationId,
-              confirmation
+              confirmation,
             );
 
             if (result.success) {
               orgToast.deleted(organizationName, confirmation.deletionType);
               setShowDeletionModal(false);
               // Redirect to organizations list after successful deletion
-              window.location.href = '/organization';
+              window.location.href = "/organization";
             } else {
               errorToast(
-                result.error?.message || 'Failed to delete organization'
+                result.error?.message || "Failed to delete organization",
               );
             }
           } catch (error) {
-            console.error('Error deleting organization:', error);
+            console.error("Error deleting organization:", error);
             errorToast(
-              'An unexpected error occurred while deleting the organization'
+              "An unexpected error occurred while deleting the organization",
             );
           }
         }}
@@ -272,18 +272,19 @@ export function DangerZone({
 
             if (result.success) {
               successToast(
-                'Ownership transfer initiated. The new owner will receive an email to confirm.'
+                "Ownership transfer initiated. The new owner will receive an email to confirm.",
               );
               setShowTransferModal(false);
             } else {
               errorToast(
-                result.error?.message || 'Failed to initiate ownership transfer'
+                result.error?.message ||
+                  "Failed to initiate ownership transfer",
               );
             }
           } catch (error) {
-            console.error('Error initiating ownership transfer:', error);
+            console.error("Error initiating ownership transfer:", error);
             errorToast(
-              'An unexpected error occurred while initiating the transfer'
+              "An unexpected error occurred while initiating the transfer",
             );
           }
         }}
@@ -301,16 +302,16 @@ export function DangerZone({
             if (result.success && result.data?.exportUrl) {
               orgToast.dataExported(format);
               // Open the export URL in a new tab
-              window.open(result.data.exportUrl, '_blank');
+              window.open(result.data.exportUrl, "_blank");
               setShowExportModal(false);
             } else {
               errorToast(
-                result.error?.message || 'Failed to export organization data'
+                result.error?.message || "Failed to export organization data",
               );
             }
           } catch (error) {
-            console.error('Error exporting organization data:', error);
-            errorToast('An unexpected error occurred while exporting data');
+            console.error("Error exporting organization data:", error);
+            errorToast("An unexpected error occurred while exporting data");
           }
         }}
       />

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition } from "react";
 import {
   Bell,
   Check,
@@ -8,8 +8,8 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,15 +17,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   markAllNotificationsRead,
   markNotificationDetail,
-} from '@/server/notifications';
-import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
+} from "@/server/notifications";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export interface Notification {
   id: string;
@@ -70,11 +70,11 @@ export function NotificationBell({
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'success':
+      case "success":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'warning':
+      case "warning":
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'error':
+      case "error":
         return <XCircle className="h-4 w-4 text-red-500" />;
       default:
         return <Info className="h-4 w-4 text-blue-500" />;
@@ -91,7 +91,7 @@ export function NotificationBell({
               variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
             >
-              {initialUnreadCount > 9 ? '9+' : initialUnreadCount}
+              {initialUnreadCount > 9 ? "9+" : initialUnreadCount}
             </Badge>
           )}
         </Button>
@@ -123,8 +123,8 @@ export function NotificationBell({
                 <DropdownMenuItem
                   key={notification.id}
                   className={cn(
-                    'flex flex-col items-start gap-1 p-3 cursor-pointer',
-                    !notification.read && 'bg-muted/50'
+                    "flex flex-col items-start gap-1 p-3 cursor-pointer",
+                    !notification.read && "bg-muted/50",
                   )}
                   onSelect={(e) => {
                     if (notification.link) {
@@ -134,7 +134,7 @@ export function NotificationBell({
                     if (!notification.read) {
                       handleMarkAsRead(
                         notification.id,
-                        e as unknown as React.MouseEvent
+                        e as unknown as React.MouseEvent,
                       );
                     }
                   }}
@@ -160,7 +160,10 @@ export function NotificationBell({
                     {notification.message}
                   </p>
                   <p className="text-[10px] text-muted-foreground w-full text-right mt-1">
-                    {new Date(notification.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {new Date(notification.createdAt).toLocaleDateString(
+                      "en-GB",
+                      { day: "numeric", month: "short", year: "numeric" },
+                    )}
                   </p>
                 </DropdownMenuItem>
               ))}

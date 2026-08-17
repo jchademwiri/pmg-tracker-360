@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 import {
   TendersSearchFilters,
   type TenderFilters,
-} from '@/components/tenders/tenders-search-filters';
-import { TendersTable } from '@/components/tenders/tenders-table';
-import { getTendersOverview, deleteTender } from '@/server/tenders';
-import { toast } from 'sonner';
-import { DeleteConfirmationDialog } from '@/components/ui/confirmation-dialog';
+} from "@/components/tenders/tenders-search-filters";
+import { TendersTable } from "@/components/tenders/tenders-table";
+import { getTendersOverview, deleteTender } from "@/server/tenders";
+import { toast } from "sonner";
+import { DeleteConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface Tender {
   id: string;
@@ -55,7 +55,7 @@ export function TendersOverviewClient({
   initialFilters,
   clients,
   organizationId,
-  basePath = '/tenders',
+  basePath = "/tenders",
 }: TendersOverviewClientProps) {
   const router = useRouter();
   const [tenders, setTenders] = useState(initialTenders);
@@ -64,25 +64,32 @@ export function TendersOverviewClient({
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<TenderFilters>(initialFilters);
-  const [tenderToDelete, setTenderToDelete] = useState<{ id: string; number: string } | null>(null);
+  const [tenderToDelete, setTenderToDelete] = useState<{
+    id: string;
+    number: string;
+  } | null>(null);
 
   const syncUrl = useCallback(
     (nextFilters: TenderFilters, nextPage: number) => {
       const params = new URLSearchParams();
 
-      if (nextFilters.search) params.set('search', nextFilters.search);
-      if (nextFilters.status !== 'all') params.set('status', nextFilters.status);
-      if (nextFilters.clientId !== 'all') params.set('clientId', nextFilters.clientId);
-      if (nextFilters.sortBy !== 'createdAt') params.set('sortBy', nextFilters.sortBy);
-      if (nextFilters.sortOrder !== 'desc') params.set('sortOrder', nextFilters.sortOrder);
-      if (nextPage > 1) params.set('page', String(nextPage));
+      if (nextFilters.search) params.set("search", nextFilters.search);
+      if (nextFilters.status !== "all")
+        params.set("status", nextFilters.status);
+      if (nextFilters.clientId !== "all")
+        params.set("clientId", nextFilters.clientId);
+      if (nextFilters.sortBy !== "createdAt")
+        params.set("sortBy", nextFilters.sortBy);
+      if (nextFilters.sortOrder !== "desc")
+        params.set("sortOrder", nextFilters.sortOrder);
+      if (nextPage > 1) params.set("page", String(nextPage));
 
       const query = params.toString();
       router.replace(query ? `${basePath}?${query}` : basePath, {
         scroll: false,
       });
     },
-    [router]
+    [router],
   );
 
   const handleFiltersChange = useCallback(
@@ -96,7 +103,7 @@ export function TendersOverviewClient({
           organizationId,
           newFilters,
           1,
-          10
+          10,
         );
         if (result.success) {
           setTenders(result.tenders);
@@ -105,12 +112,12 @@ export function TendersOverviewClient({
           setTotalPages(result.totalPages);
         }
       } catch (error) {
-        console.error('Error fetching filtered tenders:', error);
+        console.error("Error fetching filtered tenders:", error);
       } finally {
         setLoading(false);
       }
     },
-    [organizationId, syncUrl]
+    [organizationId, syncUrl],
   );
 
   const handlePageChange = useCallback(
@@ -123,7 +130,7 @@ export function TendersOverviewClient({
           organizationId,
           filters,
           page,
-          10
+          10,
         );
         if (result.success) {
           setTenders(result.tenders);
@@ -132,12 +139,12 @@ export function TendersOverviewClient({
           setTotalPages(result.totalPages);
         }
       } catch (error) {
-        console.error('Error fetching tenders page:', error);
+        console.error("Error fetching tenders page:", error);
       } finally {
         setLoading(false);
       }
     },
-    [organizationId, filters]
+    [organizationId, filters],
   );
 
   const handleViewTender = useCallback(
@@ -145,7 +152,7 @@ export function TendersOverviewClient({
       // Navigate to tender detail page
       router.push(`/tenders/${tenderId}`);
     },
-    [router]
+    [router],
   );
 
   const handleEditTender = useCallback(
@@ -153,7 +160,7 @@ export function TendersOverviewClient({
       // Navigate to tender edit page
       router.push(`/tenders/${tenderId}/edit`);
     },
-    [router]
+    [router],
   );
 
   const handleDeleteTender = useCallback(
@@ -163,7 +170,7 @@ export function TendersOverviewClient({
         setTenderToDelete({ id: tenderId, number: tender.tenderNumber });
       }
     },
-    [tenders]
+    [tenders],
   );
 
   const handleConfirmDelete = async () => {
@@ -172,14 +179,14 @@ export function TendersOverviewClient({
       setLoading(true);
       const result = await deleteTender(organizationId, tenderToDelete.id);
       if (result.success) {
-        toast.success('Tender deleted successfully');
+        toast.success("Tender deleted successfully");
         setTenderToDelete(null);
         // Refresh list by re-fetching overview
         const refreshResult = await getTendersOverview(
           organizationId,
           filters,
           currentPage,
-          10
+          10,
         );
         if (refreshResult.success) {
           setTenders(refreshResult.tenders);
@@ -187,11 +194,11 @@ export function TendersOverviewClient({
           setTotalPages(refreshResult.totalPages);
         }
       } else {
-        toast.error(result.error || 'Failed to delete tender');
+        toast.error(result.error || "Failed to delete tender");
       }
     } catch (error) {
-      console.error('Error deleting tender:', error);
-      toast.error('An error occurred while deleting the tender');
+      console.error("Error deleting tender:", error);
+      toast.error("An error occurred while deleting the tender");
     } finally {
       setLoading(false);
     }
@@ -202,7 +209,7 @@ export function TendersOverviewClient({
       // Navigate to tender detail page on row click
       router.push(`/tenders/${tenderId}`);
     },
-    [router]
+    [router],
   );
 
   return (
@@ -235,10 +242,9 @@ export function TendersOverviewClient({
         isOpen={!!tenderToDelete}
         onClose={() => setTenderToDelete(null)}
         onConfirm={handleConfirmDelete}
-        itemName={tenderToDelete?.number || ''}
+        itemName={tenderToDelete?.number || ""}
         itemType="Tender"
       />
     </div>
   );
 }
-

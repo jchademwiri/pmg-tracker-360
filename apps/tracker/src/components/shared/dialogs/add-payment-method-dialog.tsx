@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,12 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { CreditCard, Lock, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CreditCard, Lock, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AddPaymentMethodDialogProps {
   open: boolean;
@@ -29,31 +29,31 @@ export function AddPaymentMethodDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    cardholderName: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
+    cardholderName: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let formattedValue = value;
 
-    if (name === 'cardNumber') {
+    if (name === "cardNumber") {
       // Remove non-digits and limit to 16
-      formattedValue = value.replace(/\D/g, '').slice(0, 16);
+      formattedValue = value.replace(/\D/g, "").slice(0, 16);
       // Add spaces every 4 digits
-      formattedValue = formattedValue.replace(/(\d{4})(?=\d)/g, '$1 ');
-    } else if (name === 'expiryDate') {
+      formattedValue = formattedValue.replace(/(\d{4})(?=\d)/g, "$1 ");
+    } else if (name === "expiryDate") {
       // Remove non-digits and limit to 4
-      formattedValue = value.replace(/\D/g, '').slice(0, 4);
+      formattedValue = value.replace(/\D/g, "").slice(0, 4);
       // Add slash after 2 digits
       if (formattedValue.length >= 2) {
         formattedValue = `${formattedValue.slice(0, 2)}/${formattedValue.slice(2)}`;
       }
-    } else if (name === 'cvv') {
+    } else if (name === "cvv") {
       // Remove non-digits and limit to 3 or 4
-      formattedValue = value.replace(/\D/g, '').slice(0, 4);
+      formattedValue = value.replace(/\D/g, "").slice(0, 4);
     }
 
     setFormData((prev) => ({ ...prev, [name]: formattedValue }));
@@ -61,11 +61,11 @@ export function AddPaymentMethodDialog({
   };
 
   const validateForm = () => {
-    if (!formData.cardholderName.trim()) return 'Cardholder name is required';
-    if (formData.cardNumber.replace(/\s/g, '').length < 16)
-      return 'Invalid card number';
-    if (formData.expiryDate.length < 5) return 'Invalid expiry date (MM/YY)';
-    if (formData.cvv.length < 3) return 'Invalid CVV';
+    if (!formData.cardholderName.trim()) return "Cardholder name is required";
+    if (formData.cardNumber.replace(/\s/g, "").length < 16)
+      return "Invalid card number";
+    if (formData.expiryDate.length < 5) return "Invalid expiry date (MM/YY)";
+    if (formData.cvv.length < 3) return "Invalid CVV";
     return null;
   };
 
@@ -85,27 +85,27 @@ export function AddPaymentMethodDialog({
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const last4 = formData.cardNumber.slice(-4);
-      const [expMonth, expYear] = formData.expiryDate.split('/');
+      const [expMonth, expYear] = formData.expiryDate.split("/");
 
       onAdd({
         id: `pm_${Date.now()}`,
-        type: 'card',
+        type: "card",
         last4,
-        brand: 'Visa', // Mock detection
+        brand: "Visa", // Mock detection
         expiry_month: parseInt(expMonth),
-        expiry_year: parseInt('20' + expYear),
+        expiry_year: parseInt("20" + expYear),
         is_default: false,
       });
 
       onOpenChange(false);
       setFormData({
-        cardholderName: '',
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
+        cardholderName: "",
+        cardNumber: "",
+        expiryDate: "",
+        cvv: "",
       });
     } catch (err) {
-      setError('Failed to add payment method. Please try again.');
+      setError("Failed to add payment method. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -210,7 +210,7 @@ export function AddPaymentMethodDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Adding...' : 'Add Card'}
+              {isLoading ? "Adding..." : "Add Card"}
             </Button>
           </DialogFooter>
         </form>

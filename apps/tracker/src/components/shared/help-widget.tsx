@@ -1,21 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import {
-  MessageSquarePlus,
-  LifeBuoy,
-} from 'lucide-react';
+import { useState, useEffect } from "react";
+import { MessageSquarePlus, LifeBuoy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { getUserSupportTickets } from '@/server/support';
-import { usePathname } from 'next/navigation';
-import { TicketChatModal } from '../support/ticket-chat-drawer';
-import { ProductFeedbackModal } from '../feedback/ProductFeedbackModal';
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { getUserSupportTickets } from "@/server/support";
+import { usePathname } from "next/navigation";
+import { TicketChatModal } from "../support/ticket-chat-drawer";
+import { ProductFeedbackModal } from "../feedback/ProductFeedbackModal";
 
 export function HelpWidget() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -32,9 +29,9 @@ export function HelpWidget() {
     const handleUpdate = () => {
       checkUnread();
     };
-    window.addEventListener('support-count-updated', handleUpdate);
+    window.addEventListener("support-count-updated", handleUpdate);
     return () => {
-      window.removeEventListener('support-count-updated', handleUpdate);
+      window.removeEventListener("support-count-updated", handleUpdate);
     };
   }, []);
 
@@ -42,7 +39,7 @@ export function HelpWidget() {
   const checkUnread = async () => {
     try {
       const res = await getUserSupportTickets();
-      if (res.success && typeof res.unreadTotal === 'number') {
+      if (res.success && typeof res.unreadTotal === "number") {
         setUnreadCount(res.unreadTotal);
       }
     } catch {
@@ -50,7 +47,7 @@ export function HelpWidget() {
     }
   };
 
-  if (!isMounted || pathname === '/support') {
+  if (!isMounted || pathname === "/support") {
     return null;
   }
 
@@ -63,7 +60,10 @@ export function HelpWidget() {
               className="relative h-11 px-4 sm:px-5 rounded-full shadow-2xl bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2.5 font-bold transition-all hover:scale-105 cursor-pointer border border-primary/40 shadow-primary/30 text-sm"
               aria-label="Support and Help Menu"
             >
-              <LifeBuoy className="h-4 w-4 shrink-0 text-primary-foreground" aria-hidden="true" />
+              <LifeBuoy
+                className="h-4 w-4 shrink-0 text-primary-foreground"
+                aria-hidden="true"
+              />
               <span>Support</span>
               {unreadCount > 0 && (
                 <span className="flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-rose-500 text-[11px] font-extrabold text-white shadow-md animate-pulse">
@@ -72,7 +72,10 @@ export function HelpWidget() {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-60 p-2 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl space-y-1">
+          <DropdownMenuContent
+            align="end"
+            className="w-60 p-2 rounded-2xl bg-card/95 backdrop-blur-xl border border-border/80 shadow-2xl space-y-1"
+          >
             {/* Support In-App Chat */}
             <DropdownMenuItem
               onSelect={() => {
@@ -111,10 +114,7 @@ export function HelpWidget() {
       />
 
       {/* Support In-App Concierge Chat Modal */}
-      <TicketChatModal
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-      />
+      <TicketChatModal open={chatOpen} onOpenChange={setChatOpen} />
     </>
   );
 }

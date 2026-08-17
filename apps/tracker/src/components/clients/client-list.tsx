@@ -1,7 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect, useCallback, useMemo } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import {
+  useState,
+  useTransition,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   MoreHorizontalIcon,
   Building2,
@@ -10,9 +16,9 @@ import {
   Calendar,
   Copy,
   Check,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +28,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -30,14 +36,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   MobileCard,
   MobileCardHeader,
@@ -45,14 +51,19 @@ import {
   MobileCardField,
   MobileCardGrid,
   MobileCardList,
-} from '@/components/ui/mobile-card';
-import { DataTableShell } from '@/components/shared/tables/data-table-shell';
-import { DataTableToolbar } from '@/components/shared/data-table-toolbar';
+} from "@/components/ui/mobile-card";
+import { DataTableShell } from "@/components/shared/tables/data-table-shell";
+import { DataTableToolbar } from "@/components/shared/data-table-toolbar";
 
-import { getClients, deleteClient } from '@/server';
-import { formatDate, formatClientName, toTitleCase, formatPhoneNumber } from '@/lib/format';
-import type { Client } from '@pmg/db/schema';
-import Link from 'next/link';
+import { getClients, deleteClient } from "@/server";
+import {
+  formatDate,
+  formatClientName,
+  toTitleCase,
+  formatPhoneNumber,
+} from "@/lib/format";
+import type { Client } from "@pmg/db/schema";
+import Link from "next/link";
 
 interface ClientListProps {
   organizationId: string;
@@ -63,11 +74,21 @@ interface ClientListProps {
 function ClientContactCell({ client }: { client: Client }) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const displayPhone = client.contactPhone ? formatPhoneNumber(client.contactPhone) : null;
-  const displayEmail = client.contactEmail ? client.contactEmail.trim().toLowerCase() : null;
-  const displayName = client.contactName ? toTitleCase(client.contactName) : null;
+  const displayPhone = client.contactPhone
+    ? formatPhoneNumber(client.contactPhone)
+    : null;
+  const displayEmail = client.contactEmail
+    ? client.contactEmail.trim().toLowerCase()
+    : null;
+  const displayName = client.contactName
+    ? toTitleCase(client.contactName)
+    : null;
 
-  const handleCopy = (e: React.MouseEvent, text: string, type: 'phone' | 'email') => {
+  const handleCopy = (
+    e: React.MouseEvent,
+    text: string,
+    type: "phone" | "email",
+  ) => {
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopiedField(type);
@@ -76,11 +97,18 @@ function ClientContactCell({ client }: { client: Client }) {
   };
 
   if (!displayPhone && !displayEmail && !displayName) {
-    return <span className="text-xs text-muted-foreground/60 italic">No contact logged</span>;
+    return (
+      <span className="text-xs text-muted-foreground/60 italic">
+        No contact logged
+      </span>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-1 text-xs text-left" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="flex flex-col gap-1 text-xs text-left"
+      onClick={(e) => e.stopPropagation()}
+    >
       {displayName && (
         <div className="font-semibold text-foreground truncate flex items-center gap-1.5">
           <span className="truncate">{displayName}</span>
@@ -91,20 +119,23 @@ function ClientContactCell({ client }: { client: Client }) {
         {displayPhone && (
           <div className="inline-flex items-center gap-1">
             <a
-              href={`tel:${displayPhone.replace(/\s+/g, '')}`}
+              href={`tel:${displayPhone.replace(/\s+/g, "")}`}
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-emerald-400 font-medium transition-colors"
               title={`Call ${displayPhone}`}
             >
-              <Phone className="h-3 w-3 text-emerald-400 shrink-0" aria-hidden="true" />
+              <Phone
+                className="h-3 w-3 text-emerald-400 shrink-0"
+                aria-hidden="true"
+              />
               <span>{displayPhone}</span>
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopy(e, displayPhone, 'phone')}
+              onClick={(e) => handleCopy(e, displayPhone, "phone")}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Phone Number"
             >
-              {copiedField === 'phone' ? (
+              {copiedField === "phone" ? (
                 <Check className="h-2.5 w-2.5 text-emerald-400" />
               ) : (
                 <Copy className="h-2.5 w-2.5" />
@@ -120,16 +151,19 @@ function ClientContactCell({ client }: { client: Client }) {
               className="inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-sky-400 font-medium transition-colors truncate max-w-[190px]"
               title={`Email ${displayEmail}`}
             >
-              <Mail className="h-3 w-3 text-sky-400 shrink-0" aria-hidden="true" />
+              <Mail
+                className="h-3 w-3 text-sky-400 shrink-0"
+                aria-hidden="true"
+              />
               <span className="truncate">{displayEmail}</span>
             </a>
             <button
               type="button"
-              onClick={(e) => handleCopy(e, displayEmail, 'email')}
+              onClick={(e) => handleCopy(e, displayEmail, "email")}
               className="p-0.5 text-muted-foreground/60 hover:text-foreground rounded transition-colors cursor-pointer"
               title="Copy Email Address"
             >
-              {copiedField === 'email' ? (
+              {copiedField === "email" ? (
                 <Check className="h-2.5 w-2.5 text-sky-400" />
               ) : (
                 <Copy className="h-2.5 w-2.5" />
@@ -154,7 +188,9 @@ export function ClientList({
 
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || "",
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -166,25 +202,30 @@ export function ClientList({
     async (search?: string, page: number = 1) => {
       setIsLoading(true);
       try {
-        const result = await getClients(organizationId, search, page, itemsPerPage);
+        const result = await getClients(
+          organizationId,
+          search,
+          page,
+          itemsPerPage,
+        );
         setClients(result.clients);
         setTotalCount(result.totalCount);
         setCurrentPage(result.currentPage);
       } catch (error) {
-        console.error('Error fetching clients:', error);
-        toast.error('Failed to load clients. Please try again.');
+        console.error("Error fetching clients:", error);
+        toast.error("Failed to load clients. Please try again.");
       } finally {
         setIsLoading(false);
       }
     },
-    [organizationId]
+    [organizationId],
   );
 
   useEffect(() => {
-    setSearchQuery('');
+    setSearchQuery("");
     setCurrentPage(1);
     if (organizationId) {
-      fetchClientsData('', 1);
+      fetchClientsData("", 1);
     }
   }, [organizationId, fetchClientsData]);
 
@@ -205,25 +246,30 @@ export function ClientList({
     startTransition(async () => {
       const result = await deleteClient(organizationId, deleteClientId);
       if (result.success) {
-        toast.success('Client deleted successfully');
+        toast.success("Client deleted successfully");
         fetchClientsData(searchQuery, currentPage);
       } else {
-        toast.error(result.error || 'Failed to delete client');
+        toast.error(result.error || "Failed to delete client");
       }
       setDeleteClientId(null);
     });
   };
 
   const activeFilterChips = useMemo(() => {
-    const chips: Array<{ key: string; label: string; value: string; onRemove: () => void }> = [];
+    const chips: Array<{
+      key: string;
+      label: string;
+      value: string;
+      onRemove: () => void;
+    }> = [];
     if (searchQuery) {
       chips.push({
-        key: 'search',
-        label: 'Search',
+        key: "search",
+        label: "Search",
         value: `"${searchQuery}"`,
         onRemove: () => {
-          setSearchQuery('');
-          fetchClientsData('', 1);
+          setSearchQuery("");
+          fetchClientsData("", 1);
         },
       });
     }
@@ -239,8 +285,8 @@ export function ClientList({
         searchPlaceholder="Search clients by name, contact, or email..."
         activeFilters={activeFilterChips}
         onClearAllFilters={() => {
-          setSearchQuery('');
-          fetchClientsData('', 1);
+          setSearchQuery("");
+          fetchClientsData("", 1);
         }}
         mobileDrawerTitle="Filter Clients"
       />
@@ -254,26 +300,39 @@ export function ClientList({
         dataLength={clients.length}
         isLoading={isLoading}
         emptyState={{
-          type: searchQuery ? 'no-results' : 'empty',
-          icon: 'user',
-          title: searchQuery ? 'No clients found' : 'No clients yet',
+          type: searchQuery ? "no-results" : "empty",
+          icon: "user",
+          title: searchQuery ? "No clients found" : "No clients yet",
           description: searchQuery
-            ? 'No clients match your search criteria.'
-            : 'Get started by adding your first client.',
-          actionLabel: searchQuery ? undefined : 'Add Client',
-          actionHref: searchQuery ? undefined : '/clients/create',
+            ? "No clients match your search criteria."
+            : "Get started by adding your first client.",
+          actionLabel: searchQuery ? undefined : "Add Client",
+          actionHref: searchQuery ? undefined : "/clients/create",
         }}
         mobileContent={
           <MobileCardList>
             {clients.map((client) => {
               const actions = [
-                { label: 'View Details' as const, onClick: () => router.push(`/clients/${client.id}`) },
-                { label: 'Edit Client' as const, onClick: () => router.push(`/clients/${client.id}/edit`) },
-                { label: 'Delete Client' as const, onClick: () => setDeleteClientId(client.id), variant: 'destructive' as const },
+                {
+                  label: "View Details" as const,
+                  onClick: () => router.push(`/clients/${client.id}`),
+                },
+                {
+                  label: "Edit Client" as const,
+                  onClick: () => router.push(`/clients/${client.id}/edit`),
+                },
+                {
+                  label: "Delete Client" as const,
+                  onClick: () => setDeleteClientId(client.id),
+                  variant: "destructive" as const,
+                },
               ];
 
               return (
-                <MobileCard key={client.id} onClick={() => router.push(`/clients/${client.id}`)}>
+                <MobileCard
+                  key={client.id}
+                  onClick={() => router.push(`/clients/${client.id}`)}
+                >
                   <MobileCardHeader
                     identifier={formatClientName(client.name)}
                     actions={actions}
@@ -281,7 +340,9 @@ export function ClientList({
                   <MobileCardBody>
                     <ClientContactCell client={client} />
                     <MobileCardGrid>
-                      <MobileCardField label="Created">{formatDate(client.createdAt)}</MobileCardField>
+                      <MobileCardField label="Created">
+                        {formatDate(client.createdAt)}
+                      </MobileCardField>
                     </MobileCardGrid>
                   </MobileCardBody>
                 </MobileCard>
@@ -337,19 +398,32 @@ export function ClientList({
                 </TableCell>
 
                 {/* 4. Actions */}
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                <TableCell
+                  className="text-right"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 cursor-pointer"
+                      >
                         <MoreHorizontalIcon className="h-4 w-4" />
                         <span className="sr-only">Open menu</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(`/clients/${client.id}`)}>
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/clients/${client.id}`)}
+                      >
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/clients/${client.id}/edit`)}>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(`/clients/${client.id}/edit`)
+                        }
+                      >
                         Edit Client
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -370,18 +444,26 @@ export function ClientList({
       </DataTableShell>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteClientId} onOpenChange={(open) => !open && setDeleteClientId(null)}>
+      <AlertDialog
+        open={!!deleteClientId}
+        onOpenChange={(open) => !open && setDeleteClientId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Client</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this client? This action cannot be undone.
+              Are you sure you want to delete this client? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteClient} disabled={isPending} className="bg-red-600 hover:bg-red-700">
-              {isPending ? 'Deleting...' : 'Delete'}
+            <AlertDialogAction
+              onClick={confirmDeleteClient}
+              disabled={isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

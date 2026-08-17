@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 export function NavLinks() {
   const { data: activeOrganization } = authClient.useActiveOrganization();
@@ -24,10 +24,7 @@ export function NavLinks() {
           Dashboard
         </Link>
       )}
-      <Link
-        href="/settings/profile"
-        className="text-sm hover:underline"
-      >
+      <Link href="/settings/profile" className="text-sm hover:underline">
         Profile
       </Link>
     </div>

@@ -1,6 +1,6 @@
-import React from 'react';
-import { toast } from 'sonner';
-import { CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import React from "react";
+import { toast } from "sonner";
+import { CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
 
 interface ToastOptions {
   duration?: number;
@@ -33,7 +33,7 @@ class EnhancedToast {
       id: options.id,
       dismissible: options.dismissible !== false,
       icon: <CheckCircle />,
-      className: 'toast-success',
+      className: "toast-success",
     });
   }
 
@@ -46,7 +46,7 @@ class EnhancedToast {
       id: options.id,
       dismissible: options.dismissible !== false,
       icon: <AlertCircle />,
-      className: 'toast-error',
+      className: "toast-error",
     });
   }
 
@@ -59,7 +59,7 @@ class EnhancedToast {
       id: options.id,
       dismissible: options.dismissible !== false,
       icon: <AlertTriangle />,
-      className: 'toast-warning',
+      className: "toast-warning",
     });
   }
 
@@ -72,7 +72,7 @@ class EnhancedToast {
       id: options.id,
       dismissible: options.dismissible !== false,
       icon: <Info />,
-      className: 'toast-info',
+      className: "toast-info",
     });
   }
 
@@ -89,7 +89,7 @@ class EnhancedToast {
   // Custom toast with full control
   custom(
     content: (id: string | number) => React.ReactElement,
-    options: ToastOptions = {}
+    options: ToastOptions = {},
   ) {
     return toast.custom(content, {
       duration: options.duration || 4000,
@@ -114,19 +114,19 @@ class EnhancedToast {
       this.success(`Organization "${name}" created successfully`),
     updated: (name: string) =>
       this.success(`Organization "${name}" updated successfully`),
-    deleted: (name: string, type: 'soft' | 'permanent') => {
-      if (type === 'soft') {
+    deleted: (name: string, type: "soft" | "permanent") => {
+      if (type === "soft") {
         this.success(
           `Organization "${name}" deleted. You have 30 days to restore it.`,
           {
             action: {
-              label: 'Undo',
+              label: "Undo",
               onClick: () => {
                 // Handle restore action
-                console.log('Restore organization');
+                console.log("Restore organization");
               },
             },
-          }
+          },
         );
       } else {
         this.warning(`Organization "${name}" permanently deleted.`);
@@ -153,29 +153,29 @@ class EnhancedToast {
   // Network and API error toasts
   network = {
     offline: () =>
-      this.error('You are offline. Some features may not work.', {
+      this.error("You are offline. Some features may not work.", {
         dismissible: false,
       }),
-    online: () => this.success('Connection restored'),
+    online: () => this.success("Connection restored"),
     timeout: () =>
-      this.error('Request timed out. Please try again.', {
+      this.error("Request timed out. Please try again.", {
         action: {
-          label: 'Retry',
+          label: "Retry",
           onClick: () => window.location.reload(),
         },
       }),
     serverError: () =>
-      this.error('Server error. Please try again later.', {
+      this.error("Server error. Please try again later.", {
         action: {
-          label: 'Refresh',
+          label: "Refresh",
           onClick: () => window.location.reload(),
         },
       }),
     unauthorized: () =>
-      this.error('Session expired. Please log in again.', {
+      this.error("Session expired. Please log in again.", {
         action: {
-          label: 'Login',
-          onClick: () => (window.location.href = '/login'),
+          label: "Login",
+          onClick: () => (window.location.href = "/login"),
         },
       }),
   };
@@ -183,13 +183,13 @@ class EnhancedToast {
   // Form validation toasts
   form = {
     validationError: (message: string) => this.error(message),
-    saveSuccess: () => this.success('Changes saved successfully'),
-    saveError: () => this.error('Failed to save changes. Please try again.'),
-    requiredFields: () => this.warning('Please fill in all required fields'),
-    invalidEmail: () => this.error('Please enter a valid email address'),
-    passwordMismatch: () => this.error('Passwords do not match'),
+    saveSuccess: () => this.success("Changes saved successfully"),
+    saveError: () => this.error("Failed to save changes. Please try again."),
+    requiredFields: () => this.warning("Please fill in all required fields"),
+    invalidEmail: () => this.error("Please enter a valid email address"),
+    passwordMismatch: () => this.error("Passwords do not match"),
     weakPassword: () =>
-      this.warning('Password is too weak. Please choose a stronger password.'),
+      this.warning("Password is too weak. Please choose a stronger password."),
   };
 
   // File upload toasts
@@ -198,12 +198,12 @@ class EnhancedToast {
     success: (filename: string) =>
       this.success(`${filename} uploaded successfully`),
     error: (filename: string, error?: string) =>
-      this.error(`Failed to upload ${filename}${error ? `: ${error}` : ''}`),
+      this.error(`Failed to upload ${filename}${error ? `: ${error}` : ""}`),
     tooLarge: (maxSize: string) =>
       this.error(`File is too large. Maximum size is ${maxSize}`),
     invalidType: (allowedTypes: string[]) =>
       this.error(
-        `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`
+        `Invalid file type. Allowed types: ${allowedTypes.join(", ")}`,
       ),
   };
 }

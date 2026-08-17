@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { Building2, Loader2, Users } from 'lucide-react';
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Building2, Loader2, Users } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { OrganizationWithStats } from '@/server/organizations';
-import { rememberActiveOrganization } from '@/server/organizations';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { OrganizationWithStats } from "@/server/organizations";
+import { rememberActiveOrganization } from "@/server/organizations";
 
 interface OrganizationSelectClientProps {
   organizations: OrganizationWithStats[];
@@ -26,13 +26,13 @@ export function OrganizationSelectClient({
 
     startTransition(async () => {
       try {
-        const response = await fetch('/api/auth/organization/set-active', {
-          method: 'POST',
+        const response = await fetch("/api/auth/organization/set-active", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ organizationId: organization.id }),
-          credentials: 'include',
+          credentials: "include",
         });
 
         if (!response.ok) {
@@ -44,14 +44,14 @@ export function OrganizationSelectClient({
           throw new Error(remembered.error);
         }
 
-        router.replace('/dashboard');
+        router.replace("/dashboard");
         router.refresh();
       } catch (selectionError) {
         setSelectedId(null);
         setError(
           selectionError instanceof Error
             ? selectionError.message
-            : 'Failed to select organization'
+            : "Failed to select organization",
         );
       }
     });
@@ -99,10 +99,10 @@ export function OrganizationSelectClient({
                       <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <Users className="h-3.5 w-3.5" />
                         <span>
-                          {organization.memberCount}{' '}
+                          {organization.memberCount}{" "}
                           {organization.memberCount === 1
-                            ? 'member'
-                            : 'members'}
+                            ? "member"
+                            : "members"}
                         </span>
                         <span className="rounded-full border px-2 py-0.5 uppercase">
                           {organization.userRole}

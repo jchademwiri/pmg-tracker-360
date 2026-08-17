@@ -1,10 +1,9 @@
-
-import { FilterState } from '@/components/shared/search';
-import type { Member, Role } from '@pmg/db/schema';
-import type { PendingInvitation } from '@/server/organizations';
+import { FilterState } from "@/components/shared/search";
+import type { Member, Role } from "@pmg/db/schema";
+import type { PendingInvitation } from "@/server/organizations";
 
 export interface MemberWithUser extends Member {
-  status?: 'active' | 'inactive';
+  status?: "active" | "inactive";
   joinedAt?: Date;
 }
 
@@ -13,7 +12,7 @@ export interface MemberWithUser extends Member {
  */
 export function filterMembers(
   members: MemberWithUser[],
-  filters: FilterState
+  filters: FilterState,
 ): MemberWithUser[] {
   return members.filter((member) => {
     // Search filter - check name and email
@@ -28,13 +27,13 @@ export function filterMembers(
     }
 
     // Role filter
-    if (filters.role !== 'all' && member.role !== filters.role) {
+    if (filters.role !== "all" && member.role !== filters.role) {
       return false;
     }
 
     // Status filter
-    if (filters.status !== 'all') {
-      const memberStatus = member.status || 'active'; // Default to active if not specified
+    if (filters.status !== "all") {
+      const memberStatus = member.status || "active"; // Default to active if not specified
       if (memberStatus !== filters.status) {
         return false;
       }
@@ -49,7 +48,7 @@ export function filterMembers(
  */
 export function filterInvitations(
   invitations: PendingInvitation[],
-  filters: FilterState
+  filters: FilterState,
 ): PendingInvitation[] {
   return invitations.filter((invitation) => {
     // Search filter - check email and inviter name
@@ -66,19 +65,19 @@ export function filterInvitations(
     }
 
     // Role filter
-    if (filters.role !== 'all' && invitation.role !== filters.role) {
+    if (filters.role !== "all" && invitation.role !== filters.role) {
       return false;
     }
 
     // Status filter
-    if (filters.status !== 'all') {
+    if (filters.status !== "all") {
       let invitationStatus: string;
 
       // Determine invitation status
-      if (invitation.status === 'pending') {
+      if (invitation.status === "pending") {
         // Check if expired
         const now = new Date();
-        invitationStatus = invitation.expiresAt < now ? 'expired' : 'pending';
+        invitationStatus = invitation.expiresAt < now ? "expired" : "pending";
       } else {
         invitationStatus = invitation.status;
       }
@@ -96,11 +95,11 @@ export function filterInvitations(
  * Gets the display status for an invitation
  */
 export function getInvitationDisplayStatus(
-  invitation: PendingInvitation
+  invitation: PendingInvitation,
 ): string {
-  if (invitation.status === 'pending') {
+  if (invitation.status === "pending") {
     const now = new Date();
-    return invitation.expiresAt < now ? 'expired' : 'pending';
+    return invitation.expiresAt < now ? "expired" : "pending";
   }
   return invitation.status;
 }
@@ -110,7 +109,7 @@ export function getInvitationDisplayStatus(
  */
 export function hasActiveFilters(filters: FilterState): boolean {
   return (
-    filters.search !== '' || filters.role !== 'all' || filters.status !== 'all'
+    filters.search !== "" || filters.role !== "all" || filters.status !== "all"
   );
 }
 
@@ -124,22 +123,22 @@ export function getFilterSummary(filters: FilterState): string {
     parts.push(`search: "${filters.search}"`);
   }
 
-  if (filters.role !== 'all') {
+  if (filters.role !== "all") {
     parts.push(`role: ${filters.role}`);
   }
 
-  if (filters.status !== 'all') {
+  if (filters.status !== "all") {
     parts.push(`status: ${filters.status}`);
   }
 
-  return parts.join(', ');
+  return parts.join(", ");
 }
 
 /**
  * Validates if a role is a valid Role type
  */
 export function isValidRole(role: string): role is Role {
-  return ['owner', 'admin', 'member'].includes(role);
+  return ["owner", "admin", "member"].includes(role);
 }
 
 /**
@@ -147,11 +146,11 @@ export function isValidRole(role: string): role is Role {
  */
 export function getRoleLevel(role: Role): number {
   switch (role) {
-    case 'owner':
+    case "owner":
       return 3;
-    case 'admin':
+    case "admin":
       return 2;
-    case 'member':
+    case "member":
       return 1;
     default:
       return 0;
@@ -170,7 +169,7 @@ export function canManageRole(managerRole: Role, targetRole: Role): boolean {
  */
 export function getAssignableRoles(userRole: Role): Role[] {
   const userLevel = getRoleLevel(userRole);
-  const allRoles: Role[] = ['owner', 'admin', 'member'];
+  const allRoles: Role[] = ["owner", "admin", "member"];
 
   return allRoles.filter((role) => getRoleLevel(role) < userLevel);
 }
@@ -187,29 +186,29 @@ export function formatRoleName(role: Role): string {
  */
 export function getNoResultsMessage(
   filters: FilterState,
-  type: 'members' | 'invitations' | 'both' = 'both'
+  type: "members" | "invitations" | "both" = "both",
 ): string {
   const hasFilters = hasActiveFilters(filters);
 
   if (!hasFilters) {
     switch (type) {
-      case 'members':
-        return 'No members found. Invite some people to get started!';
-      case 'invitations':
-        return 'No pending invitations.';
-      case 'both':
-        return 'No members or invitations found.';
+      case "members":
+        return "No members found. Invite some people to get started!";
+      case "invitations":
+        return "No pending invitations.";
+      case "both":
+        return "No members or invitations found.";
     }
   }
 
   const filterSummary = getFilterSummary(filters);
 
   switch (type) {
-    case 'members':
+    case "members":
       return `No members found matching ${filterSummary}. Try adjusting your filters.`;
-    case 'invitations':
+    case "invitations":
       return `No invitations found matching ${filterSummary}. Try adjusting your filters.`;
-    case 'both':
+    case "both":
       return `No results found matching ${filterSummary}. Try adjusting your filters.`;
   }
 }

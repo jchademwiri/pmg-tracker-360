@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import type { OrgDetail } from '../actions';
-import StatusBadge from '@/components/StatusBadge';
-import ConfirmDialog from '@/components/ConfirmDialog';
-import MonthlyAccordionGroup from '@/components/MonthlyAccordionGroup';
+import { useState } from "react";
+import type { OrgDetail } from "../actions";
+import StatusBadge from "@/components/StatusBadge";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import MonthlyAccordionGroup from "@/components/MonthlyAccordionGroup";
 import {
   updateOrgDetails,
   suspendOrg,
@@ -12,10 +12,10 @@ import {
   purgeOrg,
   cancelPendingDeletion,
   removeOrgMember,
-} from '../actions';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { SetBreadcrumbLabel } from '@/lib/breadcrumb-context';
+} from "../actions";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { SetBreadcrumbLabel } from "@/lib/breadcrumb-context";
 import {
   ArrowLeft,
   Building2,
@@ -34,24 +34,25 @@ import {
   AlertTriangle,
   ChevronDown,
   FileText,
-} from 'lucide-react';
+} from "lucide-react";
 
 type Props = {
   data: OrgDetail;
 };
 
 export default function OrgDetailClient({ data }: Props) {
-  const { org, owner, members, invitations, tenders, projects, poTotalZar } = data;
+  const { org, owner, members, invitations, tenders, projects, poTotalZar } =
+    data;
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'members' | 'tenders_projects' | 'audit' | 'danger'
-  >('overview');
+    "overview" | "members" | "tenders_projects" | "audit" | "danger"
+  >("overview");
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState(org.name);
-  const [slugInput, setSlugInput] = useState(org.slug ?? '');
+  const [slugInput, setSlugInput] = useState(org.slug ?? "");
   const [editLoading, setEditLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -65,15 +66,15 @@ export default function OrgDetailClient({ data }: Props) {
     title: string;
     description: string;
     confirmText: string;
-    variant: 'danger' | 'warning' | 'info';
+    variant: "danger" | "warning" | "info";
     requireValue?: string;
     action: () => Promise<void>;
   }>({
     isOpen: false,
-    title: '',
-    description: '',
-    confirmText: 'Confirm',
-    variant: 'danger',
+    title: "",
+    description: "",
+    confirmText: "Confirm",
+    variant: "danger",
     action: async () => {},
   });
 
@@ -81,12 +82,13 @@ export default function OrgDetailClient({ data }: Props) {
   const isPurgeScheduled = Boolean(org.permanentDeletionScheduledAt);
 
   // Metadata JSON formatting
-  let metadataDisplay = '';
+  let metadataDisplay = "";
   if (org.metadata) {
     try {
-      metadataDisplay = typeof org.metadata === 'string'
-        ? JSON.stringify(JSON.parse(org.metadata), null, 2)
-        : JSON.stringify(org.metadata, null, 2);
+      metadataDisplay =
+        typeof org.metadata === "string"
+          ? JSON.stringify(JSON.parse(org.metadata), null, 2)
+          : JSON.stringify(org.metadata, null, 2);
     } catch {
       metadataDisplay = String(org.metadata);
     }
@@ -99,11 +101,11 @@ export default function OrgDetailClient({ data }: Props) {
     const res = await updateOrgDetails(org.id, nameInput, slugInput);
     setEditLoading(false);
     if (res.success) {
-      setSuccessMsg('Organization details updated.');
+      setSuccessMsg("Organization details updated.");
       setIsEditing(false);
       router.refresh();
     } else {
-      setErrorMsg(res.error ?? 'Failed to update organization.');
+      setErrorMsg(res.error ?? "Failed to update organization.");
     }
   }
 
@@ -149,7 +151,15 @@ export default function OrgDetailClient({ data }: Props) {
           <ArrowLeft className="h-4 w-4" /> Back to Organizations
         </Link>
         <div className="flex items-center gap-2">
-          <StatusBadge status={isPurgeScheduled ? 'deleted' : isSuspended ? 'suspicious' : 'active'} />
+          <StatusBadge
+            status={
+              isPurgeScheduled
+                ? "deleted"
+                : isSuspended
+                  ? "suspicious"
+                  : "active"
+            }
+          />
           {owner && (
             <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md bg-purple-950/80 border border-purple-800 text-purple-300">
               <Crown className="h-3.5 w-3.5 text-amber-400" />
@@ -200,7 +210,9 @@ export default function OrgDetailClient({ data }: Props) {
               ) : (
                 <>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-2xl font-bold text-white">{org.name}</h1>
+                    <h1 className="text-2xl font-bold text-white">
+                      {org.name}
+                    </h1>
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
@@ -214,7 +226,10 @@ export default function OrgDetailClient({ data }: Props) {
                     <span className="font-mono bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
                       /orgs/{org.slug || org.id}
                     </span>
-                    <span>Created {new Date(org.createdAt).toLocaleDateString('en-GB')}</span>
+                    <span>
+                      Created{" "}
+                      {new Date(org.createdAt).toLocaleDateString("en-GB")}
+                    </span>
                   </div>
                 </>
               )}
@@ -229,10 +244,10 @@ export default function OrgDetailClient({ data }: Props) {
                 onClick={() =>
                   setConfirmState({
                     isOpen: true,
-                    title: 'Restore Organization',
+                    title: "Restore Organization",
                     description: `Reactivate workspace for ${org.name}? Members will regain access immediately.`,
-                    confirmText: 'Restore Access',
-                    variant: 'info',
+                    confirmText: "Restore Access",
+                    variant: "info",
                     action: handleRestore,
                   })
                 }
@@ -246,10 +261,10 @@ export default function OrgDetailClient({ data }: Props) {
                 onClick={() =>
                   setConfirmState({
                     isOpen: true,
-                    title: 'Suspend Organization',
+                    title: "Suspend Organization",
                     description: `Revoke member access for ${org.name}? The account will remain suspended without an automated deletion date.`,
-                    confirmText: 'Suspend Org',
-                    variant: 'warning',
+                    confirmText: "Suspend Org",
+                    variant: "warning",
                     action: handleSuspend,
                   })
                 }
@@ -265,16 +280,17 @@ export default function OrgDetailClient({ data }: Props) {
                 onClick={() =>
                   setConfirmState({
                     isOpen: true,
-                    title: 'Schedule 30-Day Permanent Deletion',
+                    title: "Schedule 30-Day Permanent Deletion",
                     description: `Initiate a 30-day countdown to permanently delete ${org.name}? Warning email will be sent to the owner.`,
-                    confirmText: 'Start 30-Day Purge Timer',
-                    variant: 'danger',
+                    confirmText: "Start 30-Day Purge Timer",
+                    variant: "danger",
                     action: handlePurgeSchedule,
                   })
                 }
                 className="px-3 py-1.5 bg-red-950 hover:bg-red-900 border border-red-800 text-red-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
               >
-                <Trash2 className="h-3.5 w-3.5 inline mr-1" /> Schedule 30-Day Purge
+                <Trash2 className="h-3.5 w-3.5 inline mr-1" /> Schedule 30-Day
+                Purge
               </button>
             ) : (
               <button
@@ -282,16 +298,17 @@ export default function OrgDetailClient({ data }: Props) {
                 onClick={() =>
                   setConfirmState({
                     isOpen: true,
-                    title: 'Cancel Pending 30-Day Deletion',
+                    title: "Cancel Pending 30-Day Deletion",
                     description: `Cancel the pending permanent deletion countdown for ${org.name}? Note: The organization will remain in a suspended state.`,
-                    confirmText: 'Cancel Deletion',
-                    variant: 'info',
+                    confirmText: "Cancel Deletion",
+                    variant: "info",
                     action: handleCancelDeletion,
                   })
                 }
                 className="px-3 py-1.5 bg-indigo-950 hover:bg-indigo-900 border border-indigo-800 text-indigo-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
               >
-                <Check className="h-3.5 w-3.5 inline mr-1" /> Cancel Pending Purge
+                <Check className="h-3.5 w-3.5 inline mr-1" /> Cancel Pending
+                Purge
               </button>
             )}
           </div>
@@ -303,11 +320,15 @@ export default function OrgDetailClient({ data }: Props) {
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
               <span>
-                <strong>30-Day Purge Scheduled:</strong> Permanent deletion scheduled for{' '}
-                {new Date(org.permanentDeletionScheduledAt!).toLocaleDateString('en-GB')}.
+                <strong>30-Day Purge Scheduled:</strong> Permanent deletion
+                scheduled for{" "}
+                {new Date(org.permanentDeletionScheduledAt!).toLocaleDateString(
+                  "en-GB",
+                )}
+                .
               </span>
             </div>
-            {org.appealStatus === 'pending' && (
+            {org.appealStatus === "pending" && (
               <span className="px-2 py-0.5 bg-amber-900 border border-amber-700 text-amber-200 font-bold rounded">
                 Appeal Pending Admin Review
               </span>
@@ -348,7 +369,7 @@ export default function OrgDetailClient({ data }: Props) {
             <Receipt className="h-4 w-4 text-amber-400" />
           </div>
           <div className="text-2xl font-bold text-emerald-400">
-            R {poTotalZar.toLocaleString('en-ZA')}
+            R {poTotalZar.toLocaleString("en-ZA")}
           </div>
         </div>
       </div>
@@ -356,11 +377,11 @@ export default function OrgDetailClient({ data }: Props) {
       {/* Tab Navigation */}
       <div className="border-b border-zinc-800 flex gap-4 text-sm font-semibold">
         {[
-          { id: 'overview', label: 'Overview & Quotas' },
-          { id: 'members', label: `Members (${members.length})` },
-          { id: 'tenders_projects', label: 'Tenders & Projects (Monthly)' },
-          { id: 'audit', label: 'Security & Audit Logs' },
-          { id: 'danger', label: 'Danger Zone' },
+          { id: "overview", label: "Overview & Quotas" },
+          { id: "members", label: `Members (${members.length})` },
+          { id: "tenders_projects", label: "Tenders & Projects (Monthly)" },
+          { id: "audit", label: "Security & Audit Logs" },
+          { id: "danger", label: "Danger Zone" },
         ].map((t) => (
           <button
             key={t.id}
@@ -368,8 +389,8 @@ export default function OrgDetailClient({ data }: Props) {
             onClick={() => setActiveTab(t.id as any)}
             className={`pb-3 border-b-2 transition-colors cursor-pointer ${
               activeTab === t.id
-                ? 'border-indigo-500 text-white'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? "border-indigo-500 text-white"
+                : "border-transparent text-zinc-400 hover:text-zinc-200"
             }`}
           >
             {t.label}
@@ -378,7 +399,7 @@ export default function OrgDetailClient({ data }: Props) {
       </div>
 
       {/* Tab 1: Overview */}
-      {activeTab === 'overview' && (
+      {activeTab === "overview" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
@@ -392,19 +413,23 @@ export default function OrgDetailClient({ data }: Props) {
                 </div>
                 <div className="flex justify-between py-1 border-b border-zinc-800/60">
                   <span className="text-zinc-400">Workspace Slug</span>
-                  <span className="text-zinc-300 font-mono">/orgs/{org.slug}</span>
+                  <span className="text-zinc-300 font-mono">
+                    /orgs/{org.slug}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-zinc-800/60">
                   <span className="text-zinc-400">Owner Name</span>
-                  <span className="text-white font-medium">{owner?.name || '—'}</span>
+                  <span className="text-white font-medium">
+                    {owner?.name || "—"}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-zinc-800/60">
                   <span className="text-zinc-400">Owner Email</span>
-                  <span className="text-zinc-300">{owner?.email || '—'}</span>
+                  <span className="text-zinc-300">{owner?.email || "—"}</span>
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-zinc-400">Owner Subscription Tier</span>
-                  <StatusBadge status={owner?.plan || 'free'} />
+                  <StatusBadge status={owner?.plan || "free"} />
                 </div>
               </div>
             </div>
@@ -415,15 +440,32 @@ export default function OrgDetailClient({ data }: Props) {
               </h3>
               {(() => {
                 const now = new Date();
-                const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const currentMonthStart = new Date(
+                  now.getFullYear(),
+                  now.getMonth(),
+                  1,
+                );
                 const tendersThisMonth = tenders.filter(
-                  (t) => new Date(t.createdAt) >= currentMonthStart
+                  (t) => new Date(t.createdAt) >= currentMonthStart,
                 ).length;
 
-                const ownerPlan = (owner?.plan || 'free').toLowerCase();
-                const maxTendersQuota = ownerPlan === 'pro' ? Infinity : ownerPlan === 'starter' ? 20 : 10;
-                const isOverQuota = maxTendersQuota !== Infinity && tendersThisMonth >= maxTendersQuota;
-                const quotaPercent = maxTendersQuota !== Infinity ? Math.min(100, Math.round((tendersThisMonth / maxTendersQuota) * 100)) : 100;
+                const ownerPlan = (owner?.plan || "free").toLowerCase();
+                const maxTendersQuota =
+                  ownerPlan === "pro"
+                    ? Infinity
+                    : ownerPlan === "starter"
+                      ? 20
+                      : 10;
+                const isOverQuota =
+                  maxTendersQuota !== Infinity &&
+                  tendersThisMonth >= maxTendersQuota;
+                const quotaPercent =
+                  maxTendersQuota !== Infinity
+                    ? Math.min(
+                        100,
+                        Math.round((tendersThisMonth / maxTendersQuota) * 100),
+                      )
+                    : 100;
 
                 return (
                   <div className="space-y-4 text-sm">
@@ -431,13 +473,16 @@ export default function OrgDetailClient({ data }: Props) {
                       <div className="flex justify-between text-xs text-zinc-400">
                         <span>Monthly Tender Quota</span>
                         <span className="font-semibold text-white">
-                          {tendersThisMonth} / {maxTendersQuota === Infinity ? 'Unlimited' : `${maxTendersQuota} tenders / month`}
+                          {tendersThisMonth} /{" "}
+                          {maxTendersQuota === Infinity
+                            ? "Unlimited"
+                            : `${maxTendersQuota} tenders / month`}
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
                         <div
                           className={`h-full transition-all ${
-                            isOverQuota ? 'bg-red-500' : 'bg-emerald-500'
+                            isOverQuota ? "bg-red-500" : "bg-emerald-500"
                           }`}
                           style={{
                             width: `${quotaPercent}%`,
@@ -454,7 +499,12 @@ export default function OrgDetailClient({ data }: Props) {
                       <div className="flex justify-between text-xs text-zinc-400">
                         <span>Active Projects Capacity</span>
                         <span className="font-semibold text-white">
-                          {projects.length} / {owner?.plan === 'pro' ? '5 active' : owner?.plan === 'starter' ? '2 active' : '0 (Free Tier)'}
+                          {projects.length} /{" "}
+                          {owner?.plan === "pro"
+                            ? "5 active"
+                            : owner?.plan === "starter"
+                              ? "2 active"
+                              : "0 (Free Tier)"}
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
@@ -462,11 +512,17 @@ export default function OrgDetailClient({ data }: Props) {
                           className="h-full bg-purple-500 transition-all"
                           style={{
                             width: `${
-                              owner?.plan === 'pro'
-                                ? Math.min(100, Math.round((projects.length / 5) * 100))
-                                : owner?.plan === 'starter'
-                                ? Math.min(100, Math.round((projects.length / 2) * 100))
-                                : 0
+                              owner?.plan === "pro"
+                                ? Math.min(
+                                    100,
+                                    Math.round((projects.length / 5) * 100),
+                                  )
+                                : owner?.plan === "starter"
+                                  ? Math.min(
+                                      100,
+                                      Math.round((projects.length / 2) * 100),
+                                    )
+                                  : 0
                             }%`,
                           }}
                         />
@@ -489,7 +545,9 @@ export default function OrgDetailClient({ data }: Props) {
                 <FileText className="h-4 w-4 text-indigo-400" />
                 <span>Organization Metadata (JSON)</span>
               </div>
-              <ChevronDown className={`h-4 w-4 transition-transform ${showMetadata ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${showMetadata ? "rotate-180" : ""}`}
+              />
             </button>
             {showMetadata && (
               <div className="p-4 border-t border-zinc-800 bg-zinc-950">
@@ -498,7 +556,9 @@ export default function OrgDetailClient({ data }: Props) {
                     {metadataDisplay}
                   </pre>
                 ) : (
-                  <div className="text-xs text-zinc-500 italic">No additional metadata recorded.</div>
+                  <div className="text-xs text-zinc-500 italic">
+                    No additional metadata recorded.
+                  </div>
                 )}
               </div>
             )}
@@ -507,7 +567,7 @@ export default function OrgDetailClient({ data }: Props) {
       )}
 
       {/* Tab 2: Members & Invites */}
-      {activeTab === 'members' && (
+      {activeTab === "members" && (
         <div className="space-y-6">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
             <div className="p-4 border-b border-zinc-800 font-semibold text-sm text-white">
@@ -524,24 +584,28 @@ export default function OrgDetailClient({ data }: Props) {
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
                 {members.map((m) => (
-                  <tr key={m.userId} className="hover:bg-zinc-800/40 transition-colors">
+                  <tr
+                    key={m.userId}
+                    className="hover:bg-zinc-800/40 transition-colors"
+                  >
                     <td className="p-3 font-medium text-white">{m.userName}</td>
                     <td className="p-3 text-zinc-300">{m.userEmail}</td>
                     <td className="p-3">
                       <StatusBadge status={m.role} />
                     </td>
                     <td className="p-3 text-right">
-                      {m.role !== 'owner' && (
+                      {m.role !== "owner" && (
                         <button
                           type="button"
                           onClick={() =>
                             setConfirmState({
                               isOpen: true,
-                              title: 'Remove Member',
+                              title: "Remove Member",
                               description: `Remove ${m.userName} from ${org.name}?`,
-                              confirmText: 'Remove Member',
-                              variant: 'danger',
-                              action: () => handleRemoveMember(m.userId, m.userName),
+                              confirmText: "Remove Member",
+                              variant: "danger",
+                              action: () =>
+                                handleRemoveMember(m.userId, m.userName),
                             })
                           }
                           className="text-red-400 hover:text-red-300 font-semibold cursor-pointer"
@@ -564,10 +628,14 @@ export default function OrgDetailClient({ data }: Props) {
               </h3>
               <div className="divide-y divide-zinc-800/60 text-xs">
                 {invitations.map((inv) => (
-                  <div key={inv.id} className="py-2 flex justify-between items-center">
+                  <div
+                    key={inv.id}
+                    className="py-2 flex justify-between items-center"
+                  >
                     <span className="text-zinc-300">{inv.email}</span>
                     <span className="text-zinc-500">
-                      Expires {new Date(inv.expiresAt).toLocaleDateString('en-GB')}
+                      Expires{" "}
+                      {new Date(inv.expiresAt).toLocaleDateString("en-GB")}
                     </span>
                   </div>
                 ))}
@@ -578,7 +646,7 @@ export default function OrgDetailClient({ data }: Props) {
       )}
 
       {/* Tab 3: Monthly Accordions */}
-      {activeTab === 'tenders_projects' && (
+      {activeTab === "tenders_projects" && (
         <div className="space-y-6">
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
@@ -617,24 +685,35 @@ export default function OrgDetailClient({ data }: Props) {
       )}
 
       {/* Tab 4: Audit */}
-      {activeTab === 'audit' && (
+      {activeTab === "audit" && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-xs text-zinc-400 space-y-3">
-          <h3 className="font-semibold text-white uppercase text-xs">Security & Audit History</h3>
+          <h3 className="font-semibold text-white uppercase text-xs">
+            Security & Audit History
+          </h3>
           <div className="p-4 bg-zinc-950 rounded-lg border border-zinc-800 font-mono text-[11px] text-zinc-300">
-            <div>[INFO] Organization created on {new Date(org.createdAt).toLocaleString('en-ZA')}</div>
+            <div>
+              [INFO] Organization created on{" "}
+              {new Date(org.createdAt).toLocaleString("en-ZA")}
+            </div>
             {org.deletedAt && (
               <div className="text-amber-400 pt-1">
-                [WARN] Suspended on {new Date(org.deletedAt).toLocaleString('en-ZA')} — Reason: {org.deletionReason || 'N/A'}
+                [WARN] Suspended on{" "}
+                {new Date(org.deletedAt).toLocaleString("en-ZA")} — Reason:{" "}
+                {org.deletionReason || "N/A"}
               </div>
             )}
             {org.permanentDeletionScheduledAt && (
               <div className="text-red-400 pt-1">
-                [CRITICAL] 30-Day Purge Scheduled for {new Date(org.permanentDeletionScheduledAt).toLocaleString('en-ZA')}
+                [CRITICAL] 30-Day Purge Scheduled for{" "}
+                {new Date(org.permanentDeletionScheduledAt).toLocaleString(
+                  "en-ZA",
+                )}
               </div>
             )}
             {org.appealStatus && (
               <div className="text-indigo-400 pt-1">
-                [APPEAL] Appeal Status: {org.appealStatus.toUpperCase()} — {org.appealReason || 'No details'}
+                [APPEAL] Appeal Status: {org.appealStatus.toUpperCase()} —{" "}
+                {org.appealReason || "No details"}
               </div>
             )}
           </div>
@@ -642,17 +721,20 @@ export default function OrgDetailClient({ data }: Props) {
       )}
 
       {/* Tab 5: Danger Zone */}
-      {activeTab === 'danger' && (
+      {activeTab === "danger" && (
         <div className="bg-red-950/20 border border-red-900/60 rounded-xl p-6 space-y-6">
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-red-400">Administrative Danger Zone</h3>
+            <h3 className="text-base font-bold text-red-400">
+              Administrative Danger Zone
+            </h3>
             <p className="text-xs text-zinc-400">
-              Manage organization suspension, 30-day purge schedules, and appeals.
+              Manage organization suspension, 30-day purge schedules, and
+              appeals.
             </p>
           </div>
 
           <div className="space-y-4">
-            {org.appealStatus === 'pending' && (
+            {org.appealStatus === "pending" && (
               <div className="p-4 bg-amber-950/80 border border-amber-800 rounded-xl space-y-3">
                 <div className="font-bold text-sm text-amber-200">
                   User Appeal Submitted: Pending Review
@@ -663,10 +745,11 @@ export default function OrgDetailClient({ data }: Props) {
                   onClick={() =>
                     setConfirmState({
                       isOpen: true,
-                      title: 'Approve Appeal & Cancel Deletion',
-                      description: 'Approve appeal and cancel the 30-day permanent deletion timer? Organization will remain suspended.',
-                      confirmText: 'Approve Appeal & Cancel Deletion',
-                      variant: 'info',
+                      title: "Approve Appeal & Cancel Deletion",
+                      description:
+                        "Approve appeal and cancel the 30-day permanent deletion timer? Organization will remain suspended.",
+                      confirmText: "Approve Appeal & Cancel Deletion",
+                      variant: "info",
                       action: handleCancelDeletion,
                     })
                   }
@@ -679,8 +762,12 @@ export default function OrgDetailClient({ data }: Props) {
 
             <div className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl">
               <div>
-                <div className="text-sm font-semibold text-white">Suspend Organization Access</div>
-                <p className="text-xs text-zinc-500">Revokes member access without scheduling deletion.</p>
+                <div className="text-sm font-semibold text-white">
+                  Suspend Organization Access
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Revokes member access without scheduling deletion.
+                </p>
               </div>
               <button
                 type="button"
@@ -693,8 +780,12 @@ export default function OrgDetailClient({ data }: Props) {
 
             <div className="flex items-center justify-between p-4 bg-zinc-950 border border-zinc-800 rounded-xl">
               <div>
-                <div className="text-sm font-semibold text-white">Initiate 30-Day Purge Schedule</div>
-                <p className="text-xs text-zinc-500">Starts a 30-day countdown to permanent database deletion.</p>
+                <div className="text-sm font-semibold text-white">
+                  Initiate 30-Day Purge Schedule
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Starts a 30-day countdown to permanent database deletion.
+                </p>
               </div>
               <button
                 type="button"

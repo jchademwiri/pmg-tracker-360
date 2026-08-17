@@ -1,8 +1,8 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
-import { ClientCalendar } from '@/components/dashboard/client-calendar';
+import { Card, CardContent } from "@/components/ui/card";
+import { Sparkles } from "lucide-react";
+import { ClientCalendar } from "@/components/dashboard/client-calendar";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   return (

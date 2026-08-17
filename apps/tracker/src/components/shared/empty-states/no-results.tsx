@@ -1,13 +1,13 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Search, Users, Mail } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Search, Users, Mail } from "lucide-react";
 
 export interface NoResultsProps {
   title?: string;
   message: string;
   actionLabel?: string;
   onAction?: () => void;
-  icon?: 'search' | 'users' | 'mail';
+  icon?: "search" | "users" | "mail";
   className?: string;
 }
 
@@ -18,12 +18,12 @@ const ICONS = {
 };
 
 export function NoResults({
-  title = 'No results found',
+  title = "No results found",
   message,
   actionLabel,
   onAction,
-  icon = 'search',
-  className = '',
+  icon = "search",
+  className = "",
 }: NoResultsProps) {
   const IconComponent = ICONS[icon];
 

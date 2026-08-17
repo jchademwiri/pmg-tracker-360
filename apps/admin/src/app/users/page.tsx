@@ -1,15 +1,17 @@
-import { requireAdminPage } from '@/lib/require-admin-page';
-import { Users } from 'lucide-react';
-import { getUsersWithMemberships } from '@/lib/admin-queries';
-import { selectOrganisationUsers } from '@/lib/user-scopes';
-import { InviteAdminModal } from './components/invite-admin-modal';
-import UserListClient from './UserListClient';
+import { requireAdminPage } from "@/lib/require-admin-page";
+import { Users } from "lucide-react";
+import { getUsersWithMemberships } from "@/lib/admin-queries";
+import { selectOrganisationUsers } from "@/lib/user-scopes";
+import { InviteAdminModal } from "./components/invite-admin-modal";
+import UserListClient from "./UserListClient";
 
 type AdminUsersPageProps = {
   searchParams: Promise<{ verified?: string }>;
 };
 
-export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
+export default async function AdminUsersPage({
+  searchParams,
+}: AdminUsersPageProps) {
   // 1. Auth guard
   await requireAdminPage();
 
@@ -17,7 +19,8 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
   const users = selectOrganisationUsers(await getUsersWithMemberships());
 
   const { verified } = await searchParams;
-  const initialVerifiedFilter = verified === 'verified' || verified === 'unverified' ? verified : 'all';
+  const initialVerifiedFilter =
+    verified === "verified" || verified === "unverified" ? verified : "all";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 font-sans">

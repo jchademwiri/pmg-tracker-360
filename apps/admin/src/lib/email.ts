@@ -1,4 +1,4 @@
-import { resend, SENDER, REPLY_TO } from '@/lib/email-config';
+import { resend, SENDER, REPLY_TO } from "@/lib/email-config";
 
 /**
  * These sends previously used their own Resend client with a `re_mock_key`
@@ -13,7 +13,7 @@ export async function sendAccountSuspendedEmail(
   to: string,
   name: string,
   orgName: string,
-  reason?: string
+  reason?: string,
 ) {
   try {
     await resend.emails.send({
@@ -26,7 +26,7 @@ export async function sendAccountSuspendedEmail(
           <h2 style="color: #dc2626;">Account Suspension Notice</h2>
           <p>Hello ${name},</p>
           <p>Your organization workspace <strong>${orgName}</strong> has been suspended by an administrator.</p>
-          ${reason ? `<p><strong>Reason provided:</strong> ${reason}</p>` : ''}
+          ${reason ? `<p><strong>Reason provided:</strong> ${reason}</p>` : ""}
           <p>Your account will remain suspended indefinitely. If an account stays suspended for more than 3 months without activity, a 30-day deletion countdown will be initiated.</p>
           <p style="margin-top: 30px; font-size: 12px; color: #71717a;">PMG Tracker 360 Security Team</p>
         </div>
@@ -34,7 +34,7 @@ export async function sendAccountSuspendedEmail(
     });
     return { success: true };
   } catch (error) {
-    console.error('Failed to send suspension email:', error);
+    console.error("Failed to send suspension email:", error);
     return { success: false, error };
   }
 }
@@ -43,7 +43,7 @@ export async function sendPurgeScheduledEmail(
   to: string,
   name: string,
   orgName: string,
-  daysRemaining = 30
+  daysRemaining = 30,
 ) {
   try {
     await resend.emails.send({
@@ -63,7 +63,7 @@ export async function sendPurgeScheduledEmail(
     });
     return { success: true };
   } catch (error) {
-    console.error('Failed to send purge scheduled email:', error);
+    console.error("Failed to send purge scheduled email:", error);
     return { success: false, error };
   }
 }
@@ -71,7 +71,7 @@ export async function sendPurgeScheduledEmail(
 export async function sendDeletionCancelledEmail(
   to: string,
   name: string,
-  orgName: string
+  orgName: string,
 ) {
   try {
     await resend.emails.send({
@@ -91,7 +91,7 @@ export async function sendDeletionCancelledEmail(
     });
     return { success: true };
   } catch (error) {
-    console.error('Failed to send deletion cancelled email:', error);
+    console.error("Failed to send deletion cancelled email:", error);
     return { success: false, error };
   }
 }

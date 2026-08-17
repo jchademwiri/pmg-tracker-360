@@ -1,5 +1,5 @@
-'use client';
-import { Button } from '@/components/ui/button';
+"use client";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,13 +7,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { removeMember } from '@/server';
-import { MoreHorizontal, UserMinus, UserCog, Mail, Loader } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { handleError, handleSuccess, handleInfo } from '@/lib/error-handler';
-import { RemoveMemberConfirmationDialog } from '@/components/ui/confirmation-dialog';
+} from "@/components/ui/dropdown-menu";
+import { removeMember } from "@/server";
+import { MoreHorizontal, UserMinus, UserCog, Mail, Loader } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { handleError, handleSuccess, handleInfo } from "@/lib/error-handler";
+import { RemoveMemberConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
 interface MembersTableActionProps {
   memberId: string;
@@ -39,21 +39,21 @@ export default function MembersTableAction({
       const { success, error } = await removeMember(memberId);
 
       if (!success) {
-        handleError(error || 'Failed to remove member', {
-          title: 'Remove Failed',
+        handleError(error || "Failed to remove member", {
+          title: "Remove Failed",
         });
         return;
       }
 
-      handleSuccess('Member removed successfully', {
+      handleSuccess("Member removed successfully", {
         description: `${memberName} has been removed from the organization`,
       });
       setShowRemoveDialog(false);
       router.refresh();
     } catch (error) {
       handleError(error as Error, {
-        title: 'Remove Failed',
-        fallbackMessage: 'Failed to remove member from organization',
+        title: "Remove Failed",
+        fallbackMessage: "Failed to remove member from organization",
       });
     } finally {
       setIsProcessing(false);
@@ -68,14 +68,14 @@ export default function MembersTableAction({
       // TODO: Implement role editing functionality
       // Removed artificial delay; this will be wired to a real API
 
-      handleInfo('Role editing functionality coming soon', {
-        title: 'Feature Coming Soon',
-        description: 'This feature is currently under development',
+      handleInfo("Role editing functionality coming soon", {
+        title: "Feature Coming Soon",
+        description: "This feature is currently under development",
       });
     } catch (error) {
       handleError(error as Error, {
-        title: 'Edit Role Failed',
-        fallbackMessage: 'Failed to edit member role',
+        title: "Edit Role Failed",
+        fallbackMessage: "Failed to edit member role",
       });
     } finally {
       setIsProcessing(false);
@@ -90,14 +90,14 @@ export default function MembersTableAction({
       // TODO: Implement resend invitation functionality
       // Removed artificial delay; this will be wired to a real API
 
-      handleInfo('Resend invitation functionality coming soon', {
-        title: 'Feature Coming Soon',
-        description: 'This feature is currently under development',
+      handleInfo("Resend invitation functionality coming soon", {
+        title: "Feature Coming Soon",
+        description: "This feature is currently under development",
       });
     } catch (error) {
       handleError(error as Error, {
-        title: 'Resend Failed',
-        fallbackMessage: 'Failed to resend invitation',
+        title: "Resend Failed",
+        fallbackMessage: "Failed to resend invitation",
       });
     } finally {
       setIsProcessing(false);

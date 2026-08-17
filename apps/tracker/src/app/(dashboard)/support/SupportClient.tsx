@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   LifeBuoy,
   MessageCircle,
@@ -22,25 +22,25 @@ import {
   Zap,
   Mail,
   RotateCcw,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   getUserSupportTickets,
   getUserTicketThread,
   sendUserTicketMessage,
   createSupportTicket,
   emailUserTicketTranscript,
-} from '@/server/support';
-import { useSessionUser } from '@/lib/client-session-store';
-import { FormattedMessage } from '@/components/support/formatted-message';
-import { PrioritySelect } from '@/components/support/priority-select';
-import { toast } from 'sonner';
+} from "@/server/support";
+import { useSessionUser } from "@/lib/client-session-store";
+import { FormattedMessage } from "@/components/support/formatted-message";
+import { PrioritySelect } from "@/components/support/priority-select";
+import { toast } from "sonner";
 
 type UserTicket = {
   id: string;
@@ -62,7 +62,7 @@ type ChatMessage = {
   id: string;
   ticketId: string;
   senderId: string | null;
-  senderType: 'user' | 'admin' | 'system';
+  senderType: "user" | "admin" | "system";
   senderName: string;
   senderEmail: string;
   message: string;
@@ -70,12 +70,12 @@ type ChatMessage = {
   createdAt: Date;
 };
 
-type FilterTab = 'all' | 'active' | 'resolved';
+type FilterTab = "all" | "active" | "resolved";
 
 export default function SupportClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const urlTicketId = searchParams.get('ticket') || searchParams.get('id');
+  const urlTicketId = searchParams.get("ticket") || searchParams.get("id");
 
   const user = useSessionUser();
   const [tickets, setTickets] = useState<UserTicket[]>([]);
@@ -85,21 +85,23 @@ export default function SupportClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [threadLoading, setThreadLoading] = useState(false);
-  const [filterTab, setFilterTab] = useState<FilterTab>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filterTab, setFilterTab] = useState<FilterTab>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Chat message reply
-  const [replyMessage, setReplyMessage] = useState('');
+  const [replyMessage, setReplyMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sendingTranscript, setSendingTranscript] = useState(false);
 
   // New ticket modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [createName, setCreateName] = useState('');
-  const [createEmail, setCreateEmail] = useState('');
-  const [createSubject, setCreateSubject] = useState('');
-  const [createPriority, setCreatePriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
-  const [createMessage, setCreateMessage] = useState('');
+  const [createName, setCreateName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createSubject, setCreateSubject] = useState("");
+  const [createPriority, setCreatePriority] = useState<
+    "low" | "medium" | "high" | "urgent"
+  >("medium");
+  const [createMessage, setCreateMessage] = useState("");
   const [creating, setCreating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -121,8 +123,9 @@ export default function SupportClient() {
       const match = tickets.find(
         (t) =>
           t.id.toLowerCase() === urlTicketId.toLowerCase() ||
-          (t.ticketCode && t.ticketCode.toLowerCase() === urlTicketId.toLowerCase()) ||
-          (t.ticketNumber && String(t.ticketNumber) === urlTicketId)
+          (t.ticketCode &&
+            t.ticketCode.toLowerCase() === urlTicketId.toLowerCase()) ||
+          (t.ticketNumber && String(t.ticketNumber) === urlTicketId),
       );
       if (match && selectedTicketId !== match.id) {
         openThread(match.id, false);
@@ -144,13 +147,14 @@ export default function SupportClient() {
       setUnreadTotal(res.unreadTotal || 0);
 
       // If URL already specifies a ticket ID, open that ticket
-      const initialParam = searchParams.get('ticket') || searchParams.get('id');
+      const initialParam = searchParams.get("ticket") || searchParams.get("id");
       if (initialParam) {
         const found = list.find(
           (t) =>
             t.id.toLowerCase() === initialParam.toLowerCase() ||
-            (t.ticketCode && t.ticketCode.toLowerCase() === initialParam.toLowerCase()) ||
-            (t.ticketNumber && String(t.ticketNumber) === initialParam)
+            (t.ticketCode &&
+              t.ticketCode.toLowerCase() === initialParam.toLowerCase()) ||
+            (t.ticketNumber && String(t.ticketNumber) === initialParam),
         );
         if (found) {
           openThread(found.id, false);
@@ -161,8 +165,8 @@ export default function SupportClient() {
 
   const openThread = async (ticketId: string, updateUrl: boolean = true) => {
     setSelectedTicketId(ticketId);
-    if (updateUrl && typeof window !== 'undefined') {
-      window.history.replaceState(null, '', `/support?ticket=${ticketId}`);
+    if (updateUrl && typeof window !== "undefined") {
+      window.history.replaceState(null, "", `/support?ticket=${ticketId}`);
     }
     setThreadLoading(true);
     const res = await getUserTicketThread(ticketId);
@@ -172,20 +176,20 @@ export default function SupportClient() {
       setMessages((res.messages || []) as ChatMessage[]);
       // Clear unread indicator locally
       setTickets((prev) =>
-        prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t))
+        prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t)),
       );
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('support-count-updated'));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("support-count-updated"));
       }
       scrollToBottom();
     } else {
-      toast.error(res.error || 'Failed to load conversation thread.');
+      toast.error(res.error || "Failed to load conversation thread.");
     }
   };
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
@@ -199,7 +203,7 @@ export default function SupportClient() {
     setSending(false);
 
     if (res.success) {
-      setReplyMessage('');
+      setReplyMessage("");
       const threadRes = await getUserTicketThread(selectedTicketId);
       if (threadRes.success && threadRes.messages) {
         setMessages(threadRes.messages as ChatMessage[]);
@@ -207,25 +211,25 @@ export default function SupportClient() {
       }
       loadTickets();
     } else {
-      toast.error(res.error || 'Failed to send message.');
+      toast.error(res.error || "Failed to send message.");
     }
   };
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createSubject.trim()) {
-      toast.error('Please enter a subject for your request.');
+      toast.error("Please enter a subject for your request.");
       return;
     }
     if (!createMessage.trim()) {
-      toast.error('Please describe your question or issue.');
+      toast.error("Please describe your question or issue.");
       return;
     }
 
     setCreating(true);
     const res = await createSupportTicket({
-      name: createName.trim() || user?.name || 'User',
-      email: createEmail.trim() || user?.email || '',
+      name: createName.trim() || user?.name || "User",
+      email: createEmail.trim() || user?.email || "",
       subject: createSubject.trim(),
       priority: createPriority,
       message: createMessage.trim(),
@@ -234,15 +238,15 @@ export default function SupportClient() {
     setCreating(false);
 
     if (res.success && res.ticketId) {
-      toast.success('Support request created successfully!');
+      toast.success("Support request created successfully!");
       setCreateModalOpen(false);
-      setCreateSubject('');
-      setCreateMessage('');
-      setCreatePriority('medium');
+      setCreateSubject("");
+      setCreateMessage("");
+      setCreatePriority("medium");
       await loadTickets();
       openThread(res.ticketId);
     } else {
-      toast.error(res.error || 'Failed to submit support request.');
+      toast.error(res.error || "Failed to submit support request.");
     }
   };
 
@@ -252,25 +256,29 @@ export default function SupportClient() {
     const res = await emailUserTicketTranscript(selectedTicketId);
     setSendingTranscript(false);
     if (res.success) {
-      toast.success(res.message || 'Conversation transcript sent to your email!');
+      toast.success(
+        res.message || "Conversation transcript sent to your email!",
+      );
     } else {
-      toast.error(res.error || 'Failed to email transcript.');
+      toast.error(res.error || "Failed to email transcript.");
     }
   };
 
   // Metrics
   const activeCount = tickets.filter(
-    (t) => t.status === 'open' || t.status === 'in_progress'
+    (t) => t.status === "open" || t.status === "in_progress",
   ).length;
   const resolvedCount = tickets.filter(
-    (t) => t.status === 'resolved' || t.status === 'closed'
+    (t) => t.status === "resolved" || t.status === "closed",
   ).length;
 
   // Filtered tickets
   const filteredTickets = tickets
     .filter((t) => {
-      if (filterTab === 'active') return t.status === 'open' || t.status === 'in_progress';
-      if (filterTab === 'resolved') return t.status === 'resolved' || t.status === 'closed';
+      if (filterTab === "active")
+        return t.status === "open" || t.status === "in_progress";
+      if (filterTab === "resolved")
+        return t.status === "resolved" || t.status === "closed";
       return true;
     })
     .filter((t) => {
@@ -286,8 +294,8 @@ export default function SupportClient() {
     });
 
   const getPriorityBadge = (priority: string) => {
-    const p = (priority || 'medium').toLowerCase();
-    if (p === 'urgent') {
+    const p = (priority || "medium").toLowerCase();
+    if (p === "urgent") {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-950/90 text-rose-300 border border-rose-700/60 shadow-xs">
           <Flame className="h-2.5 w-2.5 text-rose-400 fill-rose-400" />
@@ -295,14 +303,14 @@ export default function SupportClient() {
         </span>
       );
     }
-    if (p === 'high') {
+    if (p === "high") {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-950/90 text-amber-300 border border-amber-700/60 shadow-xs">
           High
         </span>
       );
     }
-    if (p === 'low') {
+    if (p === "low") {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-zinc-800/90 text-zinc-300 border border-zinc-700">
           Low
@@ -318,7 +326,7 @@ export default function SupportClient() {
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
-    if (s === 'resolved' || s === 'closed') {
+    if (s === "resolved" || s === "closed") {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-950/80 text-emerald-300 border border-emerald-700/60">
           <CheckCircle2 className="h-3 w-3 text-emerald-400" />
@@ -326,7 +334,7 @@ export default function SupportClient() {
         </span>
       );
     }
-    if (s === 'in_progress') {
+    if (s === "in_progress") {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-950/80 text-blue-300 border border-blue-700/60">
           <Clock className="h-3 w-3 text-blue-400" />
@@ -363,7 +371,8 @@ export default function SupportClient() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground hidden sm:block">
-              Direct two-way concierge support, real-time ticket tracking, and transcript preservation.
+              Direct two-way concierge support, real-time ticket tracking, and
+              transcript preservation.
             </p>
           </div>
         </div>
@@ -383,7 +392,8 @@ export default function SupportClient() {
             </span>
             <span>•</span>
             <span className="font-medium text-foreground">
-              <strong className="text-emerald-400">{resolvedCount}</strong> Resolved
+              <strong className="text-emerald-400">{resolvedCount}</strong>{" "}
+              Resolved
             </span>
           </div>
 
@@ -420,7 +430,7 @@ export default function SupportClient() {
 
             {/* Filter Tabs */}
             <div className="flex gap-1 bg-muted/40 p-1 rounded-lg border border-border/50">
-              {(['all', 'active', 'resolved'] as FilterTab[]).map((tab) => {
+              {(["all", "active", "resolved"] as FilterTab[]).map((tab) => {
                 const isActive = filterTab === tab;
                 return (
                   <button
@@ -429,8 +439,8 @@ export default function SupportClient() {
                     onClick={() => setFilterTab(tab)}
                     className={`flex-1 py-1 text-xs font-medium rounded-md transition-all cursor-pointer capitalize ${
                       isActive
-                        ? 'bg-background text-foreground shadow-xs font-semibold'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {tab}
@@ -449,8 +459,12 @@ export default function SupportClient() {
             ) : filteredTickets.length === 0 ? (
               <div className="text-center py-16 px-4 space-y-2">
                 <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto" />
-                <p className="text-xs font-medium text-foreground">No tickets in this view</p>
-                <p className="text-[11px] text-muted-foreground">Click "Create New Ticket" above to open a request.</p>
+                <p className="text-xs font-medium text-foreground">
+                  No tickets in this view
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Click "Create New Ticket" above to open a request.
+                </p>
               </div>
             ) : (
               filteredTickets.map((t) => {
@@ -465,18 +479,20 @@ export default function SupportClient() {
                     onClick={() => openThread(t.id)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer space-y-1.5 group ${
                       isSelected
-                        ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/30'
-                        : 'bg-card/80 hover:bg-muted/50 border-border/60'
+                        ? "bg-primary/10 border-primary shadow-sm ring-1 ring-primary/30"
+                        : "bg-card/80 hover:bg-muted/50 border-border/60"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1.5">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-mono text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                          #{t.ticketCode || `TICK-${t.id.slice(0, 8).toUpperCase()}`}
+                          #
+                          {t.ticketCode ||
+                            `TICK-${t.id.slice(0, 8).toUpperCase()}`}
                         </span>
                         {getStatusBadge(t.status)}
                         {getPriorityBadge(t.priority)}
-                        {isRecent && t.status === 'open' && (
+                        {isRecent && t.status === "open" && (
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
                             NEW
                           </span>
@@ -493,7 +509,7 @@ export default function SupportClient() {
 
                     <div className="space-y-0.5">
                       <h4 className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                        {t.subject || 'Support Request'}
+                        {t.subject || "Support Request"}
                       </h4>
                       <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
                         {t.message}
@@ -503,11 +519,11 @@ export default function SupportClient() {
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/30">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {new Date(t.updatedAt).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
+                        {new Date(t.updatedAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </span>
                       <span className="flex items-center gap-1 font-medium group-hover:text-primary">
@@ -533,16 +549,19 @@ export default function SupportClient() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded border border-amber-400/20">
-                      #{activeTicket.ticketCode || `TICK-${activeTicket.id.slice(0, 8).toUpperCase()}`}
+                      #
+                      {activeTicket.ticketCode ||
+                        `TICK-${activeTicket.id.slice(0, 8).toUpperCase()}`}
                     </span>
                     {getStatusBadge(activeTicket.status)}
                     {getPriorityBadge(activeTicket.priority)}
                   </div>
                   <h2 className="text-sm sm:text-base font-bold text-foreground truncate">
-                    {activeTicket.subject || 'Support Request'}
+                    {activeTicket.subject || "Support Request"}
                   </h2>
                   <span className="text-[11px] text-muted-foreground block truncate">
-                    Opened by {activeTicket.name} • {new Date(activeTicket.createdAt).toLocaleString('en-GB')}
+                    Opened by {activeTicket.name} •{" "}
+                    {new Date(activeTicket.createdAt).toLocaleString("en-GB")}
                   </span>
                 </div>
 
@@ -570,16 +589,21 @@ export default function SupportClient() {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="p-4 bg-card border rounded-xl text-xs space-y-1">
-                    <span className="font-semibold text-foreground">Initial Inquiry:</span>
-                    <FormattedMessage content={activeTicket.message} className="text-zinc-300 text-xs" />
+                    <span className="font-semibold text-foreground">
+                      Initial Inquiry:
+                    </span>
+                    <FormattedMessage
+                      content={activeTicket.message}
+                      className="text-zinc-300 text-xs"
+                    />
                   </div>
                 ) : (
                   messages.map((m) => {
-                    const isAdmin = m.senderType === 'admin';
+                    const isAdmin = m.senderType === "admin";
                     return (
                       <div
                         key={m.id}
-                        className={`flex flex-col ${isAdmin ? 'items-start' : 'items-end'}`}
+                        className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}
                       >
                         <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-muted-foreground">
                           {isAdmin ? (
@@ -588,13 +612,15 @@ export default function SupportClient() {
                               Tender Track Support Team
                             </span>
                           ) : (
-                            <span className="font-medium text-foreground">You</span>
+                            <span className="font-medium text-foreground">
+                              You
+                            </span>
                           )}
                           <span>•</span>
                           <span>
                             {new Date(m.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
+                              hour: "2-digit",
+                              minute: "2-digit",
                             })}
                           </span>
                         </div>
@@ -602,8 +628,8 @@ export default function SupportClient() {
                         <div
                           className={`max-w-[85%] p-3.5 rounded-2xl text-xs sm:text-sm shadow-sm ${
                             isAdmin
-                              ? 'bg-card border text-foreground rounded-tl-xs'
-                              : 'bg-[#1a3a52] text-white rounded-tr-xs'
+                              ? "bg-card border text-foreground rounded-tl-xs"
+                              : "bg-[#1a3a52] text-white rounded-tr-xs"
                           }`}
                         >
                           <FormattedMessage content={m.message} />
@@ -625,7 +651,7 @@ export default function SupportClient() {
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
+                    if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       handleSendReply();
                     }
@@ -654,9 +680,12 @@ export default function SupportClient() {
               <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shadow-xs">
                 <LifeBuoy className="h-7 w-7" />
               </div>
-              <h3 className="text-base font-bold text-foreground">Select a Support Conversation</h3>
+              <h3 className="text-base font-bold text-foreground">
+                Select a Support Conversation
+              </h3>
               <p className="text-xs text-muted-foreground max-w-sm">
-                Choose a ticket from the left panel to inspect the conversation timeline or start a new request.
+                Choose a ticket from the left panel to inspect the conversation
+                timeline or start a new request.
               </p>
               <Button
                 onClick={() => setCreateModalOpen(true)}
@@ -683,7 +712,8 @@ export default function SupportClient() {
               <span>Create New Support Request</span>
             </DialogTitle>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Provide details about your inquiry or technical question. Our support team will respond directly in your live chat.
+              Provide details about your inquiry or technical question. Our
+              support team will respond directly in your live chat.
             </p>
           </DialogHeader>
 
@@ -773,7 +803,9 @@ export default function SupportClient() {
               </Button>
               <Button
                 type="submit"
-                disabled={creating || !createSubject.trim() || !createMessage.trim()}
+                disabled={
+                  creating || !createSubject.trim() || !createMessage.trim()
+                }
                 className="h-11 px-6 gap-2 cursor-pointer text-sm font-semibold shadow-sm"
               >
                 {creating ? (

@@ -1,8 +1,8 @@
-import { getOrgDetail } from '../actions';
-import OrgDetailClient from './OrgDetailClient';
-import { notFound } from 'next/navigation';
+import { getOrgDetail } from "../actions";
+import OrgDetailClient from "./OrgDetailClient";
+import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -19,7 +19,7 @@ export default async function OrgDetailPage({ params }: PageProps) {
       </div>
     );
   } catch (error) {
-    console.error('Error fetching org detail:', error);
+    console.error("Error fetching org detail:", error);
     return notFound();
   }
 }

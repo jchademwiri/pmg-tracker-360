@@ -1,6 +1,6 @@
-import 'server-only';
+import "server-only";
 
-import { db } from '@pmg/db';
+import { db } from "@pmg/db";
 import {
   user,
   session,
@@ -16,7 +16,7 @@ import {
   supportTickets,
   feedback,
   waitlist,
-} from '@pmg/db/schema';
+} from "@pmg/db/schema";
 import {
   eq,
   and,
@@ -28,13 +28,13 @@ import {
   desc,
   gte,
   inArray,
-} from 'drizzle-orm';
-import { PLATFORM_ORG_ID } from './constants';
+} from "drizzle-orm";
+import { PLATFORM_ORG_ID } from "./constants";
 import {
   getCloudflareR2StorageStats,
   type CloudflareStorageOverview,
   type BucketUsage,
-} from './cloudflare-r2';
+} from "./cloudflare-r2";
 
 export type { CloudflareStorageOverview, BucketUsage };
 
@@ -56,7 +56,7 @@ export type PlatformOverviewStats = {
   availableStorageGB: number;
   availableStorageMB: number;
   storageUtilizationPct: number;
-  storageWarningStatus: 'healthy' | 'warning' | 'critical';
+  storageWarningStatus: "healthy" | "warning" | "critical";
   storageOverview: CloudflareStorageOverview;
   totalDocuments: number;
   totalTenderPipelineValue: number;
@@ -242,7 +242,7 @@ export async function getPlatformOverviewStats(): Promise<PlatformOverviewStats>
   // Fetch Cloudflare live storage metrics (all buckets) or fallback to DB-tracked
   const storageOverview = await getCloudflareR2StorageStats(
     totalStorageBytes,
-    totalDocuments
+    totalDocuments,
   );
 
   const totalTenderPipelineValue = Number(tenderStats[0]?.pipelineValue ?? 0);
@@ -257,7 +257,7 @@ export async function getPlatformOverviewStats(): Promise<PlatformOverviewStats>
 
   const planCounts: Record<string, number> = {};
   for (const p of planDistribution) {
-    planCounts[p.plan || 'free'] = Number(p.count);
+    planCounts[p.plan || "free"] = Number(p.count);
   }
 
   return {
@@ -310,8 +310,8 @@ export async function getGrowthTrend(): Promise<GrowthTrendItem[]> {
       .where(
         and(
           gte(organization.createdAt, sixMonthsAgo),
-          sql`${organization.id} != ${PLATFORM_ORG_ID}`
-        )
+          sql`${organization.id} != ${PLATFORM_ORG_ID}`,
+        ),
       )
       .groupBy(sql`to_char(${organization.createdAt}, 'YYYY-MM')`)
       .orderBy(sql`to_char(${organization.createdAt}, 'YYYY-MM')`),
@@ -332,9 +332,7 @@ export async function getGrowthTrend(): Promise<GrowthTrendItem[]> {
         count: count(),
       })
       .from(tender)
-      .where(
-        and(gte(tender.createdAt, sixMonthsAgo), isNull(tender.deletedAt))
-      )
+      .where(and(gte(tender.createdAt, sixMonthsAgo), isNull(tender.deletedAt)))
       .groupBy(sql`to_char(${tender.createdAt}, 'YYYY-MM')`)
       .orderBy(sql`to_char(${tender.createdAt}, 'YYYY-MM')`),
   ]);
@@ -345,8 +343,11 @@ export async function getGrowthTrend(): Promise<GrowthTrendItem[]> {
   for (let i = 0; i < 6; i++) {
     const d = new Date(sixMonthsAgo);
     d.setMonth(d.getMonth() + i);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const label = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleString("en-US", {
+      month: "short",
+      year: "2-digit",
+    });
     monthMap.set(key, {
       period: label,
       organizations: 0,
@@ -438,35 +439,35 @@ export async function getStorageBreakdown(): Promise<{
 
   const categories: StorageCategoryBreakdown[] = [
     {
-      category: 'Tender Documents',
+      category: "Tender Documents",
       count: Number(raw.tenderCount),
       sizeBytes: Number(raw.tenderBytes),
       sizeMB: Number((Number(raw.tenderBytes) / (1024 * 1024)).toFixed(2)),
       percentage: Math.round((Number(raw.tenderBytes) / totalBytes) * 100),
     },
     {
-      category: 'Project Contracts & Files',
+      category: "Project Contracts & Files",
       count: Number(raw.projectCount),
       sizeBytes: Number(raw.projectBytes),
       sizeMB: Number((Number(raw.projectBytes) / (1024 * 1024)).toFixed(2)),
       percentage: Math.round((Number(raw.projectBytes) / totalBytes) * 100),
     },
     {
-      category: 'Purchase Orders & PODs',
+      category: "Purchase Orders & PODs",
       count: Number(raw.poCount),
       sizeBytes: Number(raw.poBytes),
       sizeMB: Number((Number(raw.poBytes) / (1024 * 1024)).toFixed(2)),
       percentage: Math.round((Number(raw.poBytes) / totalBytes) * 100),
     },
     {
-      category: 'Tender Extensions',
+      category: "Tender Extensions",
       count: Number(raw.extCount),
       sizeBytes: Number(raw.extBytes),
       sizeMB: Number((Number(raw.extBytes) / (1024 * 1024)).toFixed(2)),
       percentage: Math.round((Number(raw.extBytes) / totalBytes) * 100),
     },
     {
-      category: 'Other / Unassigned',
+      category: "Other / Unassigned",
       count: Number(raw.otherCount),
       sizeBytes: Number(raw.otherBytes),
       sizeMB: Number((Number(raw.otherBytes) / (1024 * 1024)).toFixed(2)),
@@ -485,7 +486,9 @@ export async function getStorageBreakdown(): Promise<{
       db
         .select({ count: count() })
         .from(project)
-        .where(and(eq(project.organizationId, t.id), isNull(project.deletedAt))),
+        .where(
+          and(eq(project.organizationId, t.id), isNull(project.deletedAt)),
+        ),
       db
         .select({ count: count() })
         .from(member)
@@ -518,7 +521,7 @@ export async function getStorageBreakdown(): Promise<{
 
   const storageOverview = await getCloudflareR2StorageStats(
     Number(raw.totalBytes),
-    totalDocCount
+    totalDocCount,
   );
 
   return { categories, topTenants, storageOverview };
@@ -556,7 +559,7 @@ export async function getSecurityComplianceMetrics(): Promise<SecurityCompliance
         userAgent: securityAuditLog.userAgent,
       })
       .from(securityAuditLog)
-      .where(eq(securityAuditLog.severity, 'critical'))
+      .where(eq(securityAuditLog.severity, "critical"))
       .orderBy(desc(securityAuditLog.createdAt))
       .limit(10),
   ]);
@@ -575,7 +578,9 @@ export async function getSecurityComplianceMetrics(): Promise<SecurityCompliance
 /**
  * Tender Status distribution across all organizations
  */
-export async function getTenderStatusDistribution(): Promise<TenderStatusDistribution[]> {
+export async function getTenderStatusDistribution(): Promise<
+  TenderStatusDistribution[]
+> {
   const results = await db
     .select({
       status: tender.status,
@@ -597,7 +602,9 @@ export async function getTenderStatusDistribution(): Promise<TenderStatusDistrib
 /**
  * Complete list of all tenants with full operational counts for Excel Export
  */
-export async function getAllTenantsUtilization(): Promise<TenantStorageUsage[]> {
+export async function getAllTenantsUtilization(): Promise<
+  TenantStorageUsage[]
+> {
   const orgs = await db
     .select({
       id: organization.id,
@@ -620,11 +627,15 @@ export async function getAllTenantsUtilization(): Promise<TenantStorageUsage[]> 
       db
         .select({ count: count() })
         .from(tender)
-        .where(and(eq(tender.organizationId, org.id), isNull(tender.deletedAt))),
+        .where(
+          and(eq(tender.organizationId, org.id), isNull(tender.deletedAt)),
+        ),
       db
         .select({ count: count() })
         .from(project)
-        .where(and(eq(project.organizationId, org.id), isNull(project.deletedAt))),
+        .where(
+          and(eq(project.organizationId, org.id), isNull(project.deletedAt)),
+        ),
       db
         .select({ count: count() })
         .from(member)

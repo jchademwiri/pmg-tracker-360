@@ -1,7 +1,7 @@
-'use client';
-import Script from 'next/script';
-import { useEffect, useRef } from 'react';
-import { env } from '@/env';
+"use client";
+import Script from "next/script";
+import { useEffect, useRef } from "react";
+import { env } from "@/env";
 
 interface TurnstileProps {
   onVerify: (token: string) => void;
@@ -12,7 +12,9 @@ interface TurnstileProps {
 export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const siteKey =
+    env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
@@ -23,12 +25,12 @@ export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
           widgetIdRef.current = window.turnstile.render(containerRef.current, {
             sitekey: siteKey,
             callback: (token: string) => onVerify(token),
-            'error-callback': () => onError?.(),
-            'expired-callback': () => onExpire?.(),
-            theme: 'dark',
+            "error-callback": () => onError?.(),
+            "expired-callback": () => onExpire?.(),
+            theme: "dark",
           });
         } catch (e) {
-          console.error('Turnstile render error:', e);
+          console.error("Turnstile render error:", e);
         }
       }
     };
@@ -46,17 +48,24 @@ export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
         onLoad={() => {
-          if (window.turnstile && containerRef.current && !widgetIdRef.current) {
+          if (
+            window.turnstile &&
+            containerRef.current &&
+            !widgetIdRef.current
+          ) {
             try {
-              widgetIdRef.current = window.turnstile.render(containerRef.current, {
-                sitekey: siteKey,
-                callback: (token: string) => onVerify(token),
-                'error-callback': () => onError?.(),
-                'expired-callback': () => onExpire?.(),
-                theme: 'dark',
-              });
+              widgetIdRef.current = window.turnstile.render(
+                containerRef.current,
+                {
+                  sitekey: siteKey,
+                  callback: (token: string) => onVerify(token),
+                  "error-callback": () => onError?.(),
+                  "expired-callback": () => onExpire?.(),
+                  theme: "dark",
+                },
+              );
             } catch (e) {
-              console.error('Turnstile render error on load:', e);
+              console.error("Turnstile render error on load:", e);
             }
           }
         }}
@@ -74,10 +83,10 @@ declare global {
         options: {
           sitekey: string;
           callback: (token: string) => void;
-          'error-callback'?: () => void;
-          'expired-callback'?: () => void;
-          theme?: 'light' | 'dark' | 'auto';
-        }
+          "error-callback"?: () => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+        },
       ) => string;
       reset: (widgetId?: string) => void;
       remove: (widgetId?: string) => void;

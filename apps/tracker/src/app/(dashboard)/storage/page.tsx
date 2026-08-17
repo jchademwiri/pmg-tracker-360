@@ -1,9 +1,9 @@
-import { getCurrentUser } from '@/server';
-import { getStorageAnalytics } from '@/server/storage';
-import { getSubscriptionPlans } from '@pmg/db';
-import { StorageDashboard } from '@/components/storage/storage-dashboard';
+import { getCurrentUser } from "@/server";
+import { getStorageAnalytics } from "@/server/storage";
+import { getSubscriptionPlans } from "@pmg/db";
+import { StorageDashboard } from "@/components/storage/storage-dashboard";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function StoragePage() {
   const { session } = await getCurrentUser();
@@ -12,8 +12,12 @@ export default async function StoragePage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <h2 className="mb-2 text-xl font-semibold">No Organization Selected</h2>
-          <p className="text-muted-foreground">Please select an organization to view storage usage.</p>
+          <h2 className="mb-2 text-xl font-semibold">
+            No Organization Selected
+          </h2>
+          <p className="text-muted-foreground">
+            Please select an organization to view storage usage.
+          </p>
         </div>
       </div>
     );
@@ -28,8 +32,12 @@ export default async function StoragePage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <h2 className="mb-2 text-xl font-semibold text-rose-500">Error Loading Storage Data</h2>
-          <p className="text-muted-foreground">{result.error || 'Failed to load storage analytics.'}</p>
+          <h2 className="mb-2 text-xl font-semibold text-rose-500">
+            Error Loading Storage Data
+          </h2>
+          <p className="text-muted-foreground">
+            {result.error || "Failed to load storage analytics."}
+          </p>
         </div>
       </div>
     );
@@ -43,4 +51,3 @@ export default async function StoragePage() {
     />
   );
 }
-

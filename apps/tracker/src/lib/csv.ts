@@ -4,8 +4,10 @@
  * otherwise interpret as the start of a formula (a well-known CSV export
  * vulnerability class — formula injection).
  */
-export function escapeCsvCell(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === '') return '';
+export function escapeCsvCell(
+  value: string | number | null | undefined,
+): string {
+  if (value === null || value === undefined || value === "") return "";
 
   let str = String(value);
   if (/^[=+\-@]/.test(str)) {
@@ -20,11 +22,11 @@ export function escapeCsvCell(value: string | number | null | undefined): string
 
 export function buildCsv(
   headers: string[],
-  rows: (string | number | null | undefined)[][]
+  rows: (string | number | null | undefined)[][],
 ): string {
   const lines = [
-    headers.map(escapeCsvCell).join(','),
-    ...rows.map((row) => row.map(escapeCsvCell).join(',')),
+    headers.map(escapeCsvCell).join(","),
+    ...rows.map((row) => row.map(escapeCsvCell).join(",")),
   ];
-  return lines.join('\n');
+  return lines.join("\n");
 }

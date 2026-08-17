@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useTransition, useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -20,20 +20,31 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { FileUploader } from '@/components/ui/file-uploader';
-import { Plus, Loader2, AlertTriangle, Calendar, User, Mail, Phone } from 'lucide-react';
-import { createTenderExtension, updateTenderExtension } from '@/server/modules/extensions';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { FileUploader } from "@/components/ui/file-uploader";
+import {
+  Plus,
+  Loader2,
+  AlertTriangle,
+  Calendar,
+  User,
+  Mail,
+  Phone,
+} from "lucide-react";
+import {
+  createTenderExtension,
+  updateTenderExtension,
+} from "@/server/modules/extensions";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const extensionFormSchema = z.object({
-  extensionDate: z.string().min(1, 'Extension date is required'),
-  newEvaluationDate: z.string().min(1, 'New evaluation date is required'),
+  extensionDate: z.string().min(1, "Extension date is required"),
+  newEvaluationDate: z.string().min(1, "New evaluation date is required"),
   contactName: z.string().optional(),
-  contactEmail: z.string().email('Invalid email address'),
+  contactEmail: z.string().email("Invalid email address"),
   contactPhone: z.string().optional(),
   notes: z.string().optional(),
   file: z.any().optional(),
@@ -99,73 +110,95 @@ export function ExtensionForm({
   const form = useForm<ExtensionFormValues>({
     resolver: zodResolver(extensionFormSchema),
     defaultValues: {
-      extensionDate: extension ? toDateInputValue(extension.extensionDate) : '',
-      newEvaluationDate: extension ? toDateInputValue(extension.newEvaluationDate) : '',
-      contactName: extension?.contactName || '',
-      contactEmail: extension?.contactEmail || '',
-      contactPhone: extension?.contactPhone || '',
-      notes: extension?.notes || '',
+      extensionDate: extension ? toDateInputValue(extension.extensionDate) : "",
+      newEvaluationDate: extension
+        ? toDateInputValue(extension.newEvaluationDate)
+        : "",
+      contactName: extension?.contactName || "",
+      contactEmail: extension?.contactEmail || "",
+      contactPhone: extension?.contactPhone || "",
+      notes: extension?.notes || "",
     },
   });
 
-  const onSubmit = useCallback(async (data: ExtensionFormValues) => {
-    const selectedFile = selectedFiles.length > 0 ? selectedFiles[0] : null;
+  const onSubmit = useCallback(
+    async (data: ExtensionFormValues) => {
+      const selectedFile = selectedFiles.length > 0 ? selectedFiles[0] : null;
 
-    if (!isEdit && !selectedFile) {
-      toast.error('File Required', {
-        description: 'Please upload the extension letter.',
+      if (!isEdit && !selectedFile) {
+        toast.error("File Required", {
+          description: "Please upload the extension letter.",
+        });
+        return;
+      }
+
+      startTransition(async () => {
+        const formData = selectedFile ? new FormData() : undefined;
+        if (selectedFile && formData) {
+          formData.append("file", selectedFile);
+        }
+
+        if (isEdit && extension) {
+          const input = {
+            extensionId: extension.id,
+            extensionDate: data.extensionDate,
+            newEvaluationDate: data.newEvaluationDate,
+            contactName: data.contactName,
+            contactEmail: data.contactEmail,
+            contactPhone: data.contactPhone,
+            notes: data.notes,
+          };
+
+          const result = await updateTenderExtension(
+            organizationId,
+            input,
+            formData,
+          );
+          if (result.success) {
+            toast.success("Extension updated successfully");
+            setOpen(false);
+            router.refresh();
+          } else {
+            toast.error(result.error || "Failed to update extension");
+          }
+        } else {
+          const input = {
+            tenderId,
+            extensionDate: data.extensionDate,
+            newEvaluationDate: data.newEvaluationDate,
+            contactName: data.contactName,
+            contactEmail: data.contactEmail,
+            contactPhone: data.contactPhone,
+            notes: data.notes,
+          };
+
+          const result = await createTenderExtension(
+            organizationId,
+            input,
+            formData!,
+          );
+          if (result.success) {
+            toast.success("Tender extension created successfully");
+            setOpen(false);
+            form.reset();
+            router.refresh();
+          } else {
+            toast.error(result.error || "Failed to create tender extension");
+          }
+        }
       });
-      return;
-    }
-
-    startTransition(async () => {
-      const formData = selectedFile ? new FormData() : undefined;
-      if (selectedFile && formData) {
-        formData.append('file', selectedFile);
-      }
-
-      if (isEdit && extension) {
-        const input = {
-          extensionId: extension.id,
-          extensionDate: data.extensionDate,
-          newEvaluationDate: data.newEvaluationDate,
-          contactName: data.contactName,
-          contactEmail: data.contactEmail,
-          contactPhone: data.contactPhone,
-          notes: data.notes,
-        };
-
-        const result = await updateTenderExtension(organizationId, input, formData);
-        if (result.success) {
-          toast.success('Extension updated successfully');
-          setOpen(false);
-          router.refresh();
-        } else {
-          toast.error(result.error || 'Failed to update extension');
-        }
-      } else {
-        const input = {
-          tenderId,
-          extensionDate: data.extensionDate,
-          newEvaluationDate: data.newEvaluationDate,
-          contactName: data.contactName,
-          contactEmail: data.contactEmail,
-          contactPhone: data.contactPhone,
-          notes: data.notes,
-        };
-
-        const result = await createTenderExtension(organizationId, input, formData!);
-        if (result.success) {
-          toast.success('Tender extension created successfully');
-          setOpen(false);
-          form.reset();
-          router.refresh();
-        } else {
-          toast.error(result.error || 'Failed to create tender extension');
-        }
-      }
-    });
-  }, [extension, organizationId, tenderId, setOpen, router, form, selectedFiles, isEdit]);
+    },
+    [
+      extension,
+      organizationId,
+      tenderId,
+      setOpen,
+      router,
+      form,
+      selectedFiles,
+      isEdit,
+    ],
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -181,10 +214,11 @@ export function ExtensionForm({
         <DialogHeader className="pb-2">
           <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2 text-foreground">
             <Calendar className="h-5 w-5 text-amber-500" />
-            {isEdit ? 'Edit Tender Extension' : 'Add Tender Extension'}
+            {isEdit ? "Edit Tender Extension" : "Add Tender Extension"}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-xs sm:text-sm">
-            Record a formal validity extension granted by the client to update the live validity deadline.
+            Record a formal validity extension granted by the client to update
+            the live validity deadline.
           </DialogDescription>
         </DialogHeader>
 
@@ -192,17 +226,24 @@ export function ExtensionForm({
           <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs sm:text-sm">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
             <div>
-              <p className="font-medium text-amber-700 dark:text-amber-400">Not the active extension</p>
+              <p className="font-medium text-amber-700 dark:text-amber-400">
+                Not the active extension
+              </p>
               <p className="mt-0.5 text-muted-foreground text-xs">
-                This is not the latest extension. Editing this record will update its metadata
-                but <strong>will not affect</strong> the tender's current evaluation deadline — that is governed by the most recent extension.
+                This is not the latest extension. Editing this record will
+                update its metadata but <strong>will not affect</strong> the
+                tender's current evaluation deadline — that is governed by the
+                most recent extension.
               </p>
             </div>
           </div>
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-1">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 pt-1"
+          >
             {/* Validity Dates (2-col grid) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
@@ -210,9 +251,15 @@ export function ExtensionForm({
                 name="extensionDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm font-semibold">Extension Notice Date *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">
+                      Extension Notice Date *
+                    </FormLabel>
                     <FormControl>
-                      <Input type="date" className="text-xs sm:text-sm" {...field} />
+                      <Input
+                        type="date"
+                        className="text-xs sm:text-sm"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,9 +270,15 @@ export function ExtensionForm({
                 name="newEvaluationDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs sm:text-sm font-semibold">New Validity Evaluation Date *</FormLabel>
+                    <FormLabel className="text-xs sm:text-sm font-semibold">
+                      New Validity Evaluation Date *
+                    </FormLabel>
                     <FormControl>
-                      <Input type="date" className="text-xs sm:text-sm" {...field} />
+                      <Input
+                        type="date"
+                        className="text-xs sm:text-sm"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -244,11 +297,17 @@ export function ExtensionForm({
                   name="contactName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm font-semibold">Contact Person Name</FormLabel>
+                      <FormLabel className="text-xs sm:text-sm font-semibold">
+                        Contact Person Name
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input placeholder="Official contact name" className="pl-9 text-xs sm:text-sm" {...field} />
+                          <Input
+                            placeholder="Official contact name"
+                            className="pl-9 text-xs sm:text-sm"
+                            {...field}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -260,11 +319,18 @@ export function ExtensionForm({
                   name="contactEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm font-semibold">Contact Email *</FormLabel>
+                      <FormLabel className="text-xs sm:text-sm font-semibold">
+                        Contact Email *
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input placeholder="official@client.gov.za" type="email" className="pl-9 text-xs sm:text-sm" {...field} />
+                          <Input
+                            placeholder="official@client.gov.za"
+                            type="email"
+                            className="pl-9 text-xs sm:text-sm"
+                            {...field}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -279,11 +345,17 @@ export function ExtensionForm({
                   name="contactPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs sm:text-sm font-semibold">Contact Phone Number</FormLabel>
+                      <FormLabel className="text-xs sm:text-sm font-semibold">
+                        Contact Phone Number
+                      </FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input placeholder="011 800 2000" className="pl-9 text-xs sm:text-sm" {...field} />
+                          <Input
+                            placeholder="011 800 2000"
+                            className="pl-9 text-xs sm:text-sm"
+                            {...field}
+                          />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -296,24 +368,32 @@ export function ExtensionForm({
             {/* Document upload */}
             <div className="space-y-2 border-t border-border/40 pt-3">
               <FormLabel className="text-xs sm:text-sm font-semibold">
-                Extension Letter Document {!isEdit && '*'}
+                Extension Letter Document {!isEdit && "*"}
               </FormLabel>
               <FileUploader
                 value={selectedFiles}
                 onValueChange={setSelectedFiles}
                 maxFiles={1}
                 accept={{
-                  'application/pdf': ['.pdf'],
-                  'application/msword': ['.doc'],
-                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+                  "application/pdf": [".pdf"],
+                  "application/msword": [".doc"],
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    [".docx"],
                 }}
                 maxSize={10 * 1024 * 1024}
               />
-              {isEdit && extension?.documents && extension.documents.length > 0 && selectedFiles.length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Current file: <span className="font-semibold text-foreground">{extension.documents[0]?.name}</span>. Upload a new file above to replace it.
-                </p>
-              )}
+              {isEdit &&
+                extension?.documents &&
+                extension.documents.length > 0 &&
+                selectedFiles.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Current file:{" "}
+                    <span className="font-semibold text-foreground">
+                      {extension.documents[0]?.name}
+                    </span>
+                    . Upload a new file above to replace it.
+                  </p>
+                )}
             </div>
 
             {/* Notes */}
@@ -322,7 +402,9 @@ export function ExtensionForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs sm:text-sm font-semibold">Extension Notes & Justification</FormLabel>
+                  <FormLabel className="text-xs sm:text-sm font-semibold">
+                    Extension Notes & Justification
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Enter details from the extension notice, rationale provided by the client, or special stipulations..."
@@ -352,8 +434,10 @@ export function ExtensionForm({
                 disabled={isPending}
                 className="cursor-pointer bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-semibold h-9 px-4"
               >
-                {isPending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                {isEdit ? 'Save Changes' : 'Record Extension'}
+                {isPending && (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                )}
+                {isEdit ? "Save Changes" : "Record Extension"}
               </Button>
             </div>
           </form>

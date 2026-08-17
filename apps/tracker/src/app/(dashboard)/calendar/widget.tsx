@@ -1,33 +1,33 @@
-'use client';
+"use client";
 
-import React, { useCallback, useMemo, useState, useTransition } from 'react';
-import FullCalendar from '@fullcalendar/react';
+import React, { useCallback, useMemo, useState, useTransition } from "react";
+import FullCalendar from "@fullcalendar/react";
 import type {
   DatesSetArg,
   EventClickArg,
   EventInput,
-} from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { getCalendarEvents } from '@/server';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useRouter } from 'next/navigation';
+} from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { getCalendarEvents } from "@/server";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 type CalendarType =
-  | 'tender_submission'
-  | 'po_expected_delivery'
-  | 'po_delivered';
+  | "tender_submission"
+  | "po_expected_delivery"
+  | "po_delivered";
 
 export function CalendarClient() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [types, setTypes] = useState<CalendarType[]>([
-    'tender_submission',
-    'po_expected_delivery',
-    'po_delivered',
+    "tender_submission",
+    "po_expected_delivery",
+    "po_delivered",
   ]);
   const [status, setStatus] = useState<string | undefined>(undefined);
 
@@ -52,35 +52,35 @@ export function CalendarClient() {
         setEvents(fullcalendarEvents);
       });
     },
-    [types, status]
+    [types, status],
   );
 
   const headerToolbar = useMemo(
     () => ({
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay',
+      left: "prev,next today",
+      center: "title",
+      right: "dayGridMonth,timeGridWeek,timeGridDay",
     }),
-    []
+    [],
   );
 
   const [fcEvents, setFcEvents] = useState<EventInput[]>([]);
 
   const onDatesSet = useCallback(
     (arg: DatesSetArg) => handleRangeChange(arg, setFcEvents),
-    [handleRangeChange]
+    [handleRangeChange],
   );
 
   const onEventClick = useCallback(
     (info: EventClickArg) => {
       // Basic routing heuristic: tenders vs POs by CSS class
-      if (info.event.classNames.includes('event-tender_submission')) {
+      if (info.event.classNames.includes("event-tender_submission")) {
         router.push(`/tenders`);
       } else {
         router.push(`/projects`);
       }
     },
-    [router]
+    [router],
   );
 
   return (
@@ -94,13 +94,13 @@ export function CalendarClient() {
           <div className="flex items-center gap-1.5">
             <Checkbox
               id="chk-tender"
-              checked={types.includes('tender_submission')}
+              checked={types.includes("tender_submission")}
               onCheckedChange={(c) => {
                 const checked = Boolean(c);
                 setTypes((prev) =>
                   checked
-                    ? Array.from(new Set([...prev, 'tender_submission']))
-                    : prev.filter((t) => t !== 'tender_submission')
+                    ? Array.from(new Set([...prev, "tender_submission"]))
+                    : prev.filter((t) => t !== "tender_submission"),
                 );
               }}
               className="h-2 w-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
@@ -115,13 +115,13 @@ export function CalendarClient() {
           <div className="flex items-center gap-1.5">
             <Checkbox
               id="chk-po-exp"
-              checked={types.includes('po_expected_delivery')}
+              checked={types.includes("po_expected_delivery")}
               onCheckedChange={(c) => {
                 const checked = Boolean(c);
                 setTypes((prev) =>
                   checked
-                    ? Array.from(new Set([...prev, 'po_expected_delivery']))
-                    : prev.filter((t) => t !== 'po_expected_delivery')
+                    ? Array.from(new Set([...prev, "po_expected_delivery"]))
+                    : prev.filter((t) => t !== "po_expected_delivery"),
                 );
               }}
               className="h-2 w-2 data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
@@ -136,13 +136,13 @@ export function CalendarClient() {
           <div className="flex items-center gap-1.5">
             <Checkbox
               id="chk-po-del"
-              checked={types.includes('po_delivered')}
+              checked={types.includes("po_delivered")}
               onCheckedChange={(c) => {
                 const checked = Boolean(c);
                 setTypes((prev) =>
                   checked
-                    ? Array.from(new Set([...prev, 'po_delivered']))
-                    : prev.filter((t) => t !== 'po_delivered')
+                    ? Array.from(new Set([...prev, "po_delivered"]))
+                    : prev.filter((t) => t !== "po_delivered"),
                 );
               }}
               className="h-2 w-2 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
@@ -184,7 +184,7 @@ export function CalendarClient() {
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           headerToolbar={headerToolbar}
-          dayHeaderFormat={{ weekday: 'short' }}
+          dayHeaderFormat={{ weekday: "short" }}
           events={fcEvents}
           datesSet={onDatesSet}
           eventClick={onEventClick}

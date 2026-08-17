@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import React from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertTriangle,
   RefreshCw,
@@ -14,7 +14,7 @@ import {
   Server,
   Shield,
   Database,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface DashboardErrorFallbackProps {
   error?: Error;
@@ -24,41 +24,41 @@ interface DashboardErrorFallbackProps {
 
 // Enhanced error categorization
 function categorizeError(error?: Error): {
-  type: 'network' | 'permission' | 'server' | 'client' | 'database' | 'unknown';
+  type: "network" | "permission" | "server" | "client" | "database" | "unknown";
   icon: React.ReactNode;
   title: string;
   description: string;
   actionable: boolean;
 } {
-  const message = error?.message?.toLowerCase() || '';
-  const stack = error?.stack?.toLowerCase() || '';
+  const message = error?.message?.toLowerCase() || "";
+  const stack = error?.stack?.toLowerCase() || "";
 
   // Network errors
   if (
-    message.includes('network') ||
-    message.includes('fetch') ||
-    message.includes('connection')
+    message.includes("network") ||
+    message.includes("fetch") ||
+    message.includes("connection")
   ) {
     return {
-      type: 'network',
+      type: "network",
       icon: <Wifi className="h-6 w-6" />,
-      title: 'Connection Error',
+      title: "Connection Error",
       description:
-        'Unable to connect to the server. Please check your internet connection.',
+        "Unable to connect to the server. Please check your internet connection.",
       actionable: true,
     };
   }
 
   // Permission errors
   if (
-    message.includes('permission') ||
-    message.includes('unauthorized') ||
-    message.includes('forbidden')
+    message.includes("permission") ||
+    message.includes("unauthorized") ||
+    message.includes("forbidden")
   ) {
     return {
-      type: 'permission',
+      type: "permission",
       icon: <Shield className="h-6 w-6" />,
-      title: 'Access Denied',
+      title: "Access Denied",
       description: "You don't have permission to access this resource.",
       actionable: false,
     };
@@ -66,57 +66,57 @@ function categorizeError(error?: Error): {
 
   // Server errors
   if (
-    message.includes('server') ||
-    message.includes('500') ||
-    message.includes('internal')
+    message.includes("server") ||
+    message.includes("500") ||
+    message.includes("internal")
   ) {
     return {
-      type: 'server',
+      type: "server",
       icon: <Server className="h-6 w-6" />,
-      title: 'Server Error',
+      title: "Server Error",
       description:
-        'The server encountered an error. Our team has been notified.',
+        "The server encountered an error. Our team has been notified.",
       actionable: true,
     };
   }
 
   // Database errors
   if (
-    message.includes('database') ||
-    message.includes('sql') ||
-    message.includes('query')
+    message.includes("database") ||
+    message.includes("sql") ||
+    message.includes("query")
   ) {
     return {
-      type: 'database',
+      type: "database",
       icon: <Database className="h-6 w-6" />,
-      title: 'Database Error',
+      title: "Database Error",
       description:
-        'There was an issue accessing the database. Please try again.',
+        "There was an issue accessing the database. Please try again.",
       actionable: true,
     };
   }
 
   // Client-side errors (React errors, etc.)
   if (
-    stack.includes('react') ||
-    message.includes('render') ||
-    message.includes('component')
+    stack.includes("react") ||
+    message.includes("render") ||
+    message.includes("component")
   ) {
     return {
-      type: 'client',
+      type: "client",
       icon: <Bug className="h-6 w-6" />,
-      title: 'Application Error',
-      description: 'A client-side error occurred while rendering the page.',
+      title: "Application Error",
+      description: "A client-side error occurred while rendering the page.",
       actionable: true,
     };
   }
 
   // Unknown errors
   return {
-    type: 'unknown',
+    type: "unknown",
     icon: <AlertTriangle className="h-6 w-6" />,
-    title: 'Unexpected Error',
-    description: 'An unexpected error occurred. Please try again.',
+    title: "Unexpected Error",
+    description: "An unexpected error occurred. Please try again.",
     actionable: true,
   };
 }
@@ -129,7 +129,7 @@ function DashboardErrorFallback({
   const errorCategory = categorizeError(error);
 
   const handleGoHome = () => {
-    window.location.href = '/organization';
+    window.location.href = "/organization";
   };
 
   const handleReload = () => {
@@ -139,19 +139,19 @@ function DashboardErrorFallback({
   const handleReportError = () => {
     // In a real app, this would send error details to an error reporting service
     const errorDetails = {
-      message: error?.message || 'Unknown error',
-      stack: error?.stack || 'No stack trace available',
+      message: error?.message || "Unknown error",
+      stack: error?.stack || "No stack trace available",
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       url: window.location.href,
     };
 
-    console.error('Error reported:', errorDetails);
+    console.error("Error reported:", errorDetails);
 
     // You could integrate with services like Sentry, LogRocket, etc.
     // Example: Sentry.captureException(error, { extra: errorDetails });
 
-    alert('Error report sent. Thank you for helping us improve!');
+    alert("Error report sent. Thank you for helping us improve!");
   };
 
   return (
@@ -184,7 +184,7 @@ function DashboardErrorFallback({
           </div>
 
           {/* Error Details for Development */}
-          {process.env.NODE_ENV === 'development' && (
+          {process.env.NODE_ENV === "development" && (
             <details className="text-xs bg-muted p-4 rounded border">
               <summary className="cursor-pointer font-medium mb-3 text-sm">
                 🔧 Error Details (Development Mode)
@@ -193,7 +193,7 @@ function DashboardErrorFallback({
                 <div>
                   <strong>Message:</strong>
                   <pre className="mt-1 text-destructive whitespace-pre-wrap">
-                    {error?.message || 'Unknown error'}
+                    {error?.message || "Unknown error"}
                   </pre>
                 </div>
 
@@ -249,7 +249,7 @@ function DashboardErrorFallback({
           </div>
 
           {/* Report Error Button */}
-          {process.env.NODE_ENV === 'production' && (
+          {process.env.NODE_ENV === "production" && (
             <div className="text-center pt-4 border-t">
               <Button
                 onClick={handleReportError}
@@ -279,10 +279,10 @@ export function DashboardErrorBoundary({
       fallback={DashboardErrorFallback}
       onError={(error, errorInfo) => {
         // Log error for monitoring
-        console.error('Dashboard Error:', error, errorInfo);
+        console.error("Dashboard Error:", error, errorInfo);
 
         // In production, send to error reporting service
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV === "production") {
           // Example: Sentry.captureException(error, { extra: errorInfo });
         }
       }}
@@ -314,7 +314,7 @@ export function ComponentErrorBoundary({
                     {componentName} Error
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {error?.message || 'This component failed to load'}
+                    {error?.message || "This component failed to load"}
                   </p>
                 </div>
               </div>

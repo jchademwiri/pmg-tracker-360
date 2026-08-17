@@ -1,18 +1,24 @@
-'use client'
+"use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface TenderStatusChartProps {
   data: Array<{
-    name: string
-    value: number
-    fill: string
-  }>
+    name: string;
+    value: number;
+    fill: string;
+  }>;
 }
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7c7c', '#8dd1e1']
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7c7c", "#8dd1e1"];
 
 export function TenderStatusChart({ data }: TenderStatusChartProps) {
   if (data.length === 0) {
@@ -20,7 +26,9 @@ export function TenderStatusChart({ data }: TenderStatusChartProps) {
       <Card>
         <CardHeader>
           <CardTitle>Tender Status Distribution</CardTitle>
-          <CardDescription>Breakdown of tenders by current status</CardDescription>
+          <CardDescription>
+            Breakdown of tenders by current status
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -28,14 +36,16 @@ export function TenderStatusChart({ data }: TenderStatusChartProps) {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Tender Status Distribution</CardTitle>
-        <CardDescription>Breakdown of tenders by current status</CardDescription>
+        <CardDescription>
+          Breakdown of tenders by current status
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer>
@@ -60,5 +70,5 @@ export function TenderStatusChart({ data }: TenderStatusChartProps) {
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }

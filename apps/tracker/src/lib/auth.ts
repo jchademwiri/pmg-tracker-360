@@ -1,39 +1,43 @@
-import { cache } from 'react';
-import { headers } from 'next/headers';
-import { betterAuth } from 'better-auth';
-import { env } from '@/env';
-import { organization, magicLink } from 'better-auth/plugins';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { nextCookies } from 'better-auth/next-js';
-import { db } from '@pmg/db';
-import { schema } from '@pmg/db/schema';
-import { eq, and, count } from 'drizzle-orm';
-import { ac, admin, manager, member, owner } from '@/lib/auth/permissions';
-import { Resend } from 'resend';
-import ResetPasswordEmail from '@/emails/reset-password-email';
-import VerifyEmail from '@/emails/verify-email';
-import { getActiveOrganization } from '@/server';
-import OrganizationInvitation from '@/emails/organization-invitation';
-import { createAuthMiddleware, APIError } from 'better-auth/api';
-import { checkDirectSignUp } from '@/lib/auth/signup-guard';
+import { cache } from "react";
+import { headers } from "next/headers";
+import { betterAuth } from "better-auth";
+import { env } from "@/env";
+import { organization, magicLink } from "better-auth/plugins";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { db } from "@pmg/db";
+import { schema } from "@pmg/db/schema";
+import { eq, and, count } from "drizzle-orm";
+import { ac, admin, manager, member, owner } from "@/lib/auth/permissions";
+import { Resend } from "resend";
+import ResetPasswordEmail from "@/emails/reset-password-email";
+import VerifyEmail from "@/emails/verify-email";
+import { getActiveOrganization } from "@/server";
+import OrganizationInvitation from "@/emails/organization-invitation";
+import { createAuthMiddleware, APIError } from "better-auth/api";
+import { checkDirectSignUp } from "@/lib/auth/signup-guard";
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_testing');
+const resend = new Resend(
+  process.env.RESEND_API_KEY || "re_dummy_key_for_testing",
+);
 
-const senderName = process.env.SENDER_NAME || 'Tender Track 360';
-const senderEmail = process.env.SENDER_EMAIL || 'no-reply@contact.tendertrack360.co.za';
+const senderName = process.env.SENDER_NAME || "Tender Track 360";
+const senderEmail =
+  process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
 const SENDER = `${senderName} <${senderEmail}>`;
-const REPLY_TO = process.env.REPLY_TO_EMAIL || 'info@contact.tendertrack360.co.za';
-const TRACKER_PRODUCTION_URL = 'https://tendertrack360.co.za';
-const LOCAL_AUTH_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0']);
+const REPLY_TO =
+  process.env.REPLY_TO_EMAIL || "info@contact.tendertrack360.co.za";
+const TRACKER_PRODUCTION_URL = "https://tendertrack360.co.za";
+const LOCAL_AUTH_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
 function getNonLocalOrigin(value?: string) {
   if (!value) return null;
 
   try {
     const url = new URL(
-      value.startsWith('http://') || value.startsWith('https://')
+      value.startsWith("http://") || value.startsWith("https://")
         ? value
-        : `https://${value}`
+        : `https://${value}`,
     );
 
     if (LOCAL_AUTH_HOSTNAMES.has(url.hostname)) {
@@ -52,7 +56,7 @@ function getPublicEmailOrigin() {
     getNonLocalOrigin(env.BETTER_AUTH_URL) ||
     getNonLocalOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ||
     getNonLocalOrigin(process.env.VERCEL_URL) ||
-    (process.env.NODE_ENV === 'production' ? TRACKER_PRODUCTION_URL : null)
+    (process.env.NODE_ENV === "production" ? TRACKER_PRODUCTION_URL : null)
   );
 }
 
@@ -68,7 +72,7 @@ function getPublicAuthEmailUrl(url: string) {
 
     return new URL(
       `${authUrl.pathname}${authUrl.search}${authUrl.hash}`,
-      publicOrigin
+      publicOrigin,
     ).toString();
   } catch {
     return url;
@@ -89,15 +93,15 @@ export const auth = betterAuth({
   // because their Origin header never matches the request's own host.
   trustedOrigins: (request) => {
     const staticOrigins: (string | undefined | null)[] = [
-      'http://localhost:3000',
-      'https://tender-track-360.vercel.app',
-      'https://admin.tendertrack360.co.za',
+      "http://localhost:3000",
+      "https://tender-track-360.vercel.app",
+      "https://admin.tendertrack360.co.za",
       ...(env.NEXT_PUBLIC_URL ? [new URL(env.NEXT_PUBLIC_URL).origin] : []),
     ];
 
     try {
-      const requestOrigin = new URL(request?.url || '').origin;
-      return requestOrigin && requestOrigin !== 'null'
+      const requestOrigin = new URL(request?.url || "").origin;
+      return requestOrigin && requestOrigin !== "null"
         ? [...staticOrigins, requestOrigin]
         : staticOrigins;
     } catch {
@@ -109,15 +113,15 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: true,
     window: 60, // 1 minute
-    max: 10,    // limit to 10 authentication requests per window per client IP
+    max: 10, // limit to 10 authentication requests per window per client IP
   },
   advanced: {
-    cookiePrefix: 'tender-track-360',
+    cookiePrefix: "tender-track-360",
     crossSubdomainCookies: {
       enabled: true,
       domain:
-        process.env.NODE_ENV === 'production'
-          ? 'tendertrack360.co.za'
+        process.env.NODE_ENV === "production"
+          ? "tendertrack360.co.za"
           : undefined,
     },
   },
@@ -130,7 +134,7 @@ export const auth = betterAuth({
       const rejection = await checkDirectSignUp(ctx);
 
       if (rejection) {
-        throw new APIError('BAD_REQUEST', { message: rejection });
+        throw new APIError("BAD_REQUEST", { message: rejection });
       }
     }),
   },
@@ -148,7 +152,7 @@ export const auth = betterAuth({
               },
             };
           } catch (error) {
-            console.error('Error in session create hook:', error);
+            console.error("Error in session create hook:", error);
             return { data: session };
           }
         },
@@ -158,16 +162,15 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: 'string',
-        defaultValue: 'user',
+        type: "string",
+        defaultValue: "user",
         input: false, // Security: Users cannot set this via API
       },
     },
   },
-  callbacks: {
-  },
+  callbacks: {},
   database: drizzleAdapter(db, {
-    provider: 'pg', // or "mysql", "sqlite"
+    provider: "pg", // or "mysql", "sqlite"
     schema,
   }),
   socialProviders: {
@@ -181,7 +184,7 @@ export const auth = betterAuth({
       await resend.emails.send({
         from: SENDER,
         to: user.email,
-        subject: 'Verify your email address',
+        subject: "Verify your email address",
         replyTo: REPLY_TO,
         react: VerifyEmail({
           username: user.name,
@@ -201,7 +204,7 @@ export const auth = betterAuth({
         const { data, error } = await resend.emails.send({
           from: SENDER,
           to: user.email,
-          subject: 'Reset your password',
+          subject: "Reset your password",
           replyTo: REPLY_TO,
           react: ResetPasswordEmail({
             username: user.name,
@@ -210,11 +213,11 @@ export const auth = betterAuth({
           }),
         });
         if (error) {
-          console.error('Error sending reset password email:', error);
+          console.error("Error sending reset password email:", error);
           throw error;
         }
       } catch (error) {
-        console.error('Failed to send reset password email:', error);
+        console.error("Failed to send reset password email:", error);
         throw error;
       }
     },
@@ -238,7 +241,7 @@ export const auth = betterAuth({
           const { error } = await resend.emails.send({
             from: SENDER,
             to: email,
-            subject: 'Your Sign-in Code and Magic Link',
+            subject: "Your Sign-in Code and Magic Link",
             replyTo: REPLY_TO,
             html: `
               <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; border: 1px solid #e4e4e7; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
@@ -269,18 +272,18 @@ export const auth = betterAuth({
             `,
           });
           if (error) {
-            console.error('Error sending magic link email:', error);
+            console.error("Error sending magic link email:", error);
             throw error;
           }
         } catch (err) {
-          console.error('Failed to process magic link email:', err);
+          console.error("Failed to process magic link email:", err);
           throw err;
         }
       },
     }),
     organization({
       async sendInvitationEmail(data) {
-        const base = env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+        const base = env.NEXT_PUBLIC_URL || "http://localhost:3000";
         const inviteLink = `${base}/invite/accept/${data.id}`;
         await resend.emails.send({
           from: SENDER,
@@ -302,8 +305,8 @@ export const auth = betterAuth({
         // Pro: 2 Organizations
 
         // We need to cast user to any to access custom 'plan' field if types aren't inferred yet
-        const userPlan = (user as any).plan || 'free';
-        const limit = userPlan === 'pro' ? 2 : 1;
+        const userPlan = (user as any).plan || "free";
+        const limit = userPlan === "pro" ? 2 : 1;
 
         const ownedOrgsCount = await db
           .select({ count: count() })
@@ -311,8 +314,8 @@ export const auth = betterAuth({
           .where(
             and(
               eq(schema.member.userId, user.id),
-              eq(schema.member.role, 'owner')
-            )
+              eq(schema.member.role, "owner"),
+            ),
           );
 
         const currentCount = ownedOrgsCount[0]?.count || 0;

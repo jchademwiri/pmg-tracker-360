@@ -1,39 +1,35 @@
-import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { Separator } from '@/components/ui/separator';
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { AdminSidebar } from '@/components/AdminSidebar';
-import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
-import { BreadcrumbProvider } from '@/lib/breadcrumb-context';
-import {
-  Database,
-  Activity,
-  Menu,
-} from 'lucide-react';
+} from "@/components/ui/sidebar";
+import { AdminSidebar } from "@/components/AdminSidebar";
+import { AdminBreadcrumb } from "@/components/AdminBreadcrumb";
+import { BreadcrumbProvider } from "@/lib/breadcrumb-context";
+import { Database, Activity, Menu } from "lucide-react";
 
 const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: 'Platform Admin console | Tender Track 360',
-  description: 'System-wide platform controls for Tender Track 360.',
+  title: "Platform Admin console | Tender Track 360",
+  description: "System-wide platform controls for Tender Track 360.",
   icons: {
-    icon: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
@@ -48,7 +44,7 @@ export default async function RootLayout({
 
   const user = session?.user;
   const isAdmin =
-    user && (user as any).role === 'admin' && !(user as any).mustSetPassword;
+    user && (user as any).role === "admin" && !(user as any).mustSetPassword;
 
   return (
     <html
@@ -64,10 +60,7 @@ export default async function RootLayout({
           <div className="h-screen flex w-full">
             <BreadcrumbProvider>
               <SidebarProvider>
-                <AdminSidebar
-                  userName={user?.name}
-                  userEmail={user?.email}
-                />
+                <AdminSidebar userName={user?.name} userEmail={user?.email} />
                 <SidebarInset className="flex-1 flex flex-col">
                   {/* Header Bar */}
                   <header className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--sidebar-border)] bg-background/95 backdrop-blur transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/server';
+import { getCurrentUser } from "@/server";
 import {
   User,
   Bell,
@@ -9,7 +9,7 @@ import {
   Building2,
   CreditCard,
   LifeBuoy,
-} from 'lucide-react';
+} from "lucide-react";
 
 import {
   Card,
@@ -17,22 +17,22 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import Link from 'next/link';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
 
 // Force dynamic rendering since we use headers() in server functions
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // Helper function to get user initials
 function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -78,7 +78,7 @@ export default async function SettingsPage() {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage
-                src={currentUser.image || ''}
+                src={currentUser.image || ""}
                 alt={`Profile picture of ${currentUser.name}`}
               />
               <AvatarFallback className="text-lg">
@@ -128,7 +128,7 @@ export default async function SettingsPage() {
               <div>
                 <p className="text-sm font-medium">Security Score</p>
                 <p className="text-xs text-muted-foreground">
-                  {securityScore >= 80 ? 'Good' : 'Needs Attention'}
+                  {securityScore >= 80 ? "Good" : "Needs Attention"}
                 </p>
               </div>
             </div>
@@ -138,8 +138,8 @@ export default async function SettingsPage() {
                   key={i}
                   className={`h-2 flex-1 rounded-full ${
                     i < Math.floor(securityScore / 20)
-                      ? 'bg-blue-200 dark:bg-blue-800'
-                      : 'bg-muted'
+                      ? "bg-blue-200 dark:bg-blue-800"
+                      : "bg-muted"
                   }`}
                 />
               ))}
@@ -186,7 +186,10 @@ export default async function SettingsPage() {
               <div>• Manage email preferences</div>
             </div>
             <Button asChild className="w-full">
-              <Link href="/settings/profile" className="inline-flex items-center justify-center">
+              <Link
+                href="/settings/profile"
+                className="inline-flex items-center justify-center"
+              >
                 <span>Manage Profile</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>
@@ -215,7 +218,10 @@ export default async function SettingsPage() {
               <div>• Configure organization settings</div>
             </div>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/organization" className="inline-flex items-center justify-center">
+              <Link
+                href="/organization"
+                className="inline-flex items-center justify-center"
+              >
                 <span>Manage Organizations</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>
@@ -235,7 +241,8 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <CardDescription>
-              Manage subscription plans, invoices, and organization payment methods.
+              Manage subscription plans, invoices, and organization payment
+              methods.
             </CardDescription>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div>• View current active plan</div>
@@ -243,7 +250,10 @@ export default async function SettingsPage() {
               <div>• Payment history & invoices</div>
             </div>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/billing" className="inline-flex items-center justify-center">
+              <Link
+                href="/billing"
+                className="inline-flex items-center justify-center"
+              >
                 <span>Manage Billing</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>
@@ -263,7 +273,8 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <CardDescription>
-              Need assistance? Submit tickets or review guidance from the support team.
+              Need assistance? Submit tickets or review guidance from the
+              support team.
             </CardDescription>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div>• Submit a support ticket</div>
@@ -271,7 +282,10 @@ export default async function SettingsPage() {
               <div>• Access user documentation</div>
             </div>
             <Button asChild variant="outline" className="w-full">
-              <Link href="/support" className="inline-flex items-center justify-center">
+              <Link
+                href="/support"
+                className="inline-flex items-center justify-center"
+              >
                 <span>Get Support</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Link>

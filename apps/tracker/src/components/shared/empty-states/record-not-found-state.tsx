@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileQuestion, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FileQuestion, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface RecordNotFoundStateProps {
   className?: string;
@@ -14,8 +14,8 @@ interface RecordNotFoundStateProps {
 }
 
 export function RecordNotFoundState({
-  className = '',
-  title = 'Record Not Found',
+  className = "",
+  title = "Record Not Found",
   description = "The record you are looking for does not exist, has been deleted, or belongs to a different organization.",
   backLink,
   backLinkLabel,
@@ -28,9 +28,7 @@ export function RecordNotFoundState({
             <FileQuestion className="size-8 text-muted-foreground" />
           </div>
 
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            {title}
-          </h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{title}</h2>
 
           <p className="text-sm text-muted-foreground mb-6 max-w-sm leading-relaxed">
             {description}

@@ -1,9 +1,9 @@
-import { requireAdminPage } from '@/lib/require-admin-page';
-import { ShieldCheck } from 'lucide-react';
-import { getUsersWithMemberships } from '@/lib/admin-queries';
-import { selectSystemAdmins } from '@/lib/user-scopes';
-import { InviteAdminModal } from '../users/components/invite-admin-modal';
-import SystemAdminListClient from './SystemAdminListClient';
+import { requireAdminPage } from "@/lib/require-admin-page";
+import { ShieldCheck } from "lucide-react";
+import { getUsersWithMemberships } from "@/lib/admin-queries";
+import { selectSystemAdmins } from "@/lib/user-scopes";
+import { InviteAdminModal } from "../users/components/invite-admin-modal";
+import SystemAdminListClient from "./SystemAdminListClient";
 
 export default async function SystemAdminsPage() {
   // 1. Auth guard

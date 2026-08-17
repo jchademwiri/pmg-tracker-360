@@ -1,15 +1,15 @@
 import {
   getActiveOrganizations,
   getUserOrganizationMembership,
-} from '@/server/organizations';
-import { getCurrentUser } from '@/server/users';
-import type { ComponentProps } from 'react';
-import { AppSidebarClient } from './app-sidebar-client';
+} from "@/server/organizations";
+import { getCurrentUser } from "@/server/users";
+import type { ComponentProps } from "react";
+import { AppSidebarClient } from "./app-sidebar-client";
 // Remove dashboadLinks import to avoid serialization issues
 
 type AppSidebarWrapperProps = Omit<
   ComponentProps<typeof AppSidebarClient>,
-  'initialOrganizations' | 'initialUser' | 'userRole'
+  "initialOrganizations" | "initialUser" | "userRole"
 >;
 
 export async function AppSidebarWrapper(props: AppSidebarWrapperProps) {
@@ -17,11 +17,11 @@ export async function AppSidebarWrapper(props: AppSidebarWrapperProps) {
   const { currentUser, session } = await getCurrentUser();
 
   // Fetch current user's role in the active organization
-  let role = 'member'; // Default to lowest permission
+  let role = "member"; // Default to lowest permission
   if (currentUser && session?.activeOrganizationId) {
     const membership = await getUserOrganizationMembership(
       currentUser.id,
-      session.activeOrganizationId
+      session.activeOrganizationId,
     );
     if (membership) {
       role = membership.role;

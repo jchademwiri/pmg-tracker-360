@@ -1,53 +1,64 @@
-import { Clock, Users, TrendingUp, LifeBuoy, CheckCircle2, Sparkles } from 'lucide-react';
+import {
+  Clock,
+  Users,
+  TrendingUp,
+  LifeBuoy,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 
 export function CoreHighlightsSection() {
   const highlights = [
     {
       icon: Clock,
-      color: 'from-amber-500/20 to-orange-500/10 text-amber-400 border-amber-500/30',
-      title: 'Automated 11:00 AM Closing Siren',
+      color:
+        "from-amber-500/20 to-orange-500/10 text-amber-400 border-amber-500/30",
+      title: "Automated 11:00 AM Closing Siren",
       description:
-        'Never lose a tender to closing hour confusion. Real-time countdown sirens and status beacons notify your team days before cutoff.',
+        "Never lose a tender to closing hour confusion. Real-time countdown sirens and status beacons notify your team days before cutoff.",
       bullets: [
-        'Urgent closing beacons',
-        'Automated email alerts',
-        'Calendar synchronization',
+        "Urgent closing beacons",
+        "Automated email alerts",
+        "Calendar synchronization",
       ],
     },
     {
       icon: Users,
-      color: 'from-blue-500/20 to-indigo-500/10 text-blue-400 border-blue-500/30',
-      title: 'Multi-Tenant Team Collaboration',
+      color:
+        "from-blue-500/20 to-indigo-500/10 text-blue-400 border-blue-500/30",
+      title: "Multi-Tenant Team Collaboration",
       description:
-        'Invite estimators, project managers, and directors with role-based permissions (Admin, Manager, Member) and audit logs.',
+        "Invite estimators, project managers, and directors with role-based permissions (Admin, Manager, Member) and audit logs.",
       bullets: [
-        'Role-based access control',
-        'Multi-organization support',
-        'Activity audit trails',
+        "Role-based access control",
+        "Multi-organization support",
+        "Activity audit trails",
       ],
     },
     {
       icon: TrendingUp,
-      color: 'from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/30',
-      title: 'Win-Rate & Margin Analytics',
+      color:
+        "from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/30",
+      title: "Win-Rate & Margin Analytics",
       description:
-        'Analyze tender performance, win-loss ratios, client margins, and pipeline valuations with executive visual reports.',
+        "Analyze tender performance, win-loss ratios, client margins, and pipeline valuations with executive visual reports.",
       bullets: [
-        'Pipeline valuation metrics',
-        'Win-loss ratio tracking',
-        'Executive CSV & PDF reports',
+        "Pipeline valuation metrics",
+        "Win-loss ratio tracking",
+        "Executive CSV & PDF reports",
       ],
     },
     {
       icon: LifeBuoy,
-      color: 'from-amber-400/20 to-yellow-500/10 text-primary border-primary/30',
-      title: 'In-App Concierge Support Desk',
+      color:
+        "from-amber-400/20 to-yellow-500/10 text-primary border-primary/30",
+      title: "In-App Concierge Support Desk",
       description:
-        'Direct two-way support chat with systematic ticket reference codes (#TICK-1005) and instant transcript preservation.',
+        "Direct two-way support chat with systematic ticket reference codes (#TICK-1005) and instant transcript preservation.",
       bullets: [
-        'Real-time live desk triage',
-        'Transcript email delivery',
-        'Priority assistance',
+        "Real-time live desk triage",
+        "Transcript email delivery",
+        "Priority assistance",
       ],
     },
   ];
@@ -81,8 +92,14 @@ export function CoreHighlightsSection() {
               {/* Bullet points */}
               <div className="pt-4 border-t border-border/50 space-y-2">
                 {item.bullets.map((b) => (
-                  <div key={b} className="flex items-center gap-2 text-xs text-foreground/90 font-medium">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
+                  <div
+                    key={b}
+                    className="flex items-center gap-2 text-xs text-foreground/90 font-medium"
+                  >
+                    <CheckCircle2
+                      className="h-3.5 w-3.5 text-emerald-400 shrink-0"
+                      aria-hidden="true"
+                    />
                     <span>{b}</span>
                   </div>
                 ))}

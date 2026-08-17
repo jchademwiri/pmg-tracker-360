@@ -13,7 +13,11 @@ const sizeMap = {
   lg: { icon: "w-12 h-12 text-lg", text: "text-xl" },
 };
 
-export function Logo({ size = "default", className, showText = true }: LogoProps) {
+export function Logo({
+  size = "default",
+  className,
+  showText = true,
+}: LogoProps) {
   const { icon, text } = sizeMap[size];
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -21,7 +25,7 @@ export function Logo({ size = "default", className, showText = true }: LogoProps
         className={cn(
           icon,
           "rounded-md flex items-center justify-center shrink-0",
-          "bg-gradient-to-br from-brand-navy to-brand-gold"
+          "bg-gradient-to-br from-brand-navy to-brand-gold",
         )}
         aria-hidden="true"
       >

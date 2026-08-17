@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { db, getPlanLimits } from '@pmg/db';
+import { db, getPlanLimits } from "@pmg/db";
 import {
   user as userTable,
   member,
@@ -9,9 +9,19 @@ import {
   project,
   document,
   securityAuditLog,
-} from '@pmg/db/schema';
-import { eq, inArray, count, isNull, and, gte, sql, or, desc } from 'drizzle-orm';
-import { getCurrentUser } from './users';
+} from "@pmg/db/schema";
+import {
+  eq,
+  inArray,
+  count,
+  isNull,
+  and,
+  gte,
+  sql,
+  or,
+  desc,
+} from "drizzle-orm";
+import { getCurrentUser } from "./users";
 
 function getStartOfCurrentMonth(): Date {
   const now = new Date();
@@ -32,7 +42,7 @@ export async function getUserUsageStats() {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // 1. Get User's Active Organizations where user has 'owner' role
@@ -43,9 +53,9 @@ export async function getUserUsageStats() {
       .where(
         and(
           eq(member.userId, currentUser.id),
-          eq(member.role, 'owner'),
-          isNull(organization.deletedAt)
-        )
+          eq(member.role, "owner"),
+          isNull(organization.deletedAt),
+        ),
       );
 
     const ownedOrgIds = ownerMemberships.map((m) => m.organizationId);
@@ -64,8 +74,8 @@ export async function getUserUsageStats() {
           and(
             inArray(tender.organizationId, ownedOrgIds),
             gte(tender.createdAt, startOfMonth),
-            isNull(tender.deletedAt)
-          )
+            isNull(tender.deletedAt),
+          ),
         );
       tendersCount = monthlyTendersResult[0]?.count || 0;
 
@@ -75,8 +85,8 @@ export async function getUserUsageStats() {
         .where(
           and(
             inArray(tender.organizationId, ownedOrgIds),
-            isNull(tender.deletedAt)
-          )
+            isNull(tender.deletedAt),
+          ),
         );
       totalLifetimeTenders = lifetimeResult[0]?.count || 0;
     }
@@ -90,9 +100,9 @@ export async function getUserUsageStats() {
         .where(
           and(
             inArray(project.organizationId, ownedOrgIds),
-            eq(project.status, 'active'),
-            isNull(project.deletedAt)
-          )
+            eq(project.status, "active"),
+            isNull(project.deletedAt),
+          ),
         );
       projectsCount = activeProjectsResult[0]?.count || 0;
     }
@@ -116,53 +126,66 @@ export async function getUserUsageStats() {
       .where(
         and(
           eq(securityAuditLog.userId, currentUser.id),
-          eq(securityAuditLog.action, 'subscription_plan_updated')
-        )
+          eq(securityAuditLog.action, "subscription_plan_updated"),
+        ),
       )
       .orderBy(desc(securityAuditLog.createdAt));
 
     const invoices: BillingInvoice[] = auditLogs.map((log) => {
       let detailsObj: any = {};
-      if (typeof log.details === 'string') {
+      if (typeof log.details === "string") {
         try {
           detailsObj = JSON.parse(log.details);
         } catch (e) {}
-      } else if (log.details && typeof log.details === 'object') {
+      } else if (log.details && typeof log.details === "object") {
         detailsObj = log.details;
       }
 
-      const planName = (detailsObj.plan || log.resourceId || 'starter').toUpperCase();
-      const amount = detailsObj.amount ?? (planName.includes('PRO') ? 499 : planName.includes('STARTER') ? 249 : 0);
+      const planName = (
+        detailsObj.plan ||
+        log.resourceId ||
+        "starter"
+      ).toUpperCase();
+      const amount =
+        detailsObj.amount ??
+        (planName.includes("PRO")
+          ? 499
+          : planName.includes("STARTER")
+            ? 249
+            : 0);
 
       return {
         id: detailsObj.invoiceId || `INV-${log.id.slice(0, 8).toUpperCase()}`,
-        date: new Date(log.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
+        date: new Date(log.createdAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
         }),
         description: `PMG Tracker 360 Subscription (${planName} Tier)`,
         amount: amount,
-        status: 'Paid',
-        receipt: '#',
+        status: "Paid",
+        receipt: "#",
       };
     });
 
     // If user is on paid plan but has no audit log yet, generate historical invoice for active plan
-    const userPlan = (currentUser.plan || 'free').toLowerCase();
-    if (invoices.length === 0 && (userPlan === 'starter' || userPlan === 'pro')) {
-      const planPrice = userPlan === 'pro' ? 499 : 249;
+    const userPlan = (currentUser.plan || "free").toLowerCase();
+    if (
+      invoices.length === 0 &&
+      (userPlan === "starter" || userPlan === "pro")
+    ) {
+      const planPrice = userPlan === "pro" ? 499 : 249;
       invoices.push({
         id: `INV-${currentUser.id.slice(-6).toUpperCase()}-01`,
-        date: new Date(currentUser.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
+        date: new Date(currentUser.createdAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
         }),
         description: `PMG Tracker 360 Subscription (${userPlan.toUpperCase()} Tier)`,
         amount: planPrice,
-        status: 'Paid',
-        receipt: '#',
+        status: "Paid",
+        receipt: "#",
       });
     }
 
@@ -180,12 +203,12 @@ export async function getUserUsageStats() {
       invoices,
     };
   } catch (error) {
-    console.error('Error fetching user usage stats:', error);
+    console.error("Error fetching user usage stats:", error);
     return {
       success: false,
-      plan: 'free',
+      plan: "free",
       userUpdatedAt: new Date(),
-      error: 'Failed to fetch usage stats',
+      error: "Failed to fetch usage stats",
       usage: {
         organizations: 0,
         tenders: 0,
@@ -198,12 +221,12 @@ export async function getUserUsageStats() {
   }
 }
 
-export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
+export async function updateUserPlan(plan: "free" | "starter" | "pro") {
   try {
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
-      throw new Error('User not authenticated');
+      throw new Error("User not authenticated");
     }
 
     // Fetch live usage metrics for downgrade checks
@@ -211,7 +234,7 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
     if (!usageStats.success) {
       return {
         success: false,
-        error: usageStats.error || 'Failed to fetch usage stats',
+        error: usageStats.error || "Failed to fetch usage stats",
       };
     }
     const { organizations, projects, tenders, storage } = usageStats.usage;
@@ -263,10 +286,10 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
     const ownerMemberships = await db
       .select({ organizationId: member.organizationId })
       .from(member)
-      .where(and(eq(member.userId, currentUser.id), eq(member.role, 'owner')));
+      .where(and(eq(member.userId, currentUser.id), eq(member.role, "owner")));
 
     const primaryOrgId = ownerMemberships[0]?.organizationId;
-    const planPrice = plan === 'pro' ? 499 : plan === 'starter' ? 249 : 0;
+    const planPrice = plan === "pro" ? 499 : plan === "starter" ? 249 : 0;
 
     // Log subscription change to securityAuditLog
     if (primaryOrgId) {
@@ -275,8 +298,8 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
           id: crypto.randomUUID(),
           organizationId: primaryOrgId,
           userId: currentUser.id,
-          action: 'subscription_plan_updated',
-          resourceType: 'billing',
+          action: "subscription_plan_updated",
+          resourceType: "billing",
           resourceId: plan,
           details: JSON.stringify({
             plan,
@@ -284,18 +307,17 @@ export async function updateUserPlan(plan: 'free' | 'starter' | 'pro') {
             date: now.toISOString(),
             invoiceId: `INV-${Date.now().toString().slice(-6)}`,
           }),
-          severity: 'info',
+          severity: "info",
           createdAt: now,
         });
       } catch (auditError) {
-        console.warn('Failed to insert billing audit log:', auditError);
+        console.warn("Failed to insert billing audit log:", auditError);
       }
     }
 
     return { success: true };
   } catch (error: any) {
-    console.error('Error updating plan:', error);
-    return { success: false, error: error.message || 'Failed to update plan' };
+    console.error("Error updating plan:", error);
+    return { success: false, error: error.message || "Failed to update plan" };
   }
 }
-

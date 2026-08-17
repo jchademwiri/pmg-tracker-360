@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -26,7 +26,7 @@ interface ErrorFallbackProps {
 
 // Default error fallback component
 function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.NODE_ENV === "development";
 
   return (
     <div className="min-h-[400px] flex items-center justify-center p-4">
@@ -45,7 +45,7 @@ function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
             <AlertDescription>
               {isDevelopment
                 ? error.message
-                : 'An unexpected error occurred. Please try refreshing the page.'}
+                : "An unexpected error occurred. Please try refreshing the page."}
             </AlertDescription>
           </Alert>
 
@@ -67,7 +67,7 @@ function DefaultErrorFallback({ error, resetError }: ErrorFallbackProps) {
             </Button>
             <Button
               variant="outline"
-              onClick={() => (window.location.href = '/')}
+              onClick={() => (window.location.href = "/")}
               className="flex-1"
             >
               <Home className="mr-2 h-4 w-4" />
@@ -97,7 +97,7 @@ export class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
 
     // Call the onError callback if provided
     if (this.props.onError) {
@@ -111,9 +111,9 @@ export class ErrorBoundary extends React.Component<
     });
 
     // Log to external error reporting service in production
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // TODO: Integrate with error reporting service (e.g., Sentry)
-      console.error('Production error:', {
+      console.error("Production error:", {
         error: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack,
@@ -146,12 +146,12 @@ export class ErrorBoundary extends React.Component<
 // Hook for functional components to handle errors
 export function useErrorHandler() {
   return (error: Error, errorInfo?: React.ErrorInfo) => {
-    console.error('Error caught by useErrorHandler:', error, errorInfo);
+    console.error("Error caught by useErrorHandler:", error, errorInfo);
 
     // In a real app, you might want to report this to an error service
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // TODO: Report to error service
-      console.error('Production error via hook:', {
+      console.error("Production error via hook:", {
         error: error.message,
         stack: error.stack,
         timestamp: new Date().toISOString(),
@@ -166,7 +166,7 @@ export function useErrorHandler() {
 // Higher-order component for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  fallback?: React.ComponentType<ErrorFallbackProps>
+  fallback?: React.ComponentType<ErrorFallbackProps>,
 ) {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary fallback={fallback}>

@@ -1,20 +1,20 @@
-'use server';
+"use server";
 
-import { z } from 'zod';
-import { auth, getServerSession } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { revalidatePath } from 'next/cache';
-import { db } from '@pmg/db';
-import { session } from '@pmg/db/schema';
-import { eq, and, ne } from 'drizzle-orm';
+import { z } from "zod";
+import { auth, getServerSession } from "@/lib/auth";
+import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
+import { db } from "@pmg/db";
+import { session } from "@pmg/db/schema";
+import { eq, and, ne } from "drizzle-orm";
 
 // Server-side validation schema
 const updateProfileSchema = z.object({
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must not exceed 50 characters')
-    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must not exceed 50 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
@@ -22,23 +22,23 @@ export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 // Password change validation schema
 const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
+    currentPassword: z.string().min(1, "Current password is required"),
     newPassword: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      .regex(/[0-9]/, 'Password must contain at least one number')
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
       .regex(
         /[^a-zA-Z0-9]/,
-        'Password must contain at least one special character'
+        "Password must contain at least one special character",
       ),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
     signOutOtherSessions: z.boolean().default(false),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ['confirmPassword'],
+    path: ["confirmPassword"],
   });
 
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
@@ -61,7 +61,7 @@ export interface SessionInfo {
 }
 
 export async function updateProfile(
-  data: UpdateProfileData
+  data: UpdateProfileData,
 ): Promise<ActionResult> {
   try {
     // Get current session
@@ -70,7 +70,7 @@ export async function updateProfile(
     if (!session) {
       return {
         success: false,
-        message: 'You must be logged in to update your profile',
+        message: "You must be logged in to update your profile",
       };
     }
 
@@ -79,7 +79,7 @@ export async function updateProfile(
     if (!validationResult.success) {
       return {
         success: false,
-        message: 'Invalid input data',
+        message: "Invalid input data",
         data: validationResult.error.flatten().fieldErrors,
       };
     }
@@ -97,44 +97,44 @@ export async function updateProfile(
     if (!updateResult) {
       return {
         success: false,
-        message: 'Failed to update profile. Please try again.',
+        message: "Failed to update profile. Please try again.",
       };
     }
 
     // Revalidate the profile page to show updated data
-    revalidatePath('/settings/profile');
-    revalidatePath('/profile'); // Also revalidate the main profile page
+    revalidatePath("/settings/profile");
+    revalidatePath("/profile"); // Also revalidate the main profile page
 
     return {
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       data: {
         name: validatedData.name,
       },
     };
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error("Profile update error:", error);
 
     // Handle specific Better Auth errors
     if (error instanceof Error) {
-      if (error.message.includes('unauthorized')) {
+      if (error.message.includes("unauthorized")) {
         return {
           success: false,
-          message: 'You are not authorized to perform this action',
+          message: "You are not authorized to perform this action",
         };
       }
 
-      if (error.message.includes('validation')) {
+      if (error.message.includes("validation")) {
         return {
           success: false,
-          message: 'Invalid data provided',
+          message: "Invalid data provided",
         };
       }
     }
 
     return {
       success: false,
-      message: 'An unexpected error occurred. Please try again.',
+      message: "An unexpected error occurred. Please try again.",
     };
   }
 }
@@ -163,7 +163,7 @@ export async function resendVerificationEmail(): Promise<ActionResult> {
     if (!session) {
       return {
         success: false,
-        message: 'You must be logged in to resend verification email',
+        message: "You must be logged in to resend verification email",
       };
     }
 
@@ -178,7 +178,7 @@ export async function resendVerificationEmail(): Promise<ActionResult> {
         resendAttempts.set(userId, { count: 1, lastAttempt: now });
       } else if (userAttempts.count >= RESEND_RATE_LIMIT) {
         const remainingTime = Math.ceil(
-          (RESEND_WINDOW - (now - userAttempts.lastAttempt)) / 60000
+          (RESEND_WINDOW - (now - userAttempts.lastAttempt)) / 60000,
         );
         return {
           success: false,
@@ -200,7 +200,7 @@ export async function resendVerificationEmail(): Promise<ActionResult> {
     if (session.user.emailVerified) {
       return {
         success: false,
-        message: 'Your email is already verified',
+        message: "Your email is already verified",
       };
     }
 
@@ -216,50 +216,50 @@ export async function resendVerificationEmail(): Promise<ActionResult> {
     if (!result) {
       return {
         success: false,
-        message: 'Failed to send verification email. Please try again.',
+        message: "Failed to send verification email. Please try again.",
       };
     }
 
     return {
       success: true,
-      message: 'Verification email sent successfully. Please check your inbox.',
+      message: "Verification email sent successfully. Please check your inbox.",
     };
   } catch (error) {
-    console.error('Email verification resend error:', error);
+    console.error("Email verification resend error:", error);
 
     // Handle specific Better Auth errors
     if (error instanceof Error) {
-      if (error.message.includes('unauthorized')) {
+      if (error.message.includes("unauthorized")) {
         return {
           success: false,
-          message: 'You are not authorized to perform this action',
+          message: "You are not authorized to perform this action",
         };
       }
 
-      if (error.message.includes('already verified')) {
+      if (error.message.includes("already verified")) {
         return {
           success: false,
-          message: 'Your email is already verified',
+          message: "Your email is already verified",
         };
       }
 
-      if (error.message.includes('rate limit')) {
+      if (error.message.includes("rate limit")) {
         return {
           success: false,
-          message: 'Too many requests. Please wait before trying again.',
+          message: "Too many requests. Please wait before trying again.",
         };
       }
     }
 
     return {
       success: false,
-      message: 'An unexpected error occurred. Please try again.',
+      message: "An unexpected error occurred. Please try again.",
     };
   }
 }
 
 export async function changePassword(
-  data: ChangePasswordData
+  data: ChangePasswordData,
 ): Promise<ActionResult> {
   try {
     // Get current session
@@ -268,7 +268,7 @@ export async function changePassword(
     if (!session) {
       return {
         success: false,
-        message: 'You must be logged in to change your password',
+        message: "You must be logged in to change your password",
       };
     }
 
@@ -283,7 +283,7 @@ export async function changePassword(
         passwordChangeAttempts.set(userId, { count: 1, lastAttempt: now });
       } else if (userAttempts.count >= PASSWORD_CHANGE_RATE_LIMIT) {
         const remainingTime = Math.ceil(
-          (PASSWORD_CHANGE_WINDOW - (now - userAttempts.lastAttempt)) / 60000
+          (PASSWORD_CHANGE_WINDOW - (now - userAttempts.lastAttempt)) / 60000,
         );
         return {
           success: false,
@@ -306,7 +306,7 @@ export async function changePassword(
     if (!validationResult.success) {
       return {
         success: false,
-        message: 'Invalid input data',
+        message: "Invalid input data",
         data: validationResult.error.flatten().fieldErrors,
       };
     }
@@ -327,7 +327,7 @@ export async function changePassword(
       return {
         success: false,
         message:
-          'Failed to change password. Please check your current password and try again.',
+          "Failed to change password. Please check your current password and try again.",
       };
     }
 
@@ -335,87 +335,87 @@ export async function changePassword(
     passwordChangeAttempts.delete(userId);
 
     // Revalidate the profile page
-    revalidatePath('/settings/profile');
-    revalidatePath('/profile'); // Also revalidate the main profile page
+    revalidatePath("/settings/profile");
+    revalidatePath("/profile"); // Also revalidate the main profile page
 
     return {
       success: true,
       message: validatedData.signOutOtherSessions
-        ? 'Password changed successfully. Other sessions have been signed out.'
-        : 'Password changed successfully.',
+        ? "Password changed successfully. Other sessions have been signed out."
+        : "Password changed successfully.",
     };
   } catch (error) {
-    console.error('Password change error:', error);
+    console.error("Password change error:", error);
 
     // Handle specific Better Auth errors
     if (error instanceof Error) {
       if (
-        error.message.includes('unauthorized') ||
-        error.message.includes('invalid password')
+        error.message.includes("unauthorized") ||
+        error.message.includes("invalid password")
       ) {
         return {
           success: false,
-          message: 'Current password is incorrect. Please try again.',
+          message: "Current password is incorrect. Please try again.",
         };
       }
 
-      if (error.message.includes('validation')) {
+      if (error.message.includes("validation")) {
         return {
           success: false,
-          message: 'Invalid password format. Please check the requirements.',
+          message: "Invalid password format. Please check the requirements.",
         };
       }
 
-      if (error.message.includes('rate limit')) {
+      if (error.message.includes("rate limit")) {
         return {
           success: false,
-          message: 'Too many attempts. Please wait before trying again.',
+          message: "Too many attempts. Please wait before trying again.",
         };
       }
     }
 
     return {
       success: false,
-      message: 'An unexpected error occurred. Please try again.',
+      message: "An unexpected error occurred. Please try again.",
     };
   }
 }
 
 // Helper function to parse user agent for device information
 function parseUserAgent(userAgent: string | null): string {
-  if (!userAgent) return 'Unknown Device';
+  if (!userAgent) return "Unknown Device";
 
   // Simple user agent parsing - in production, consider using a library like ua-parser-js
-  if (userAgent.includes('Mobile') || userAgent.includes('Android')) {
-    if (userAgent.includes('Chrome')) return 'Mobile Chrome';
-    if (userAgent.includes('Safari')) return 'Mobile Safari';
-    if (userAgent.includes('Firefox')) return 'Mobile Firefox';
-    return 'Mobile Browser';
+  if (userAgent.includes("Mobile") || userAgent.includes("Android")) {
+    if (userAgent.includes("Chrome")) return "Mobile Chrome";
+    if (userAgent.includes("Safari")) return "Mobile Safari";
+    if (userAgent.includes("Firefox")) return "Mobile Firefox";
+    return "Mobile Browser";
   }
 
-  if (userAgent.includes('Chrome')) return 'Chrome Browser';
-  if (userAgent.includes('Safari') && !userAgent.includes('Chrome'))
-    return 'Safari Browser';
-  if (userAgent.includes('Firefox')) return 'Firefox Browser';
-  if (userAgent.includes('Edge')) return 'Edge Browser';
+  if (userAgent.includes("Chrome")) return "Chrome Browser";
+  if (userAgent.includes("Safari") && !userAgent.includes("Chrome"))
+    return "Safari Browser";
+  if (userAgent.includes("Firefox")) return "Firefox Browser";
+  if (userAgent.includes("Edge")) return "Edge Browser";
 
-  return 'Desktop Browser';
+  return "Desktop Browser";
 }
 
 // Helper function to get location from IP (placeholder - in production, use a geolocation service)
 function getLocationFromIP(ipAddress: string | null): string {
-  if (!ipAddress) return 'Unknown Location';
+  if (!ipAddress) return "Unknown Location";
 
   // Placeholder - in production, integrate with a geolocation service
   if (
-    ipAddress === '127.0.0.1' ||
-    ipAddress.startsWith('192.168.') ||
-    ipAddress.startsWith('10.')
+    ipAddress === "127.0.0.1" ||
+    ipAddress.startsWith("192.168.") ||
+    ipAddress.startsWith("10.")
   ) {
-    return 'Local Network';
+    return "Local Network";
   }
 
-  return 'Unknown Location';
+  return "Unknown Location";
 }
 
 export async function getUserSessions(): Promise<ActionResult> {
@@ -426,7 +426,7 @@ export async function getUserSessions(): Promise<ActionResult> {
     if (!currentSession) {
       return {
         success: false,
-        message: 'You must be logged in to view sessions',
+        message: "You must be logged in to view sessions",
       };
     }
 
@@ -456,14 +456,14 @@ export async function getUserSessions(): Promise<ActionResult> {
 
     return {
       success: true,
-      message: 'Sessions retrieved successfully',
+      message: "Sessions retrieved successfully",
       data: sessionInfos,
     };
   } catch (error) {
-    console.error('Get user sessions error:', error);
+    console.error("Get user sessions error:", error);
     return {
       success: false,
-      message: 'Failed to retrieve sessions. Please try again.',
+      message: "Failed to retrieve sessions. Please try again.",
     };
   }
 }
@@ -476,7 +476,7 @@ export async function revokeSession(sessionId: string): Promise<ActionResult> {
     if (!currentSession) {
       return {
         success: false,
-        message: 'You must be logged in to revoke sessions',
+        message: "You must be logged in to revoke sessions",
       };
     }
 
@@ -484,7 +484,7 @@ export async function revokeSession(sessionId: string): Promise<ActionResult> {
     if (sessionId === currentSession.session.id) {
       return {
         success: false,
-        message: 'Cannot revoke your current session',
+        message: "Cannot revoke your current session",
       };
     }
 
@@ -494,19 +494,19 @@ export async function revokeSession(sessionId: string): Promise<ActionResult> {
       .where(
         and(
           eq(session.id, sessionId),
-          eq(session.userId, currentSession.user.id)
-        )
+          eq(session.userId, currentSession.user.id),
+        ),
       );
 
     return {
       success: true,
-      message: 'Session revoked successfully',
+      message: "Session revoked successfully",
     };
   } catch (error) {
-    console.error('Revoke session error:', error);
+    console.error("Revoke session error:", error);
     return {
       success: false,
-      message: 'Failed to revoke session. Please try again.',
+      message: "Failed to revoke session. Please try again.",
     };
   }
 }
@@ -519,7 +519,7 @@ export async function revokeAllOtherSessions(): Promise<ActionResult> {
     if (!currentSession) {
       return {
         success: false,
-        message: 'You must be logged in to revoke sessions',
+        message: "You must be logged in to revoke sessions",
       };
     }
 
@@ -529,19 +529,19 @@ export async function revokeAllOtherSessions(): Promise<ActionResult> {
       .where(
         and(
           eq(session.userId, currentSession.user.id),
-          ne(session.id, currentSession.session.id)
-        )
+          ne(session.id, currentSession.session.id),
+        ),
       );
 
     return {
       success: true,
-      message: 'All other sessions have been signed out successfully',
+      message: "All other sessions have been signed out successfully",
     };
   } catch (error) {
-    console.error('Revoke all other sessions error:', error);
+    console.error("Revoke all other sessions error:", error);
     return {
       success: false,
-      message: 'Failed to sign out other sessions. Please try again.',
+      message: "Failed to sign out other sessions. Please try again.",
     };
   }
 }

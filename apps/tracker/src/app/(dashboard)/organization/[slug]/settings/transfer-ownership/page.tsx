@@ -1,7 +1,7 @@
-import { notFound, redirect } from 'next/navigation';
-import { getOrganizationBySlug } from '@/server/organizations';
-import { TransferOwnershipClient } from './client';
-import { getServerSession } from '@/lib/auth';
+import { notFound, redirect } from "next/navigation";
+import { getOrganizationBySlug } from "@/server/organizations";
+import { TransferOwnershipClient } from "./client";
+import { getServerSession } from "@/lib/auth";
 
 interface TransferOwnershipPageProps {
   params: Promise<{

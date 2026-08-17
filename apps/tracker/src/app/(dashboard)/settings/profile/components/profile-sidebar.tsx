@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   useState,
@@ -6,23 +6,23 @@ import {
   useOptimistic,
   useRef,
   useEffect,
-} from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { toast } from 'sonner';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Mail,
   CalendarDays,
@@ -35,18 +35,18 @@ import {
   X,
   Loader2,
   Clock,
-} from 'lucide-react';
-import { AvatarUpload } from './avatar-upload';
-import { updateUserImage, removeUserImage } from '@/server/users';
-import type { UpdateProfileData, ActionResult } from '../actions';
+} from "lucide-react";
+import { AvatarUpload } from "./avatar-upload";
+import { updateUserImage, removeUserImage } from "@/server/users";
+import type { UpdateProfileData, ActionResult } from "../actions";
 
 // Validation schema
 const profileFormSchema = z.object({
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must not exceed 50 characters')
-    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must not exceed 50 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -93,7 +93,7 @@ export function ProfileSidebar({
     (state, updates: { name?: string; image?: string | null }) => ({
       ...state,
       ...updates,
-    })
+    }),
   );
 
   const form = useForm<ProfileFormData>({
@@ -122,16 +122,16 @@ export function ProfileSidebar({
         } else {
           updateOptimisticUser({ name: currentUser.name });
           toast.error(result.message);
-          if (result.data && typeof result.data === 'object') {
+          if (result.data && typeof result.data === "object") {
             const errors = result.data as Record<string, string[]>;
             if (errors.name?.[0]) {
-              form.setError('name', { message: errors.name[0] });
+              form.setError("name", { message: errors.name[0] });
             }
           }
         }
       } catch (error) {
         updateOptimisticUser({ name: currentUser.name });
-        toast.error('An unexpected error occurred.');
+        toast.error("An unexpected error occurred.");
       }
     });
   };
@@ -147,43 +147,43 @@ export function ProfileSidebar({
       const result = await removeUserImage();
       if (result.success) {
         updateOptimisticUser({ image: null });
-        toast.success('Profile picture removed');
+        toast.success("Profile picture removed");
       } else {
-        toast.error(result.error || 'Failed to remove profile picture');
+        toast.error(result.error || "Failed to remove profile picture");
       }
     } catch (error) {
-      console.error('Failed to remove profile picture:', error);
-      toast.error('Failed to remove profile picture');
+      console.error("Failed to remove profile picture:", error);
+      toast.error("Failed to remove profile picture");
     }
   };
 
   const handleUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     return await updateUserImage(formData);
   };
 
   // Helpers
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     }).format(new Date(date));
   };
 
   const copyEmail = () => {
     navigator.clipboard.writeText(currentUser.email);
-    toast.success('Email copied to clipboard');
+    toast.success("Email copied to clipboard");
   };
 
   return (
@@ -217,7 +217,7 @@ export function ProfileSidebar({
           ) : (
             <Avatar className="h-24 w-24 border-4 border-background shadow-sm bg-background">
               <AvatarImage
-                src={optimisticUser.image || ''}
+                src={optimisticUser.image || ""}
                 alt={`Profile picture of ${optimisticUser.name}`}
               />
               <AvatarFallback className="text-xl font-medium bg-secondary text-secondary-foreground">

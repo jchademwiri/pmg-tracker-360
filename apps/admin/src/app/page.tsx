@@ -1,9 +1,9 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { db } from '@pmg/db';
-import { user } from '@pmg/db/schema';
-import { count, eq } from 'drizzle-orm';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { db } from "@pmg/db";
+import { user } from "@pmg/db/schema";
+import { count, eq } from "drizzle-orm";
 import {
   Users,
   Building2,
@@ -14,16 +14,16 @@ import {
   LifeBuoy,
   Users2,
   LogOut,
-} from 'lucide-react';
-import { adminSignOut } from '@/app/actions';
-import AlertTray from '@/components/AlertTray';
-import MetricCard from '@/components/MetricCard';
+} from "lucide-react";
+import { adminSignOut } from "@/app/actions";
+import AlertTray from "@/components/AlertTray";
+import MetricCard from "@/components/MetricCard";
 import {
   getDashboardMetrics,
   getAlertCounts,
   getRecentActivity,
   getSuspiciousSessions,
-} from '@/lib/admin-queries';
+} from "@/lib/admin-queries";
 
 /* -------------------------------------------------------------------------- */
 /*  Pure helpers                                                               */
@@ -32,7 +32,7 @@ import {
 function formatRelativeTime(date: Date): string {
   const diff = Date.now() - date.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
@@ -44,10 +44,10 @@ function formatRelativeTime(date: Date): string {
 /*  Page                                                                       */
 /* -------------------------------------------------------------------------- */
 
-import QuickActionsBar from '@/components/dashboard/QuickActionsBar';
-import RevenueAnalytics from '@/components/dashboard/RevenueAnalytics';
-import SystemHealthWidget from '@/components/dashboard/SystemHealthWidget';
-import SecurityLogStream from '@/components/dashboard/SecurityLogStream';
+import QuickActionsBar from "@/components/dashboard/QuickActionsBar";
+import RevenueAnalytics from "@/components/dashboard/RevenueAnalytics";
+import SystemHealthWidget from "@/components/dashboard/SystemHealthWidget";
+import SecurityLogStream from "@/components/dashboard/SecurityLogStream";
 
 export default async function AdminDashboardPage() {
   // 1. Auth guard
@@ -55,20 +55,20 @@ export default async function AdminDashboardPage() {
     headers: await headers(),
   });
 
-  if (!session || (session.user as any).role !== 'admin') {
+  if (!session || (session.user as any).role !== "admin") {
     const adminCountResult = await db
       .select({ count: count() })
       .from(user)
-      .where(eq(user.role, 'admin'));
+      .where(eq(user.role, "admin"));
     const adminCount = adminCountResult[0]?.count ?? 0;
     if (adminCount === 0) {
-      redirect('/setup');
+      redirect("/setup");
     }
-    redirect('/login');
+    redirect("/login");
   }
 
   if ((session.user as any).mustSetPassword) {
-    redirect('/set-password');
+    redirect("/set-password");
   }
 
   // 2. Data fetching
@@ -90,60 +90,60 @@ export default async function AdminDashboardPage() {
   // Alert definitions
   const alerts = [
     {
-      id: 'suspicious',
+      id: "suspicious",
       label: `${alertCounts.suspiciousSessions} suspicious active session(s)`,
       count: alertCounts.suspiciousSessions,
-      severity: 'critical' as const,
-      href: '/sessions',
+      severity: "critical" as const,
+      href: "/sessions",
     },
     {
-      id: 'unverified',
+      id: "unverified",
       label: `${alertCounts.unverifiedRecentUsers} unverified user(s) registered in the last 7 days`,
       count: alertCounts.unverifiedRecentUsers,
-      severity: 'high' as const,
-      href: '/users',
+      severity: "high" as const,
+      href: "/users",
     },
     {
-      id: 'purge',
+      id: "purge",
       label: `${alertCounts.pendingPurgeOrgs} organisation(s) scheduled for deletion within 72 hours`,
       count: alertCounts.pendingPurgeOrgs,
-      severity: 'high' as const,
-      href: '/organizations',
+      severity: "high" as const,
+      href: "/organizations",
     },
     {
-      id: 'invitations',
+      id: "invitations",
       label: `${alertCounts.expiringInvitations} invitation(s) expiring within 48 hours`,
       count: alertCounts.expiringInvitations,
-      severity: 'medium' as const,
-      href: '/organizations',
+      severity: "medium" as const,
+      href: "/organizations",
     },
     {
-      id: 'transfers',
+      id: "transfers",
       label: `${alertCounts.expiringTransfers} ownership transfer(s) expiring within 24 hours`,
       count: alertCounts.expiringTransfers,
-      severity: 'medium' as const,
-      href: '/',
+      severity: "medium" as const,
+      href: "/",
     },
     {
-      id: 'tickets',
+      id: "tickets",
       label: `${alertCounts.openTickets} open support ticket(s)`,
       count: alertCounts.openTickets,
-      severity: 'low' as const,
-      href: '/support-tickets',
+      severity: "low" as const,
+      href: "/support-tickets",
     },
   ];
 
   // Pipeline bar helper
   const pipelineStatuses: Array<{
-    key: 'draft' | 'submitted' | 'won' | 'lost' | 'pending';
+    key: "draft" | "submitted" | "won" | "lost" | "pending";
     label: string;
     color: string;
   }> = [
-    { key: 'draft', label: 'Draft', color: 'bg-zinc-500' },
-    { key: 'submitted', label: 'Submitted', color: 'bg-indigo-500' },
-    { key: 'won', label: 'Won', color: 'bg-emerald-500' },
-    { key: 'lost', label: 'Lost', color: 'bg-red-500' },
-    { key: 'pending', label: 'Pending', color: 'bg-amber-500' },
+    { key: "draft", label: "Draft", color: "bg-zinc-500" },
+    { key: "submitted", label: "Submitted", color: "bg-indigo-500" },
+    { key: "won", label: "Won", color: "bg-emerald-500" },
+    { key: "lost", label: "Lost", color: "bg-red-500" },
+    { key: "pending", label: "Pending", color: "bg-amber-500" },
   ];
 
   return (
@@ -157,7 +157,8 @@ export default async function AdminDashboardPage() {
             Platform Overview
           </h1>
           <p className="text-sm text-zinc-400">
-            Real-time platform health, revenue metrics, security audit stream, and administrative controls.
+            Real-time platform health, revenue metrics, security audit stream,
+            and administrative controls.
           </p>
         </div>
         <form action={adminSignOut}>
@@ -218,7 +219,7 @@ export default async function AdminDashboardPage() {
           label="Email Verified"
           count={`${verifiedPct}%`}
           icon={<ShieldCheck className="h-5 w-5 text-emerald-400" />}
-          variant={metrics.unverifiedCount > 0 ? 'danger' : 'success'}
+          variant={metrics.unverifiedCount > 0 ? "danger" : "success"}
           secondaryNote={`${metrics.unverifiedCount} unverified`}
           href="/users?verified=unverified"
         />
@@ -226,7 +227,7 @@ export default async function AdminDashboardPage() {
           label="Open Tickets"
           count={metrics.openTickets}
           icon={<LifeBuoy className="h-5 w-5 text-red-400" />}
-          variant={metrics.openTickets > 0 ? 'danger' : 'success'}
+          variant={metrics.openTickets > 0 ? "danger" : "success"}
           secondaryNote={`${metrics.inProgressTickets} in progress`}
         />
         <MetricCard
@@ -259,14 +260,16 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Tender pipeline health */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-          <h2 className="text-base font-semibold text-white">Tender Pipeline Distribution</h2>
+          <h2 className="text-base font-semibold text-white">
+            Tender Pipeline Distribution
+          </h2>
           <div className="space-y-3">
             {pipelineStatuses.map(({ key, label, color }) => {
               const cnt = metrics.tenderByStatus[key];
               const pct =
                 totalTenders > 0
                   ? ((cnt / totalTenders) * 100).toFixed(1)
-                  : '0';
+                  : "0";
               return (
                 <div key={key} className="space-y-1">
                   <div className="flex items-center justify-between text-xs text-zinc-400">
@@ -302,12 +305,14 @@ export default async function AdminDashboardPage() {
                 <ul className="space-y-1 mt-2">
                   {suspiciousSessions.slice(0, 3).map((s) => (
                     <li key={s.id} className="text-xs text-zinc-400 truncate">
-                      {s.userEmail ?? '(unknown)'}
+                      {s.userEmail ?? "(unknown)"}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-zinc-500 mt-2">No active suspicious sessions.</p>
+                <p className="text-xs text-zinc-500 mt-2">
+                  No active suspicious sessions.
+                </p>
               )}
             </div>
             <a
@@ -321,7 +326,9 @@ export default async function AdminDashboardPage() {
           {/* Support Tickets Overview */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3 flex flex-col justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-white">Support Ticket Status</h3>
+              <h3 className="text-sm font-semibold text-white">
+                Support Ticket Status
+              </h3>
               <div className="space-y-2 text-xs text-zinc-400 mt-3">
                 <div className="flex justify-between items-center p-2 bg-zinc-950/60 rounded-lg">
                   <span>Open Tickets</span>

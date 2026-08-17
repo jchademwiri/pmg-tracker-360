@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { createSystemAdmin } from '../actions';
-import { ShieldAlert, Loader, Lock, Mail, User, ShieldCheck } from 'lucide-react';
+import React, { useState } from "react";
+import { createSystemAdmin } from "../actions";
+import {
+  ShieldAlert,
+  Loader,
+  Lock,
+  Mail,
+  User,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function SetupForm() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,13 +30,13 @@ export default function SetupForm() {
         setSuccess(response.message);
         // After 2.5 seconds, redirect to the login screen
         setTimeout(() => {
-          window.location.replace('/login');
+          window.location.replace("/login");
         }, 2500);
       } else {
         setError(response.error);
       }
     } catch {
-      setError('An unexpected error occurred during setup. Please try again.');
+      setError("An unexpected error occurred during setup. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -45,9 +52,7 @@ export default function SetupForm() {
           <h1 className="text-2xl font-bold tracking-tight text-white">
             System Initialized!
           </h1>
-          <p className="text-sm text-zinc-400">
-            {success}
-          </p>
+          <p className="text-sm text-zinc-400">{success}</p>
         </div>
         <div className="text-xs text-zinc-500 animate-pulse">
           Redirecting to authentication console...
@@ -75,7 +80,9 @@ export default function SetupForm() {
 
       {/* 2. SECURITY NOTE */}
       <div className="p-4 bg-amber-950/20 border border-amber-900/40 rounded-xl text-xs leading-relaxed text-amber-200">
-        <strong>⚠️ Security Lockout Rule:</strong> This setup page is only accessible when zero administrators exist in the database. Once you create this initial account, this route will be permanently deactivated.
+        <strong>⚠️ Security Lockout Rule:</strong> This setup page is only
+        accessible when zero administrators exist in the database. Once you
+        create this initial account, this route will be permanently deactivated.
       </div>
 
       {/* 3. ERROR DISPLAY CONTAINER */}
@@ -156,7 +163,7 @@ export default function SetupForm() {
           {loading ? (
             <Loader className="h-4 w-4 animate-spin text-black" />
           ) : (
-            'INITIALIZE SYSTEM ADMIN'
+            "INITIALIZE SYSTEM ADMIN"
           )}
         </button>
       </form>

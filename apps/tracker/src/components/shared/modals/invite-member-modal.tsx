@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { inviteMember } from '@/server/invitations';
-import type { Role } from '@pmg/db/schema';
-import { handleSuccess } from '@/lib/error-handler';
-import { Loader, AlertCircle } from 'lucide-react';
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { inviteMember } from "@/server/invitations";
+import type { Role } from "@pmg/db/schema";
+import { handleSuccess } from "@/lib/error-handler";
+import { Loader, AlertCircle } from "lucide-react";
 
 interface InviteMemberModalProps {
   organizationId: string;
@@ -32,7 +32,7 @@ interface InviteMemberModalProps {
 
 interface InviteMemberForm {
   email: string;
-  role: Role | '';
+  role: Role | "";
 }
 
 interface FormErrors {
@@ -51,8 +51,8 @@ export function InviteMemberModal({
   onSuccess,
 }: InviteMemberModalProps) {
   const [form, setForm] = useState<InviteMemberForm>({
-    email: '',
-    role: '',
+    email: "",
+    role: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -60,7 +60,7 @@ export function InviteMemberModal({
   // Reset form when modal opens/closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      setForm({ email: '', role: '' });
+      setForm({ email: "", role: "" });
       setErrors({});
       setIsLoading(false);
       onClose();
@@ -73,14 +73,14 @@ export function InviteMemberModal({
 
     // Email validation
     if (!form.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!EMAIL_REGEX.test(form.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
 
     // Role validation
     if (!form.role) {
-      newErrors.role = 'Role is required';
+      newErrors.role = "Role is required";
     }
 
     setErrors(newErrors);
@@ -102,43 +102,43 @@ export function InviteMemberModal({
       const result = await inviteMember(
         organizationId,
         form.email,
-        form.role as Role
+        form.role as Role,
       );
 
       if (result.success) {
-        handleSuccess('Invitation sent successfully!', {
+        handleSuccess("Invitation sent successfully!", {
           description: `An invitation has been sent to ${form.email}`,
         });
 
         // Reset form and close modal
-        setForm({ email: '', role: '' });
+        setForm({ email: "", role: "" });
         onSuccess();
         onClose();
       } else {
         // Handle server-side errors with enhanced error handling
         const errorCode = result.error?.code;
         const errorMessage =
-          result.error?.message || 'Failed to send invitation';
+          result.error?.message || "Failed to send invitation";
 
         // Show specific error messages based on error codes
         switch (errorCode) {
-          case 'INVALID_EMAIL':
+          case "INVALID_EMAIL":
             setErrors({ email: errorMessage });
             break;
-          case 'INVALID_ROLE':
+          case "INVALID_ROLE":
             setErrors({ role: errorMessage });
             break;
-          case 'ALREADY_MEMBER':
-          case 'INVITATION_EXISTS':
+          case "ALREADY_MEMBER":
+          case "INVITATION_EXISTS":
             setErrors({ email: errorMessage });
             break;
-          case 'INSUFFICIENT_PERMISSIONS':
+          case "INSUFFICIENT_PERMISSIONS":
             setErrors({ general: errorMessage });
             break;
-          case 'RATE_LIMIT_EXCEEDED':
+          case "RATE_LIMIT_EXCEEDED":
             setErrors({
               general:
-                'Too many invitations sent. Please wait before sending more.',
+                "Too many invitations sent. Please wait before sending more.",
             });
             break;
           default:
@@ -147,19 +147,19 @@ export function InviteMemberModal({
         }
       }
     } catch (error) {
-      console.error('Error inviting member:', error);
+      console.error("Error inviting member:", error);
 
       // Enhanced error handling for network/unexpected errors
       if (
         error instanceof Error &&
-        error.message.toLowerCase().includes('network')
+        error.message.toLowerCase().includes("network")
       ) {
         setErrors({
-          general: 'Network error. Please check your connection and try again.',
+          general: "Network error. Please check your connection and try again.",
         });
       } else {
         setErrors({
-          general: 'An unexpected error occurred. Please try again later.',
+          general: "An unexpected error occurred. Please try again later.",
         });
       }
     } finally {
@@ -208,11 +208,11 @@ export function InviteMemberModal({
               value={form.email}
               onChange={(e) => handleEmailChange(e.target.value)}
               className={
-                errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
+                errors.email ? "border-red-500 focus-visible:ring-red-500" : ""
               }
               disabled={isLoading}
               autoComplete="email"
-              aria-describedby={errors.email ? 'email-error' : undefined}
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
             {errors.email && (
               <p
@@ -234,7 +234,7 @@ export function InviteMemberModal({
             >
               <SelectTrigger
                 className={
-                  errors.role ? 'border-red-500 focus:ring-red-500' : ''
+                  errors.role ? "border-red-500 focus:ring-red-500" : ""
                 }
                 aria-label="Role"
               >
@@ -274,7 +274,7 @@ export function InviteMemberModal({
                   <span>Sending...</span>
                 </div>
               ) : (
-                'Send Invite'
+                "Send Invite"
               )}
             </Button>
           </div>

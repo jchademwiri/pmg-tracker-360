@@ -1,16 +1,16 @@
-import { Suspense } from 'react';
-import { notFound, redirect } from 'next/navigation';
-import { getCurrentUser } from '@/server';
+import { Suspense } from "react";
+import { notFound, redirect } from "next/navigation";
+import { getCurrentUser } from "@/server";
 import {
   getOrganizationBySlugWithUserRole,
   getUserOrganizationMembership,
-} from '@/server/organizations';
-import { OrganizationManagementTabs } from './components/organization-management-tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { OrganizationSettingsWrapper } from '@/components/organization/organization-settings-wrapper';
+} from "@/server/organizations";
+import { OrganizationManagementTabs } from "./components/organization-management-tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { OrganizationSettingsWrapper } from "@/components/organization/organization-settings-wrapper";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface OrganizationManagementPageProps {
   params: Promise<{ slug: string }>;
@@ -29,12 +29,12 @@ async function OrganizationManagementContent({ slug }: { slug: string }) {
   // Check if user has access to this organization
   const userMembership = await getUserOrganizationMembership(
     currentUser.id,
-    organizationData.id
+    organizationData.id,
   );
 
   if (!userMembership) {
     // User doesn't belong to this organization
-    redirect('/organization');
+    redirect("/organization");
   }
 
   // Do not redirect members back to the same route. Pass the role through so the
@@ -44,9 +44,11 @@ async function OrganizationManagementContent({ slug }: { slug: string }) {
       <OrganizationManagementTabs
         organization={{
           ...organizationData,
-          metadata: typeof organizationData.metadata === 'object' && organizationData.metadata !== null
-            ? JSON.stringify(organizationData.metadata)
-            : (organizationData.metadata as string | null | undefined),
+          metadata:
+            typeof organizationData.metadata === "object" &&
+            organizationData.metadata !== null
+              ? JSON.stringify(organizationData.metadata)
+              : (organizationData.metadata as string | null | undefined),
         }}
         userRole={userMembership.role}
         currentUser={currentUser}

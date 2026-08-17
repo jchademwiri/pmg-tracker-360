@@ -1,12 +1,12 @@
-import { Suspense } from 'react';
-import { getorganizations } from '@/server/organizations';
-import { getCurrentUser } from '@/server';
-import { Building2, Users, Shield, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { OrganizationGrid } from '@/components/organization-grid';
-import { OrganizationGridSkeleton } from '@/components/shared/loading';
+import { Suspense } from "react";
+import { getorganizations } from "@/server/organizations";
+import { getCurrentUser } from "@/server";
+import { Building2, Users, Shield, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OrganizationGrid } from "@/components/organization-grid";
+import { OrganizationGridSkeleton } from "@/components/shared/loading";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 async function OrganizationContent() {
   try {
@@ -17,13 +17,13 @@ async function OrganizationContent() {
     const totalOrganizations = organizations.length;
     const totalMembers = organizations.reduce(
       (sum, org) => sum + org.memberCount,
-      0
+      0,
     );
     const ownedOrganizations = organizations.filter(
-      (org) => org.userRole === 'owner'
+      (org) => org.userRole === "owner",
     ).length;
     const managedOrganizations = organizations.filter((org) =>
-      ['owner', 'admin', 'manager'].includes(org.userRole)
+      ["owner", "admin", "manager"].includes(org.userRole),
     ).length;
 
     return (
@@ -94,11 +94,14 @@ async function OrganizationContent() {
         )}
 
         {/* Organizations Grid */}
-        <OrganizationGrid organizations={organizations} activeOrganizationId={session?.activeOrganizationId ?? undefined} />
+        <OrganizationGrid
+          organizations={organizations}
+          activeOrganizationId={session?.activeOrganizationId ?? undefined}
+        />
       </div>
     );
   } catch (error) {
-    console.error('Error loading organizations:', error);
+    console.error("Error loading organizations:", error);
     return (
       <div className="text-center py-12">
         <div className="mx-auto w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">

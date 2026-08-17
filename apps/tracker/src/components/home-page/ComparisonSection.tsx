@@ -1,41 +1,52 @@
-import { Check, X, ShieldCheck, Zap } from 'lucide-react';
+import { Check, X, ShieldCheck, Zap } from "lucide-react";
 
 export function ComparisonSection() {
   const comparisonRows = [
     {
-      capability: 'Briefing Session Reminders',
-      without: 'Missed mandatory site briefings leading to automatic disqualification',
-      withTt: 'Automated briefing alerts with calendar integration and venue details',
+      capability: "Briefing Session Reminders",
+      without:
+        "Missed mandatory site briefings leading to automatic disqualification",
+      withTt:
+        "Automated briefing alerts with calendar integration and venue details",
     },
     {
-      capability: 'Closing Date Alarms',
-      without: 'Scrambling on closing morning, risking strict 11:00 AM cutoffs',
-      withTt: '72h, 24h, and 4h countdown alarms with pre-flight returnables check',
+      capability: "Closing Date Alarms",
+      without: "Scrambling on closing morning, risking strict 11:00 AM cutoffs",
+      withTt:
+        "72h, 24h, and 4h countdown alarms with pre-flight returnables check",
     },
     {
-      capability: 'Tender Validity Expiry Follow-up',
-      without: 'Submitted bids forgotten; no follow-up when 90-day validity lapses',
-      withTt: 'Automatic validity countdown with prompt to follow up with SCM',
+      capability: "Tender Validity Expiry Follow-up",
+      without:
+        "Submitted bids forgotten; no follow-up when 90-day validity lapses",
+      withTt: "Automatic validity countdown with prompt to follow up with SCM",
     },
     {
-      capability: 'Awarded Project & PO Tracking',
-      without: 'Scattered spreadsheets to track PO line items and supplier deliveries',
-      withTt: 'Centralized PO ledger linked directly to the won tender and project',
+      capability: "Awarded Project & PO Tracking",
+      without:
+        "Scattered spreadsheets to track PO line items and supplier deliveries",
+      withTt:
+        "Centralized PO ledger linked directly to the won tender and project",
     },
     {
-      capability: 'Cash Flow & Income Projections',
-      without: 'Financial guesswork and uncertainty over upcoming payment milestones',
-      withTt: 'Accurate 30/60/90-day cash projections based on active PO balances',
+      capability: "Cash Flow & Income Projections",
+      without:
+        "Financial guesswork and uncertainty over upcoming payment milestones",
+      withTt:
+        "Accurate 30/60/90-day cash projections based on active PO balances",
     },
     {
-      capability: 'Tender Submission Preparedness',
-      without: 'Panic searching through folders for previous compliance packs',
-      withTt: 'Always organized, audit-ready, and prepared for any tender inquiry',
+      capability: "Tender Submission Preparedness",
+      without: "Panic searching through folders for previous compliance packs",
+      withTt:
+        "Always organized, audit-ready, and prepared for any tender inquiry",
     },
     {
-      capability: 'Executive & Presentation Reporting',
-      without: 'Manually copying messy spreadsheets into Word for management meetings',
-      withTt: '1-Click download of presentation-ready PDF reports & formatted Excel workbooks',
+      capability: "Executive & Presentation Reporting",
+      without:
+        "Manually copying messy spreadsheets into Word for management meetings",
+      withTt:
+        "1-Click download of presentation-ready PDF reports & formatted Excel workbooks",
     },
   ];
 
@@ -51,7 +62,9 @@ export function ComparisonSection() {
             Why Contractors Choose to Manage Tenders & POs with Tender Track 360
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground text-pretty">
-            Compare manual spreadsheet tracking against an automated procurement system engineered to keep your bids on schedule and your POs under control.
+            Compare manual spreadsheet tracking against an automated procurement
+            system engineered to keep your bids on schedule and your POs under
+            control.
           </p>
         </div>
 
@@ -81,11 +94,16 @@ export function ComparisonSection() {
                   {row.capability}
                 </div>
                 <div className="md:col-span-4 text-muted-foreground flex items-start gap-2 pr-4">
-                  <span className="text-rose-400 font-bold shrink-0 mt-0.5">&times;</span>
+                  <span className="text-rose-400 font-bold shrink-0 mt-0.5">
+                    &times;
+                  </span>
                   <span>{row.without}</span>
                 </div>
                 <div className="md:col-span-4 text-foreground flex items-start gap-2 font-medium bg-amber-500/5 md:bg-transparent p-2.5 md:p-0 rounded-xl border border-amber-500/20 md:border-0">
-                  <Check className="h-4 w-4 text-emerald-400 font-bold shrink-0 mt-0.5" aria-hidden="true" />
+                  <Check
+                    className="h-4 w-4 text-emerald-400 font-bold shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
                   <span>{row.withTt}</span>
                 </div>
               </div>

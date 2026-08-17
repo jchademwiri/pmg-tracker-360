@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   User as UserIcon,
@@ -6,9 +6,9 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,18 +17,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 
-import type { User } from '@pmg/db/schema';
-import { signOut } from '@/lib/auth-client';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import type { User } from "@pmg/db/schema";
+import { signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
@@ -37,16 +37,16 @@ export function NavUser({ user }: { user: User }) {
   // Generate initials from user name
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const handleLogout = async () => {
     await signOut();
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -60,7 +60,7 @@ export function NavUser({ user }: { user: User }) {
               tooltip={`${user.name} (${user.email})`}
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.image || ''} alt={user.name} />
+                <AvatarImage src={user.image || ""} alt={user.name} />
                 <AvatarFallback className="rounded-lg">
                   {getInitials(user.name)}
                 </AvatarFallback>
@@ -76,14 +76,14 @@ export function NavUser({ user }: { user: User }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg shadow-lg border border-border/80"
-            side={isMobile ? 'bottom' : 'right'}
+            side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.image || ''} alt={user.name} />
+                  <AvatarImage src={user.image || ""} alt={user.name} />
                   <AvatarFallback className="rounded-lg">
                     {getInitials(user.name)}
                   </AvatarFallback>
@@ -131,4 +131,3 @@ export function NavUser({ user }: { user: User }) {
     </SidebarMenu>
   );
 }
-

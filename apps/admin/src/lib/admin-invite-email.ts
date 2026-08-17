@@ -1,5 +1,5 @@
-import { resend, SENDER, REPLY_TO } from '@/lib/email-config';
-import { getAdminBaseURL } from '@/lib/urls';
+import { resend, SENDER, REPLY_TO } from "@/lib/email-config";
+import { getAdminBaseURL } from "@/lib/urls";
 
 /**
  * Notifies someone that they have been granted system administrator access.
@@ -21,7 +21,7 @@ export async function sendAdminInvitationEmail(params: {
   const loginUrl = getAdminBaseURL();
   const invitedByLine = params.invitedBy
     ? `<p style="color: #334155; font-size: 14px; line-height: 1.5; margin: 0 0 16px 0;">You were added by ${params.invitedBy}.</p>`
-    : '';
+    : "";
 
   const { error } = await resend.emails.send({
     from: SENDER,
@@ -50,11 +50,11 @@ export async function sendAdminInvitationEmail(params: {
   });
 
   if (error) {
-    console.error('Failed to send admin invitation email:', error);
+    console.error("Failed to send admin invitation email:", error);
     throw new Error(
-      typeof error === 'object' && error !== null && 'message' in error
+      typeof error === "object" && error !== null && "message" in error
         ? String((error as { message: unknown }).message)
-        : 'Failed to send invitation email.'
+        : "Failed to send invitation email.",
     );
   }
 }

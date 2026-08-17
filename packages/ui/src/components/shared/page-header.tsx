@@ -8,12 +8,17 @@ interface PageHeaderProps {
   className?: string;
 }
 
-export function PageHeader({ title, description, action, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  action,
+  className,
+}: PageHeaderProps) {
   return (
     <div
       className={cn(
         "flex items-start justify-between mb-8 border-b border-[var(--border)] pb-6",
-        className
+        className,
       )}
     >
       <div className="space-y-1">

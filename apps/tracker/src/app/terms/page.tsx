@@ -1,12 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import type { Metadata } from 'next';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Terms of Service',
+  title: "Terms of Service",
   description:
-    'Read the Tender Track 360 Terms of Service. Understand your rights and responsibilities when using our platform.',
+    "Read the Tender Track 360 Terms of Service. Understand your rights and responsibilities when using our platform.",
 };
 
 export default function TermsPage() {
@@ -155,7 +155,7 @@ export default function TermsPage() {
             <section className="pt-4 border-t border-white/10">
               <p className="text-sm">
                 If you have any questions about these Terms, please contact us
-                at{' '}
+                at{" "}
                 <a
                   href="mailto:info@tendertrack360.co.za"
                   className="text-primary hover:underline"

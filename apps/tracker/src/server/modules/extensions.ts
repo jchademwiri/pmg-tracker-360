@@ -1,20 +1,20 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
+import { db } from "@pmg/db";
 import {
   tenderExtension,
   tender,
   document,
   type TenderExtension,
-} from '@pmg/db/schema';
-import { eq, desc, and, isNull } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { getServerSession } from '@/lib/auth';
-import { nanoid } from 'nanoid';
-import { uploadDocument } from '@/server/documents';
-import { StorageService } from '@/lib/storage';
-import { z } from 'zod';
-import { logTenderActivity } from '../tenders';
+} from "@pmg/db/schema";
+import { eq, desc, and, isNull } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { getServerSession } from "@/lib/auth";
+import { nanoid } from "nanoid";
+import { uploadDocument } from "@/server/documents";
+import { StorageService } from "@/lib/storage";
+import { z } from "zod";
+import { logTenderActivity } from "../tenders";
 
 const createExtensionSchema = z.object({
   tenderId: z.string(),
@@ -31,7 +31,7 @@ export type CreateExtensionInput = z.input<typeof createExtensionSchema>;
 export async function createTenderExtension(
   organizationId: string,
   input: CreateExtensionInput,
-  formData: FormData
+  formData: FormData,
 ) {
   try {
     // 1. Auth Check
@@ -42,7 +42,7 @@ export async function createTenderExtension(
       !session.session.activeOrganizationId ||
       session.session.activeOrganizationId !== organizationId
     ) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     const userId = session.user.id;
@@ -76,25 +76,26 @@ export async function createTenderExtension(
       .where(eq(tender.id, validatedData.tenderId));
 
     // 4. Handle File Upload
-    const file = formData.get('file');
+    const file = formData.get("file");
     if (file && file instanceof File && file.size > 0) {
       const uploadResult = await uploadDocument(organizationId, formData, {
         tenderId: validatedData.tenderId,
         extensionId: extensionId,
-        category: 'extension',
-        extensionDate: validatedData.newEvaluationDate || validatedData.extensionDate,
+        category: "extension",
+        extensionDate:
+          validatedData.newEvaluationDate || validatedData.extensionDate,
       });
 
       if (!uploadResult.success) {
         // Log warning but don't fail the whole transaction?
         // Or fail? Let's return partial success or error.
         console.error(
-          'Failed to upload extension document:',
-          uploadResult.error
+          "Failed to upload extension document:",
+          uploadResult.error,
         );
         return {
           success: true, // Extension created, but file failed.
-          warning: 'Extension created but file upload failed.',
+          warning: "Extension created but file upload failed.",
           extension: newExtension,
         };
       }
@@ -103,29 +104,29 @@ export async function createTenderExtension(
     await logTenderActivity(
       organizationId,
       validatedData.tenderId,
-      'extension_added',
+      "extension_added",
       `Extension added for date ${new Date(validatedData.extensionDate).toLocaleDateString()}. New evaluation date: ${new Date(validatedData.newEvaluationDate).toLocaleDateString()}`,
-      userId
+      userId,
     );
 
     revalidatePath(`/tenders/${validatedData.tenderId}`);
     return { success: true, extension: newExtension };
   } catch (error) {
-    console.error('Error creating tender extension:', error);
+    console.error("Error creating tender extension:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Validation failed',
+        error: "Validation failed",
         details: error.errors,
       };
     }
-    return { success: false, error: 'Failed to create extension' };
+    return { success: false, error: "Failed to create extension" };
   }
 }
 
 export async function getTenderExtensions(
   organizationId: string,
-  tenderId: string
+  tenderId: string,
 ) {
   try {
     const session = await getServerSession();
@@ -135,13 +136,13 @@ export async function getTenderExtensions(
       !session.session.activeOrganizationId ||
       session.session.activeOrganizationId !== organizationId
     ) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     const extensions = await db.query.tenderExtension.findMany({
       where: and(
         eq(tenderExtension.tenderId, tenderId),
-        isNull(tenderExtension.deletedAt)
+        isNull(tenderExtension.deletedAt),
       ),
       orderBy: [desc(tenderExtension.extensionDate)],
       with: {
@@ -149,7 +150,14 @@ export async function getTenderExtensions(
           columns: { name: true, image: true },
         },
         documents: {
-          columns: { id: true, name: true, url: true, size: true, type: true, createdAt: true },
+          columns: {
+            id: true,
+            name: true,
+            url: true,
+            size: true,
+            type: true,
+            createdAt: true,
+          },
         },
       },
     });
@@ -161,16 +169,16 @@ export async function getTenderExtensions(
           ext.documents.map(async (doc) => ({
             ...doc,
             signedUrl: await StorageService.getSignedUrl(doc.url),
-          }))
+          })),
         );
         return { ...ext, documents: docsWithUrls };
-      })
+      }),
     );
 
     return { success: true, data: extensionsWithDocs };
   } catch (error) {
-    console.error('Error fetching extensions:', error);
-    return { success: false, error: 'Failed to fetch extensions' };
+    console.error("Error fetching extensions:", error);
+    return { success: false, error: "Failed to fetch extensions" };
   }
 }
 
@@ -189,7 +197,7 @@ export type UpdateExtensionInput = z.input<typeof updateExtensionSchema>;
 export async function updateTenderExtension(
   organizationId: string,
   input: UpdateExtensionInput,
-  formData?: FormData
+  formData?: FormData,
 ) {
   try {
     const session = await getServerSession();
@@ -199,7 +207,7 @@ export async function updateTenderExtension(
       !session.session.activeOrganizationId ||
       session.session.activeOrganizationId !== organizationId
     ) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     const validatedData = updateExtensionSchema.parse(input);
@@ -209,12 +217,12 @@ export async function updateTenderExtension(
       where: and(
         eq(tenderExtension.id, validatedData.extensionId),
         eq(tenderExtension.organizationId, organizationId),
-        isNull(tenderExtension.deletedAt)
+        isNull(tenderExtension.deletedAt),
       ),
     });
 
     if (!existing) {
-      return { success: false, error: 'Extension not found' };
+      return { success: false, error: "Extension not found" };
     }
 
     // Update the extension record
@@ -235,10 +243,12 @@ export async function updateTenderExtension(
     const latestExtension = await db
       .select({ newEvaluationDate: tenderExtension.newEvaluationDate })
       .from(tenderExtension)
-      .where(and(
-        eq(tenderExtension.tenderId, existing.tenderId),
-        isNull(tenderExtension.deletedAt)
-      ))
+      .where(
+        and(
+          eq(tenderExtension.tenderId, existing.tenderId),
+          isNull(tenderExtension.deletedAt),
+        ),
+      )
       .orderBy(desc(tenderExtension.newEvaluationDate))
       .limit(1);
 
@@ -262,7 +272,7 @@ export async function updateTenderExtension(
 
     // Handle file upload (replace old file if new one provided)
     if (formData) {
-      const file = formData.get('file');
+      const file = formData.get("file");
       if (file && file instanceof File && file.size > 0) {
         // Delete existing documents for this extension
         const existingDocs = await db
@@ -274,21 +284,27 @@ export async function updateTenderExtension(
           try {
             await StorageService.deleteFile(doc.url);
           } catch (e) {
-            console.error('Error deleting old extension document:', e);
+            console.error("Error deleting old extension document:", e);
           }
         }
-        await db.delete(document).where(eq(document.extensionId, validatedData.extensionId));
+        await db
+          .delete(document)
+          .where(eq(document.extensionId, validatedData.extensionId));
 
         // Upload new file
         const uploadResult = await uploadDocument(organizationId, formData, {
           tenderId: existing.tenderId,
           extensionId: validatedData.extensionId,
-          category: 'extension',
-          extensionDate: validatedData.newEvaluationDate || validatedData.extensionDate,
+          category: "extension",
+          extensionDate:
+            validatedData.newEvaluationDate || validatedData.extensionDate,
         });
 
         if (!uploadResult.success) {
-          console.error('Failed to upload new extension document:', uploadResult.error);
+          console.error(
+            "Failed to upload new extension document:",
+            uploadResult.error,
+          );
         }
       }
     }
@@ -296,17 +312,21 @@ export async function updateTenderExtension(
     revalidatePath(`/tenders/${existing.tenderId}`);
     return { success: true };
   } catch (error) {
-    console.error('Error updating tender extension:', error);
+    console.error("Error updating tender extension:", error);
     if (error instanceof z.ZodError) {
-      return { success: false, error: 'Validation failed', details: error.errors };
+      return {
+        success: false,
+        error: "Validation failed",
+        details: error.errors,
+      };
     }
-    return { success: false, error: 'Failed to update extension' };
+    return { success: false, error: "Failed to update extension" };
   }
 }
 
 export async function deleteTenderExtension(
   organizationId: string,
-  extensionId: string
+  extensionId: string,
 ) {
   try {
     const session = await getServerSession();
@@ -316,7 +336,7 @@ export async function deleteTenderExtension(
       !session.session.activeOrganizationId ||
       session.session.activeOrganizationId !== organizationId
     ) {
-      return { success: false, error: 'Unauthorized' };
+      return { success: false, error: "Unauthorized" };
     }
 
     // Fetch the extension to get tenderId for revalidation
@@ -324,12 +344,12 @@ export async function deleteTenderExtension(
       where: and(
         eq(tenderExtension.id, extensionId),
         eq(tenderExtension.organizationId, organizationId),
-        isNull(tenderExtension.deletedAt)
+        isNull(tenderExtension.deletedAt),
       ),
     });
 
     if (!ext) {
-      return { success: false, error: 'Extension not found' };
+      return { success: false, error: "Extension not found" };
     }
 
     // Soft delete the extension
@@ -351,7 +371,7 @@ export async function deleteTenderExtension(
       try {
         await StorageService.deleteFile(doc.url);
       } catch (e) {
-        console.error('Error deleting extension document from storage:', e);
+        console.error("Error deleting extension document from storage:", e);
       }
     }
 
@@ -361,10 +381,12 @@ export async function deleteTenderExtension(
     const latestExtension = await db
       .select({ newEvaluationDate: tenderExtension.newEvaluationDate })
       .from(tenderExtension)
-      .where(and(
-        eq(tenderExtension.tenderId, ext.tenderId),
-        isNull(tenderExtension.deletedAt)
-      ))
+      .where(
+        and(
+          eq(tenderExtension.tenderId, ext.tenderId),
+          isNull(tenderExtension.deletedAt),
+        ),
+      )
       .orderBy(desc(tenderExtension.newEvaluationDate))
       .limit(1);
 
@@ -390,7 +412,7 @@ export async function deleteTenderExtension(
     revalidatePath(`/tenders/${ext.tenderId}`);
     return { success: true };
   } catch (error) {
-    console.error('Error deleting tender extension:', error);
-    return { success: false, error: 'Failed to delete extension' };
+    console.error("Error deleting tender extension:", error);
+    return { success: false, error: "Failed to delete extension" };
   }
 }

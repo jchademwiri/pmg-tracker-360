@@ -1,9 +1,9 @@
-import { getCurrentUser } from '@/server';
-import { getClientById, getClientRelatedRecords } from '@/server';
-import { ClientDetails } from '@/components/clients/client-details';
-import { notFound } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { getClientById, getClientRelatedRecords } from "@/server";
+import { ClientDetails } from "@/components/clients/client-details";
+import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface ClientDetailPageProps {
   params: Promise<{
@@ -41,7 +41,7 @@ export default async function ClientDetailPage({
   // Fetch related records (tenders, projects, POs)
   const relatedRecordsResult = await getClientRelatedRecords(
     session.activeOrganizationId,
-    id
+    id,
   );
 
   return (

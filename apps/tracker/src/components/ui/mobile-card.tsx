@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { MoreHorizontalIcon } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { ReactNode } from "react";
+import { MoreHorizontalIcon } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { StatusBadge } from '@/components/ui/status-badge';
+} from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 /* ──────────────────────────────────────────────
    MobileCard — root container
@@ -23,12 +23,16 @@ interface MobileCardProps {
   className?: string;
 }
 
-export function MobileCard({ children, onClick, className = '' }: MobileCardProps) {
+export function MobileCard({
+  children,
+  onClick,
+  className = "",
+}: MobileCardProps) {
   return (
     <div
       onClick={onClick}
       className={`rounded-xl border border-border/40 bg-card/45 backdrop-blur-md hover:bg-card/60 transition-all shadow-sm relative overflow-hidden ${
-        onClick ? 'cursor-pointer' : ''
+        onClick ? "cursor-pointer" : ""
       } ${className}`}
     >
       {children}
@@ -53,7 +57,7 @@ interface MobileCardHeaderProps {
   actions?: Array<{
     label: string;
     onClick: () => void;
-    variant?: 'default' | 'destructive';
+    variant?: "default" | "destructive";
   }>;
   className?: string;
 }
@@ -63,10 +67,12 @@ export function MobileCardHeader({
   status,
   badge,
   actions,
-  className = '',
+  className = "",
 }: MobileCardHeaderProps) {
   return (
-    <div className={`flex items-center justify-between gap-2 px-4 pt-4 pb-2 ${className}`}>
+    <div
+      className={`flex items-center justify-between gap-2 px-4 pt-4 pb-2 ${className}`}
+    >
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <span className="font-mono text-sm font-bold text-blue-400 truncate">
           {identifier}
@@ -78,7 +84,11 @@ export function MobileCardHeader({
         <div onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 cursor-pointer shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 cursor-pointer shrink-0"
+              >
                 <MoreHorizontalIcon className="h-4 w-4" />
                 <span className="sr-only">Open menu</span>
               </Button>
@@ -86,12 +96,17 @@ export function MobileCardHeader({
             <DropdownMenuContent align="end">
               {actions.map((action, i) => (
                 <div key={action.label}>
-                  {i === actions.length - 1 && action.variant === 'destructive' && (
-                    <DropdownMenuSeparator />
-                  )}
+                  {i === actions.length - 1 &&
+                    action.variant === "destructive" && (
+                      <DropdownMenuSeparator />
+                    )}
                   <DropdownMenuItem
                     onClick={action.onClick}
-                    variant={action.variant === 'destructive' ? 'destructive' : undefined}
+                    variant={
+                      action.variant === "destructive"
+                        ? "destructive"
+                        : undefined
+                    }
                   >
                     {action.label}
                   </DropdownMenuItem>
@@ -114,7 +129,10 @@ interface MobileCardBodyProps {
   className?: string;
 }
 
-export function MobileCardBody({ children, className = '' }: MobileCardBodyProps) {
+export function MobileCardBody({
+  children,
+  className = "",
+}: MobileCardBodyProps) {
   return <div className={`px-4 pb-4 space-y-3 ${className}`}>{children}</div>;
 }
 
@@ -128,7 +146,11 @@ interface MobileCardFieldProps {
   className?: string;
 }
 
-export function MobileCardField({ label, children, className = '' }: MobileCardFieldProps) {
+export function MobileCardField({
+  label,
+  children,
+  className = "",
+}: MobileCardFieldProps) {
   return (
     <div className={className}>
       <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-0.5">
@@ -148,9 +170,14 @@ interface MobileCardGridProps {
   className?: string;
 }
 
-export function MobileCardGrid({ children, className = '' }: MobileCardGridProps) {
+export function MobileCardGrid({
+  children,
+  className = "",
+}: MobileCardGridProps) {
   return (
-    <div className={`grid grid-cols-2 gap-y-2.5 gap-x-4 border-t border-border/20 pt-3 ${className}`}>
+    <div
+      className={`grid grid-cols-2 gap-y-2.5 gap-x-4 border-t border-border/20 pt-3 ${className}`}
+    >
       {children}
     </div>
   );
@@ -165,7 +192,7 @@ interface MobileCardAction {
   href?: string;
   onClick?: () => void;
   icon?: ReactNode;
-  variant?: 'default' | 'outline' | 'ghost';
+  variant?: "default" | "outline" | "ghost";
 }
 
 interface MobileCardActionsProps {
@@ -173,18 +200,19 @@ interface MobileCardActionsProps {
   className?: string;
 }
 
-export function MobileCardActions({ actions, className = '' }: MobileCardActionsProps) {
+export function MobileCardActions({
+  actions,
+  className = "",
+}: MobileCardActionsProps) {
   return (
-    <div className={`flex items-center gap-2 px-4 pb-4 pt-1 border-t border-border/20 ${className}`}>
-      {actions.map((action) => (
+    <div
+      className={`flex items-center gap-2 px-4 pb-4 pt-1 border-t border-border/20 ${className}`}
+    >
+      {actions.map((action) =>
         action.href ? (
-          <Link
-            key={action.label}
-            href={action.href}
-            className="flex-1"
-          >
+          <Link key={action.label} href={action.href} className="flex-1">
             <Button
-              variant={action.variant ?? 'ghost'}
+              variant={action.variant ?? "ghost"}
               size="sm"
               className="w-full text-xs h-8 cursor-pointer"
             >
@@ -195,7 +223,7 @@ export function MobileCardActions({ actions, className = '' }: MobileCardActions
         ) : (
           <Button
             key={action.label}
-            variant={action.variant ?? 'ghost'}
+            variant={action.variant ?? "ghost"}
             size="sm"
             className="flex-1 text-xs h-8 cursor-pointer"
             onClick={action.onClick}
@@ -203,8 +231,8 @@ export function MobileCardActions({ actions, className = '' }: MobileCardActions
             {action.icon}
             {action.label}
           </Button>
-        )
-      ))}
+        ),
+      )}
     </div>
   );
 }
@@ -221,7 +249,11 @@ interface MobileCardListProps {
   className?: string;
 }
 
-export function MobileCardList({ children, emptyMessage, className = '' }: MobileCardListProps) {
+export function MobileCardList({
+  children,
+  emptyMessage,
+  className = "",
+}: MobileCardListProps) {
   return (
     <div className={`md:hidden space-y-3 ${className}`}>
       {children}

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { HomeIcon, ArrowLeftIcon, SearchIcon } from 'lucide-react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { HomeIcon, ArrowLeftIcon, SearchIcon } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -59,7 +59,7 @@ export default function NotFound() {
             {/* Additional Help */}
             <div className="pt-6 border-t border-white/5">
               <p className="text-xs text-muted-foreground/60">
-                Need help? Try checking the URL or{' '}
+                Need help? Try checking the URL or{" "}
                 <Link
                   href="/contact"
                   className="text-primary hover:text-primary/80 transition-colors"
@@ -81,4 +81,3 @@ export default function NotFound() {
     </div>
   );
 }
-

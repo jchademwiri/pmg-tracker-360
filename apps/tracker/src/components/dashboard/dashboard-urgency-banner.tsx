@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from "next/link";
 import {
   AlertTriangle,
   Clock,
@@ -8,8 +8,8 @@ import {
   PhoneCall,
   FileWarning,
   Truck,
-} from 'lucide-react';
-import { getDashboardUrgency } from '@/server/dashboard-urgency';
+} from "lucide-react";
+import { getDashboardUrgency } from "@/server/dashboard-urgency";
 
 interface DashboardUrgencyBannerProps {
   organizationId: string;
@@ -51,7 +51,8 @@ export async function DashboardUrgencyBanner({
           className="group inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
         >
           <Clock className="h-3 w-3" />
-          {urgency.overdueTenders} overdue tender{urgency.overdueTenders !== 1 ? 's' : ''}
+          {urgency.overdueTenders} overdue tender
+          {urgency.overdueTenders !== 1 ? "s" : ""}
           <ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
         </Link>
       )}
@@ -73,7 +74,8 @@ export async function DashboardUrgencyBanner({
           className="group inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
         >
           <Clock className="h-3 w-3" />
-          {urgency.underEvaluation} awaiting result{urgency.underEvaluation !== 1 ? 's' : ''}
+          {urgency.underEvaluation} awaiting result
+          {urgency.underEvaluation !== 1 ? "s" : ""}
           <ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
         </Link>
       )}
@@ -84,7 +86,8 @@ export async function DashboardUrgencyBanner({
           className="group inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50"
         >
           <PhoneCall className="h-3 w-3" />
-          {urgency.dueFollowUps} follow-up{urgency.dueFollowUps !== 1 ? 's' : ''} due
+          {urgency.dueFollowUps} follow-up
+          {urgency.dueFollowUps !== 1 ? "s" : ""} due
           <ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
         </Link>
       )}
@@ -95,7 +98,8 @@ export async function DashboardUrgencyBanner({
           className="group inline-flex items-center gap-1.5 rounded-full bg-pink-100 px-2.5 py-1 text-xs font-medium text-pink-700 transition-colors hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:hover:bg-pink-900/50"
         >
           <FileWarning className="h-3 w-3" />
-          {urgency.missingDocuments} missing document{urgency.missingDocuments !== 1 ? 's' : ''}
+          {urgency.missingDocuments} missing document
+          {urgency.missingDocuments !== 1 ? "s" : ""}
           <ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
         </Link>
       )}
@@ -106,13 +110,14 @@ export async function DashboardUrgencyBanner({
           className="group inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50"
         >
           <Truck className="h-3 w-3" />
-          {urgency.overdueDeliveries} overdue deliver{urgency.overdueDeliveries !== 1 ? 'ies' : 'y'}
+          {urgency.overdueDeliveries} overdue deliver
+          {urgency.overdueDeliveries !== 1 ? "ies" : "y"}
           <ArrowRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
         </Link>
       )}
 
       <span className="text-xs text-muted-foreground ml-auto hidden lg:inline">
-        {urgency.totalOpen} open tender{urgency.totalOpen !== 1 ? 's' : ''}
+        {urgency.totalOpen} open tender{urgency.totalOpen !== 1 ? "s" : ""}
       </span>
     </div>
   );

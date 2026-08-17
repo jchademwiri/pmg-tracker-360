@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { ChevronsUpDown, Plus, Building2 } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
-import { switchOrganization } from '@/lib/organization-utils';
+import * as React from "react";
+import { ChevronsUpDown, Plus, Building2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { switchOrganization } from "@/lib/organization-utils";
 
 import {
   DropdownMenu,
@@ -13,13 +13,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   Dialog,
   DialogContent,
@@ -27,10 +27,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { CreateOrganizationForm } from '@/components/shared/forms';
-import { UpgradeDialog } from '@/components/shared/dialogs';
-import type { OrganizationWithStats } from '@/server/organizations';
+} from "@/components/ui/dialog";
+import { CreateOrganizationForm } from "@/components/shared/forms";
+import { UpgradeDialog } from "@/components/shared/dialogs";
+import type { OrganizationWithStats } from "@/server/organizations";
 
 export function TeamSwitcher({
   organizations,
@@ -47,9 +47,9 @@ export function TeamSwitcher({
   // Optimistic local state for the active org ID so the sidebar updates
   // immediately when the user switches orgs, without waiting for
   // useActiveOrganization() or router.refresh() to propagate.
-  const [optimisticOrgId, setOptimisticOrgId] = React.useState<
-    string | null
-  >(null);
+  const [optimisticOrgId, setOptimisticOrgId] = React.useState<string | null>(
+    null,
+  );
 
   // Guards against double-clicks / rapid switching while a switch is in
   // flight. Without this, a second click can race the in-progress reload
@@ -64,9 +64,7 @@ export function TeamSwitcher({
     // 3. Server-side active organization (passed via prop)
     // 4. Fallback to first organization
     const targetId =
-      optimisticOrgId ||
-      activeOrganization?.id ||
-      activeOrganizationId;
+      optimisticOrgId || activeOrganization?.id || activeOrganizationId;
 
     if (targetId) {
       return (
@@ -82,7 +80,7 @@ export function TeamSwitcher({
   ]);
 
   const handleOrganizationSwitch = async (
-    organization: OrganizationWithStats
+    organization: OrganizationWithStats,
   ) => {
     if (isSwitching) {
       return;
@@ -127,11 +125,11 @@ export function TeamSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-medium">
-                  {isSwitching ? 'Switching…' : activeOrg.name}
+                  {isSwitching ? "Switching…" : activeOrg.name}
                 </span>
                 <span className="truncate text-xs">
-                  {activeOrg.memberCount}{' '}
-                  {activeOrg.memberCount === 1 ? 'member' : 'members'}
+                  {activeOrg.memberCount}{" "}
+                  {activeOrg.memberCount === 1 ? "member" : "members"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto group-data-[collapsible=icon]:hidden" />
@@ -140,7 +138,7 @@ export function TeamSwitcher({
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? 'bottom' : 'right'}
+            side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
@@ -158,8 +156,8 @@ export function TeamSwitcher({
                 <div className="flex flex-col">
                   <span className="font-medium">{organization.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {organization.memberCount}{' '}
-                    {organization.memberCount === 1 ? 'member' : 'members'}
+                    {organization.memberCount}{" "}
+                    {organization.memberCount === 1 ? "member" : "members"}
                   </span>
                 </div>
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>

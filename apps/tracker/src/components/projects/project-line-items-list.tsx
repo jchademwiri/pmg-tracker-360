@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useMemo, useState, useTransition } from 'react';
-import Link from 'next/link';
-import { Archive, Edit, Package, Plus, Search } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { Archive, Edit, Package, Plus, Search } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -25,10 +25,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { archiveProjectLineItem } from '@/server/purchase-orders';
-import { formatCurrency, toTitleCase } from '@/lib/format';
-import { StatusBadge } from '@/components/ui/status-badge';
+} from "@/components/ui/table";
+import { archiveProjectLineItem } from "@/server/purchase-orders";
+import { formatCurrency, toTitleCase } from "@/lib/format";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface ProjectLineItem {
   id: string;
@@ -59,7 +59,7 @@ export function ProjectLineItemsList({
   project,
   lineItems,
 }: ProjectLineItemsListProps) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [archiveItem, setArchiveItem] = useState<ProjectLineItem | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -84,14 +84,14 @@ export function ProjectLineItemsList({
       const result = await archiveProjectLineItem(
         organizationId,
         project.id,
-        archiveItem.id
+        archiveItem.id,
       );
 
       if (result.success) {
-        toast.success('Project item archived');
+        toast.success("Project item archived");
         setArchiveItem(null);
       } else {
-        toast.error(result.error || 'Failed to archive project item');
+        toast.error(result.error || "Failed to archive project item");
       }
     });
   };
@@ -105,7 +105,9 @@ export function ProjectLineItemsList({
             {project.projectNumber.toUpperCase()}
           </h1>
           {project.description && (
-            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{project.description}</p>
+            <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+              {project.description}
+            </p>
           )}
         </div>
         <Button asChild>
@@ -151,15 +153,20 @@ export function ProjectLineItemsList({
             <TableBody>
               {filteredItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={10}
+                    className="py-10 text-center text-muted-foreground"
+                  >
                     {lineItems.length === 0
-                      ? 'No saved project items yet.'
-                      : 'No project items match your search.'}
+                      ? "No saved project items yet."
+                      : "No project items match your search."}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredItems.map((item) => {
-                  const badgeStatus = (item.status ?? 'Not Ordered').toLowerCase().replace(' ', '_');
+                  const badgeStatus = (item.status ?? "Not Ordered")
+                    .toLowerCase()
+                    .replace(" ", "_");
                   return (
                     <TableRow key={item.id} className="cursor-default">
                       <TableCell className="pl-6 font-mono font-bold text-xs text-sky-400">
@@ -168,8 +175,12 @@ export function ProjectLineItemsList({
                       <TableCell className="font-medium text-foreground text-xs">
                         {toTitleCase(item.description)}
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{item.sapReference || '—'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{item.unit}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {item.sapReference || "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {item.unit}
+                      </TableCell>
                       <TableCell className="text-right font-mono font-bold text-xs tabular-nums text-foreground">
                         {formatCurrency(item.unitPrice)}
                       </TableCell>
@@ -183,14 +194,26 @@ export function ProjectLineItemsList({
                         <StatusBadge status={badgeStatus} domain="project" />
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={item.usageCount > 0 ? 'secondary' : 'outline'} className="font-mono text-xs">
+                        <Badge
+                          variant={
+                            item.usageCount > 0 ? "secondary" : "outline"
+                          }
+                          className="font-mono text-xs"
+                        >
                           {item.usageCount}
                         </Badge>
                       </TableCell>
                       <TableCell className="pr-6 text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm" className="h-8 text-xs cursor-pointer" asChild>
-                            <Link href={`/projects/${project.id}/items/${item.id}/edit`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs cursor-pointer"
+                            asChild
+                          >
+                            <Link
+                              href={`/projects/${project.id}/items/${item.id}/edit`}
+                            >
                               <Edit className="mr-1.5 h-3.5 w-3.5" />
                               Edit
                             </Link>
@@ -215,19 +238,23 @@ export function ProjectLineItemsList({
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!archiveItem} onOpenChange={(open) => !open && setArchiveItem(null)}>
+      <AlertDialog
+        open={!!archiveItem}
+        onOpenChange={(open) => !open && setArchiveItem(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Archive Project Item</AlertDialogTitle>
             <AlertDialogDescription>
-              Archive "{archiveItem?.description}" so it can no longer be selected on new purchase
-              orders. Existing PO lines keep their snapshotted details.
+              Archive "{archiveItem?.description}" so it can no longer be
+              selected on new purchase orders. Existing PO lines keep their
+              snapshotted details.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive} disabled={isPending}>
-              {isPending ? 'Archiving...' : 'Archive Item'}
+              {isPending ? "Archiving..." : "Archive Item"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

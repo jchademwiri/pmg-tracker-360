@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 type Props = {
   content: string;
   className?: string;
 };
 
-export function FormattedMessage({ content, className = '' }: Props) {
+export function FormattedMessage({ content, className = "" }: Props) {
   if (!content) return null;
 
   // Split lines
-  const lines = content.split('\n');
+  const lines = content.split("\n");
 
   return (
     <div className={`space-y-1.5 leading-relaxed break-words ${className}`}>
@@ -62,7 +62,7 @@ function parseLine(text: string): React.ReactNode[] {
           onClick={(e) => e.stopPropagation()}
         >
           {matchedStr}
-        </a>
+        </a>,
       );
     }
     // 2. @mention
@@ -73,7 +73,7 @@ function parseLine(text: string): React.ReactNode[] {
           className="inline-flex items-center px-1.5 py-0.2 mx-0.5 rounded-md font-semibold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30"
         >
           {matchedStr}
-        </span>
+        </span>,
       );
     }
     // 3. `inline code`
@@ -85,7 +85,7 @@ function parseLine(text: string): React.ReactNode[] {
           className="px-1.5 py-0.5 mx-0.5 rounded bg-black/40 font-mono text-[11px] text-amber-200 border border-amber-900/40"
         >
           {codeText}
-        </code>
+        </code>,
       );
     }
     // 4. **bold**
@@ -94,7 +94,7 @@ function parseLine(text: string): React.ReactNode[] {
       nodes.push(
         <strong key={`bold-${match.index}`} className="font-bold text-white">
           {boldText}
-        </strong>
+        </strong>,
       );
     }
 

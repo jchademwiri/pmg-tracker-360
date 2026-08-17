@@ -1,9 +1,9 @@
-import { getCurrentUser } from '@/server';
-import { getClientById } from '@/server';
-import { ClientForm } from '@/components/clients/client-form';
-import { notFound } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { getClientById } from "@/server";
+import { ClientForm } from "@/components/clients/client-form";
+import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface EditClientPageProps {
   params: Promise<{

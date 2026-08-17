@@ -1,8 +1,8 @@
-'use server';
+"use server";
 
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { revalidatePath } from 'next/cache';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import {
   createBackup,
   listBackups,
@@ -10,15 +10,17 @@ import {
   restoreOrganization,
   getOrganizationsForRestore,
   runAutomatedBackup,
-} from '@/lib/backup';
+} from "@/lib/backup";
 
 /**
  * Auth guard: ensures the caller is an admin.
  */
-async function requireAdmin(): Promise<{ authorized: false; error: string } | { authorized: true }> {
+async function requireAdmin(): Promise<
+  { authorized: false; error: string } | { authorized: true }
+> {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session || (session.user as any).role !== 'admin') {
-    return { authorized: false, error: 'Unauthorized: Admin access required.' };
+  if (!session || (session.user as any).role !== "admin") {
+    return { authorized: false, error: "Unauthorized: Admin access required." };
   }
   return { authorized: true };
 }
@@ -31,7 +33,7 @@ export async function runBackupAction() {
   if (!auth.authorized) return { success: false, message: auth.error };
 
   const result = await createBackup();
-  revalidatePath('/backups');
+  revalidatePath("/backups");
   return result;
 }
 
@@ -53,7 +55,7 @@ export async function restoreFullAction(key: string) {
   if (!auth.authorized) return { success: false, message: auth.error };
 
   const result = await restoreFull(key);
-  revalidatePath('/backups');
+  revalidatePath("/backups");
   return result;
 }
 
@@ -65,7 +67,7 @@ export async function restoreOrgAction(key: string, orgId: string) {
   if (!auth.authorized) return { success: false, message: auth.error };
 
   const result = await restoreOrganization(key, orgId);
-  revalidatePath('/backups');
+  revalidatePath("/backups");
   return result;
 }
 

@@ -1,15 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { adminSendMagicLink, verifyAdminOTP } from '../actions';
-import { authClient } from '@/lib/auth-client';
-import { ShieldAlert, Loader, Lock, Mail, Key, ShieldCheck } from 'lucide-react';
+import React, { useState } from "react";
+import { adminSendMagicLink, verifyAdminOTP } from "../actions";
+import { authClient } from "@/lib/auth-client";
+import {
+  ShieldAlert,
+  Loader,
+  Lock,
+  Mail,
+  Key,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function LoginForm() {
-  const [activeTab, setActiveTab] = useState<'password' | 'passwordless'>('password');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
+  const [activeTab, setActiveTab] = useState<"password" | "passwordless">(
+    "password",
+  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,22 +37,22 @@ export default function LoginForm() {
       });
 
       if (authError) {
-        setError(authError.message || 'Invalid email or password');
+        setError(authError.message || "Invalid email or password");
         return;
       }
 
       if (data?.user) {
         // Role Enforcement: Ensure user role is 'admin'
-        if ((data.user as any).role !== 'admin') {
+        if ((data.user as any).role !== "admin") {
           await authClient.signOut(); // Clear the session
-          setError('Access Denied: Only system administrators are authorized.');
+          setError("Access Denied: Only system administrators are authorized.");
           return;
         }
-        
-        window.location.replace('/');
+
+        window.location.replace("/");
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,12 +68,14 @@ export default function LoginForm() {
       const response = await adminSendMagicLink(email);
       if (response.success) {
         setIsOtpSent(true);
-        setStatusMessage(response.message ?? 'Link and code sent successfully!');
+        setStatusMessage(
+          response.message ?? "Link and code sent successfully!",
+        );
       } else {
-        setError(response.error ?? 'Failed to send login code');
+        setError(response.error ?? "Failed to send login code");
       }
     } catch {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -79,18 +90,18 @@ export default function LoginForm() {
     try {
       const response = await verifyAdminOTP(email, otp);
       if (response.success && response.token) {
-        setStatusMessage('Signing you in...');
+        setStatusMessage("Signing you in...");
         // Redirect to standard magic-link verify endpoint to log in programmatically
         window.location.replace(
-          `/api/auth/magic-link/verify?token=${response.token}&callbackURL=${encodeURIComponent(window.location.origin)}`
+          `/api/auth/magic-link/verify?token=${response.token}&callbackURL=${encodeURIComponent(window.location.origin)}`,
         );
         // Do not turn off loading state while redirecting
       } else {
-        setError(response.error ?? 'Invalid or expired passcode.');
+        setError(response.error ?? "Invalid or expired passcode.");
         setLoading(false);
       }
     } catch {
-      setError('Verification failed. Please try again.');
+      setError("Verification failed. Please try again.");
       setLoading(false);
     }
   };
@@ -117,14 +128,14 @@ export default function LoginForm() {
         <button
           type="button"
           onClick={() => {
-            setActiveTab('password');
+            setActiveTab("password");
             setError(null);
             setStatusMessage(null);
           }}
           className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-            activeTab === 'password'
-              ? 'bg-zinc-800 text-white shadow-xs'
-              : 'text-zinc-500 hover:text-zinc-300'
+            activeTab === "password"
+              ? "bg-zinc-800 text-white shadow-xs"
+              : "text-zinc-500 hover:text-zinc-300"
           }`}
         >
           PASSPHRASE
@@ -132,14 +143,14 @@ export default function LoginForm() {
         <button
           type="button"
           onClick={() => {
-            setActiveTab('passwordless');
+            setActiveTab("passwordless");
             setError(null);
             setStatusMessage(null);
           }}
           className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-            activeTab === 'passwordless'
-              ? 'bg-zinc-800 text-white shadow-xs'
-              : 'text-zinc-500 hover:text-zinc-300'
+            activeTab === "passwordless"
+              ? "bg-zinc-800 text-white shadow-xs"
+              : "text-zinc-500 hover:text-zinc-300"
           }`}
         >
           CODE & LINK
@@ -162,7 +173,7 @@ export default function LoginForm() {
       )}
 
       {/* 4. ACTIVE FORM */}
-      {activeTab === 'password' ? (
+      {activeTab === "password" ? (
         /* PASSWORD SIGN IN FORM */
         <form onSubmit={handlePasswordSubmit} className="space-y-6">
           <div className="space-y-4">
@@ -211,7 +222,7 @@ export default function LoginForm() {
             {loading ? (
               <Loader className="h-4 w-4 animate-spin text-black" />
             ) : (
-              'AUTHENTICATE'
+              "AUTHENTICATE"
             )}
           </button>
         </form>
@@ -247,7 +258,7 @@ export default function LoginForm() {
                 {loading ? (
                   <Loader className="h-4 w-4 animate-spin text-black" />
                 ) : (
-                  'SEND SIGN-IN LINK & CODE'
+                  "SEND SIGN-IN LINK & CODE"
                 )}
               </button>
             </form>
@@ -267,7 +278,9 @@ export default function LoginForm() {
                       required
                       disabled={loading}
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/[^0-9]/g, ""))
+                      }
                       placeholder="123456"
                       className="w-full pl-11 pr-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-center text-white tracking-[0.25em] font-mono placeholder-zinc-700 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
                     />
@@ -284,10 +297,10 @@ export default function LoginForm() {
                   {loading ? (
                     <Loader className="h-4 w-4 animate-spin text-black" />
                   ) : (
-                    'VERIFY PASSCODE'
+                    "VERIFY PASSCODE"
                   )}
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={() => setIsOtpSent(false)}

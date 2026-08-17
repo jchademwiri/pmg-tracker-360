@@ -1,20 +1,32 @@
-'use server';
+"use server";
 
-import { db } from '@pmg/db';
-import { validateSessionAndOrg } from './utils';
-import { 
-  purchaseOrder, 
-  project, 
+import { db } from "@pmg/db";
+import { validateSessionAndOrg } from "./utils";
+import {
+  purchaseOrder,
+  project,
   client,
   projectLineItem,
   purchaseOrderLineItem,
   purchaseOrderDeliveryNote,
   purchaseOrderDeliveryItem,
-  projectActivity
-} from '@pmg/db/schema';
-import { eq, and, isNull, ilike, or, desc, ne, inArray, sql, gte, lte } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
+  projectActivity,
+} from "@pmg/db/schema";
+import {
+  eq,
+  and,
+  isNull,
+  ilike,
+  or,
+  desc,
+  ne,
+  inArray,
+  sql,
+  gte,
+  lte,
+} from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import {
   PurchaseOrderCreateSchema,
   PurchaseOrderUpdateSchema,
@@ -22,7 +34,7 @@ import {
   type PurchaseOrderCreateInput,
   type PurchaseOrderUpdateInput,
   type PurchaseOrderStatusUpdateInput,
-} from '@/lib/validations/purchase-order';
+} from "@/lib/validations/purchase-order";
 
 export async function getPurchaseOrderBreadcrumbLabel(poId: string) {
   try {
@@ -34,7 +46,7 @@ export async function getPurchaseOrderBreadcrumbLabel(poId: string) {
 
     return po[0]?.poNumber || null;
   } catch (error) {
-    console.error('Error fetching purchase order breadcrumb label:', error);
+    console.error("Error fetching purchase order breadcrumb label:", error);
     return null;
   }
 }
@@ -47,12 +59,17 @@ export async function getProjectLineItemBreadcrumbLabel(lineItemId: string) {
         description: projectLineItem.description,
       })
       .from(projectLineItem)
-      .where(and(eq(projectLineItem.id, lineItemId), isNull(projectLineItem.deletedAt)))
+      .where(
+        and(
+          eq(projectLineItem.id, lineItemId),
+          isNull(projectLineItem.deletedAt),
+        ),
+      )
       .limit(1);
 
     return item[0] ? `${item[0].itemNumber} - ${item[0].description}` : null;
   } catch (error) {
-    console.error('Error fetching project line item breadcrumb label:', error);
+    console.error("Error fetching project line item breadcrumb label:", error);
     return null;
   }
 }
@@ -64,7 +81,10 @@ type POLineItemInput = {
   unitPrice?: string;
 };
 
-export async function getProjectLineItems(organizationId: string, projectId: string) {
+export async function getProjectLineItems(
+  organizationId: string,
+  projectId: string,
+) {
   try {
     await validateSessionAndOrg(organizationId);
 
@@ -86,14 +106,14 @@ export async function getProjectLineItems(organizationId: string, projectId: str
       .from(projectLineItem)
       .leftJoin(
         purchaseOrderLineItem,
-        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id)
+        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id),
       )
       .where(
         and(
           eq(projectLineItem.organizationId, organizationId),
           eq(projectLineItem.projectId, projectId),
-          isNull(projectLineItem.deletedAt)
-        )
+          isNull(projectLineItem.deletedAt),
+        ),
       )
       .groupBy(projectLineItem.id)
       .orderBy(projectLineItem.itemNumber);
@@ -106,12 +126,15 @@ export async function getProjectLineItems(organizationId: string, projectId: str
         quantity: purchaseOrderLineItem.quantity,
       })
       .from(purchaseOrderLineItem)
-      .innerJoin(purchaseOrder, eq(purchaseOrderLineItem.purchaseOrderId, purchaseOrder.id))
+      .innerJoin(
+        purchaseOrder,
+        eq(purchaseOrderLineItem.purchaseOrderId, purchaseOrder.id),
+      )
       .where(
         and(
           eq(purchaseOrder.projectId, projectId),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       );
 
     // Fetch all delivery items for these PO lines
@@ -121,45 +144,54 @@ export async function getProjectLineItems(organizationId: string, projectId: str
         quantityDelivered: purchaseOrderDeliveryItem.quantityDelivered,
       })
       .from(purchaseOrderDeliveryItem)
-      .innerJoin(purchaseOrderDeliveryNote, eq(purchaseOrderDeliveryItem.deliveryNoteId, purchaseOrderDeliveryNote.id))
+      .innerJoin(
+        purchaseOrderDeliveryNote,
+        eq(
+          purchaseOrderDeliveryItem.deliveryNoteId,
+          purchaseOrderDeliveryNote.id,
+        ),
+      )
       .where(
         and(
           eq(purchaseOrderDeliveryNote.projectId, projectId),
-          eq(purchaseOrderDeliveryNote.status, 'verified')
-        )
+          eq(purchaseOrderDeliveryNote.status, "verified"),
+        ),
       );
 
     // Map totals in JS
     const orderedMap: Record<string, number> = {};
     const deliveredMap: Record<string, number> = {};
-    
+
     // Accumulate delivered quantity per PO line item
     const poLineDelivered: Record<string, number> = {};
     for (const d of deliveryItems) {
-      poLineDelivered[d.lineItemId] = (poLineDelivered[d.lineItemId] || 0) + parseFloat(d.quantityDelivered);
+      poLineDelivered[d.lineItemId] =
+        (poLineDelivered[d.lineItemId] || 0) + parseFloat(d.quantityDelivered);
     }
 
     for (const poLine of poLines) {
       if (poLine.projectLineItemId) {
         const qty = parseFloat(poLine.quantity);
         const delQty = poLineDelivered[poLine.id] || 0;
-        orderedMap[poLine.projectLineItemId] = (orderedMap[poLine.projectLineItemId] || 0) + qty;
-        deliveredMap[poLine.projectLineItemId] = (deliveredMap[poLine.projectLineItemId] || 0) + delQty;
+        orderedMap[poLine.projectLineItemId] =
+          (orderedMap[poLine.projectLineItemId] || 0) + qty;
+        deliveredMap[poLine.projectLineItemId] =
+          (deliveredMap[poLine.projectLineItemId] || 0) + delQty;
       }
     }
 
-    const itemsWithQty = items.map(item => {
+    const itemsWithQty = items.map((item) => {
       const ordered = orderedMap[item.id] || 0;
       const delivered = deliveredMap[item.id] || 0;
-      
-      let status = 'Not Ordered';
+
+      let status = "Not Ordered";
       if (ordered > 0) {
         if (delivered >= ordered) {
-          status = 'Fully Delivered';
+          status = "Fully Delivered";
         } else if (delivered > 0) {
-          status = 'Partially Delivered';
+          status = "Partially Delivered";
         } else {
-          status = 'Fully Ordered';
+          status = "Fully Ordered";
         }
       }
 
@@ -173,15 +205,19 @@ export async function getProjectLineItems(organizationId: string, projectId: str
 
     return { success: true, lineItems: itemsWithQty };
   } catch (error: any) {
-    console.error('Error fetching project line items:', error);
-    return { success: false, error: error.message || 'Failed to fetch project line items', lineItems: [] };
+    console.error("Error fetching project line items:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch project line items",
+      lineItems: [],
+    };
   }
 }
 
 export async function getProjectLineItemById(
   organizationId: string,
   projectId: string,
-  lineItemId: string
+  lineItemId: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -204,27 +240,30 @@ export async function getProjectLineItemById(
       .from(projectLineItem)
       .leftJoin(
         purchaseOrderLineItem,
-        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id)
+        eq(purchaseOrderLineItem.projectLineItemId, projectLineItem.id),
       )
       .where(
         and(
           eq(projectLineItem.id, lineItemId),
           eq(projectLineItem.organizationId, organizationId),
           eq(projectLineItem.projectId, projectId),
-          isNull(projectLineItem.deletedAt)
-        )
+          isNull(projectLineItem.deletedAt),
+        ),
       )
       .groupBy(projectLineItem.id)
       .limit(1);
 
     if (items.length === 0) {
-      return { success: false, error: 'Project line item not found' };
+      return { success: false, error: "Project line item not found" };
     }
 
     return { success: true, lineItem: items[0] };
   } catch (error: any) {
-    console.error('Error fetching project line item:', error);
-    return { success: false, error: error.message || 'Failed to fetch project line item' };
+    console.error("Error fetching project line item:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch project line item",
+    };
   }
 }
 
@@ -237,24 +276,27 @@ export async function createProjectLineItem(
     description: string;
     unit: string;
     unitPrice: string;
-  }
+  },
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['create'],
+          purchase_order: ["create"],
         },
       },
     });
 
     if (!hasPermission) {
-      return { success: false, error: 'Insufficient permissions to create line items' };
+      return {
+        success: false,
+        error: "Insufficient permissions to create line items",
+      };
     }
 
     const itemNumber = data.itemNumber.trim().toUpperCase();
@@ -263,8 +305,19 @@ export async function createProjectLineItem(
     const unit = data.unit.trim();
     const unitPrice = parseFloat(data.unitPrice);
 
-    if (!data.projectId || !itemNumber || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
-      return { success: false, error: 'Project, item number, description, unit, and unit price are required.' };
+    if (
+      !data.projectId ||
+      !itemNumber ||
+      !description ||
+      !unit ||
+      Number.isNaN(unitPrice) ||
+      unitPrice < 0
+    ) {
+      return {
+        success: false,
+        error:
+          "Project, item number, description, unit, and unit price are required.",
+      };
     }
 
     const projectExists = await db
@@ -274,13 +327,13 @@ export async function createProjectLineItem(
         and(
           eq(project.id, data.projectId),
           eq(project.organizationId, organizationId),
-          isNull(project.deletedAt)
-        )
+          isNull(project.deletedAt),
+        ),
       )
       .limit(1);
 
     if (projectExists.length === 0) {
-      return { success: false, error: 'Project not found' };
+      return { success: false, error: "Project not found" };
     }
 
     const duplicateItem = await db
@@ -291,13 +344,16 @@ export async function createProjectLineItem(
           eq(projectLineItem.organizationId, organizationId),
           eq(projectLineItem.projectId, data.projectId),
           eq(projectLineItem.itemNumber, itemNumber),
-          isNull(projectLineItem.deletedAt)
-        )
+          isNull(projectLineItem.deletedAt),
+        ),
       )
       .limit(1);
 
     if (duplicateItem.length > 0) {
-      return { success: false, error: 'This item number already exists for the selected project.' };
+      return {
+        success: false,
+        error: "This item number already exists for the selected project.",
+      };
     }
 
     const newItem = await db
@@ -314,12 +370,15 @@ export async function createProjectLineItem(
       })
       .returning();
 
-    revalidatePath('/projects/purchase-orders/create');
+    revalidatePath("/projects/purchase-orders/create");
     revalidatePath(`/projects/${data.projectId}`);
     return { success: true, lineItem: newItem[0] };
   } catch (error: any) {
-    console.error('Error creating project line item:', error);
-    return { success: false, error: error.message || 'Failed to create line item' };
+    console.error("Error creating project line item:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to create line item",
+    };
   }
 }
 
@@ -333,24 +392,27 @@ export async function updateProjectLineItem(
     description: string;
     unit: string;
     unitPrice: string;
-  }
+  },
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['update'],
+          purchase_order: ["update"],
         },
       },
     });
 
     if (!hasPermission) {
-      return { success: false, error: 'Insufficient permissions to update line items' };
+      return {
+        success: false,
+        error: "Insufficient permissions to update line items",
+      };
     }
 
     const itemNumber = data.itemNumber.trim().toUpperCase();
@@ -359,8 +421,17 @@ export async function updateProjectLineItem(
     const unit = data.unit.trim();
     const unitPrice = parseFloat(data.unitPrice);
 
-    if (!itemNumber || !description || !unit || Number.isNaN(unitPrice) || unitPrice < 0) {
-      return { success: false, error: 'Item number, description, unit, and unit price are required.' };
+    if (
+      !itemNumber ||
+      !description ||
+      !unit ||
+      Number.isNaN(unitPrice) ||
+      unitPrice < 0
+    ) {
+      return {
+        success: false,
+        error: "Item number, description, unit, and unit price are required.",
+      };
     }
 
     const existingItem = await db
@@ -371,13 +442,13 @@ export async function updateProjectLineItem(
           eq(projectLineItem.id, lineItemId),
           eq(projectLineItem.projectId, projectId),
           eq(projectLineItem.organizationId, organizationId),
-          isNull(projectLineItem.deletedAt)
-        )
+          isNull(projectLineItem.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingItem.length === 0) {
-      return { success: false, error: 'Project line item not found' };
+      return { success: false, error: "Project line item not found" };
     }
 
     const duplicateItem = await db
@@ -389,13 +460,16 @@ export async function updateProjectLineItem(
           eq(projectLineItem.projectId, projectId),
           eq(projectLineItem.itemNumber, itemNumber),
           isNull(projectLineItem.deletedAt),
-          ne(projectLineItem.id, lineItemId)
-        )
+          ne(projectLineItem.id, lineItemId),
+        ),
       )
       .limit(1);
 
     if (duplicateItem.length > 0) {
-      return { success: false, error: 'This item number already exists for the selected project.' };
+      return {
+        success: false,
+        error: "This item number already exists for the selected project.",
+      };
     }
 
     const updatedItem = await db
@@ -415,32 +489,38 @@ export async function updateProjectLineItem(
     revalidatePath(`/projects/${projectId}/items`);
     return { success: true, lineItem: updatedItem[0] };
   } catch (error: any) {
-    console.error('Error updating project line item:', error);
-    return { success: false, error: error.message || 'Failed to update line item' };
+    console.error("Error updating project line item:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to update line item",
+    };
   }
 }
 
 export async function archiveProjectLineItem(
   organizationId: string,
   projectId: string,
-  lineItemId: string
+  lineItemId: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['delete'],
+          purchase_order: ["delete"],
         },
       },
     });
 
     if (!hasPermission) {
-      return { success: false, error: 'Insufficient permissions to archive line items' };
+      return {
+        success: false,
+        error: "Insufficient permissions to archive line items",
+      };
     }
 
     const existingItem = await db
@@ -451,13 +531,13 @@ export async function archiveProjectLineItem(
           eq(projectLineItem.id, lineItemId),
           eq(projectLineItem.projectId, projectId),
           eq(projectLineItem.organizationId, organizationId),
-          isNull(projectLineItem.deletedAt)
-        )
+          isNull(projectLineItem.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingItem.length === 0) {
-      return { success: false, error: 'Project line item not found' };
+      return { success: false, error: "Project line item not found" };
     }
 
     await db
@@ -472,21 +552,26 @@ export async function archiveProjectLineItem(
     revalidatePath(`/projects/${projectId}/items`);
     return { success: true };
   } catch (error: any) {
-    console.error('Error archiving project line item:', error);
-    return { success: false, error: error.message || 'Failed to archive line item' };
+    console.error("Error archiving project line item:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to archive line item",
+    };
   }
 }
 
 async function getValidatedProjectLineItemSnapshots(
   organizationId: string,
   projectId: string,
-  lineItems: POLineItemInput[] = []
+  lineItems: POLineItemInput[] = [],
 ) {
   if (lineItems.length === 0) {
     return [];
   }
 
-  const ids = Array.from(new Set(lineItems.map((item) => item.projectLineItemId)));
+  const ids = Array.from(
+    new Set(lineItems.map((item) => item.projectLineItemId)),
+  );
   const savedItems = await db
     .select()
     .from(projectLineItem)
@@ -495,24 +580,28 @@ async function getValidatedProjectLineItemSnapshots(
         inArray(projectLineItem.id, ids),
         eq(projectLineItem.organizationId, organizationId),
         eq(projectLineItem.projectId, projectId),
-        isNull(projectLineItem.deletedAt)
-      )
+        isNull(projectLineItem.deletedAt),
+      ),
     );
 
   const savedItemMap = new Map(savedItems.map((item) => [item.id, item]));
   const missingIds = ids.filter((id) => !savedItemMap.has(id));
 
   if (missingIds.length > 0) {
-    throw new Error('One or more selected line items do not belong to the selected project.');
+    throw new Error(
+      "One or more selected line items do not belong to the selected project.",
+    );
   }
 
   return lineItems.map((item) => {
     const savedItem = savedItemMap.get(item.projectLineItemId)!;
     const qty = parseFloat(item.quantity) || 0;
-    
+
     // Support per-PO adjustable unit price, falling back to the saved catalogue price
     const customPrice =
-      item.unitPrice !== undefined && item.unitPrice !== null && item.unitPrice.trim() !== ''
+      item.unitPrice !== undefined &&
+      item.unitPrice !== null &&
+      item.unitPrice.trim() !== ""
         ? parseFloat(item.unitPrice)
         : NaN;
     const price =
@@ -521,7 +610,9 @@ async function getValidatedProjectLineItemSnapshots(
         : parseFloat(savedItem.unitPrice) || 0;
 
     if (qty <= 0) {
-      throw new Error(`Quantity for "${savedItem.description}" must be greater than zero.`);
+      throw new Error(
+        `Quantity for "${savedItem.description}" must be greater than zero.`,
+      );
     }
 
     return {
@@ -540,7 +631,7 @@ async function getValidatedProjectLineItemSnapshots(
 
 function toPurchaseOrderValues(
   organizationId: string,
-  data: PurchaseOrderCreateInput | PurchaseOrderUpdateInput
+  data: PurchaseOrderCreateInput | PurchaseOrderUpdateInput,
 ) {
   return {
     organizationId,
@@ -567,18 +658,18 @@ export async function getPurchaseOrders(
   status?: string,
   supplierName?: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['read'],
+          purchase_order: ["read"],
         },
       },
     });
@@ -589,7 +680,7 @@ export async function getPurchaseOrders(
         totalCount: 0,
         currentPage: 1,
         totalPages: 0,
-        error: 'Insufficient permissions',
+        error: "Insufficient permissions",
       };
     }
 
@@ -597,14 +688,14 @@ export async function getPurchaseOrders(
 
     let whereCondition = and(
       eq(purchaseOrder.organizationId, organizationId),
-      isNull(purchaseOrder.deletedAt)
+      isNull(purchaseOrder.deletedAt),
     );
 
     // Add project filter if provided
-    if (projectId && projectId !== 'all') {
+    if (projectId && projectId !== "all") {
       whereCondition = and(
         whereCondition,
-        eq(purchaseOrder.projectId, projectId)
+        eq(purchaseOrder.projectId, projectId),
       );
     }
 
@@ -615,21 +706,24 @@ export async function getPurchaseOrders(
         whereCondition,
         or(
           ilike(purchaseOrder.supplierName, searchTerm),
-          ilike(purchaseOrder.description, searchTerm)
-        )
+          ilike(purchaseOrder.description, searchTerm),
+        ),
       );
     }
 
     // Add status filter if provided
-    if (status && status !== 'all') {
-      whereCondition = and(whereCondition, eq(purchaseOrder.status, status as any));
+    if (status && status !== "all") {
+      whereCondition = and(
+        whereCondition,
+        eq(purchaseOrder.status, status as any),
+      );
     }
 
     // Add supplier filter if provided
-    if (supplierName && supplierName !== 'all') {
+    if (supplierName && supplierName !== "all") {
       whereCondition = and(
         whereCondition,
-        eq(purchaseOrder.supplierName, supplierName)
+        eq(purchaseOrder.supplierName, supplierName),
       );
     }
 
@@ -637,14 +731,11 @@ export async function getPurchaseOrders(
     if (startDate) {
       whereCondition = and(
         whereCondition,
-        gte(purchaseOrder.poDate, startDate)
+        gte(purchaseOrder.poDate, startDate),
       );
     }
     if (endDate) {
-      whereCondition = and(
-        whereCondition,
-        lte(purchaseOrder.poDate, endDate)
-      );
+      whereCondition = and(whereCondition, lte(purchaseOrder.poDate, endDate));
     }
 
     const purchaseOrders = await db
@@ -688,7 +779,7 @@ export async function getPurchaseOrders(
       totalPages: Math.ceil(totalCount.length / limit),
     };
   } catch (error: any) {
-    console.error('Error fetching purchase orders:', error);
+    console.error("Error fetching purchase orders:", error);
     throw error;
   }
 }
@@ -696,18 +787,18 @@ export async function getPurchaseOrders(
 // Create a new purchase order
 export async function createPurchaseOrder(
   organizationId: string,
-  data: PurchaseOrderCreateInput
+  data: PurchaseOrderCreateInput,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['create'],
+          purchase_order: ["create"],
         },
       },
     });
@@ -715,7 +806,7 @@ export async function createPurchaseOrder(
     if (!hasPermission) {
       return {
         success: false,
-        error: 'Insufficient permissions to create purchase order',
+        error: "Insufficient permissions to create purchase order",
       };
     }
 
@@ -730,13 +821,13 @@ export async function createPurchaseOrder(
         and(
           eq(project.id, validatedData.projectId),
           eq(project.organizationId, organizationId),
-          isNull(project.deletedAt)
-        )
+          isNull(project.deletedAt),
+        ),
       )
       .limit(1);
 
     if (projectExists.length === 0) {
-      return { success: false, error: 'Project not found' };
+      return { success: false, error: "Project not found" };
     }
 
     // Check if PO number is globally unique
@@ -746,22 +837,23 @@ export async function createPurchaseOrder(
       .where(
         and(
           eq(purchaseOrder.poNumber, validatedData.poNumber),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingPO.length > 0) {
       return {
         success: false,
-        error: 'This PO number is already in use. PO numbers must be unique across all organizations.',
+        error:
+          "This PO number is already in use. PO numbers must be unique across all organizations.",
       };
     }
 
     const lineItemSnapshots = await getValidatedProjectLineItemSnapshots(
       organizationId,
       validatedData.projectId,
-      validatedData.lineItems as POLineItemInput[]
+      validatedData.lineItems as POLineItemInput[],
     );
 
     const poValues = {
@@ -796,52 +888,55 @@ export async function createPurchaseOrder(
     // Save line items
     if (lineItemSnapshots.length > 0) {
       const lineItemsToInsert = lineItemSnapshots.map((item) => ({
-          id: crypto.randomUUID(),
-          purchaseOrderId: poId,
-          projectLineItemId: item.projectLineItemId,
-          itemNumber: item.itemNumber,
-          sapReference: item.sapReference,
-          description: item.description,
-          unit: item.unit,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          subtotal: item.subtotal,
-        }));
+        id: crypto.randomUUID(),
+        purchaseOrderId: poId,
+        projectLineItemId: item.projectLineItemId,
+        itemNumber: item.itemNumber,
+        sapReference: item.sapReference,
+        description: item.description,
+        unit: item.unit,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: item.subtotal,
+      }));
 
       await db.insert(purchaseOrderLineItem).values(lineItemsToInsert);
     }
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     revalidatePath(`/projects/${validatedData.projectId}`);
     return { success: true, purchaseOrder: newPurchaseOrder[0] };
   } catch (error: any) {
-    console.error('Error creating purchase order:', error);
+    console.error("Error creating purchase order:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid input data',
+        error: "Invalid input data",
         details: error.errors,
       };
     }
-    return { success: false, error: error.message || 'Failed to create purchase order' };
+    return {
+      success: false,
+      error: error.message || "Failed to create purchase order",
+    };
   }
 }
 
 // Get purchase order by ID with project information
 export async function getPurchaseOrderById(
   organizationId: string,
-  poId: string
+  poId: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['read'],
+          purchase_order: ["read"],
         },
       },
     });
@@ -849,7 +944,7 @@ export async function getPurchaseOrderById(
     if (!hasPermission) {
       return {
         success: false,
-        error: 'Insufficient permissions to view purchase order',
+        error: "Insufficient permissions to view purchase order",
       };
     }
 
@@ -857,7 +952,7 @@ export async function getPurchaseOrderById(
       where: and(
         eq(purchaseOrder.id, poId),
         eq(purchaseOrder.organizationId, organizationId),
-        isNull(purchaseOrder.deletedAt)
+        isNull(purchaseOrder.deletedAt),
       ),
       with: {
         project: true,
@@ -876,24 +971,26 @@ export async function getPurchaseOrderById(
     });
 
     if (!po) {
-      return { success: false, error: 'Purchase order not found' };
+      return { success: false, error: "Purchase order not found" };
     }
 
     // Enhance delivery notes with signed URLs for PODs
     if (po.deliveryNotes && po.deliveryNotes.length > 0) {
-      const { StorageService } = await import('@/lib/storage');
+      const { StorageService } = await import("@/lib/storage");
       const enhancedNotes = await Promise.all(
         po.deliveryNotes.map(async (note) => {
           if (note.podFileUrl) {
             try {
-              const signedUrl = await StorageService.getSignedUrl(note.podFileUrl);
+              const signedUrl = await StorageService.getSignedUrl(
+                note.podFileUrl,
+              );
               return { ...note, podFileUrl: signedUrl };
             } catch (err) {
-              console.error('Error signing POD url:', err);
+              console.error("Error signing POD url:", err);
             }
           }
           return note;
-        })
+        }),
       );
       // @ts-ignore
       po.deliveryNotes = enhancedNotes;
@@ -901,8 +998,11 @@ export async function getPurchaseOrderById(
 
     return { success: true, purchaseOrder: po };
   } catch (error: any) {
-    console.error('Error fetching purchase order:', error);
-    return { success: false, error: error.message || 'Failed to fetch purchase order' };
+    console.error("Error fetching purchase order:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to fetch purchase order",
+    };
   }
 }
 
@@ -910,18 +1010,18 @@ export async function getPurchaseOrderById(
 export async function updatePurchaseOrder(
   organizationId: string,
   poId: string,
-  data: PurchaseOrderUpdateInput
+  data: PurchaseOrderUpdateInput,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['update'],
+          purchase_order: ["update"],
         },
       },
     });
@@ -929,7 +1029,7 @@ export async function updatePurchaseOrder(
     if (!hasPermission) {
       return {
         success: false,
-        error: 'Insufficient permissions to update purchase order',
+        error: "Insufficient permissions to update purchase order",
       };
     }
 
@@ -944,13 +1044,13 @@ export async function updatePurchaseOrder(
         and(
           eq(purchaseOrder.id, poId),
           eq(purchaseOrder.organizationId, organizationId),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingPO.length === 0) {
-      return { success: false, error: 'Purchase order not found' };
+      return { success: false, error: "Purchase order not found" };
     }
 
     // If PO number is being updated, check uniqueness
@@ -963,15 +1063,16 @@ export async function updatePurchaseOrder(
             eq(purchaseOrder.poNumber, validatedData.poNumber),
             isNull(purchaseOrder.deletedAt),
             // Exclude current PO from uniqueness check
-            ne(purchaseOrder.id, poId)
-          )
+            ne(purchaseOrder.id, poId),
+          ),
         )
         .limit(1);
 
       if (duplicatePO.length > 0) {
         return {
           success: false,
-          error: 'This PO number is already in use. PO numbers must be unique across all organizations.',
+          error:
+            "This PO number is already in use. PO numbers must be unique across all organizations.",
         };
       }
     }
@@ -985,13 +1086,13 @@ export async function updatePurchaseOrder(
           and(
             eq(project.id, validatedData.projectId),
             eq(project.organizationId, organizationId),
-            isNull(project.deletedAt)
-          )
+            isNull(project.deletedAt),
+          ),
         )
         .limit(1);
 
       if (projectExists.length === 0) {
-        return { success: false, error: 'Project not found' };
+        return { success: false, error: "Project not found" };
       }
     }
 
@@ -1000,7 +1101,7 @@ export async function updatePurchaseOrder(
       ? await getValidatedProjectLineItemSnapshots(
           organizationId,
           targetProjectId,
-          data.lineItems as POLineItemInput[]
+          data.lineItems as POLineItemInput[],
         )
       : undefined;
 
@@ -1027,15 +1128,24 @@ export async function updatePurchaseOrder(
         .from(purchaseOrderLineItem)
         .where(eq(purchaseOrderLineItem.purchaseOrderId, poId));
 
-      const existingItemsMap = new Map(existingItems.map((item) => [item.id, item]));
-      const updatedItemIds = new Set(lineItemSnapshots.map((item) => item.id).filter(Boolean));
+      const existingItemsMap = new Map(
+        existingItems.map((item) => [item.id, item]),
+      );
+      const updatedItemIds = new Set(
+        lineItemSnapshots.map((item) => item.id).filter(Boolean),
+      );
 
       // 1. Delete items no longer present
-      const itemsToDelete = existingItems.filter((item) => !updatedItemIds.has(item.id));
+      const itemsToDelete = existingItems.filter(
+        (item) => !updatedItemIds.has(item.id),
+      );
       if (itemsToDelete.length > 0) {
-        await db
-          .delete(purchaseOrderLineItem)
-          .where(inArray(purchaseOrderLineItem.id, itemsToDelete.map((i) => i.id)));
+        await db.delete(purchaseOrderLineItem).where(
+          inArray(
+            purchaseOrderLineItem.id,
+            itemsToDelete.map((i) => i.id),
+          ),
+        );
       }
 
       // 2. Insert or Update line items
@@ -1073,22 +1183,25 @@ export async function updatePurchaseOrder(
       }
     }
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     revalidatePath(`/projects/purchase-orders/${poId}`);
     if (existingPO[0].projectId) {
       revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, purchaseOrder: updatedPO[0] };
   } catch (error: any) {
-    console.error('Error updating purchase order:', error);
+    console.error("Error updating purchase order:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid input data',
+        error: "Invalid input data",
         details: error.errors,
       };
     }
-    return { success: false, error: error.message || 'Failed to update purchase order' };
+    return {
+      success: false,
+      error: error.message || "Failed to update purchase order",
+    };
   }
 }
 
@@ -1096,7 +1209,7 @@ export async function updatePurchaseOrder(
 export async function updatePurchaseOrderStatus(
   organizationId: string,
   poId: string,
-  data: PurchaseOrderStatusUpdateInput
+  data: PurchaseOrderStatusUpdateInput,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
@@ -1111,33 +1224,37 @@ export async function updatePurchaseOrderStatus(
         and(
           eq(purchaseOrder.id, poId),
           eq(purchaseOrder.organizationId, organizationId),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingPO.length === 0) {
-      return { success: false, error: 'Purchase order not found' };
+      return { success: false, error: "Purchase order not found" };
     }
 
     // Check if PO is in a terminal state - cannot change status once completed or cancelled
-    if (existingPO[0].status === 'completed' || existingPO[0].status === 'cancelled') {
+    if (
+      existingPO[0].status === "completed" ||
+      existingPO[0].status === "cancelled"
+    ) {
       return {
         success: false,
-        error: 'Cannot change status of a completed or cancelled purchase order',
+        error:
+          "Cannot change status of a completed or cancelled purchase order",
       };
     }
 
     // Check user permissions - only owner and admin can change status
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission, error: permissionError } =
       await auth.api.hasPermission({
         headers: await headers(),
         body: {
           permissions: {
-            purchase_order: ['update'], // Use specific PO update permission
+            purchase_order: ["update"], // Use specific PO update permission
           },
         },
       });
@@ -1145,7 +1262,7 @@ export async function updatePurchaseOrderStatus(
     if (permissionError || !hasPermission) {
       return {
         success: false,
-        error: 'Insufficient permissions to change purchase order status',
+        error: "Insufficient permissions to change purchase order status",
       };
     }
 
@@ -1155,46 +1272,49 @@ export async function updatePurchaseOrderStatus(
         status: validatedData.status,
         // Auto-set deliveredAt when status is delivered
         deliveredAt:
-          validatedData.status === 'delivered' ? new Date() : undefined,
+          validatedData.status === "delivered" ? new Date() : undefined,
         updatedAt: new Date(),
       })
       .where(eq(purchaseOrder.id, poId))
       .returning();
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     revalidatePath(`/projects/purchase-orders/${poId}`);
     if (existingPO[0].projectId) {
       revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
     return { success: true, purchaseOrder: updatedPO[0] };
   } catch (error: any) {
-    console.error('Error updating purchase order status:', error);
+    console.error("Error updating purchase order status:", error);
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: 'Invalid input data',
+        error: "Invalid input data",
         details: error.errors,
       };
     }
-    return { success: false, error: error.message || 'Failed to update purchase order status' };
+    return {
+      success: false,
+      error: error.message || "Failed to update purchase order status",
+    };
   }
 }
 
 // Soft delete purchase order
 export async function deletePurchaseOrder(
   organizationId: string,
-  poId: string
+  poId: string,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['delete'],
+          purchase_order: ["delete"],
         },
       },
     });
@@ -1202,7 +1322,7 @@ export async function deletePurchaseOrder(
     if (!hasPermission) {
       return {
         success: false,
-        error: 'Insufficient permissions to delete purchase order',
+        error: "Insufficient permissions to delete purchase order",
       };
     }
 
@@ -1214,13 +1334,13 @@ export async function deletePurchaseOrder(
         and(
           eq(purchaseOrder.id, poId),
           eq(purchaseOrder.organizationId, organizationId),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       )
       .limit(1);
 
     if (existingPO.length === 0) {
-      return { success: false, error: 'Purchase order not found' };
+      return { success: false, error: "Purchase order not found" };
     }
 
     await db
@@ -1231,14 +1351,17 @@ export async function deletePurchaseOrder(
       })
       .where(eq(purchaseOrder.id, poId));
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     if (existingPO[0].projectId) {
       revalidatePath(`/projects/${existingPO[0].projectId}`);
     }
-    return { success: true, message: 'Purchase order deleted successfully' };
+    return { success: true, message: "Purchase order deleted successfully" };
   } catch (error: any) {
-    console.error('Error deleting purchase order:', error);
-    return { success: false, error: error.message || 'Failed to delete purchase order' };
+    console.error("Error deleting purchase order:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete purchase order",
+    };
   }
 }
 
@@ -1256,18 +1379,18 @@ export async function recordPODelivery(
       lineItemId: string;
       quantityDelivered: string;
     }>;
-  }
+  },
 ) {
   try {
     await validateSessionAndOrg(organizationId);
-    const { auth } = await import('@/lib/auth');
-    const { headers } = await import('next/headers');
+    const { auth } = await import("@/lib/auth");
+    const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
         permissions: {
-          purchase_order: ['update'],
+          purchase_order: ["update"],
         },
       },
     });
@@ -1275,11 +1398,11 @@ export async function recordPODelivery(
     if (!hasPermission) {
       return {
         success: false,
-        error: 'Insufficient permissions to record purchase order delivery',
+        error: "Insufficient permissions to record purchase order delivery",
       };
     }
 
-    const { getServerSession } = await import('@/lib/auth');
+    const { getServerSession } = await import("@/lib/auth");
     const session = await getServerSession();
     const userId = session?.user?.id;
 
@@ -1288,7 +1411,7 @@ export async function recordPODelivery(
       where: and(
         eq(purchaseOrder.id, poId),
         eq(purchaseOrder.organizationId, organizationId),
-        isNull(purchaseOrder.deletedAt)
+        isNull(purchaseOrder.deletedAt),
       ),
       with: {
         lineItems: true,
@@ -1301,13 +1424,14 @@ export async function recordPODelivery(
     });
 
     if (!po) {
-      return { success: false, error: 'Purchase order not found' };
+      return { success: false, error: "Purchase order not found" };
     }
 
-    if (po.status === 'completed' || po.status === 'cancelled') {
+    if (po.status === "completed" || po.status === "cancelled") {
       return {
         success: false,
-        error: 'Cannot record delivery for a completed or cancelled purchase order',
+        error:
+          "Cannot record delivery for a completed or cancelled purchase order",
       };
     }
 
@@ -1317,7 +1441,10 @@ export async function recordPODelivery(
       if (note.items) {
         for (const item of note.items) {
           const currentVal = existingDeliveredQtyMap.get(item.lineItemId) || 0;
-          existingDeliveredQtyMap.set(item.lineItemId, currentVal + parseFloat(item.quantityDelivered));
+          existingDeliveredQtyMap.set(
+            item.lineItemId,
+            currentVal + parseFloat(item.quantityDelivered),
+          );
         }
       }
     }
@@ -1331,7 +1458,9 @@ export async function recordPODelivery(
     }> = [];
 
     for (const inputItem of data.items) {
-      const lineItem = po.lineItems.find((li) => li.id === inputItem.lineItemId);
+      const lineItem = po.lineItems.find(
+        (li) => li.id === inputItem.lineItemId,
+      );
       if (!lineItem) {
         return {
           success: false,
@@ -1372,7 +1501,8 @@ export async function recordPODelivery(
     if (itemsToInsert.length === 0) {
       return {
         success: false,
-        error: 'At least one item must have a delivered quantity greater than zero',
+        error:
+          "At least one item must have a delivered quantity greater than zero",
       };
     }
 
@@ -1388,7 +1518,7 @@ export async function recordPODelivery(
         deliveryNoteNumber: data.deliveryNoteNumber,
         recipientName: data.recipientName,
         receivedAt: data.receivedAt,
-        status: 'received',
+        status: "received",
         podFileUrl: data.podFileUrl || null,
         notes: data.notes || null,
       });
@@ -1402,7 +1532,7 @@ export async function recordPODelivery(
           quantityDelivered: item.quantityDelivered.toString(),
           unitPrice: item.unitPrice.toFixed(2),
           deliveryValue: item.deliveryValue.toFixed(2),
-        }))
+        })),
       );
 
       // 3. Recalculate and update PO status
@@ -1411,8 +1541,11 @@ export async function recordPODelivery(
 
       for (const lineItem of po.lineItems) {
         const ordered = parseFloat(lineItem.quantity) || 0;
-        const previouslyDelivered = existingDeliveredQtyMap.get(lineItem.id) || 0;
-        const newlyDelivered = itemsToInsert.find((item) => item.lineItemId === lineItem.id)?.quantityDelivered || 0;
+        const previouslyDelivered =
+          existingDeliveredQtyMap.get(lineItem.id) || 0;
+        const newlyDelivered =
+          itemsToInsert.find((item) => item.lineItemId === lineItem.id)
+            ?.quantityDelivered || 0;
         const totalDelivered = previouslyDelivered + newlyDelivered;
 
         if (totalDelivered < ordered) {
@@ -1428,36 +1561,43 @@ export async function recordPODelivery(
         allCompleted = false;
       }
 
-      const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+      const newStatus = allCompleted
+        ? "completed"
+        : someDelivered
+          ? "partially_delivered"
+          : "open";
 
       await tx
         .update(purchaseOrder)
         .set({
           status: newStatus,
-          deliveredAt: newStatus === 'completed' ? new Date() : undefined,
+          deliveredAt: newStatus === "completed" ? new Date() : undefined,
           updatedAt: new Date(),
         })
         .where(eq(purchaseOrder.id, poId));
-      
+
       // 4. Log project activity
       await tx.insert(projectActivity).values({
         id: crypto.randomUUID(),
         organizationId,
         projectId: po.projectId,
-        activityType: 'po_delivery',
+        activityType: "po_delivery",
         description: `Delivery Note ${data.deliveryNoteNumber} recorded for PO ${po.poNumber}. Status updated to ${newStatus}.`,
         userId: userId || null,
       });
     });
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     revalidatePath(`/projects/purchase-orders/${poId}`);
     revalidatePath(`/projects/${po.projectId}`);
 
     return { success: true, deliveryNoteId };
   } catch (error: any) {
-    console.error('Error recording PO delivery:', error);
-    return { success: false, error: error.message || 'Failed to record delivery' };
+    console.error("Error recording PO delivery:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to record delivery",
+    };
   }
 }
 
@@ -1471,23 +1611,26 @@ export async function getUniqueSuppliers(organizationId: string) {
       .where(
         and(
           eq(purchaseOrder.organizationId, organizationId),
-          isNull(purchaseOrder.deletedAt)
-        )
+          isNull(purchaseOrder.deletedAt),
+        ),
       )
       .orderBy(purchaseOrder.supplierName);
-    
-    return { 
-      success: true, 
-      suppliers: result.map((r) => r.supplierName).filter(Boolean) as string[] 
+
+    return {
+      success: true,
+      suppliers: result.map((r) => r.supplierName).filter(Boolean) as string[],
     };
   } catch (error: any) {
-    console.error('Error getting unique suppliers:', error);
+    console.error("Error getting unique suppliers:", error);
     return { success: false, suppliers: [], error: error.message };
   }
 }
 
 // Verify delivery note, transition status to verified and update PO status
-export async function verifyDeliveryNote(organizationId: string, deliveryNoteId: string) {
+export async function verifyDeliveryNote(
+  organizationId: string,
+  deliveryNoteId: string,
+) {
   try {
     const { userId } = await validateSessionAndOrg(organizationId);
 
@@ -1501,23 +1644,23 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
             organizationId: true,
           },
         },
-      }
+      },
     });
 
     if (!note) {
-      return { success: false, error: 'Delivery note not found' };
+      return { success: false, error: "Delivery note not found" };
     }
 
     // Verify the delivery note belongs to this organization
     if (note.purchaseOrder.organizationId !== organizationId) {
-      return { success: false, error: 'Delivery note not found' };
+      return { success: false, error: "Delivery note not found" };
     }
 
     await db.transaction(async (tx) => {
       // 1. Update status to verified
       await tx
         .update(purchaseOrderDeliveryNote)
-        .set({ status: 'verified' })
+        .set({ status: "verified" })
         .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
 
       // 2. Fetch purchase order and recalculate status based on verified notes
@@ -1528,12 +1671,12 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
         with: {
           lineItems: true,
           deliveryNotes: {
-            where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+            where: eq(purchaseOrderDeliveryNote.status, "verified"),
             with: {
               items: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       if (po) {
@@ -1543,7 +1686,10 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
         for (const vn of po.deliveryNotes) {
           for (const item of vn.items || []) {
             const current = deliveredQtyMap.get(item.lineItemId) || 0;
-            deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
+            deliveredQtyMap.set(
+              item.lineItemId,
+              current + parseFloat(item.quantityDelivered),
+            );
           }
         }
 
@@ -1566,13 +1712,17 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
           allCompleted = false;
         }
 
-        const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+        const newStatus = allCompleted
+          ? "completed"
+          : someDelivered
+            ? "partially_delivered"
+            : "open";
 
         await tx
           .update(purchaseOrder)
           .set({
             status: newStatus,
-            deliveredAt: newStatus === 'completed' ? new Date() : null,
+            deliveredAt: newStatus === "completed" ? new Date() : null,
             updatedAt: new Date(),
           })
           .where(eq(purchaseOrder.id, note.purchaseOrderId));
@@ -1582,26 +1732,32 @@ export async function verifyDeliveryNote(organizationId: string, deliveryNoteId:
           id: crypto.randomUUID(),
           organizationId,
           projectId: note.projectId,
-          activityType: 'po_delivery_verified',
+          activityType: "po_delivery_verified",
           description: `Delivery Note ${note.deliveryNoteNumber} verified. PO ${po.poNumber} status updated to ${newStatus}.`,
           userId: userId || null,
         });
       }
     });
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     revalidatePath(`/projects/purchase-orders/${note.purchaseOrderId}`);
     revalidatePath(`/projects/${note.projectId}`);
 
     return { success: true };
   } catch (error: any) {
-    console.error('Error verifying delivery note:', error);
-    return { success: false, error: error.message || 'Failed to verify delivery note' };
+    console.error("Error verifying delivery note:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to verify delivery note",
+    };
   }
 }
 
 // Void delivery note, transition status to voided and update PO status
-export async function voidDeliveryNote(organizationId: string, deliveryNoteId: string) {
+export async function voidDeliveryNote(
+  organizationId: string,
+  deliveryNoteId: string,
+) {
   try {
     const { userId } = await validateSessionAndOrg(organizationId);
 
@@ -1618,19 +1774,19 @@ export async function voidDeliveryNote(organizationId: string, deliveryNoteId: s
     });
 
     if (!note) {
-      return { success: false, error: 'Delivery note not found' };
+      return { success: false, error: "Delivery note not found" };
     }
 
     // Verify the delivery note belongs to this organization
     if (note.purchaseOrder.organizationId !== organizationId) {
-      return { success: false, error: 'Delivery note not found' };
+      return { success: false, error: "Delivery note not found" };
     }
 
     await db.transaction(async (tx) => {
       // 1. Update status to voided
       await tx
         .update(purchaseOrderDeliveryNote)
-        .set({ status: 'voided' })
+        .set({ status: "voided" })
         .where(eq(purchaseOrderDeliveryNote.id, deliveryNoteId));
 
       // 2. Fetch purchase order and recalculate status based only on verified notes
@@ -1639,12 +1795,12 @@ export async function voidDeliveryNote(organizationId: string, deliveryNoteId: s
         with: {
           lineItems: true,
           deliveryNotes: {
-            where: eq(purchaseOrderDeliveryNote.status, 'verified'),
+            where: eq(purchaseOrderDeliveryNote.status, "verified"),
             with: {
               items: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       if (po) {
@@ -1654,7 +1810,10 @@ export async function voidDeliveryNote(organizationId: string, deliveryNoteId: s
         for (const vn of po.deliveryNotes) {
           for (const item of vn.items || []) {
             const current = deliveredQtyMap.get(item.lineItemId) || 0;
-            deliveredQtyMap.set(item.lineItemId, current + parseFloat(item.quantityDelivered));
+            deliveredQtyMap.set(
+              item.lineItemId,
+              current + parseFloat(item.quantityDelivered),
+            );
           }
         }
 
@@ -1677,13 +1836,17 @@ export async function voidDeliveryNote(organizationId: string, deliveryNoteId: s
           allCompleted = false;
         }
 
-        const newStatus = allCompleted ? 'completed' : someDelivered ? 'partially_delivered' : 'open';
+        const newStatus = allCompleted
+          ? "completed"
+          : someDelivered
+            ? "partially_delivered"
+            : "open";
 
         await tx
           .update(purchaseOrder)
           .set({
             status: newStatus,
-            deliveredAt: newStatus === 'completed' ? new Date() : null,
+            deliveredAt: newStatus === "completed" ? new Date() : null,
             updatedAt: new Date(),
           })
           .where(eq(purchaseOrder.id, note.purchaseOrderId));
@@ -1693,20 +1856,23 @@ export async function voidDeliveryNote(organizationId: string, deliveryNoteId: s
           id: crypto.randomUUID(),
           organizationId,
           projectId: note.projectId,
-          activityType: 'po_delivery_voided',
+          activityType: "po_delivery_voided",
           description: `Delivery Note ${note.deliveryNoteNumber} voided. PO ${po.poNumber} status updated to ${newStatus}.`,
           userId: userId || null,
         });
       }
     });
 
-    revalidatePath('/projects/purchase-orders');
+    revalidatePath("/projects/purchase-orders");
     revalidatePath(`/projects/purchase-orders/${note.purchaseOrderId}`);
     revalidatePath(`/projects/${note.projectId}`);
 
     return { success: true };
   } catch (error: any) {
-    console.error('Error voiding delivery note:', error);
-    return { success: false, error: error.message || 'Failed to void delivery note' };
+    console.error("Error voiding delivery note:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to void delivery note",
+    };
   }
 }

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import StatusBadge from '@/components/StatusBadge';
+} from "@/components/ui/sheet";
+import StatusBadge from "@/components/StatusBadge";
 import {
   LifeBuoy,
   User,
@@ -22,17 +22,17 @@ import {
   ChevronDown,
   Sparkles,
   RotateCcw,
-} from 'lucide-react';
-import type { TicketWithUser, TicketMessageItem } from '@/lib/admin-queries';
-import { FormattedMessage } from './FormattedMessage';
-import { PrioritySelect } from './PrioritySelect';
+} from "lucide-react";
+import type { TicketWithUser, TicketMessageItem } from "@/lib/admin-queries";
+import { FormattedMessage } from "./FormattedMessage";
+import { PrioritySelect } from "./PrioritySelect";
 import {
   getTicketThreadAction,
   sendAdminTicketMessageAction,
   updateTicketStatus,
   updateTicketPriority,
   sendTicketTranscriptEmailAction,
-} from './actions';
+} from "./actions";
 
 type Props = {
   ticket: TicketWithUser | null;
@@ -42,17 +42,17 @@ type Props = {
 };
 
 const STATUS_OPTIONS = [
-  { value: 'open', label: 'Open' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'resolved', label: 'Resolved' },
-  { value: 'closed', label: 'Closed' },
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
 ];
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'urgent', label: 'Urgent' },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
 ];
 
 export function TicketDetailDrawer({
@@ -62,14 +62,19 @@ export function TicketDetailDrawer({
   onTicketUpdated,
 }: Props) {
   const [messages, setMessages] = useState<TicketMessageItem[]>([]);
-  const [currentTicket, setCurrentTicket] = useState<TicketWithUser | null>(ticket);
+  const [currentTicket, setCurrentTicket] = useState<TicketWithUser | null>(
+    ticket,
+  );
   const [loading, setLoading] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendingTranscript, setSendingTranscript] = useState(false);
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load thread messages
@@ -96,11 +101,11 @@ export function TicketDetailDrawer({
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
   };
@@ -119,11 +124,11 @@ export function TicketDetailDrawer({
     setSending(false);
 
     if (res.success) {
-      setNewMessage('');
+      setNewMessage("");
       await loadThread(currentTicket.id);
       onTicketUpdated?.();
     } else {
-      showNotification('error', res.error || 'Failed to send message.');
+      showNotification("error", res.error || "Failed to send message.");
     }
   };
 
@@ -131,11 +136,13 @@ export function TicketDetailDrawer({
     if (!currentTicket) return;
     try {
       await updateTicketStatus(currentTicket.id, newStatus);
-      setCurrentTicket((prev) => (prev ? { ...prev, status: newStatus } : null));
+      setCurrentTicket((prev) =>
+        prev ? { ...prev, status: newStatus } : null,
+      );
       onTicketUpdated?.();
-      showNotification('success', `Status changed to ${newStatus}`);
+      showNotification("success", `Status changed to ${newStatus}`);
     } catch (err: any) {
-      showNotification('error', err.message || 'Status update failed.');
+      showNotification("error", err.message || "Status update failed.");
     }
   };
 
@@ -143,11 +150,13 @@ export function TicketDetailDrawer({
     if (!currentTicket) return;
     try {
       await updateTicketPriority(currentTicket.id, newPriority);
-      setCurrentTicket((prev) => (prev ? { ...prev, priority: newPriority } : null));
+      setCurrentTicket((prev) =>
+        prev ? { ...prev, priority: newPriority } : null,
+      );
       onTicketUpdated?.();
-      showNotification('success', `Priority updated to ${newPriority}`);
+      showNotification("success", `Priority updated to ${newPriority}`);
     } catch (err: any) {
-      showNotification('error', err.message || 'Priority update failed.');
+      showNotification("error", err.message || "Priority update failed.");
     }
   };
 
@@ -156,13 +165,16 @@ export function TicketDetailDrawer({
     setSendingTranscript(true);
     const res = await sendTicketTranscriptEmailAction(
       currentTicket.id,
-      currentTicket.email
+      currentTicket.email,
     );
     setSendingTranscript(false);
     if (res.success) {
-      showNotification('success', `Full transcript emailed to ${currentTicket.email}`);
+      showNotification(
+        "success",
+        `Full transcript emailed to ${currentTicket.email}`,
+      );
     } else {
-      showNotification('error', res.error || 'Failed to email transcript.');
+      showNotification("error", res.error || "Failed to email transcript.");
     }
   };
 
@@ -179,9 +191,9 @@ export function TicketDetailDrawer({
           {notification && (
             <div
               className={`p-2.5 rounded-lg text-xs font-medium ${
-                notification.type === 'success'
-                  ? 'bg-emerald-950/70 border border-emerald-800 text-emerald-300'
-                  : 'bg-rose-950/70 border border-rose-800 text-rose-300'
+                notification.type === "success"
+                  ? "bg-emerald-950/70 border border-emerald-800 text-emerald-300"
+                  : "bg-rose-950/70 border border-rose-800 text-rose-300"
               }`}
             >
               {notification.message}
@@ -192,12 +204,16 @@ export function TicketDetailDrawer({
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <LifeBuoy className="h-5 w-5 text-amber-400" />
                 <span className="font-mono text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                  #{currentTicket.ticketCode || (currentTicket.ticketNumber ? `TICK-${currentTicket.ticketNumber}` : `TICK-${currentTicket.id.slice(0, 8).toUpperCase()}`)}
+                  #
+                  {currentTicket.ticketCode ||
+                    (currentTicket.ticketNumber
+                      ? `TICK-${currentTicket.ticketNumber}`
+                      : `TICK-${currentTicket.id.slice(0, 8).toUpperCase()}`)}
                 </span>
                 <StatusBadge status={currentTicket.status} />
               </div>
               <SheetTitle className="text-base font-bold text-white truncate">
-                {currentTicket.subject || 'Support Request'}
+                {currentTicket.subject || "Support Request"}
               </SheetTitle>
             </div>
 
@@ -268,12 +284,14 @@ export function TicketDetailDrawer({
             </div>
           ) : messages.length === 0 ? (
             <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-400">
-              <p className="font-semibold text-white mb-1">Initial Ticket Message:</p>
+              <p className="font-semibold text-white mb-1">
+                Initial Ticket Message:
+              </p>
               <p className="whitespace-pre-wrap">{currentTicket.message}</p>
             </div>
           ) : (
             messages.map((m) => {
-              const isAdmin = m.senderType === 'admin';
+              const isAdmin = m.senderType === "admin";
               const isInternalNote = m.isInternal;
 
               if (isInternalNote) {
@@ -289,8 +307,8 @@ export function TicketDetailDrawer({
                       </span>
                       <span>
                         {new Date(m.createdAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </span>
                     </div>
@@ -304,17 +322,17 @@ export function TicketDetailDrawer({
               return (
                 <div
                   key={m.id}
-                  className={`flex flex-col ${isAdmin ? 'items-end' : 'items-start'}`}
+                  className={`flex flex-col ${isAdmin ? "items-end" : "items-start"}`}
                 >
                   <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-zinc-500">
                     <span className="font-medium text-zinc-400">
-                      {isAdmin ? 'You (Support)' : m.senderName}
+                      {isAdmin ? "You (Support)" : m.senderName}
                     </span>
                     <span>•</span>
                     <span>
                       {new Date(m.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </span>
                   </div>
@@ -322,8 +340,8 @@ export function TicketDetailDrawer({
                   <div
                     className={`max-w-[85%] p-3.5 rounded-2xl text-xs sm:text-sm shadow-xs ${
                       isAdmin
-                        ? 'bg-amber-600/90 text-white rounded-tr-xs'
-                        : 'bg-zinc-800 text-zinc-200 rounded-tl-xs border border-zinc-700/60'
+                        ? "bg-amber-600/90 text-white rounded-tr-xs"
+                        : "bg-zinc-800 text-zinc-200 rounded-tl-xs border border-zinc-700/60"
                     }`}
                   >
                     <FormattedMessage content={m.message} />
@@ -372,20 +390,20 @@ export function TicketDetailDrawer({
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage(e);
                 }
               }}
               placeholder={
                 isInternal
-                  ? 'Add internal staff note (hidden from customer)...'
-                  : 'Type your message to the customer (Enter to send, Shift+Enter for newline)...'
+                  ? "Add internal staff note (hidden from customer)..."
+                  : "Type your message to the customer (Enter to send, Shift+Enter for newline)..."
               }
               className={`flex-1 px-3 py-2 bg-zinc-950 border rounded-xl text-xs sm:text-sm text-white focus:outline-none placeholder:text-zinc-600 resize-none ${
                 isInternal
-                  ? 'border-amber-900/60 focus:border-amber-500/80'
-                  : 'border-zinc-800 focus:border-amber-500/80'
+                  ? "border-amber-900/60 focus:border-amber-500/80"
+                  : "border-zinc-800 focus:border-amber-500/80"
               }`}
             />
 
@@ -394,8 +412,8 @@ export function TicketDetailDrawer({
               disabled={sending || !newMessage.trim()}
               className={`px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all flex flex-col items-center justify-center gap-1 shrink-0 ${
                 isInternal
-                  ? 'bg-amber-700 hover:bg-amber-600 text-white disabled:opacity-50'
-                  : 'bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50'
+                  ? "bg-amber-700 hover:bg-amber-600 text-white disabled:opacity-50"
+                  : "bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50"
               }`}
             >
               {sending ? (
@@ -403,7 +421,9 @@ export function TicketDetailDrawer({
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              <span className="text-[10px]">{isInternal ? 'Note' : 'Send'}</span>
+              <span className="text-[10px]">
+                {isInternal ? "Note" : "Send"}
+              </span>
             </button>
           </div>
         </form>

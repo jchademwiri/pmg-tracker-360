@@ -1,16 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useTransition, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { z } from 'zod';
-import { ArrowLeft, FileText, Building, Plus, Trash2, Package } from 'lucide-react';
-import { StepIndicator, StepActions, type StepConfig } from '@/components/ui/form-stepper';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useFieldArray } from "react-hook-form";
+import { z } from "zod";
+import {
+  ArrowLeft,
+  FileText,
+  Building,
+  Plus,
+  Trash2,
+  Package,
+} from "lucide-react";
+import {
+  StepIndicator,
+  StepActions,
+  type StepConfig,
+} from "@/components/ui/form-stepper";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,14 +29,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -33,38 +44,48 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   createProjectLineItem,
   createPurchaseOrder,
   getProjectLineItems,
   updatePurchaseOrder,
-} from '@/server/purchase-orders';
-import { getProjects } from '@/server/projects';
-import { ProjectCreateDialog } from '@/components/projects/project-create-dialog';
-import { toSASTDateString, parseDateToUTC } from '@/lib/timezone';
-import { formatCurrency } from '@/lib/format';
-import { toast } from 'sonner';
+} from "@/server/purchase-orders";
+import { getProjects } from "@/server/projects";
+import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
+import { toSASTDateString, parseDateToUTC } from "@/lib/timezone";
+import { formatCurrency } from "@/lib/format";
+import { toast } from "sonner";
 
 const lineItemSchema = z.object({
   id: z.string().optional(),
-  projectLineItemId: z.string().min(1, 'Saved line item is required'),
+  projectLineItemId: z.string().min(1, "Saved line item is required"),
   description: z.string().optional(),
   unit: z.string().optional(),
-  quantity: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-    message: 'Quantity must be a positive number',
-  }),
+  quantity: z
+    .string()
+    .refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+      message: "Quantity must be a positive number",
+    }),
   unitPrice: z.string().optional(),
 });
 
 const poFormSchema = z
   .object({
-    poNumber: z.string().min(1, 'PO Number is required'),
-    projectId: z.string().min(1, 'Project is required'),
+    poNumber: z.string().min(1, "PO Number is required"),
+    projectId: z.string().min(1, "Project is required"),
     supplierName: z.string().optional(),
-    description: z.string().min(1, 'Description is required'),
-    totalAmount: z.string().min(1, 'Total amount is required'),
-    status: z.enum(['open', 'sent', 'partially_delivered', 'delivered', 'completed', 'cancelled', 'disputed']),
+    description: z.string().min(1, "Description is required"),
+    totalAmount: z.string().min(1, "Total amount is required"),
+    status: z.enum([
+      "open",
+      "sent",
+      "partially_delivered",
+      "delivered",
+      "completed",
+      "cancelled",
+      "disputed",
+    ]),
     poDate: z.date().optional(),
     expectedDeliveryDate: z.date().optional(),
     deliveryAddress: z.string().optional(),
@@ -78,9 +99,9 @@ const poFormSchema = z
       return true;
     },
     {
-      message: 'Expected delivery date must be after the PO date',
-      path: ['expectedDeliveryDate'],
-    }
+      message: "Expected delivery date must be after the PO date",
+      path: ["expectedDeliveryDate"],
+    },
   );
 
 interface POFormValues {
@@ -89,7 +110,14 @@ interface POFormValues {
   supplierName?: string;
   description: string;
   totalAmount: string;
-  status: 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed';
+  status:
+    | "open"
+    | "sent"
+    | "partially_delivered"
+    | "delivered"
+    | "completed"
+    | "cancelled"
+    | "disputed";
   poDate?: Date;
   expectedDeliveryDate?: Date;
   deliveryAddress?: string;
@@ -112,7 +140,14 @@ interface POFormProps {
     supplierName?: string;
     description: string;
     totalAmount: string;
-    status: 'open' | 'sent' | 'partially_delivered' | 'delivered' | 'completed' | 'cancelled' | 'disputed';
+    status:
+      | "open"
+      | "sent"
+      | "partially_delivered"
+      | "delivered"
+      | "completed"
+      | "cancelled"
+      | "disputed";
     poDate?: Date;
     expectedDeliveryDate?: Date;
     deliveryAddress?: string;
@@ -141,55 +176,55 @@ export function POForm({
   const [currentStep, setCurrentStep] = useState(1);
   const [loadingLineItems, setLoadingLineItems] = useState(false);
   const [newLineItem, setNewLineItem] = useState({
-    itemNumber: '',
-    sapReference: '',
-    description: '',
-    unit: 'unit',
-    unitPrice: '0.00',
+    itemNumber: "",
+    sapReference: "",
+    description: "",
+    unit: "unit",
+    unitPrice: "0.00",
   });
 
   const form = useForm<POFormValues>({
     resolver: zodResolver(poFormSchema),
     defaultValues: {
-      poNumber: initialData?.poNumber || '',
-      projectId: initialData?.projectId || '',
-      supplierName: initialData?.supplierName || '',
-      description: initialData?.description || '',
-      totalAmount: initialData?.totalAmount || '0.00',
-      status: initialData?.status || 'open',
+      poNumber: initialData?.poNumber || "",
+      projectId: initialData?.projectId || "",
+      supplierName: initialData?.supplierName || "",
+      description: initialData?.description || "",
+      totalAmount: initialData?.totalAmount || "0.00",
+      status: initialData?.status || "open",
       poDate: initialData?.poDate,
       expectedDeliveryDate: initialData?.expectedDeliveryDate,
-      deliveryAddress: initialData?.deliveryAddress || '',
+      deliveryAddress: initialData?.deliveryAddress || "",
       lineItems:
         initialData?.lineItems?.map((item) => ({
           ...item,
-          projectLineItemId: item.projectLineItemId || '',
-          unit: item.unit || 'unit',
+          projectLineItemId: item.projectLineItemId || "",
+          unit: item.unit || "unit",
         })) || [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'lineItems',
+    name: "lineItems",
   });
 
-  const watchedLineItems = form.watch('lineItems');
-  const selectedProjectId = form.watch('projectId');
+  const watchedLineItems = form.watch("lineItems");
+  const selectedProjectId = form.watch("projectId");
 
   // Auto-calculate totalAmount when lineItems change
   useEffect(() => {
     if (watchedLineItems) {
       const total = watchedLineItems.reduce((acc, item) => {
         const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.unitPrice || '0') || 0;
+        const price = parseFloat(item.unitPrice || "0") || 0;
         return acc + qty * price;
       }, 0);
-      form.setValue('totalAmount', total.toFixed(2));
+      form.setValue("totalAmount", total.toFixed(2));
     }
   }, [watchedLineItems, form]);
 
-  const watchedTotal = parseFloat(form.watch('totalAmount')) || 0;
+  const watchedTotal = parseFloat(form.watch("totalAmount")) || 0;
   const vatExclusive = watchedTotal;
   const vatAmount = watchedTotal * 0.15;
   const vatInclusive = watchedTotal * 1.15;
@@ -198,10 +233,10 @@ export function POForm({
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const result = await getProjects(organizationId, '', 1, 100);
+        const result = await getProjects(organizationId, "", 1, 100);
         setProjects(result.projects);
       } catch (error) {
-        console.error('Error loading projects:', error);
+        console.error("Error loading projects:", error);
       } finally {
         setLoadingProjects(false);
       }
@@ -219,10 +254,13 @@ export function POForm({
     const loadProjectLineItems = async () => {
       setLoadingLineItems(true);
       try {
-        const result = await getProjectLineItems(organizationId, selectedProjectId);
+        const result = await getProjectLineItems(
+          organizationId,
+          selectedProjectId,
+        );
         setProjectLineItems(result.lineItems || []);
       } catch (error) {
-        console.error('Error loading project line items:', error);
+        console.error("Error loading project line items:", error);
         setProjectLineItems([]);
       } finally {
         setLoadingLineItems(false);
@@ -235,9 +273,9 @@ export function POForm({
   const handleNextStep = async () => {
     let fieldsToValidate: (keyof POFormValues)[] = [];
     if (currentStep === 1) {
-      fieldsToValidate = ['poNumber', 'description', 'status', 'totalAmount'];
+      fieldsToValidate = ["poNumber", "description", "status", "totalAmount"];
     } else if (currentStep === 2) {
-      fieldsToValidate = ['projectId'];
+      fieldsToValidate = ["projectId"];
     }
 
     const isValid = await form.trigger(fieldsToValidate as any);
@@ -255,11 +293,16 @@ export function POForm({
 
     // Moving forward - validate intermediate steps
     if (currentStep === 1) {
-      const isValid = await form.trigger(['poNumber', 'description', 'status', 'totalAmount'] as any);
+      const isValid = await form.trigger([
+        "poNumber",
+        "description",
+        "status",
+        "totalAmount",
+      ] as any);
       if (!isValid) return;
     }
     if (currentStep <= 2 && targetStep === 3) {
-      const isValid = await form.trigger(['projectId'] as any);
+      const isValid = await form.trigger(["projectId"] as any);
       if (!isValid) return;
     }
 
@@ -268,17 +311,17 @@ export function POForm({
 
   const handleCreateProjectLineItem = async () => {
     if (!selectedProjectId) {
-      toast.error('Select a project before adding saved line items.');
+      toast.error("Select a project before adding saved line items.");
       return;
     }
 
     if (!newLineItem.itemNumber.trim()) {
-      toast.error('Item number is required.');
+      toast.error("Item number is required.");
       return;
     }
 
     if (!newLineItem.description.trim()) {
-      toast.error('Description is required.');
+      toast.error("Description is required.");
       return;
     }
 
@@ -287,33 +330,49 @@ export function POForm({
       itemNumber: newLineItem.itemNumber.trim(),
       sapReference: newLineItem.sapReference.trim() || undefined,
       description: newLineItem.description.trim(),
-      unit: newLineItem.unit.trim() || 'unit',
-      unitPrice: newLineItem.unitPrice.trim() || '0.00',
+      unit: newLineItem.unit.trim() || "unit",
+      unitPrice: newLineItem.unitPrice.trim() || "0.00",
     });
 
     if (result.success && result.lineItem) {
-      toast.success(`Item "${result.lineItem.itemNumber}" added to Purchase Order`);
+      toast.success(
+        `Item "${result.lineItem.itemNumber}" added to Purchase Order`,
+      );
       setProjectLineItems((prev) => [...prev, result.lineItem]);
       // Automatically add to the purchase order items list
       append({
         projectLineItemId: result.lineItem.id,
-        description: result.lineItem.description || '',
-        unit: result.lineItem.unit || 'unit',
-        quantity: '1',
-        unitPrice: result.lineItem.unitPrice || '0.00',
+        description: result.lineItem.description || "",
+        unit: result.lineItem.unit || "unit",
+        quantity: "1",
+        unitPrice: result.lineItem.unitPrice || "0.00",
       });
-      setNewLineItem({ itemNumber: '', sapReference: '', description: '', unit: 'unit', unitPrice: '0.00' });
+      setNewLineItem({
+        itemNumber: "",
+        sapReference: "",
+        description: "",
+        unit: "unit",
+        unitPrice: "0.00",
+      });
     } else {
-      toast.error(result.error || 'Failed to create saved line item');
+      toast.error(result.error || "Failed to create saved line item");
     }
   };
 
   const applySavedLineItem = (index: number, projectLineItemId: string) => {
-    const savedItem = projectLineItems.find((item) => item.id === projectLineItemId);
-    form.setValue(`lineItems.${index}.projectLineItemId` as any, projectLineItemId);
+    const savedItem = projectLineItems.find(
+      (item) => item.id === projectLineItemId,
+    );
+    form.setValue(
+      `lineItems.${index}.projectLineItemId` as any,
+      projectLineItemId,
+    );
 
     if (savedItem) {
-      form.setValue(`lineItems.${index}.description` as any, savedItem.description);
+      form.setValue(
+        `lineItems.${index}.description` as any,
+        savedItem.description,
+      );
       form.setValue(`lineItems.${index}.unit` as any, savedItem.unit);
       form.setValue(`lineItems.${index}.unitPrice` as any, savedItem.unitPrice);
     }
@@ -326,40 +385,46 @@ export function POForm({
     }
 
     if (!data.lineItems || data.lineItems.length === 0) {
-      toast.error('Please add at least one line item to this purchase order.');
+      toast.error("Please add at least one line item to this purchase order.");
       return;
     }
 
     startTransition(async () => {
       try {
         if (initialData?.id) {
-          const result = await updatePurchaseOrder(organizationId, initialData.id, data);
+          const result = await updatePurchaseOrder(
+            organizationId,
+            initialData.id,
+            data,
+          );
           if (result.success) {
-            toast.success('Purchase order updated successfully');
+            toast.success("Purchase order updated successfully");
             if (onSuccess) {
               onSuccess();
             } else {
-              router.push('/projects/purchase-orders');
+              router.push("/projects/purchase-orders");
             }
           } else {
-            toast.error(result.error || 'Failed to update purchase order');
+            toast.error(result.error || "Failed to update purchase order");
           }
         } else {
           const result = await createPurchaseOrder(organizationId, data);
           if (result.success) {
-            toast.success('Purchase order created successfully');
+            toast.success("Purchase order created successfully");
             if (onSuccess) {
               onSuccess();
             } else {
-              router.push('/projects/purchase-orders');
+              router.push("/projects/purchase-orders");
             }
           } else {
-            toast.error(result.error || 'Failed to create purchase order');
+            toast.error(result.error || "Failed to create purchase order");
           }
         }
       } catch (error) {
-        console.error('Form submission error:', error);
-        toast.error('An unexpected error occurred while saving the purchase order');
+        console.error("Form submission error:", error);
+        toast.error(
+          "An unexpected error occurred while saving the purchase order",
+        );
       }
     });
   };
@@ -375,9 +440,9 @@ export function POForm({
   };
 
   const steps: StepConfig[] = [
-    { step: 1, label: 'PO Details' },
-    { step: 2, label: 'Project & Supplier' },
-    { step: 3, label: 'Line Items' },
+    { step: 1, label: "PO Details" },
+    { step: 2, label: "Project & Supplier" },
+    { step: 3, label: "Line Items" },
   ];
 
   return (
@@ -390,12 +455,12 @@ export function POForm({
         </Button>
         <div className="text-right">
           <h1 className="text-2xl font-bold">
-            {initialData?.id ? 'Edit Purchase Order' : 'Create Purchase Order'}
+            {initialData?.id ? "Edit Purchase Order" : "Create Purchase Order"}
           </h1>
           <p className="text-muted-foreground">
             {initialData?.id
-              ? 'Update purchase order information and details'
-              : 'Create a new purchase order with project and supplier details'}
+              ? "Update purchase order information and details"
+              : "Create a new purchase order with project and supplier details"}
           </p>
         </div>
       </div>
@@ -501,13 +566,21 @@ export function POForm({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                               <SelectItem value="open">Open</SelectItem>
-                               <SelectItem value="sent">Sent</SelectItem>
-                               <SelectItem value="partially_delivered">Partially Delivered</SelectItem>
-                               <SelectItem value="delivered">Delivered</SelectItem>
-                               <SelectItem value="completed">Completed</SelectItem>
-                               <SelectItem value="cancelled">Cancelled</SelectItem>
-                               <SelectItem value="disputed">Disputed</SelectItem>
+                              <SelectItem value="open">Open</SelectItem>
+                              <SelectItem value="sent">Sent</SelectItem>
+                              <SelectItem value="partially_delivered">
+                                Partially Delivered
+                              </SelectItem>
+                              <SelectItem value="delivered">
+                                Delivered
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                Completed
+                              </SelectItem>
+                              <SelectItem value="cancelled">
+                                Cancelled
+                              </SelectItem>
+                              <SelectItem value="disputed">Disputed</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -583,7 +656,7 @@ export function POForm({
                           <Select
                             onValueChange={(value) => {
                               if (value !== field.value) {
-                                form.setValue('lineItems', []);
+                                form.setValue("lineItems", []);
                               }
                               field.onChange(value);
                             }}
@@ -606,7 +679,10 @@ export function POForm({
                                 </SelectItem>
                               ) : (
                                 projects.map((project) => (
-                                  <SelectItem key={project.id} value={project.id}>
+                                  <SelectItem
+                                    key={project.id}
+                                    value={project.id}
+                                  >
                                     {project.projectNumber.toUpperCase()}
                                   </SelectItem>
                                 ))
@@ -621,12 +697,12 @@ export function POForm({
                                 {
                                   id: newProject.id,
                                   projectNumber: newProject.projectNumber,
-                                  description: '',
-                                  status: 'active',
+                                  description: "",
+                                  status: "active",
                                   client: null,
                                 },
                               ]);
-                              form.setValue('projectId', newProject.id);
+                              form.setValue("projectId", newProject.id);
                             }}
                           />
                         </div>
@@ -649,14 +725,14 @@ export function POForm({
                     )}
                   />
 
-                  {form.watch('projectId') ? (
+                  {form.watch("projectId") ? (
                     <div className="bg-accent rounded-md p-4 mt-2">
                       <h4 className="text-sm font-medium text-foreground mb-2">
                         Selected Project Details
                       </h4>
                       {(() => {
                         const selectedProject = projects.find(
-                          (p) => p.id === form.watch('projectId')
+                          (p) => p.id === form.watch("projectId"),
                         );
                         if (!selectedProject) return null;
 
@@ -670,17 +746,19 @@ export function POForm({
                             </div>
                             {selectedProject.description && (
                               <div>
-                                <span className="font-medium">Description:</span>{' '}
+                                <span className="font-medium">
+                                  Description:
+                                </span>{" "}
                                 {selectedProject.description}
                               </div>
                             )}
                             <div>
-                              <span className="font-medium">Status:</span>{' '}
+                              <span className="font-medium">Status:</span>{" "}
                               {selectedProject.status}
                             </div>
                             {selectedProject.client && (
                               <div>
-                                <span className="font-medium">Client:</span>{' '}
+                                <span className="font-medium">Client:</span>{" "}
                                 {selectedProject.client.name}
                               </div>
                             )}
@@ -729,7 +807,8 @@ export function POForm({
                       PO Line Items
                       {fields.length > 0 && (
                         <span className="ml-2.5 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
-                          {fields.length} {fields.length === 1 ? 'item' : 'items'}
+                          {fields.length}{" "}
+                          {fields.length === 1 ? "item" : "items"}
                         </span>
                       )}
                     </CardTitle>
@@ -743,21 +822,23 @@ export function POForm({
                     size="sm"
                     onClick={() => {
                       if (!selectedProjectId) {
-                        toast.error('Please select a project first (Step 2).');
+                        toast.error("Please select a project first (Step 2).");
                         return;
                       }
                       if (projectLineItems.length === 0) {
-                        toast.info('Create your first item below to add it to the purchase order.');
-                        const el = document.getElementById('new-item-number');
+                        toast.info(
+                          "Create your first item below to add it to the purchase order.",
+                        );
+                        const el = document.getElementById("new-item-number");
                         if (el) el.focus();
                         return;
                       }
                       append({
-                        projectLineItemId: projectLineItems[0]?.id || '',
-                        description: projectLineItems[0]?.description || '',
-                        unit: projectLineItems[0]?.unit || 'unit',
-                        quantity: '1',
-                        unitPrice: projectLineItems[0]?.unitPrice || '0.00',
+                        projectLineItemId: projectLineItems[0]?.id || "",
+                        description: projectLineItems[0]?.description || "",
+                        unit: projectLineItems[0]?.unit || "unit",
+                        quantity: "1",
+                        unitPrice: projectLineItems[0]?.unitPrice || "0.00",
                       });
                     }}
                     disabled={!selectedProjectId}
@@ -771,7 +852,8 @@ export function POForm({
                   <div className="border-b p-6 bg-muted/10">
                     {!selectedProjectId ? (
                       <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
-                        Select a project before adding purchase order line items.
+                        Select a project before adding purchase order line
+                        items.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -780,7 +862,8 @@ export function POForm({
                             Quick Add &amp; Price New Line Item
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Automatically adds item to project catalogue &amp; this PO
+                            Automatically adds item to project catalogue &amp;
+                            this PO
                           </span>
                         </div>
                         <div className="grid grid-cols-1 gap-3 rounded-lg border bg-card p-4 shadow-sm md:grid-cols-[130px_130px_1fr_100px_130px_auto]">
@@ -798,14 +881,14 @@ export function POForm({
                                 }))
                               }
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (
                                     newLineItem.itemNumber.trim() &&
                                     newLineItem.description.trim() &&
                                     newLineItem.unit.trim() &&
-                                    newLineItem.unitPrice.trim() !== ''
+                                    newLineItem.unitPrice.trim() !== ""
                                   ) {
                                     handleCreateProjectLineItem();
                                   }
@@ -827,14 +910,14 @@ export function POForm({
                                 }))
                               }
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (
                                     newLineItem.itemNumber.trim() &&
                                     newLineItem.description.trim() &&
                                     newLineItem.unit.trim() &&
-                                    newLineItem.unitPrice.trim() !== ''
+                                    newLineItem.unitPrice.trim() !== ""
                                   ) {
                                     handleCreateProjectLineItem();
                                   }
@@ -856,14 +939,14 @@ export function POForm({
                                 }))
                               }
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (
                                     newLineItem.itemNumber.trim() &&
                                     newLineItem.description.trim() &&
                                     newLineItem.unit.trim() &&
-                                    newLineItem.unitPrice.trim() !== ''
+                                    newLineItem.unitPrice.trim() !== ""
                                   ) {
                                     handleCreateProjectLineItem();
                                   }
@@ -879,17 +962,20 @@ export function POForm({
                             <Input
                               value={newLineItem.unit}
                               onChange={(event) =>
-                                setNewLineItem((prev) => ({ ...prev, unit: event.target.value }))
+                                setNewLineItem((prev) => ({
+                                  ...prev,
+                                  unit: event.target.value,
+                                }))
                               }
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (
                                     newLineItem.itemNumber.trim() &&
                                     newLineItem.description.trim() &&
                                     newLineItem.unit.trim() &&
-                                    newLineItem.unitPrice.trim() !== ''
+                                    newLineItem.unitPrice.trim() !== ""
                                   ) {
                                     handleCreateProjectLineItem();
                                   }
@@ -913,14 +999,14 @@ export function POForm({
                                 }))
                               }
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (
                                     newLineItem.itemNumber.trim() &&
                                     newLineItem.description.trim() &&
                                     newLineItem.unit.trim() &&
-                                    newLineItem.unitPrice.trim() !== ''
+                                    newLineItem.unitPrice.trim() !== ""
                                   ) {
                                     handleCreateProjectLineItem();
                                   }
@@ -937,7 +1023,7 @@ export function POForm({
                                 !newLineItem.itemNumber.trim() ||
                                 !newLineItem.description.trim() ||
                                 !newLineItem.unit.trim() ||
-                                newLineItem.unitPrice.trim() === ''
+                                newLineItem.unitPrice.trim() === ""
                               }
                               className="w-full cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-sm"
                             >
@@ -955,48 +1041,73 @@ export function POForm({
                       <TableHeader>
                         <TableRow>
                           <TableHead className="pl-6">Item #</TableHead>
-                          <TableHead className="w-[30%]">Saved Line Item *</TableHead>
+                          <TableHead className="w-[30%]">
+                            Saved Line Item *
+                          </TableHead>
                           <TableHead className="w-[10%]">Unit</TableHead>
                           <TableHead className="w-[10%]">Quantity *</TableHead>
-                          <TableHead className="w-[15%]">Unit Price (ZAR)</TableHead>
+                          <TableHead className="w-[15%]">
+                            Unit Price (ZAR)
+                          </TableHead>
                           <TableHead className="w-[12%]">Subtotal</TableHead>
-                          <TableHead className="w-[5%] pr-6 text-right">Action</TableHead>
+                          <TableHead className="w-[5%] pr-6 text-right">
+                            Action
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {fields.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground italic">
+                            <TableCell
+                              colSpan={7}
+                              className="text-center py-8 text-muted-foreground italic"
+                            >
                               {selectedProjectId
                                 ? 'No PO line items selected yet. Save project line items, then click "Add Item".'
-                                : 'Select a project to load saved line items.'}
+                                : "Select a project to load saved line items."}
                             </TableCell>
                           </TableRow>
                         ) : (
                           fields.map((field, index) => {
-                            const qtyVal = form.watch(`lineItems.${index}.quantity` as any);
-                            const priceVal = form.watch(`lineItems.${index}.unitPrice` as any);
-                            const unitVal = form.watch(`lineItems.${index}.unit` as any);
-                            const qty = parseFloat(qtyVal || '0') || 0;
-                            const price = parseFloat(priceVal || '0') || 0;
+                            const qtyVal = form.watch(
+                              `lineItems.${index}.quantity` as any,
+                            );
+                            const priceVal = form.watch(
+                              `lineItems.${index}.unitPrice` as any,
+                            );
+                            const unitVal = form.watch(
+                              `lineItems.${index}.unit` as any,
+                            );
+                            const qty = parseFloat(qtyVal || "0") || 0;
+                            const price = parseFloat(priceVal || "0") || 0;
                             const subtotal = qty * price;
                             return (
                               <TableRow key={field.id}>
                                 <TableCell className="pl-6 font-semibold text-blue-600 text-sm whitespace-nowrap">
                                   {(() => {
-                                    const saved = projectLineItems.find((i) => i.id === form.watch(`lineItems.${index}.projectLineItemId` as any));
-                                    return saved?.itemNumber || '-';
+                                    const saved = projectLineItems.find(
+                                      (i) =>
+                                        i.id ===
+                                        form.watch(
+                                          `lineItems.${index}.projectLineItemId` as any,
+                                        ),
+                                    );
+                                    return saved?.itemNumber || "-";
                                   })()}
                                 </TableCell>
                                 <TableCell>
                                   <FormField
                                     control={form.control as any}
-                                    name={`lineItems.${index}.projectLineItemId` as any}
+                                    name={
+                                      `lineItems.${index}.projectLineItemId` as any
+                                    }
                                     render={({ field: inputField }) => (
                                       <FormItem>
                                         <Select
                                           value={inputField.value}
-                                          onValueChange={(value) => applySavedLineItem(index, value)}
+                                          onValueChange={(value) =>
+                                            applySavedLineItem(index, value)
+                                          }
                                           disabled={loadingLineItems}
                                         >
                                           <FormControl>
@@ -1006,8 +1117,12 @@ export function POForm({
                                           </FormControl>
                                           <SelectContent>
                                             {projectLineItems.map((item) => (
-                                              <SelectItem key={item.id} value={item.id}>
-                                                {item.itemNumber} - {item.description}
+                                              <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                              >
+                                                {item.itemNumber} -{" "}
+                                                {item.description}
                                               </SelectItem>
                                             ))}
                                           </SelectContent>
@@ -1018,7 +1133,7 @@ export function POForm({
                                   />
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
-                                  {unitVal || 'unit'}
+                                  {unitVal || "unit"}
                                 </TableCell>
                                 <TableCell>
                                   <FormField
@@ -1032,7 +1147,7 @@ export function POForm({
                                             step="0.01"
                                             placeholder="0.00"
                                             onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
+                                              if (e.key === "Enter") {
                                                 e.preventDefault();
                                               }
                                             }}
@@ -1062,7 +1177,7 @@ export function POForm({
                                               placeholder="0.00"
                                               className="pl-6 font-medium"
                                               onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
+                                                if (e.key === "Enter") {
                                                   e.preventDefault();
                                                 }
                                               }}
@@ -1103,22 +1218,37 @@ export function POForm({
                       <div className="text-center py-8 text-muted-foreground italic border rounded-lg bg-muted/10">
                         {selectedProjectId
                           ? 'No PO line items selected yet. Save project line items, then click "Add Item".'
-                          : 'Select a project to load saved line items.'}
+                          : "Select a project to load saved line items."}
                       </div>
                     ) : (
                       fields.map((field, index) => {
-                        const qtyVal = form.watch(`lineItems.${index}.quantity` as any);
-                        const priceVal = form.watch(`lineItems.${index}.unitPrice` as any);
-                        const unitVal = form.watch(`lineItems.${index}.unit` as any);
-                        const qty = parseFloat(qtyVal || '0') || 0;
-                        const price = parseFloat(priceVal || '0') || 0;
+                        const qtyVal = form.watch(
+                          `lineItems.${index}.quantity` as any,
+                        );
+                        const priceVal = form.watch(
+                          `lineItems.${index}.unitPrice` as any,
+                        );
+                        const unitVal = form.watch(
+                          `lineItems.${index}.unit` as any,
+                        );
+                        const qty = parseFloat(qtyVal || "0") || 0;
+                        const price = parseFloat(priceVal || "0") || 0;
                         const subtotal = qty * price;
-                        
-                        const saved = projectLineItems.find((i) => i.id === form.watch(`lineItems.${index}.projectLineItemId` as any));
-                        const itemNumberLabel = saved?.itemNumber || '-';
+
+                        const saved = projectLineItems.find(
+                          (i) =>
+                            i.id ===
+                            form.watch(
+                              `lineItems.${index}.projectLineItemId` as any,
+                            ),
+                        );
+                        const itemNumberLabel = saved?.itemNumber || "-";
 
                         return (
-                          <Card key={field.id} className="p-4 space-y-3 relative border">
+                          <Card
+                            key={field.id}
+                            className="p-4 space-y-3 relative border"
+                          >
                             <div className="flex items-center justify-between">
                               <span className="font-semibold text-blue-600 text-sm">
                                 Item #{itemNumberLabel}
@@ -1136,15 +1266,21 @@ export function POForm({
 
                             <div className="space-y-2">
                               <div>
-                                <label className="text-xs font-medium text-muted-foreground">Saved Project Line Item *</label>
+                                <label className="text-xs font-medium text-muted-foreground">
+                                  Saved Project Line Item *
+                                </label>
                                 <FormField
                                   control={form.control as any}
-                                  name={`lineItems.${index}.projectLineItemId` as any}
+                                  name={
+                                    `lineItems.${index}.projectLineItemId` as any
+                                  }
                                   render={({ field: inputField }) => (
                                     <FormItem className="mt-1">
                                       <Select
                                         value={inputField.value}
-                                        onValueChange={(value) => applySavedLineItem(index, value)}
+                                        onValueChange={(value) =>
+                                          applySavedLineItem(index, value)
+                                        }
                                         disabled={loadingLineItems}
                                       >
                                         <FormControl>
@@ -1154,8 +1290,12 @@ export function POForm({
                                         </FormControl>
                                         <SelectContent>
                                           {projectLineItems.map((item) => (
-                                            <SelectItem key={item.id} value={item.id}>
-                                              {item.itemNumber} - {item.description}
+                                            <SelectItem
+                                              key={item.id}
+                                              value={item.id}
+                                            >
+                                              {item.itemNumber} -{" "}
+                                              {item.description}
                                             </SelectItem>
                                           ))}
                                         </SelectContent>
@@ -1168,14 +1308,18 @@ export function POForm({
 
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                  <label className="text-xs font-medium text-muted-foreground">Unit</label>
+                                  <label className="text-xs font-medium text-muted-foreground">
+                                    Unit
+                                  </label>
                                   <div className="mt-1 text-sm bg-muted/30 border rounded-md h-9 flex items-center px-3 text-muted-foreground">
-                                    {unitVal || 'unit'}
+                                    {unitVal || "unit"}
                                   </div>
                                 </div>
 
                                 <div>
-                                  <label className="text-xs font-medium text-muted-foreground">Quantity *</label>
+                                  <label className="text-xs font-medium text-muted-foreground">
+                                    Quantity *
+                                  </label>
                                   <FormField
                                     control={form.control as any}
                                     name={`lineItems.${index}.quantity` as any}
@@ -1187,7 +1331,7 @@ export function POForm({
                                             step="0.01"
                                             placeholder="0.00"
                                             onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
+                                              if (e.key === "Enter") {
                                                 e.preventDefault();
                                               }
                                             }}
@@ -1203,7 +1347,9 @@ export function POForm({
 
                               <div className="grid grid-cols-2 gap-2 pt-1">
                                 <div>
-                                  <label className="text-xs font-medium text-muted-foreground">Unit Price (ZAR) *</label>
+                                  <label className="text-xs font-medium text-muted-foreground">
+                                    Unit Price (ZAR) *
+                                  </label>
                                   <FormField
                                     control={form.control as any}
                                     name={`lineItems.${index}.unitPrice` as any}
@@ -1221,7 +1367,7 @@ export function POForm({
                                               placeholder="0.00"
                                               className="pl-6 h-9 font-medium"
                                               onKeyDown={(e) => {
-                                                if (e.key === 'Enter') {
+                                                if (e.key === "Enter") {
                                                   e.preventDefault();
                                                 }
                                               }}
@@ -1236,7 +1382,9 @@ export function POForm({
                                 </div>
 
                                 <div>
-                                  <label className="text-xs font-medium text-muted-foreground">Subtotal</label>
+                                  <label className="text-xs font-medium text-muted-foreground">
+                                    Subtotal
+                                  </label>
                                   <div className="mt-1 text-sm font-bold flex items-center h-9">
                                     {formatCurrency(subtotal)}
                                   </div>
@@ -1252,15 +1400,23 @@ export function POForm({
                   <div className="flex flex-col items-end gap-2 p-6 bg-zinc-950/20 border-t">
                     <div className="flex justify-between w-72 text-sm text-muted-foreground">
                       <span>VAT Exclusive Total:</span>
-                      <span className="font-semibold text-foreground">{formatCurrency(vatExclusive)}</span>
+                      <span className="font-semibold text-foreground">
+                        {formatCurrency(vatExclusive)}
+                      </span>
                     </div>
                     <div className="flex justify-between w-72 text-sm text-muted-foreground">
                       <span>VAT (15%):</span>
-                      <span className="font-semibold text-foreground">{formatCurrency(vatAmount)}</span>
+                      <span className="font-semibold text-foreground">
+                        {formatCurrency(vatAmount)}
+                      </span>
                     </div>
                     <div className="flex justify-between w-72 text-base font-bold border-t pt-2 mt-1">
-                      <span className="text-indigo-600">Total (VAT Inclusive):</span>
-                      <span className="text-foreground">{formatCurrency(vatInclusive)}</span>
+                      <span className="text-indigo-600">
+                        Total (VAT Inclusive):
+                      </span>
+                      <span className="text-foreground">
+                        {formatCurrency(vatInclusive)}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -1271,13 +1427,21 @@ export function POForm({
           {/* Form Actions */}
           <StepActions
             onCancel={() => router.back()}
-            onPrevious={currentStep > 1 ? () => setCurrentStep((prev) => prev - 1) : undefined}
+            onPrevious={
+              currentStep > 1
+                ? () => setCurrentStep((prev) => prev - 1)
+                : undefined
+            }
             onNext={currentStep < 3 ? handleNextStep : undefined}
             currentStep={currentStep}
             totalSteps={steps.length}
             isPending={isPending}
-            submitLabel={initialData?.id ? 'Save & Update Purchase Order' : 'Save & Create Purchase Order'}
-            loadingLabel={initialData?.id ? 'Updating...' : 'Creating...'}
+            submitLabel={
+              initialData?.id
+                ? "Save & Update Purchase Order"
+                : "Save & Create Purchase Order"
+            }
+            loadingLabel={initialData?.id ? "Updating..." : "Creating..."}
           />
         </form>
       </Form>

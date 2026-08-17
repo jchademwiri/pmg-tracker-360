@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Save, ArrowLeft, User, Mail, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, ArrowLeft, User, Mail, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -16,19 +16,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 
-import { createClient, updateClient } from '@/server';
+import { createClient, updateClient } from "@/server";
 import {
   ClientCreateSchema,
   type ClientCreateInput,
-} from '@/lib/validations/client';
-import type { Client } from '@pmg/db/schema';
+} from "@/lib/validations/client";
+import type { Client } from "@pmg/db/schema";
 
 interface ClientFormProps {
   organizationId: string;
   client?: Client;
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
 }
 
 export function ClientForm({ organizationId, client, mode }: ClientFormProps) {
@@ -39,11 +39,11 @@ export function ClientForm({ organizationId, client, mode }: ClientFormProps) {
   const form = useForm<ClientCreateInput>({
     resolver: zodResolver(ClientCreateSchema),
     defaultValues: {
-      name: client?.name || '',
-      notes: client?.notes || '',
-      contactName: client?.contactName || '',
-      contactEmail: client?.contactEmail || '',
-      contactPhone: client?.contactPhone || '',
+      name: client?.name || "",
+      notes: client?.notes || "",
+      contactName: client?.contactName || "",
+      contactEmail: client?.contactEmail || "",
+      contactPhone: client?.contactPhone || "",
     },
   });
 
@@ -54,21 +54,21 @@ export function ClientForm({ organizationId, client, mode }: ClientFormProps) {
       try {
         let result;
 
-        if (mode === 'create') {
+        if (mode === "create") {
           result = await createClient(organizationId, data);
         } else if (client) {
           result = await updateClient(organizationId, client.id, data);
         }
 
         if (result?.success) {
-          router.push('/clients');
+          router.push("/clients");
           router.refresh();
         } else {
-          setError(result?.error || 'An error occurred');
+          setError(result?.error || "An error occurred");
         }
       } catch (err) {
-        setError('An unexpected error occurred');
-        console.error('Form submission error:', err);
+        setError("An unexpected error occurred");
+        console.error("Form submission error:", err);
       }
     });
   };
@@ -87,12 +87,12 @@ export function ClientForm({ organizationId, client, mode }: ClientFormProps) {
         </Button>
         <div className="text-right">
           <h1 className="text-2xl font-bold">
-            {mode === 'create' ? 'Add New Client' : 'Edit Client'}
+            {mode === "create" ? "Add New Client" : "Edit Client"}
           </h1>
           <p className="text-gray-600">
-            {mode === 'create'
-              ? 'Create a new client with contact information'
-              : 'Update client information and contact details'}
+            {mode === "create"
+              ? "Create a new client with contact information"
+              : "Update client information and contact details"}
           </p>
         </div>
       </div>
@@ -265,7 +265,7 @@ export function ClientForm({ organizationId, client, mode }: ClientFormProps) {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {mode === 'create' ? 'Create Client' : 'Save Changes'}
+                  {mode === "create" ? "Create Client" : "Save Changes"}
                 </>
               )}
             </Button>

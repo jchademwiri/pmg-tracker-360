@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { ShieldAlert, Building2, Users, LifeBuoy, Zap } from 'lucide-react';
+import Link from "next/link";
+import { ShieldAlert, Building2, Users, LifeBuoy, Zap } from "lucide-react";
 
 export default function QuickActionsBar() {
   return (
@@ -9,8 +9,12 @@ export default function QuickActionsBar() {
       <div className="flex items-center gap-2">
         <Zap className="h-5 w-5 text-indigo-400 shrink-0" />
         <div>
-          <h3 className="text-sm font-semibold text-white">Admin Quick Actions</h3>
-          <p className="text-xs text-zinc-400">Fast shortcuts for platform moderation and management</p>
+          <h3 className="text-sm font-semibold text-white">
+            Admin Quick Actions
+          </h3>
+          <p className="text-xs text-zinc-400">
+            Fast shortcuts for platform moderation and management
+          </p>
         </div>
       </div>
 

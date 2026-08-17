@@ -1,10 +1,10 @@
-import { getCurrentUser } from '@/server';
-import { POForm } from '@/components/purchase-orders/po-form';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { getCurrentUser } from "@/server";
+import { POForm } from "@/components/purchase-orders/po-form";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function NewPurchaseOrderPage() {
   const { session } = await getCurrentUser();
@@ -14,13 +14,13 @@ export default async function NewPurchaseOrderPage() {
     headers: await headers(),
     body: {
       permissions: {
-        purchase_order: ['create'],
+        purchase_order: ["create"],
       },
     },
   });
 
   if (!hasPermission) {
-    redirect('/projects/purchase-orders'); // Or just /projects if they cant see list
+    redirect("/projects/purchase-orders"); // Or just /projects if they cant see list
   }
 
   if (!session.activeOrganizationId) {

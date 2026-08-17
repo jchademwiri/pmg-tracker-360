@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Suspense } from 'react';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { LoadingCard } from '@/components/ui/loading-spinner';
-import { ErrorState } from '@/components/ui/error-state';
+import { Suspense } from "react";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { LoadingCard } from "@/components/ui/loading-spinner";
+import { ErrorState } from "@/components/ui/error-state";
 
 interface OrganizationSettingsWrapperProps {
   children: React.ReactNode;
@@ -21,14 +21,14 @@ export function OrganizationSettingsWrapper({
           title="Settings Error"
           description="There was an error loading the organization settings. Please try again."
           action={{
-            label: 'Reload Settings',
+            label: "Reload Settings",
             onClick: resetError,
           }}
         />
       )}
       onError={(error, errorInfo) => {
         // Log to monitoring service
-        console.error('Organization Settings Error:', error, errorInfo);
+        console.error("Organization Settings Error:", error, errorInfo);
       }}
     >
       <Suspense fallback={fallback || <OrganizationSettingsLoading />}>

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import {
   Shield,
   CheckCircle,
@@ -17,8 +17,8 @@ import {
   Lock,
   Key,
   Activity,
-} from 'lucide-react';
-import { useState } from 'react';
+} from "lucide-react";
+import { useState } from "react";
 
 interface SecurityDashboardProps {
   emailVerified: boolean;
@@ -63,7 +63,7 @@ export function SecurityDashboard({
     // Password strength (25 points) - assuming strong if recent change
     if (lastPasswordChange) {
       const daysSinceChange = Math.floor(
-        (Date.now() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - lastPasswordChange.getTime()) / (1000 * 60 * 60 * 24),
       );
       if (daysSinceChange < 90) score += 25;
       else if (daysSinceChange < 180) score += 15;
@@ -89,30 +89,30 @@ export function SecurityDashboard({
   const securityScore = calculateSecurityScore();
 
   const getSecurityLevel = (
-    score: number
+    score: number,
   ): { level: string; color: string; description: string } => {
     if (score >= 80)
       return {
-        level: 'Excellent',
-        color: 'text-green-600',
-        description: 'Your account is well secured',
+        level: "Excellent",
+        color: "text-green-600",
+        description: "Your account is well secured",
       };
     if (score >= 60)
       return {
-        level: 'Good',
-        color: 'text-blue-600',
-        description: 'Your security is decent',
+        level: "Good",
+        color: "text-blue-600",
+        description: "Your security is decent",
       };
     if (score >= 40)
       return {
-        level: 'Fair',
-        color: 'text-yellow-600',
-        description: 'Consider improving your security',
+        level: "Fair",
+        color: "text-yellow-600",
+        description: "Consider improving your security",
       };
     return {
-      level: 'Poor',
-      color: 'text-red-600',
-      description: 'Your account needs better security',
+      level: "Poor",
+      color: "text-red-600",
+      description: "Your account needs better security",
     };
   };
 
@@ -120,49 +120,49 @@ export function SecurityDashboard({
 
   const securityMetrics: SecurityMetric[] = [
     {
-      label: 'Email Verification',
+      label: "Email Verification",
       value: emailVerified ? 1 : 0,
       max: 1,
-      color: emailVerified ? 'text-green-600' : 'text-red-600',
+      color: emailVerified ? "text-green-600" : "text-red-600",
       icon: emailVerified ? (
         <CheckCircle className="h-4 w-4" />
       ) : (
         <AlertTriangle className="h-4 w-4" />
       ),
-      description: emailVerified ? 'Email verified' : 'Email not verified',
+      description: emailVerified ? "Email verified" : "Email not verified",
     },
     {
-      label: 'Two-Factor Authentication',
+      label: "Two-Factor Authentication",
       value: twoFactorEnabled ? 1 : 0,
       max: 1,
-      color: twoFactorEnabled ? 'text-green-600' : 'text-red-600',
+      color: twoFactorEnabled ? "text-green-600" : "text-red-600",
       icon: twoFactorEnabled ? (
         <CheckCircle className="h-4 w-4" />
       ) : (
         <Lock className="h-4 w-4" />
       ),
-      description: twoFactorEnabled ? '2FA enabled' : '2FA not enabled',
+      description: twoFactorEnabled ? "2FA enabled" : "2FA not enabled",
     },
     {
-      label: 'Password Strength',
+      label: "Password Strength",
       value: lastPasswordChange ? 1 : 0,
       max: 1,
-      color: lastPasswordChange ? 'text-green-600' : 'text-yellow-600',
+      color: lastPasswordChange ? "text-green-600" : "text-yellow-600",
       icon: <Key className="h-4 w-4" />,
       description: lastPasswordChange
-        ? 'Recent password change'
-        : 'Password may need updating',
+        ? "Recent password change"
+        : "Password may need updating",
     },
     {
-      label: 'Active Sessions',
+      label: "Active Sessions",
       value: sessions.length,
       max: 5,
       color:
         sessions.length <= 3
-          ? 'text-green-600'
+          ? "text-green-600"
           : sessions.length <= 5
-            ? 'text-yellow-600'
-            : 'text-red-600',
+            ? "text-yellow-600"
+            : "text-red-600",
       icon: <Activity className="h-4 w-4" />,
       description: `${sessions.length} active sessions`,
     },
@@ -171,10 +171,10 @@ export function SecurityDashboard({
   const formatLastActive = (date: Date) => {
     const now = new Date();
     const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60)
+      (now.getTime() - date.getTime()) / (1000 * 60),
     );
 
-    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 1) return "Just now";
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
 
     const diffInHours = Math.floor(diffInMinutes / 60);
@@ -185,7 +185,7 @@ export function SecurityDashboard({
   };
 
   const getDeviceIcon = (device: string) => {
-    if (device.toLowerCase().includes('mobile')) {
+    if (device.toLowerCase().includes("mobile")) {
       return <Smartphone className="h-4 w-4" />;
     }
     return <Monitor className="h-4 w-4" />;
@@ -204,10 +204,10 @@ export function SecurityDashboard({
             <Badge
               variant={
                 securityScore >= 80
-                  ? 'default'
+                  ? "default"
                   : securityScore >= 60
-                    ? 'secondary'
-                    : 'destructive'
+                    ? "secondary"
+                    : "destructive"
               }
               className={securityLevel.color}
             >
@@ -271,7 +271,7 @@ export function SecurityDashboard({
               ) : (
                 <Eye className="h-4 w-4" />
               )}
-              <span>{showDetails ? 'Hide' : 'Show'} Details</span>
+              <span>{showDetails ? "Hide" : "Show"} Details</span>
             </Button>
           </div>
         </CardHeader>

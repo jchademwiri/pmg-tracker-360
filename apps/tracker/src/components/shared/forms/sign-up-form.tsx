@@ -1,19 +1,19 @@
-'use client';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+"use client";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { signUp } from '@/server';
-import Link from 'next/link';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { signUp } from "@/server";
+import Link from "next/link";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -21,13 +21,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { useState, useMemo, useEffect } from 'react';
-import { Loader, UserPlus, Check, X } from 'lucide-react';
-import { signInWithGoogle } from '@/lib/auth-client';
-import { Turnstile } from '@/components/ui/turnstile';
+} from "@/components/ui/form";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { Loader, UserPlus, Check, X } from "lucide-react";
+import { signInWithGoogle } from "@/lib/auth-client";
+import { Turnstile } from "@/components/ui/turnstile";
 
 const signUpFormSchema = z.object({
   name: z.string().min(2).max(100),
@@ -39,10 +39,14 @@ const signUpFormSchema = z.object({
 export function SignUpForm({
   className,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
-  const [formMountedAt, setFormMountedAt] = useState<number | undefined>(undefined);
-  const [turnstileToken, setTurnstileToken] = useState<string | undefined>(undefined);
+  const [formMountedAt, setFormMountedAt] = useState<number | undefined>(
+    undefined,
+  );
+  const [turnstileToken, setTurnstileToken] = useState<string | undefined>(
+    undefined,
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -53,17 +57,29 @@ export function SignUpForm({
   const form = useForm<z.infer<typeof signUpFormSchema>>({
     resolver: zodResolver(signUpFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      website: '',
+      name: "",
+      email: "",
+      password: "",
+      website: "",
     },
   });
 
   // Password strength calculation
-  const password = form.watch('password');
+  const password = form.watch("password");
   const strength = useMemo(() => {
-    if (!password) return { score: 0, label: '', color: '', checks: { length: false, upper: false, lower: false, number: false, special: false } };
+    if (!password)
+      return {
+        score: 0,
+        label: "",
+        color: "",
+        checks: {
+          length: false,
+          upper: false,
+          lower: false,
+          number: false,
+          special: false,
+        },
+      };
     const checks = {
       length: password.length >= 8,
       upper: /[A-Z]/.test(password),
@@ -73,10 +89,19 @@ export function SignUpForm({
     };
     const passed = Object.values(checks).filter(Boolean).length;
     let label: string, color: string;
-    if (passed <= 2) { label = 'Weak'; color = 'bg-red-500'; }
-    else if (passed <= 3) { label = 'Fair'; color = 'bg-amber-500'; }
-    else if (passed <= 4) { label = 'Good'; color = 'bg-blue-500'; }
-    else { label = 'Strong'; color = 'bg-emerald-500'; }
+    if (passed <= 2) {
+      label = "Weak";
+      color = "bg-red-500";
+    } else if (passed <= 3) {
+      label = "Fair";
+      color = "bg-amber-500";
+    } else if (passed <= 4) {
+      label = "Good";
+      color = "bg-blue-500";
+    } else {
+      label = "Strong";
+      color = "bg-emerald-500";
+    }
     return { score: (passed / 5) * 100, label, color, checks };
   }, [password]);
 
@@ -89,17 +114,17 @@ export function SignUpForm({
       values.password,
       values.website,
       formMountedAt,
-      turnstileToken
+      turnstileToken,
     );
     if (success) {
       toast.success(`${message as string}`);
       // If this signup was started from an invitation, redirect back using the `next` query param in the URL
       try {
         const params = new URLSearchParams(window.location.search);
-        const next = params.get('next');
-        router.push(next ? `/check-email?next=${next}` : '/check-email');
+        const next = params.get("next");
+        router.push(next ? `/check-email?next=${next}` : "/check-email");
       } catch (e) {
-        router.push('/check-email');
+        router.push("/check-email");
       }
     } else {
       toast.error(message as string);
@@ -107,7 +132,7 @@ export function SignUpForm({
     setIsLoading(false);
   }
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden border-white/10 bg-card/50 backdrop-blur-sm shadow-xl">
         <CardHeader className="text-center space-y-4 pb-2">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-3 text-primary">
@@ -208,43 +233,55 @@ export function SignUpForm({
                                   width: `${strength.score}%`,
                                   backgroundColor:
                                     strength.score <= 40
-                                      ? '#ef4444'
+                                      ? "#ef4444"
                                       : strength.score <= 60
-                                        ? '#f59e0b'
+                                        ? "#f59e0b"
                                         : strength.score <= 80
-                                          ? '#3b82f6'
-                                          : '#10b981',
+                                          ? "#3b82f6"
+                                          : "#10b981",
                                 }}
                               />
                             </div>
                             <span
                               className={`text-xs font-medium min-w-[2.5rem] text-right ${
-                                strength.label === 'Weak'
-                                  ? 'text-red-500'
-                                  : strength.label === 'Fair'
-                                    ? 'text-amber-500'
-                                    : strength.label === 'Good'
-                                      ? 'text-blue-500'
-                                      : 'text-emerald-500'
+                                strength.label === "Weak"
+                                  ? "text-red-500"
+                                  : strength.label === "Fair"
+                                    ? "text-amber-500"
+                                    : strength.label === "Good"
+                                      ? "text-blue-500"
+                                      : "text-emerald-500"
                               }`}
                             >
-                              {password ? strength.label : ''}
+                              {password ? strength.label : ""}
                             </span>
                           </div>
                           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                             {[
-                              { key: 'length' as const, label: '8+ characters' },
-                              { key: 'upper' as const, label: 'Uppercase letter' },
-                              { key: 'lower' as const, label: 'Lowercase letter' },
-                              { key: 'number' as const, label: 'Number' },
-                              { key: 'special' as const, label: 'Special character' },
+                              {
+                                key: "length" as const,
+                                label: "8+ characters",
+                              },
+                              {
+                                key: "upper" as const,
+                                label: "Uppercase letter",
+                              },
+                              {
+                                key: "lower" as const,
+                                label: "Lowercase letter",
+                              },
+                              { key: "number" as const, label: "Number" },
+                              {
+                                key: "special" as const,
+                                label: "Special character",
+                              },
                             ].map(({ key, label }) => (
                               <div
                                 key={key}
                                 className={`flex items-center gap-1.5 text-xs ${
                                   strength.checks[key]
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-muted-foreground'
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : "text-muted-foreground"
                                 }`}
                               >
                                 {strength.checks[key] ? (
@@ -277,7 +314,7 @@ export function SignUpForm({
                   {isLoading ? (
                     <Loader className="size-4 animate-spin" />
                   ) : (
-                    'Sign Up'
+                    "Sign Up"
                   )}
                 </Button>
 
@@ -293,7 +330,7 @@ export function SignUpForm({
                   type="button"
                   onClick={() => {
                     const params = new URLSearchParams(window.location.search);
-                    const next = params.get('next');
+                    const next = params.get("next");
                     signInWithGoogle(next || undefined);
                   }}
                 >
@@ -311,7 +348,7 @@ export function SignUpForm({
                 </Button>
 
                 <div className="text-center text-sm">
-                  Already have an account?{' '}
+                  Already have an account?{" "}
                   <Link
                     href="/login"
                     className="underline underline-offset-4 font-medium text-primary hover:text-primary/90"
@@ -325,11 +362,11 @@ export function SignUpForm({
         </CardContent>
       </Card>
       <div className="text-muted-foreground/60 text-center text-xs text-balance">
-        By clicking continue, you agree to our{' '}
+        By clicking continue, you agree to our{" "}
         <Link href="/terms" className="underline hover:text-primary">
           Terms of Service
-        </Link>{' '}
-        and{' '}
+        </Link>{" "}
+        and{" "}
         <Link href="/privacy" className="underline hover:text-primary">
           Privacy Policy
         </Link>

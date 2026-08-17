@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TableSkeletonProps {
   rows?: number;
@@ -18,17 +18,14 @@ export function TableSkeleton({ rows = 5, columns = 4 }: TableSkeletonProps) {
       {/* Rows */}
       <div className="divide-y divide-zinc-800">
         {Array.from({ length: rows }).map((_, rowIndex) => (
-          <div
-            key={rowIndex}
-            className="px-4 py-3 flex gap-8 items-center"
-          >
+          <div key={rowIndex} className="px-4 py-3 flex gap-8 items-center">
             {Array.from({ length: columns }).map((_, colIndex) => (
               <Skeleton
                 key={colIndex}
                 className="h-3 bg-zinc-800"
                 style={{
                   width: `${((rowIndex * 7 + colIndex * 13) % 40) + 40}%`,
-                  maxWidth: colIndex === 0 ? '160px' : '120px',
+                  maxWidth: colIndex === 0 ? "160px" : "120px",
                 }}
               />
             ))}

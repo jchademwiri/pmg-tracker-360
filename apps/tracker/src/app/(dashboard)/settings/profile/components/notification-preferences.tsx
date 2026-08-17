@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Bell,
   Mail,
@@ -26,8 +26,8 @@ import {
   Clock,
   Settings,
   Volume2,
-} from 'lucide-react';
-import { toast } from 'sonner';
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface NotificationChannel {
   id: string;
@@ -49,7 +49,7 @@ interface NotificationCategory {
     inApp: boolean;
     sms?: boolean;
   };
-  frequency: 'immediate' | 'hourly' | 'daily' | 'weekly';
+  frequency: "immediate" | "hourly" | "daily" | "weekly";
   quietHours?: {
     enabled: boolean;
     start: string;
@@ -60,82 +60,82 @@ interface NotificationCategory {
 export function NotificationPreferences() {
   const [categories, setCategories] = useState<NotificationCategory[]>([
     {
-      id: 'security',
-      name: 'Security Alerts',
-      description: 'Important security notifications and account changes',
+      id: "security",
+      name: "Security Alerts",
+      description: "Important security notifications and account changes",
       icon: <Shield className="h-4 w-4" />,
       enabled: true,
       channels: { email: true, push: true, inApp: true },
-      frequency: 'immediate',
-      quietHours: { enabled: false, start: '22:00', end: '08:00' },
+      frequency: "immediate",
+      quietHours: { enabled: false, start: "22:00", end: "08:00" },
     },
     {
-      id: 'account',
-      name: 'Account Updates',
+      id: "account",
+      name: "Account Updates",
       description:
-        'Profile changes, password updates, and account modifications',
+        "Profile changes, password updates, and account modifications",
       icon: <Users className="h-4 w-4" />,
       enabled: true,
       channels: { email: true, push: false, inApp: true },
-      frequency: 'immediate',
+      frequency: "immediate",
     },
     {
-      id: 'tenders',
-      name: 'Tender Notifications',
-      description: 'New tenders, deadlines, and submission updates',
+      id: "tenders",
+      name: "Tender Notifications",
+      description: "New tenders, deadlines, and submission updates",
       icon: <FileText className="h-4 w-4" />,
       enabled: true,
       channels: { email: true, push: true, inApp: true },
-      frequency: 'daily',
+      frequency: "daily",
     },
     {
-      id: 'team',
-      name: 'Team Activities',
-      description: 'Member invitations, role changes, and team updates',
+      id: "team",
+      name: "Team Activities",
+      description: "Member invitations, role changes, and team updates",
       icon: <Users className="h-4 w-4" />,
       enabled: false,
       channels: { email: false, push: false, inApp: true },
-      frequency: 'daily',
+      frequency: "daily",
     },
     {
-      id: 'system',
-      name: 'System Updates',
-      description: 'Maintenance notifications and feature announcements',
+      id: "system",
+      name: "System Updates",
+      description: "Maintenance notifications and feature announcements",
       icon: <Monitor className="h-4 w-4" />,
       enabled: true,
       channels: { email: true, push: false, inApp: true },
-      frequency: 'weekly',
+      frequency: "weekly",
     },
   ]);
 
   const [channels, setChannels] = useState<NotificationChannel[]>([
     {
-      id: 'email',
-      name: 'Email',
+      id: "email",
+      name: "Email",
       icon: <Mail className="h-4 w-4" />,
       enabled: true,
-      description: 'Receive notifications via email',
+      description: "Receive notifications via email",
     },
     {
-      id: 'push',
-      name: 'Push Notifications',
+      id: "push",
+      name: "Push Notifications",
       icon: <Smartphone className="h-4 w-4" />,
       enabled: true,
-      description: 'Browser and mobile push notifications',
+      description: "Browser and mobile push notifications",
     },
     {
-      id: 'inApp',
-      name: 'In-App',
+      id: "inApp",
+      name: "In-App",
       icon: <Bell className="h-4 w-4" />,
       enabled: true,
-      description: 'Notifications within the application',
+      description: "Notifications within the application",
     },
     {
-      id: 'sms',
-      name: 'SMS',
+      id: "sms",
+      name: "SMS",
       icon: <Smartphone className="h-4 w-4" />,
       enabled: false,
-      description: 'Text message notifications for critical alerts',
+      description: "Text message notifications for critical alerts",
     },
   ]);
 
@@ -143,8 +143,8 @@ export function NotificationPreferences() {
     doNotDisturb: false,
     quietHours: {
       enabled: true,
-      start: '22:00',
-      end: '08:00',
+      start: "22:00",
+      end: "08:00",
     },
     soundEnabled: true,
     desktopNotifications: true,
@@ -152,37 +152,37 @@ export function NotificationPreferences() {
 
   const updateCategory = (
     categoryId: string,
-    updates: Partial<NotificationCategory>
+    updates: Partial<NotificationCategory>,
   ) => {
     setCategories((prev) =>
-      prev.map((cat) => (cat.id === categoryId ? { ...cat, ...updates } : cat))
+      prev.map((cat) => (cat.id === categoryId ? { ...cat, ...updates } : cat)),
     );
-    toast.success('Notification preferences updated');
+    toast.success("Notification preferences updated");
   };
 
   const updateChannel = (channelId: string, enabled: boolean) => {
     setChannels((prev) =>
       prev.map((channel) =>
-        channel.id === channelId ? { ...channel, enabled } : channel
-      )
+        channel.id === channelId ? { ...channel, enabled } : channel,
+      ),
     );
-    toast.success('Notification channel updated');
+    toast.success("Notification channel updated");
   };
 
   const updateGlobalSettings = (updates: Partial<typeof globalSettings>) => {
     setGlobalSettings((prev) => ({ ...prev, ...updates }));
-    toast.success('Global settings updated');
+    toast.success("Global settings updated");
   };
 
   const getFrequencyIcon = (frequency: string) => {
     switch (frequency) {
-      case 'immediate':
+      case "immediate":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'hourly':
+      case "hourly":
         return <Clock className="h-4 w-4 text-blue-500" />;
-      case 'daily':
+      case "daily":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'weekly':
+      case "weekly":
         return <Clock className="h-4 w-4 text-orange-500" />;
       default:
         return <Clock className="h-4 w-4 text-gray-500" />;
@@ -191,16 +191,16 @@ export function NotificationPreferences() {
 
   const getFrequencyLabel = (frequency: string) => {
     switch (frequency) {
-      case 'immediate':
-        return 'Immediate';
-      case 'hourly':
-        return 'Hourly Digest';
-      case 'daily':
-        return 'Daily Summary';
-      case 'weekly':
-        return 'Weekly Summary';
+      case "immediate":
+        return "Immediate";
+      case "hourly":
+        return "Hourly Digest";
+      case "daily":
+        return "Daily Summary";
+      case "weekly":
+        return "Weekly Summary";
       default:
-        return 'Custom';
+        return "Custom";
     }
   };
 
@@ -274,7 +274,7 @@ export function NotificationPreferences() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">
-                      {globalSettings.quietHours.start} -{' '}
+                      {globalSettings.quietHours.start} -{" "}
                       {globalSettings.quietHours.end}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -415,10 +415,10 @@ export function NotificationPreferences() {
                       onValueChange={(frequency) =>
                         updateCategory(category.id, {
                           frequency: frequency as
-                            | 'immediate'
-                            | 'hourly'
-                            | 'daily'
-                            | 'weekly',
+                            | "immediate"
+                            | "hourly"
+                            | "daily"
+                            | "weekly",
                         })
                       }
                     >
@@ -480,7 +480,7 @@ export function NotificationPreferences() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.success('Test notification sent!')}
+              onClick={() => toast.success("Test notification sent!")}
               className="flex items-center space-x-2"
             >
               <CheckCircle className="h-4 w-4" />
@@ -489,7 +489,7 @@ export function NotificationPreferences() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.error('Test error notification!')}
+              onClick={() => toast.error("Test error notification!")}
               className="flex items-center space-x-2"
             >
               <AlertTriangle className="h-4 w-4" />
@@ -498,7 +498,7 @@ export function NotificationPreferences() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Test info notification!')}
+              onClick={() => toast.info("Test info notification!")}
               className="flex items-center space-x-2"
             >
               <Bell className="h-4 w-4" />
