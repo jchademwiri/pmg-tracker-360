@@ -46,6 +46,8 @@ interface Testimonial {
   rating: number;
 }
 
+import { DEFAULT_SUBSCRIPTION_PLANS, type SubscriptionPlan } from '@pmg/db/plans-constants';
+
 interface UpgradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +56,7 @@ interface UpgradeDialogProps {
   userName?: string;
   organizationName?: string;
   usageContext?: 'organizations' | 'tenders' | 'members' | 'storage';
+  plans?: SubscriptionPlan[];
 }
 
 export function UpgradeDialog({
@@ -62,6 +65,7 @@ export function UpgradeDialog({
   currentCount,
   maxCount,
   usageContext = 'organizations',
+  plans = DEFAULT_SUBSCRIPTION_PLANS,
 }: UpgradeDialogProps) {
   const router = useRouter();
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -81,49 +85,16 @@ export function UpgradeDialog({
     }
   }, [open]);
 
-  const pricingTiers: PricingTier[] = [
-    {
-      name: 'Free',
-      price: 0,
-      period: '/month',
-      description: 'Perfect for getting started',
-      features: [
-        '1 organization',
-        'Basic tender tracking',
-        '10 tenders / month',
-        '0 Active Projects',
-        '100MB Storage',
-        'Community support',
-      ],
-    },
-    {
-      name: 'Starter',
-      price: 249,
-      period: '/month',
-      description: 'For freelancers & consultants',
-      features: [
-        '1 organization',
-        '20 tenders / month',
-        '2 Active Projects',
-        '1GB Storage',
-        'Email support',
-      ],
-      popular: true,
-    },
-    {
-      name: 'Pro',
-      price: 499,
-      period: '/month',
-      description: 'For growing teams',
-      features: [
-        '2 organizations',
-        'Unlimited tenders',
-        '5 Active Projects',
-        '10GB Storage',
-        'Priority support',
-      ],
-    },
-  ];
+  const activePlans = plans.filter((p) => p.isActive);
+
+  const pricingTiers: PricingTier[] = activePlans.map((p) => ({
+    name: p.name,
+    price: p.priceZar,
+    period: `/${p.period}`,
+    description: p.description,
+    features: Array.isArray(p.features) ? p.features : [],
+    popular: p.popular,
+  }));
 
   const testimonials: Testimonial[] = [
     {

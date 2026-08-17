@@ -1023,6 +1023,33 @@ export const documentRelations = relations(document, ({ one }) => ({
 }));
 
 /* =========================
+   SUBSCRIPTION PLANS TABLE
+========================= */
+export const subscriptionPlan = pgTable('subscription_plan', {
+  id: text('id').primaryKey(), // 'free', 'starter', 'pro'
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  priceZar: integer('price_zar').notNull().default(0),
+  period: text('period').notNull().default('per month'),
+  maxStorageMb: integer('max_storage_mb').notNull().default(100),
+  maxTendersPerMonth: integer('max_tenders_per_month').notNull().default(10), // -1 for unlimited
+  maxActiveProjects: integer('max_active_projects').notNull().default(0),
+  maxOwnedOrgs: integer('max_owned_orgs').notNull().default(1),
+  features: jsonb('features').$type<string[]>().notNull(),
+  popular: boolean('popular').notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  ctaText: text('cta_text').notNull().default('Select Plan'),
+  badgeText: text('badge_text'),
+  createdAt: timestamp('created_at')
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp('updated_at')
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+/* =========================
    EXPORT SCHEMA
 ========================= */
 export const schema = {
@@ -1081,6 +1108,7 @@ export const schema = {
   waitlist,
   feedback,
   supportTickets,
+  subscriptionPlan,
 };
 
 export type Feedback = typeof feedback.$inferSelect;
@@ -1088,3 +1116,5 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 export type PurchaseOrderDeliveryNote = typeof purchaseOrderDeliveryNote.$inferSelect;
 export type PurchaseOrderDeliveryItem = typeof purchaseOrderDeliveryItem.$inferSelect;
 export type TenderFollowUp = typeof tenderFollowUp.$inferSelect;
+export type SubscriptionPlan = typeof subscriptionPlan.$inferSelect;
+export type NewSubscriptionPlan = typeof subscriptionPlan.$inferInsert;

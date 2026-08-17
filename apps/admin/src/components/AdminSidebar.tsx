@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Shield,
   HardDrive,
+  CreditCard,
   Database,
   LogOut,
   type LucideIcon,
@@ -69,6 +70,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Platform',
     items: [
+      { href: '/pricing', label: 'Pricing & Plans', icon: CreditCard },
       { href: '/storage', label: 'Storage & R2', icon: HardDrive },
       { href: '/system-admins', label: 'System Admins', icon: ShieldCheck },
     ],

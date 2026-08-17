@@ -10,4 +10,6 @@ export const formSchema = z.object({
   details: z.string().min(10, {
     message: "Details must be at least 10 characters.",
   }),
+  company_website_hp: z.string().optional(),
+  formMountedAt: z.coerce.number().optional(),
 });

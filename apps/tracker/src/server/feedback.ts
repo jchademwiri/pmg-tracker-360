@@ -6,6 +6,9 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { nanoid } from 'nanoid';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { checkRateLimit, getClientIp, verifyBotProtection } from '@/lib/bot-protection';
 
 const feedbackSchema = z.object({
   message: z
@@ -17,6 +20,8 @@ const feedbackSchema = z.object({
   userId: z.string().optional(),
   name: z.string().optional(),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  honeypot: z.string().optional(),
+  formMountedAt: z.number().optional(),
 });
 
 export type FeedbackInput = z.infer<typeof feedbackSchema>;
@@ -24,15 +29,59 @@ export type FeedbackInput = z.infer<typeof feedbackSchema>;
 export async function submitFeedback(input: FeedbackInput) {
   try {
     const validated = feedbackSchema.parse(input);
-    const feedbackId = nanoid(); // Changed to nanoid
+
+    // Verify session if available
+    let sessionUser: { id: string; name?: string | null; email?: string | null } | null = null;
+    try {
+      const headerList = await headers();
+      const session = await auth.api.getSession({ headers: headerList });
+      if (session?.user) {
+        sessionUser = session.user;
+      }
+    } catch {
+      // Non-blocking if called outside session context
+    }
+
+    const effectiveUserId = sessionUser?.id || validated.userId || null;
+    const effectiveName = sessionUser?.name || validated.name || null;
+    const effectiveEmail = sessionUser?.email || validated.email || null;
+
+    // For unauthenticated feedback, enforce bot protection and rate limiting
+    if (!sessionUser) {
+      const clientIp = await getClientIp();
+
+      // Rate limit check
+      const rateLimit = checkRateLimit(`feedback:${clientIp}`, 5, 10 * 60 * 1000);
+      if (!rateLimit.allowed) {
+        return {
+          success: false,
+          error: `Too many submissions. Please wait ${Math.ceil((rateLimit.retryAfterSeconds || 60) / 60)} minute(s).`,
+        };
+      }
+
+      // Bot protection check
+      const botCheck = await verifyBotProtection({
+        name: effectiveName || undefined,
+        email: effectiveEmail || undefined,
+        honeypot: validated.honeypot,
+        formMountedAt: validated.formMountedAt,
+      });
+
+      if (botCheck.isBot) {
+        console.warn(`[Anti-Spam] Feedback blocked: ${botCheck.reason}`);
+        return { success: true };
+      }
+    }
+
+    const feedbackId = nanoid();
     await db.insert(feedback).values({
-      id: feedbackId, // Changed to nanoid
+      id: feedbackId,
       message: validated.message,
       type: validated.type,
-      url: validated.url || null, // Normalized url to null
-      userId: validated.userId || null,
-      name: validated.name || null,
-      email: validated.email || null,
+      url: validated.url || null,
+      userId: effectiveUserId,
+      name: effectiveName,
+      email: effectiveEmail,
     });
 
     // Send email notification to system admins

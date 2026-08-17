@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@pmg/db';
+import { db, getPlanLimits } from '@pmg/db';
 import {
   document,
   tender,
@@ -65,15 +65,9 @@ export async function getStorageAnalytics(organizationId: string): Promise<{
 
     // 1. Plan limits
     const plan = await getOrganizationOwnerPlan(organizationId);
-    const planLimitMb =
-      plan === 'enterprise'
-        ? 50000
-        : plan === 'pro'
-          ? 10000
-          : plan === 'starter'
-            ? 1000
-            : 100;
-    const planLimitBytes = planLimitMb * 1024 * 1024;
+    const limits = await getPlanLimits(plan);
+    const planLimitMb = limits.maxStorageMb;
+    const planLimitBytes = limits.maxStorageBytes;
 
     // 2. Aggregate overall stats
     const [overallResult] = await db
@@ -280,13 +274,9 @@ export async function updateOrganizationPlan(
     }
 
     // If downgrading, check if current usage fits into target plan
-    const targetPlanLimitMb =
-      targetPlan === 'pro'
-        ? 10000
-        : targetPlan === 'starter'
-          ? 1000
-          : 100;
-    const targetPlanLimitBytes = targetPlanLimitMb * 1024 * 1024;
+    const targetLimits = await getPlanLimits(targetPlan);
+    const targetPlanLimitMb = targetLimits.maxStorageMb;
+    const targetPlanLimitBytes = targetLimits.maxStorageBytes;
 
     const [storageUsage] = await db
       .select({ totalSize: sql<number>`coalesce(sum(${document.size}), 0)` })

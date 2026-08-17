@@ -1,18 +1,25 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/lib/auth-client';
 import { DOCS_URL } from '@/lib/constants';
 import Link from 'next/link';
 import Logout from '../ui/logout';
-import { LayoutDashboard, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function AuthAwareNav() {
-  const { data: session, isPending } = authClient.useSession();
+  const [mounted, setMounted] = useState(false);
+  const { data: session } = authClient.useSession();
 
-  if (session?.user) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // When mounted and user is logged in, show dashboard & logout
+  if (mounted && session?.user) {
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
           <Link
             href={DOCS_URL}
@@ -30,15 +37,7 @@ export default function AuthAwareNav() {
     );
   }
 
-  if (isPending) {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="h-8 w-16 rounded-md bg-muted/40 animate-pulse hidden sm:block" />
-        <div className="h-8 w-24 rounded-md bg-primary/20 animate-pulse" />
-      </div>
-    );
-  }
-
+  // Consistent SSR and initial client hydration render
   return (
     <div className="flex items-center gap-3">
       <Button variant="ghost" asChild size="sm">
