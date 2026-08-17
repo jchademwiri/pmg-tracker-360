@@ -45,6 +45,8 @@ export function ProductFeedbackModal({
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackName, setFeedbackName] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [feedbackHp, setFeedbackHp] = useState('');
+  const [formMountedAt, setFormMountedAt] = useState<number>(() => Date.now());
   const [submitted, setSubmitted] = useState(false);
 
   const [isPending, startTransition] = useTransition();
@@ -56,15 +58,19 @@ export function ProductFeedbackModal({
   const currentUser = storeUser || session?.user;
 
   useEffect(() => {
-    if (currentUser) {
-      if (currentUser.name) setFeedbackName(currentUser.name);
-      if (currentUser.email) setFeedbackEmail(currentUser.email);
+    if (open) {
+      setFormMountedAt(Date.now());
+      if (currentUser) {
+        if (currentUser.name) setFeedbackName(currentUser.name);
+        if (currentUser.email) setFeedbackEmail(currentUser.email);
+      }
     }
   }, [currentUser, open]);
 
   const handleReset = () => {
     setFeedbackMessage('');
     setFeedbackType('feature');
+    setFeedbackHp('');
     setSubmitted(false);
     if (!currentUser) {
       setFeedbackName('');
@@ -91,6 +97,8 @@ export function ProductFeedbackModal({
         email: feedbackEmail.trim() || undefined,
         name: feedbackName.trim() || undefined,
         userId: currentUser?.id,
+        honeypot: feedbackHp,
+        formMountedAt,
       });
 
       if (result.success) {
@@ -196,6 +204,24 @@ export function ProductFeedbackModal({
 
             {/* Sender Identity (Auto-filled if logged in) */}
             <div className="space-y-2 text-left">
+              {/* Honeypot field (hidden from humans, caught by bots) */}
+              <div
+                aria-hidden="true"
+                className="opacity-0 absolute -z-50 select-none pointer-events-none h-0 w-0 overflow-hidden"
+                tabIndex={-1}
+              >
+                <label htmlFor="fb-company-hp">Leave this field blank</label>
+                <input
+                  id="fb-company-hp"
+                  type="text"
+                  name="fb_company_hp"
+                  value={feedbackHp}
+                  onChange={(e) => setFeedbackHp(e.target.value)}
+                  autoComplete="off"
+                  tabIndex={-1}
+                />
+              </div>
+
               {currentUser && (
                 <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
                   <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
