@@ -60,8 +60,49 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+const jsonLdGraph = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://tendertrack360.co.za/#website",
+      url: "https://tendertrack360.co.za",
+      name: "Tender Track 360",
+      description:
+        "All-in-one tender management, validity tracking, and purchase order system engineered for South African contractors and enterprises.",
+      inLanguage: "en-ZA",
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://tendertrack360.co.za/#application",
+      name: "Tender Track 360",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web-based",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "ZAR",
+        priceValidUntil: "2027-12-31",
+        availability: "https://schema.org/InStock",
+      },
+      description:
+        "All-in-one tender management, validity tracking, and purchase order system engineered for South African contractors and enterprises.",
+      url: "https://tendertrack360.co.za",
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://tendertrack360.co.za/#faq",
+      mainEntity: HOMEPAGE_FAQS.map((faq) => ({
+        "@type": "Question",
+        name: faq.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.a,
+        },
+      })),
+    },
+  ],
+};
 
 export default async function Home() {
   const plans = await getSubscriptionPlans();
