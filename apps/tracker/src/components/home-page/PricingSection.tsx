@@ -79,7 +79,7 @@ export function PricingSection({
                       R
                     </span>
                     <span className="text-4xl font-extrabold text-foreground font-mono tabular-nums">
-                      {tier.priceZar}
+                      {tier.priceZar.toLocaleString("en-ZA")}
                     </span>
                   </div>
                   <div className="text-xs text-amber-400 font-medium mt-1">
