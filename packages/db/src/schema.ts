@@ -282,6 +282,57 @@ export const notification = pgTable("notification", {
 });
 
 /* =========================
+   REMINDER LOG
+   Dedup/tracking table for the automated email reminder sweep.
+   One row per (entity, stage, targetDate) that has already been sent.
+========================= */
+export const reminderType = pgEnum("reminder_type", [
+  "tender_submission",
+  "tender_evaluation",
+  "tender_briefing",
+  "tender_follow_up",
+  "project_contract_end",
+  "project_close_out",
+  "po_expected_delivery",
+]);
+
+export const reminderStage = pgEnum("reminder_stage", [
+  "upcoming_7d",
+  "upcoming_1d",
+  "due_today",
+  "overdue",
+]);
+
+export const reminderLog = pgTable(
+  "reminder_log",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    entityType: reminderType("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    stage: reminderStage("stage").notNull(),
+    targetDate: timestamp("target_date").notNull(),
+    sentAt: timestamp("sent_at").defaultNow().notNull(),
+    recipientCount: integer("recipient_count").default(0).notNull(),
+  },
+  (table) => ({
+    dedupUnique: unique("reminder_log_dedup_unique").on(
+      table.entityType,
+      table.entityId,
+      table.stage,
+      table.targetDate,
+    ),
+    orgIdIdx: index("idx_reminder_log_org_id").on(table.organizationId),
+    entityIdx: index("idx_reminder_log_entity").on(
+      table.entityType,
+      table.entityId,
+    ),
+  }),
+);
+
+/* =========================
    OWNERSHIP TRANSFER
 ========================= */
 export const ownershipTransfer = pgTable("ownership_transfer", {
