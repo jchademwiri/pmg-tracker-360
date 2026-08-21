@@ -32,9 +32,7 @@ interface AvatarUploadProps {
   onImageChange: (imageUrl: string | null, storageKey?: string | null) => void;
   onImageRemove: () => void;
   disabled?: boolean;
-  uploadAction: (
-    file: File,
-  ) => Promise<{
+  uploadAction: (file: File) => Promise<{
     success: boolean;
     imageUrl?: string;
     key?: string;

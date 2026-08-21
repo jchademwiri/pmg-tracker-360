@@ -36,11 +36,7 @@ const TENDER_TERMINAL_STATUSES = [
   "cancelled",
 ] as const;
 const PROJECT_TERMINAL_STATUSES = ["completed", "cancelled"] as const;
-const PO_TERMINAL_STATUSES = [
-  "delivered",
-  "completed",
-  "cancelled",
-] as const;
+const PO_TERMINAL_STATUSES = ["delivered", "completed", "cancelled"] as const;
 
 const APP_BASE_URL = env.NEXT_PUBLIC_URL || "http://localhost:3000";
 
@@ -81,9 +77,10 @@ interface Candidate {
   organizationId: string;
   targetDate: Date;
   stage: ReminderStageValue;
-  render: (
-    recipientName: string,
-  ) => { subject: string; react: ReturnType<typeof TenderDeadlineReminder> };
+  render: (recipientName: string) => {
+    subject: string;
+    react: ReturnType<typeof TenderDeadlineReminder>;
+  };
 }
 
 const recipientCache = new Map<string, ReminderRecipient[]>();
