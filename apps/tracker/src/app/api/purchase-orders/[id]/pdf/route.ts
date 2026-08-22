@@ -11,7 +11,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.session?.activeOrganizationId) {
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  if (!session.session?.activeOrganizationId) {
     return NextResponse.json(
       { error: "No organization selected." },
       { status: 400 },

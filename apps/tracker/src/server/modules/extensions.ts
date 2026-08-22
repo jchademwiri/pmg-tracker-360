@@ -3,7 +3,6 @@
 import { db } from "@pmg/db";
 import {
   tenderExtension,
-  tender,
   document,
   type TenderExtension,
 } from "@pmg/db/schema";
@@ -14,7 +13,10 @@ import { nanoid } from "nanoid";
 import { uploadDocument } from "@/server/documents";
 import { StorageService } from "@/lib/storage";
 import { z } from "zod";
-import { logTenderActivity } from "../tenders";
+import {
+  logTenderActivity,
+  recomputeEvaluationDateForTender,
+} from "../tenders";
 
 const createExtensionSchema = z.object({
   tenderId: z.string(),
@@ -48,32 +50,33 @@ export async function createTenderExtension(
     const userId = session.user.id;
     const validatedData = createExtensionSchema.parse(input);
 
-    // 2. Create Extension Record
+    // 2. Create Extension Record + 3. Recompute Tender Evaluation Date
+    // (Both in one transaction so the extension and the derived evaluation
+    // date can never disagree if the second write fails.)
     const extensionId = nanoid();
-    const [newExtension] = await db
-      .insert(tenderExtension)
-      .values({
-        id: extensionId,
-        organizationId,
-        tenderId: validatedData.tenderId,
-        extensionDate: validatedData.extensionDate,
-        newEvaluationDate: validatedData.newEvaluationDate,
-        contactName: validatedData.contactName,
-        contactEmail: validatedData.contactEmail,
-        contactPhone: validatedData.contactPhone,
-        notes: validatedData.notes,
-        createdBy: userId,
-      })
-      .returning();
+    const [newExtension] = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(tenderExtension)
+        .values({
+          id: extensionId,
+          organizationId,
+          tenderId: validatedData.tenderId,
+          extensionDate: validatedData.extensionDate,
+          newEvaluationDate: validatedData.newEvaluationDate,
+          contactName: validatedData.contactName,
+          contactEmail: validatedData.contactEmail,
+          contactPhone: validatedData.contactPhone,
+          notes: validatedData.notes,
+          createdBy: userId,
+        })
+        .returning();
 
-    // 3. Update Tender Evaluation Date
-    await db
-      .update(tender)
-      .set({
-        evaluationDate: validatedData.newEvaluationDate,
-        updatedAt: new Date(),
-      })
-      .where(eq(tender.id, validatedData.tenderId));
+      // Recompute from the latest (MAX) non-deleted extension, not just the
+      // one just added — matches update/delete semantics.
+      await recomputeEvaluationDateForTender(validatedData.tenderId, tx);
+
+      return [inserted];
+    });
 
     // 4. Handle File Upload
     const file = formData.get("file");
@@ -239,36 +242,9 @@ export async function updateTenderExtension(
       })
       .where(eq(tenderExtension.id, validatedData.extensionId));
 
-    // Recompute the tender's evaluation date from the latest remaining extension
-    const latestExtension = await db
-      .select({ newEvaluationDate: tenderExtension.newEvaluationDate })
-      .from(tenderExtension)
-      .where(
-        and(
-          eq(tenderExtension.tenderId, existing.tenderId),
-          isNull(tenderExtension.deletedAt),
-        ),
-      )
-      .orderBy(desc(tenderExtension.newEvaluationDate))
-      .limit(1);
-
-    if (latestExtension.length > 0) {
-      await db
-        .update(tender)
-        .set({
-          evaluationDate: latestExtension[0].newEvaluationDate,
-          updatedAt: new Date(),
-        })
-        .where(eq(tender.id, existing.tenderId));
-    } else {
-      await db
-        .update(tender)
-        .set({
-          evaluationDate: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(tender.id, existing.tenderId));
-    }
+    // Recompute the tender's evaluation date from the latest remaining
+    // extension (falls back to validityDate/validityDays if none remain).
+    await recomputeEvaluationDateForTender(existing.tenderId);
 
     // Handle file upload (replace old file if new one provided)
     if (formData) {
@@ -377,37 +353,9 @@ export async function deleteTenderExtension(
 
     await db.delete(document).where(eq(document.extensionId, extensionId));
 
-    // Recompute the tender's evaluation date from the latest remaining extension
-    const latestExtension = await db
-      .select({ newEvaluationDate: tenderExtension.newEvaluationDate })
-      .from(tenderExtension)
-      .where(
-        and(
-          eq(tenderExtension.tenderId, ext.tenderId),
-          isNull(tenderExtension.deletedAt),
-        ),
-      )
-      .orderBy(desc(tenderExtension.newEvaluationDate))
-      .limit(1);
-
-    if (latestExtension.length > 0) {
-      await db
-        .update(tender)
-        .set({
-          evaluationDate: latestExtension[0].newEvaluationDate,
-          updatedAt: new Date(),
-        })
-        .where(eq(tender.id, ext.tenderId));
-    } else {
-      // No extensions left — clear the evaluation date so the original validity date shows
-      await db
-        .update(tender)
-        .set({
-          evaluationDate: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(tender.id, ext.tenderId));
-    }
+    // Recompute the tender's evaluation date from the latest remaining
+    // extension (falls back to validityDate/validityDays if none remain).
+    await recomputeEvaluationDateForTender(ext.tenderId);
 
     revalidatePath(`/tenders/${ext.tenderId}`);
     return { success: true };

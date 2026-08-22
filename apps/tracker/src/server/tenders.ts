@@ -100,14 +100,22 @@ async function autoCreateProjectForTender(
   }
 }
 
-async function resolveEvaluationDate(
+type TransactionClient = Parameters<typeof db.transaction>[0] extends (
+  tx: infer T,
+) => unknown
+  ? T
+  : never;
+type DbClient = typeof db | TransactionClient;
+
+export async function resolveEvaluationDate(
   tenderId: string | undefined,
   submissionDate: Date | null | undefined,
   validityDays: number | null | undefined,
   validityDate: Date | null | undefined,
+  dbClient: DbClient = db,
 ): Promise<Date | null> {
   if (tenderId) {
-    const latestExtension = await db
+    const latestExtension = await dbClient
       .select()
       .from(tenderExtension)
       .where(
@@ -133,6 +141,48 @@ async function resolveEvaluationDate(
     return calcDate;
   }
   return null;
+}
+
+/**
+ * Recompute and persist a tender's `evaluationDate` from the latest
+ * non-deleted extension (falling back to validityDate/validityDays), using
+ * the same MAX-based logic as tender create/update. Single source of truth
+ * for the extension create/update/delete actions in `server/modules/extensions.ts`,
+ * which previously each reimplemented this independently and inconsistently
+ * (createTenderExtension in particular overwrote with the newly-added
+ * extension's date rather than the latest across all extensions).
+ *
+ * Pass `dbClient` as a transaction handle to keep this atomic with the
+ * caller's other writes (e.g. the extension insert).
+ */
+export async function recomputeEvaluationDateForTender(
+  tenderId: string,
+  dbClient: DbClient = db,
+): Promise<Date | null> {
+  const [existing] = await dbClient
+    .select({
+      submissionDate: tender.submissionDate,
+      validityDays: tender.validityDays,
+      validityDate: tender.validityDate,
+    })
+    .from(tender)
+    .where(eq(tender.id, tenderId))
+    .limit(1);
+
+  const evaluationDate = await resolveEvaluationDate(
+    tenderId,
+    existing?.submissionDate,
+    existing?.validityDays,
+    existing?.validityDate,
+    dbClient,
+  );
+
+  await dbClient
+    .update(tender)
+    .set({ evaluationDate, updatedAt: new Date() })
+    .where(eq(tender.id, tenderId));
+
+  return evaluationDate;
 }
 
 // Get tenders with pagination, search, and client joins
