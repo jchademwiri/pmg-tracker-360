@@ -1,6 +1,6 @@
 import { db } from "@pmg/db";
-import { tender } from "@pmg/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { tender, tenderExtension } from "@pmg/db/schema";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { validateSessionAndOrg } from "./utils";
 import { resolveTenderStatus } from "@/lib/tender-utils";
 import { autoCloseExpiredTenders } from "./tenders";
@@ -38,10 +38,34 @@ export async function getSpecialistDashboardStats(organizationId: string) {
         ),
       );
 
-    // Filter using status resolver
+    // Fetch active extensions to get effective evaluation dates
+    const extensions = await db
+      .select({
+        tenderId: tenderExtension.tenderId,
+        newEvaluationDate: tenderExtension.newEvaluationDate,
+      })
+      .from(tenderExtension)
+      .where(
+        and(
+          eq(tenderExtension.organizationId, organizationId),
+          isNull(tenderExtension.deletedAt),
+        ),
+      )
+      .orderBy(desc(tenderExtension.extensionDate));
+
+    const latestExtensionByTender = new Map<string, Date>();
+    for (const ext of extensions) {
+      if (!latestExtensionByTender.has(ext.tenderId)) {
+        latestExtensionByTender.set(ext.tenderId, ext.newEvaluationDate);
+      }
+    }
+
+    // Filter using status resolver and effective evaluation date
     const resolvedTenders = tenders.map((t) => ({
       ...t,
       resolvedStatus: resolveTenderStatus(t.status, t.submissionDate),
+      effectiveEvaluationDate:
+        latestExtensionByTender.get(t.id) ?? t.evaluationDate,
     }));
 
     const openCount = resolvedTenders.filter(
@@ -53,8 +77,8 @@ export async function getSpecialistDashboardStats(organizationId: string) {
 
     // Count validity deadlines approaching in next 14 days
     const validityWarnings = resolvedTenders.filter((t) => {
-      if (!t.evaluationDate) return false;
-      const evalDate = new Date(t.evaluationDate);
+      if (!t.effectiveEvaluationDate) return false;
+      const evalDate = new Date(t.effectiveEvaluationDate);
       return evalDate >= now && evalDate <= fourteenDaysFromNow;
     });
 
@@ -67,7 +91,7 @@ export async function getSpecialistDashboardStats(organizationId: string) {
         validityWarnings: validityWarnings.map((w) => ({
           id: w.id,
           tenderNumber: w.tenderNumber,
-          evaluationDate: w.evaluationDate,
+          evaluationDate: w.effectiveEvaluationDate,
         })),
       },
     };

@@ -844,6 +844,7 @@ export async function getProjectStats(organizationId: string) {
       .where(
         and(
           eq(project.organizationId, organizationId),
+          isNull(project.deletedAt),
           eq(purchaseOrderDeliveryNote.status, "verified"),
         ),
       );

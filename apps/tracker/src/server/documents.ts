@@ -343,6 +343,10 @@ export async function uploadDocument(
     if (target.projectId) {
       revalidatePath(`/projects/${target.projectId}`);
     }
+    if (target.purchaseOrderId) {
+      revalidatePath(`/projects/purchase-orders/${target.purchaseOrderId}`);
+    }
+    revalidatePath("/storage");
 
     return {
       success: true,
@@ -468,6 +472,10 @@ export async function deleteDocument(
     if (doc.projectId) {
       revalidatePath(`/projects/${doc.projectId}`);
     }
+    if (doc.purchaseOrderId) {
+      revalidatePath(`/projects/purchase-orders/${doc.purchaseOrderId}`);
+    }
+    revalidatePath("/storage");
 
     return { success: true };
   } catch (error: any) {
