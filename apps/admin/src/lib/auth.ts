@@ -19,11 +19,38 @@ function getAdminMagicLinkUrl(token: string) {
 
 export const auth = betterAuth({
   baseURL: getAdminBaseURL(),
-  trustedOrigins: [
-    getAdminBaseURL(),
-    "http://localhost:3001",
-    "https://admin.tendertrack360.co.za",
-  ],
+  trustedOrigins: (request) => {
+    const staticOrigins: string[] = [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+      "https://admin.tendertrack360.co.za",
+      "https://app.tendertrack360.co.za",
+      "https://tendertrack360.co.za",
+      "https://dev.tendertrack360.co.za",
+      "https://admin.playhousemedia.co.za",
+      "https://portal.playhousemedia.co.za",
+      "https://playhousemedia.co.za",
+      "https://portal.tenderedgesolutions.co.za",
+      "https://tenderedgesolutions.co.za",
+      ...(process.env.NEXT_PUBLIC_ADMIN_URL
+        ? [new URL(process.env.NEXT_PUBLIC_ADMIN_URL).origin]
+        : []),
+      ...(process.env.BETTER_AUTH_URL
+        ? [new URL(process.env.BETTER_AUTH_URL).origin]
+        : []),
+      getAdminBaseURL(),
+    ];
+
+    try {
+      const requestOrigin = new URL(request?.url || "").origin;
+      return requestOrigin && requestOrigin !== "null"
+        ? Array.from(new Set([...staticOrigins, requestOrigin]))
+        : staticOrigins;
+    } catch {
+      return staticOrigins;
+    }
+  },
   rateLimit: {
     enabled: true,
     window: 60, // 1 minute
