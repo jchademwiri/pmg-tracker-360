@@ -57,9 +57,17 @@ export async function getCloudflareR2StorageStats(
   const totalCapacityGB = getStorageCapacityLimitGB();
   const totalCapacityMB = totalCapacityGB * 1024;
 
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const currentBucketName = process.env.R2_BUCKET_NAME || "pmg-tracker-360";
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN || process.env.R2_API_TOKEN;
+  const cleanEnv = (val?: string) =>
+    val ? val.replace(/^["']|["']$/g, "").trim() : undefined;
+
+  const accountId =
+    cleanEnv(process.env.CLOUDFLARE_ACCOUNT_ID) ||
+    cleanEnv(process.env.R2_ACCOUNT_ID);
+  const currentBucketName =
+    cleanEnv(process.env.R2_BUCKET_NAME) || "pmg-tracker-360";
+  const apiToken =
+    cleanEnv(process.env.CLOUDFLARE_API_TOKEN) ||
+    cleanEnv(process.env.R2_API_TOKEN);
 
   const pmgStorageMB = Number((pmgDbBytes / (1024 * 1024)).toFixed(2));
   const pmgStorageGB = Number((pmgDbBytes / (1024 * 1024 * 1024)).toFixed(3));
