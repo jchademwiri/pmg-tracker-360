@@ -249,6 +249,14 @@ export function DocumentManager({
     async (filesToUpload: File[]) => {
       if (filesToUpload.length === 0) return;
 
+      if (uploadCategory === "extension" && !extensionDate) {
+        toast.error("New Validity Date Required", {
+          description:
+            "Please select the new validity date before uploading the extension letter.",
+        });
+        return;
+      }
+
       setIsUploading(true);
       setUploadProgress(10);
 
@@ -618,16 +626,24 @@ export function DocumentManager({
                 </div>
 
                 {uploadCategory === "extension" && (
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap font-medium">
-                      Extension Date:
+                  <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-lg">
+                    <label className="text-xs text-amber-300 whitespace-nowrap font-semibold">
+                      New Validity Date <span className="text-rose-400">*</span>:
                     </label>
                     <input
                       type="date"
                       value={extensionDate}
+                      required
                       onChange={(e) => setExtensionDate(e.target.value)}
-                      className="h-7 text-xs px-2 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                      className={cn(
+                        "h-7 text-xs px-2 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-sm",
+                        !extensionDate &&
+                          "border-amber-500 ring-1 ring-amber-500/50",
+                      )}
                     />
+                    <span className="text-[11px] text-amber-300/80 hidden sm:inline">
+                      (Required to update validity status)
+                    </span>
                   </div>
                 )}
               </div>
