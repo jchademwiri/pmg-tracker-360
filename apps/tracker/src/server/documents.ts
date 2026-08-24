@@ -14,7 +14,6 @@ import { validateSessionAndOrg, getOrganizationOwnerPlan } from "./utils";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { StorageService } from "@/lib/storage";
-import { nanoid } from "nanoid";
 import { recomputeEvaluationDateForTender, logTenderActivity } from "./tenders";
 
 export interface DocumentUploadTarget {
@@ -187,7 +186,7 @@ export async function uploadDocument(
           .replace(/[^a-zA-Z0-9_-]/g, "-")
           .toUpperCase();
         extensionDateStr = parsedDate.toISOString().slice(0, 10);
-        createdExtensionId = nanoid();
+        createdExtensionId = crypto.randomUUID();
       }
 
       const existingExtDocs = await db
