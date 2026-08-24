@@ -70,7 +70,7 @@ export default async function AdminStoragePage() {
         />
         <MetricCard
           label="Total Documents"
-          count={storageData.storageOverview.pmgDocumentCount.toLocaleString()}
+          count={overview.totalDocuments.toLocaleString()}
           icon={<FileText className="w-5 h-5 text-emerald-400" />}
           variant="success"
           secondaryNote="Across all tenant workspaces & buckets"
