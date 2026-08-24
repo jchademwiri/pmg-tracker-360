@@ -6,12 +6,24 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// Ensure environment variables are checked (or updated in env.ts)
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const S3_API = process.env.S3_API; // Optional custom endpoint override
+function cleanEnv(val?: string | null): string | undefined {
+  if (!val) return undefined;
+  const trimmed = val.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
+// Ensure environment variables are checked and sanitized
+const R2_ACCOUNT_ID = cleanEnv(process.env.R2_ACCOUNT_ID);
+const R2_ACCESS_KEY_ID = cleanEnv(process.env.R2_ACCESS_KEY_ID);
+const R2_SECRET_ACCESS_KEY = cleanEnv(process.env.R2_SECRET_ACCESS_KEY);
+const R2_BUCKET_NAME = cleanEnv(process.env.R2_BUCKET_NAME);
+const S3_API = cleanEnv(process.env.S3_API); // Optional custom endpoint override
 
 // Initialize S3 Client for Cloudflare R2 (or custom S3-compatible endpoint)
 // https://developers.cloudflare.com/r2/examples/aws-sdk-js-v3/
