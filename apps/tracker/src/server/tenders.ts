@@ -1385,14 +1385,14 @@ export async function getTenderStats(organizationId: string) {
 
       // Calculate effective validity expiration date
       let effectiveExpiry: Date | null = null;
-      if (t.validityDate) {
+      if (t.evaluationDate) {
+        effectiveExpiry = new Date(t.evaluationDate);
+      } else if (t.validityDate) {
         effectiveExpiry = new Date(t.validityDate);
       } else if (t.submissionDate && t.validityDays) {
         const d = new Date(t.submissionDate);
         d.setDate(d.getDate() + t.validityDays);
         effectiveExpiry = d;
-      } else if (t.evaluationDate) {
-        effectiveExpiry = new Date(t.evaluationDate);
       }
 
       if (!effectiveExpiry || effectiveExpiry >= now) return false;
@@ -1943,7 +1943,7 @@ export async function getTendersOverview(
     ) {
       // Most overdue first (earliest lapsed validity date to most recent)
       orderByExpressions = [
-        sql`coalesce(${tender.validityDate}, ${tender.evaluationDate}, ${tender.submissionDate}) asc nulls last`,
+        sql`coalesce(${tender.evaluationDate}, ${tender.validityDate}, ${tender.submissionDate}) asc nulls last`,
         desc(tender.createdAt),
       ];
     } else if (isRegisterDefaultSort) {
