@@ -126,7 +126,7 @@ export async function getCloudflareR2StorageStats(
           Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
-        next: { revalidate: 300 }, // cache for 5 minutes
+        cache: "no-store",
       },
     );
 
@@ -156,7 +156,7 @@ export async function getCloudflareR2StorageStats(
               Authorization: `Bearer ${apiToken}`,
               "Content-Type": "application/json",
             },
-            next: { revalidate: 300 },
+            cache: "no-store",
           },
         );
 
