@@ -18,26 +18,33 @@ function cleanEnv(val?: string | null): string | undefined {
   return trimmed;
 }
 
-// Ensure environment variables are checked and sanitized
-const R2_ACCOUNT_ID = cleanEnv(process.env.R2_ACCOUNT_ID);
-const R2_ACCESS_KEY_ID = cleanEnv(process.env.R2_ACCESS_KEY_ID);
-const R2_SECRET_ACCESS_KEY = cleanEnv(process.env.R2_SECRET_ACCESS_KEY);
-const R2_BUCKET_NAME = cleanEnv(process.env.R2_BUCKET_NAME);
-const S3_API = cleanEnv(process.env.S3_API); // Optional custom endpoint override
+function getStorageConfig() {
+  const accountId = cleanEnv(process.env.R2_ACCOUNT_ID);
+  const accessKeyId = cleanEnv(process.env.R2_ACCESS_KEY_ID);
+  const secretAccessKey = cleanEnv(process.env.R2_SECRET_ACCESS_KEY);
+  const bucketName = cleanEnv(process.env.R2_BUCKET_NAME);
+  const s3Api = cleanEnv(process.env.S3_API);
 
-// Initialize S3 Client for Cloudflare R2 (or custom S3-compatible endpoint)
-// https://developers.cloudflare.com/r2/examples/aws-sdk-js-v3/
-const s3Client =
-  R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && (R2_ACCOUNT_ID || S3_API)
-    ? new S3Client({
-        region: "auto",
-        endpoint: S3_API || `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        credentials: {
-          accessKeyId: R2_ACCESS_KEY_ID,
-          secretAccessKey: R2_SECRET_ACCESS_KEY,
-        },
-      })
-    : null;
+  const client =
+    accessKeyId && secretAccessKey && (accountId || s3Api)
+      ? new S3Client({
+          region: "auto",
+          endpoint: s3Api || `https://${accountId}.r2.cloudflarestorage.com`,
+          credentials: {
+            accessKeyId,
+            secretAccessKey,
+          },
+        })
+      : null;
+
+  return {
+    client,
+    bucketName,
+    accountId,
+    accessKeyId,
+    s3Api,
+  };
+}
 
 export class StorageService {
   /**
@@ -52,22 +59,30 @@ export class StorageService {
     key: string,
     contentType: string,
   ): Promise<string> {
-    if (!s3Client || !R2_BUCKET_NAME) {
-      console.warn("Storage not configured: R2 credentials missing");
-      // For local dev without R2, we might just return a mock URL or throw
-      // But for MVP if no creds, we should probably throw
-      throw new Error("Storage configuration missing");
+    const { client, bucketName, accessKeyId, accountId } = getStorageConfig();
+
+    if (!client || !bucketName) {
+      const missing = [
+        !process.env.R2_ACCOUNT_ID && "R2_ACCOUNT_ID",
+        !process.env.R2_ACCESS_KEY_ID && "R2_ACCESS_KEY_ID",
+        !process.env.R2_SECRET_ACCESS_KEY && "R2_SECRET_ACCESS_KEY",
+        !process.env.R2_BUCKET_NAME && "R2_BUCKET_NAME",
+      ]
+        .filter(Boolean)
+        .join(", ");
+      console.warn(`Storage not configured: Missing [${missing || "credentials"}]`);
+      throw new Error(`Storage configuration missing (${missing || "Check R2 environment variables"})`);
     }
 
     const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
       Body: fileBuffer,
       ContentType: contentType,
     });
 
     try {
-      await s3Client.send(command);
+      await client.send(command);
       // Construct public URL if bucket is public, or R2 dev URL
       // For now, returning the Key which can be used to generate signed URLs or constructed if public
       // If using a custom domain: https://files.tendertracker.com/${key}
@@ -106,11 +121,12 @@ export class StorageService {
   static isOwnSignedUrl(url: string): boolean {
     if (!/^https?:\/\//i.test(url)) return false;
     try {
+      const { s3Api, accountId } = getStorageConfig();
       const host = new URL(url).hostname;
       const endpoint =
-        S3_API ||
-        (R2_ACCOUNT_ID
-          ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+        s3Api ||
+        (accountId
+          ? `https://${accountId}.r2.cloudflarestorage.com`
           : null);
       if (!endpoint) return false;
       const allowedHost = new URL(endpoint).hostname;
@@ -125,18 +141,19 @@ export class StorageService {
    * @param key The path/key of the file to delete
    */
   static async deleteFile(key: string): Promise<void> {
-    if (!s3Client || !R2_BUCKET_NAME) {
+    const { client, bucketName } = getStorageConfig();
+    if (!client || !bucketName) {
       console.warn("Storage not configured: R2 credentials missing");
       return;
     }
 
     const command = new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
     });
 
     try {
-      await s3Client.send(command);
+      await client.send(command);
     } catch (error) {
       console.error("Error deleting file from storage:", error);
       // We don't throw here to avoid blocking DB cleanup if storage fails (soft delete logic usually)
@@ -148,17 +165,18 @@ export class StorageService {
    * @param key The path/key of the file
    */
   static async getSignedUrl(key: string): Promise<string> {
-    if (!s3Client || !R2_BUCKET_NAME) {
+    const { client, bucketName } = getStorageConfig();
+    if (!client || !bucketName) {
       return "#storage-not-configured";
     }
 
     const command = new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: bucketName,
       Key: key,
     });
 
     try {
-      return await getSignedUrl(s3Client as any, command as any, {
+      return await getSignedUrl(client as any, command as any, {
         expiresIn: 3600,
       });
     } catch (error) {
