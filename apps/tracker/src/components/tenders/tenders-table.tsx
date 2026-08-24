@@ -84,14 +84,15 @@ function resolveValidityExpiry(tender: Tender): {
 } {
   let expiryDate: Date | null = null;
 
-  if (tender.validityDate) {
+  // 1. Live evaluation deadline (recomputed from latest extension)
+  if (tender.evaluationDate) {
+    expiryDate = new Date(tender.evaluationDate);
+  } else if (tender.validityDate) {
     expiryDate = new Date(tender.validityDate);
   } else if (tender.submissionDate && tender.validityDays) {
     const d = new Date(tender.submissionDate);
     d.setDate(d.getDate() + tender.validityDays);
     expiryDate = d;
-  } else if (tender.evaluationDate) {
-    expiryDate = new Date(tender.evaluationDate);
   }
 
   if (!expiryDate) {

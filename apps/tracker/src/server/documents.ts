@@ -5,6 +5,7 @@ import {
   document,
   tender,
   tenderExtension,
+  user,
   project,
   purchaseOrder,
   organization,
@@ -13,6 +14,7 @@ import { validateSessionAndOrg, getOrganizationOwnerPlan } from "./utils";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { StorageService } from "@/lib/storage";
+import { recomputeEvaluationDateForTender, logTenderActivity } from "./tenders";
 
 export interface DocumentUploadTarget {
   tenderId?: string;
@@ -114,6 +116,8 @@ export async function uploadDocument(
     let storageKey = `${orgSlug}/documents/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
     // Naming logic based on entity target and category
+    let createdExtensionId: string | undefined;
+
     if (
       target.extensionId ||
       (target.tenderId && target.category === "extension")
@@ -147,20 +151,42 @@ export async function uploadDocument(
           extensionDateStr = d.toISOString().slice(0, 10);
         }
       } else if (target.tenderId) {
+        if (!target.extensionDate) {
+          return {
+            success: false,
+            error:
+              "New validity extension date is required when uploading an extension letter.",
+          };
+        }
+
+        const parsedDate = new Date(target.extensionDate);
+        if (isNaN(parsedDate.getTime())) {
+          return {
+            success: false,
+            error: "Invalid validity extension date provided.",
+          };
+        }
+
         const t = await db
           .select({ tenderNumber: tender.tenderNumber })
           .from(tender)
-          .where(eq(tender.id, target.tenderId))
+          .where(
+            and(
+              eq(tender.id, target.tenderId),
+              eq(tender.organizationId, organizationId),
+            ),
+          )
           .limit(1);
-        if (t.length > 0) {
-          tenderNum = t[0].tenderNumber
-            .replace(/[^a-zA-Z0-9_-]/g, "-")
-            .toUpperCase();
+
+        if (t.length === 0) {
+          return { success: false, error: "Tender not found." };
         }
-        const d = target.extensionDate
-          ? new Date(target.extensionDate)
-          : new Date();
-        extensionDateStr = d.toISOString().slice(0, 10);
+
+        tenderNum = t[0].tenderNumber
+          .replace(/[^a-zA-Z0-9_-]/g, "-")
+          .toUpperCase();
+        extensionDateStr = parsedDate.toISOString().slice(0, 10);
+        createdExtensionId = crypto.randomUUID();
       }
 
       const existingExtDocs = await db
@@ -318,9 +344,48 @@ export async function uploadDocument(
     // Generate signed URL immediately for client preview and instant download
     const signedUrl = await StorageService.getSignedUrl(uploadedKey);
 
+    const now = new Date();
+
+    // If uploading an extension letter directly from Documents tab without a pre-existing extensionId
+    if (createdExtensionId && target.tenderId && target.extensionDate) {
+      const parsedEvalDate = new Date(target.extensionDate);
+      const [u] = await db
+        .select({ email: user.email, name: user.name })
+        .from(user)
+        .where(eq(user.id, userId))
+        .limit(1);
+
+      await db.insert(tenderExtension).values({
+        id: createdExtensionId,
+        organizationId,
+        tenderId: target.tenderId,
+        extensionDate: now,
+        newEvaluationDate: parsedEvalDate,
+        contactEmail: u?.email || "notifications@tendertrack360.co.za",
+        contactName: u?.name || null,
+        notes: `Uploaded via Documents tab (${finalFileName})`,
+        createdBy: userId,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // Recompute the tender's live evaluation date from this latest extension!
+      await recomputeEvaluationDateForTender(target.tenderId);
+
+      await logTenderActivity(
+        organizationId,
+        target.tenderId,
+        "extension_added",
+        `Extension letter uploaded. New validity evaluation date set to: ${parsedEvalDate.toLocaleDateString("en-ZA", { year: "numeric", month: "short", day: "numeric" })}`,
+        userId,
+      );
+    }
+
     // Save document record in database
     const docId = crypto.randomUUID();
-    const now = new Date();
+    const effectiveExtensionId =
+      target.extensionId || createdExtensionId || null;
+
     await db.insert(document).values({
       id: docId,
       organizationId,
@@ -331,7 +396,7 @@ export async function uploadDocument(
       tenderId: target.tenderId || null,
       projectId: target.projectId || null,
       purchaseOrderId: target.purchaseOrderId || null,
-      extensionId: target.extensionId || null,
+      extensionId: effectiveExtensionId,
       uploadedBy: userId,
       createdAt: now,
     });
@@ -339,12 +404,18 @@ export async function uploadDocument(
     // Revalidate relevant paths
     if (target.tenderId) {
       revalidatePath(`/tenders/${target.tenderId}`);
+      revalidatePath("/tenders");
+      revalidatePath("/tenders/overview");
+      revalidatePath("/dashboard");
     }
     if (target.projectId) {
       revalidatePath(`/projects/${target.projectId}`);
+      revalidatePath("/projects");
+      revalidatePath("/dashboard");
     }
     if (target.purchaseOrderId) {
       revalidatePath(`/projects/purchase-orders/${target.purchaseOrderId}`);
+      revalidatePath("/projects/purchase-orders");
     }
     revalidatePath("/storage");
 

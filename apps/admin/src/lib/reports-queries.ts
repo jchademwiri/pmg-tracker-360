@@ -388,8 +388,8 @@ export async function getStorageBreakdown(): Promise<{
   const [categoryResults, topTenantResults] = await Promise.all([
     db
       .select({
-        tenderCount: sql<number>`count(*) filter (where ${document.tenderId} is not null)`,
-        tenderBytes: sql<number>`coalesce(sum(${document.size}) filter (where ${document.tenderId} is not null), 0)`,
+        tenderCount: sql<number>`count(*) filter (where ${document.tenderId} is not null and ${document.extensionId} is null)`,
+        tenderBytes: sql<number>`coalesce(sum(${document.size}) filter (where ${document.tenderId} is not null and ${document.extensionId} is null), 0)`,
         projectCount: sql<number>`count(*) filter (where ${document.projectId} is not null and ${document.tenderId} is null)`,
         projectBytes: sql<number>`coalesce(sum(${document.size}) filter (where ${document.projectId} is not null and ${document.tenderId} is null), 0)`,
         poCount: sql<number>`count(*) filter (where ${document.purchaseOrderId} is not null)`,

@@ -77,8 +77,10 @@ interface ExtensionFormProps {
   trigger?: React.ReactNode;
 }
 
-function toDateInputValue(date: Date | string): string {
+function toDateInputValue(date?: Date | string | null): string {
+  if (!date) return "";
   const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
   return d.toISOString().slice(0, 10);
 }
 
@@ -100,13 +102,6 @@ export function ExtensionForm({
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
 
-  // Reset the selected file when the dialog opens or extension changes
-  useEffect(() => {
-    if (open) {
-      setSelectedFiles([]);
-    }
-  }, [open, extension?.id]);
-
   const form = useForm<ExtensionFormValues>({
     resolver: zodResolver(extensionFormSchema),
     defaultValues: {
@@ -120,6 +115,25 @@ export function ExtensionForm({
       notes: extension?.notes || "",
     },
   });
+
+  // Reset form values and selected files when the dialog opens or extension changes
+  useEffect(() => {
+    if (open) {
+      setSelectedFiles([]);
+      form.reset({
+        extensionDate: extension
+          ? toDateInputValue(extension.extensionDate)
+          : "",
+        newEvaluationDate: extension
+          ? toDateInputValue(extension.newEvaluationDate)
+          : "",
+        contactName: extension?.contactName || "",
+        contactEmail: extension?.contactEmail || "",
+        contactPhone: extension?.contactPhone || "",
+        notes: extension?.notes || "",
+      });
+    }
+  }, [open, extension, form]);
 
   const onSubmit = useCallback(
     async (data: ExtensionFormValues) => {

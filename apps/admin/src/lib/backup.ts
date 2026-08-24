@@ -34,11 +34,23 @@ async function getDb() {
 /*  R2 Config                                                          */
 /* ------------------------------------------------------------------ */
 
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const S3_API = process.env.S3_API;
+function cleanEnv(val?: string | null): string | undefined {
+  if (!val) return undefined;
+  const trimmed = val.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
+const R2_ACCOUNT_ID = cleanEnv(process.env.R2_ACCOUNT_ID);
+const R2_ACCESS_KEY_ID = cleanEnv(process.env.R2_ACCESS_KEY_ID);
+const R2_SECRET_ACCESS_KEY = cleanEnv(process.env.R2_SECRET_ACCESS_KEY);
+const R2_BUCKET_NAME = cleanEnv(process.env.R2_BUCKET_NAME);
+const S3_API = cleanEnv(process.env.S3_API);
 const BACKUP_PREFIX = "database-backup/";
 const RETENTION_DAYS = 30;
 
