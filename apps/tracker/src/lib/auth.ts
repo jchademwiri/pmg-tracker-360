@@ -79,35 +79,45 @@ function getPublicAuthEmailUrl(url: string) {
   }
 }
 
+const TRUSTED_ROOT_DOMAINS = ["tendertrack360.co.za"];
+
+function isTrustedOrigin(originStr?: string | null): boolean {
+  if (!originStr) return false;
+  try {
+    const url = new URL(originStr);
+    if (LOCAL_AUTH_HOSTNAMES.has(url.hostname)) return true;
+    if (url.hostname.endsWith(".vercel.app")) return true;
+    return TRUSTED_ROOT_DOMAINS.some(
+      (root) => url.hostname === root || url.hostname.endsWith(`.${root}`),
+    );
+  } catch {
+    return false;
+  }
+}
+
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
-  // Better Auth validates the Origin header of state-changing requests
-  // (e.g. `/api/auth/organization/set-active`) against trustedOrigins and
-  // rejects unknown hosts — which broke organization switching on the
-  // `dev.tendertrack360.co.za` deployment with 403 INVALID_ORIGIN.
-  //
-  // As a function, this keeps the static list and additionally trusts the
-  // origin the request was actually sent to, so legitimate same-origin calls
-  // work from every deployment (production, dev subdomain, preview) without
-  // per-host configuration. Cross-origin CSRF attempts are still rejected
-  // because their Origin header never matches the request's own host.
   trustedOrigins: (request) => {
     const staticOrigins: (string | undefined | null)[] = [
       "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
       "https://tender-track-360.vercel.app",
       "https://admin.tendertrack360.co.za",
+      "https://app.tendertrack360.co.za",
+      "https://tendertrack360.co.za",
+      "https://dev.tendertrack360.co.za",
       ...(env.NEXT_PUBLIC_URL ? [new URL(env.NEXT_PUBLIC_URL).origin] : []),
     ];
 
     try {
       const requestOrigin = new URL(request?.url || "").origin;
-      return requestOrigin && requestOrigin !== "null"
-        ? [...staticOrigins, requestOrigin]
-        : staticOrigins;
+      if (requestOrigin && isTrustedOrigin(requestOrigin)) {
+        return Array.from(new Set([...staticOrigins.filter(Boolean), requestOrigin])) as string[];
+      }
+      return staticOrigins.filter(Boolean) as string[];
     } catch {
-      // No request (internal auth.api call) or non-absolute URL —
-      // fall back to the static list.
-      return staticOrigins;
+      return staticOrigins.filter(Boolean) as string[];
     }
   },
   rateLimit: {

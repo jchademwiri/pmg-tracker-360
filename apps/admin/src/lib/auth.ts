@@ -9,6 +9,22 @@ import { resend, SENDER, REPLY_TO } from "@/lib/email-config";
 
 const LOCAL_AUTH_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
+const TRUSTED_ROOT_DOMAINS = ["tendertrack360.co.za"];
+
+function isTrustedOrigin(originStr?: string | null): boolean {
+  if (!originStr) return false;
+  try {
+    const url = new URL(originStr);
+    if (LOCAL_AUTH_HOSTNAMES.has(url.hostname)) return true;
+    if (url.hostname.endsWith(".vercel.app")) return true;
+    return TRUSTED_ROOT_DOMAINS.some(
+      (root) => url.hostname === root || url.hostname.endsWith(`.${root}`),
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getAdminMagicLinkUrl(token: string) {
   const adminBaseURL = getAdminBaseURL();
   const magicLinkUrl = new URL("/api/auth/magic-link/verify", adminBaseURL);
@@ -28,11 +44,6 @@ export const auth = betterAuth({
       "https://app.tendertrack360.co.za",
       "https://tendertrack360.co.za",
       "https://dev.tendertrack360.co.za",
-      "https://admin.playhousemedia.co.za",
-      "https://portal.playhousemedia.co.za",
-      "https://playhousemedia.co.za",
-      "https://portal.tenderedgesolutions.co.za",
-      "https://tenderedgesolutions.co.za",
       ...(process.env.NEXT_PUBLIC_ADMIN_URL
         ? [new URL(process.env.NEXT_PUBLIC_ADMIN_URL).origin]
         : []),
@@ -44,9 +55,10 @@ export const auth = betterAuth({
 
     try {
       const requestOrigin = new URL(request?.url || "").origin;
-      return requestOrigin && requestOrigin !== "null"
-        ? Array.from(new Set([...staticOrigins, requestOrigin]))
-        : staticOrigins;
+      if (requestOrigin && isTrustedOrigin(requestOrigin)) {
+        return Array.from(new Set([...staticOrigins, requestOrigin]));
+      }
+      return staticOrigins;
     } catch {
       return staticOrigins;
     }
