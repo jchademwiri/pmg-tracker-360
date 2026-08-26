@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { inviteSystemAdmin } from "../../actions";
+import { AdminInviteSchema } from "@/lib/validations";
 import { Shield, Plus, X, Loader, ShieldCheck, Mail, User } from "lucide-react";
 
 export function InviteAdminModal() {
@@ -11,12 +12,14 @@ export function InviteAdminModal() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleOpen = () => {
     setName("");
     setEmail("");
     setError(null);
     setSuccess(null);
+    setFieldErrors({});
     setIsOpen(true);
   };
 
@@ -28,6 +31,18 @@ export function InviteAdminModal() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setFieldErrors({});
+
+    const result = AdminInviteSchema.safeParse({ name, email });
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        errors[err.path[0] as string] = err.message;
+      });
+      setFieldErrors(errors);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -116,11 +131,20 @@ export function InviteAdminModal() {
                     required
                     disabled={loading || !!success}
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) {
+                        const { name: _, ...rest } = fieldErrors;
+                        setFieldErrors(rest);
+                      }
+                    }}
                     placeholder="e.g. Sipho Dube"
-                    className="w-full pl-10 pr-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                    className={`w-full pl-10 pr-4 py-3 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.name ? "border-red-500" : "border-zinc-800"}`}
                   />
                 </div>
+                {fieldErrors.name && (
+                  <p className="text-xs text-red-400">{fieldErrors.name}</p>
+                )}
               </div>
 
               {/* Email */}
@@ -135,11 +159,20 @@ export function InviteAdminModal() {
                     required
                     disabled={loading || !!success}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (fieldErrors.email) {
+                        const { email: _, ...rest } = fieldErrors;
+                        setFieldErrors(rest);
+                      }
+                    }}
                     placeholder="e.g. sipho@tendertrack360.co.za"
-                    className="w-full pl-10 pr-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                    className={`w-full pl-10 pr-4 py-3 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.email ? "border-red-500" : "border-zinc-800"}`}
                   />
                 </div>
+                {fieldErrors.email && (
+                  <p className="text-xs text-red-400">{fieldErrors.email}</p>
+                )}
               </div>
 
               <p className="text-[11px] text-zinc-500 leading-relaxed">

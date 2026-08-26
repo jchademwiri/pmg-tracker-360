@@ -21,6 +21,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { inviteMember } from "@/server/invitations";
 import type { Role } from "@pmg/db/schema";
 import { handleSuccess } from "@/lib/error-handler";
+import { InviteMemberSchema } from "@/lib/validations/organization-invite";
 import { Loader, AlertCircle } from "lucide-react";
 
 interface InviteMemberModalProps {
@@ -67,24 +68,26 @@ export function InviteMemberModal({
     }
   };
 
-  // Client-side validation
+  // Client-side validation using Zod
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    const result = InviteMemberSchema.safeParse({
+      email: form.email,
+      role: form.role || "member",
+    });
 
-    // Email validation
-    if (!form.email) {
-      newErrors.email = "Email is required";
-    } else if (!EMAIL_REGEX.test(form.email)) {
-      newErrors.email = "Please enter a valid email address";
+    if (!result.success) {
+      const newErrors: FormErrors = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        if (field === "email") newErrors.email = err.message;
+        if (field === "role") newErrors.role = err.message;
+      });
+      setErrors(newErrors);
+      return false;
     }
 
-    // Role validation
-    if (!form.role) {
-      newErrors.role = "Role is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   // Handle form submission

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { SupportTicketCreateSchema } from "@/lib/validations/support";
 import {
   Dialog,
   DialogContent,
@@ -102,6 +103,7 @@ export function TicketChatModal({
     "low" | "medium" | "high" | "urgent"
   >("medium");
   const [createMessage, setCreateMessage] = useState("");
+  const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -114,17 +116,13 @@ export function TicketChatModal({
     }
   }, [user, open]);
 
-  // Load ticket list on open
-  useEffect(() => {
-    if (open) {
-      loadTickets();
-      if (initialTicketId) {
-        openThread(initialTicketId);
-      }
-    }
-  }, [open, initialTicketId]);
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, []);
 
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     setLoading(true);
     const res = await getUserSupportTickets();
     setLoading(false);
@@ -134,29 +132,36 @@ export function TicketChatModal({
         setView("create");
       }
     }
-  };
+  }, [activeTicketId]);
 
-  const openThread = async (ticketId: string) => {
-    setActiveTicketId(ticketId);
-    setView("thread");
-    setThreadLoading(true);
-    const res = await getUserTicketThread(ticketId);
-    setThreadLoading(false);
-    if (res.success && res.ticket) {
-      setActiveTicket(res.ticket as unknown as UserTicket);
-      setMessages((res.messages || []) as ChatMessage[]);
-      scrollToBottom();
-    } else {
-      toast.error(res.error || "Failed to load conversation thread.");
-      setView("list");
+  const openThread = useCallback(
+    async (ticketId: string) => {
+      setActiveTicketId(ticketId);
+      setView("thread");
+      setThreadLoading(true);
+      const res = await getUserTicketThread(ticketId);
+      setThreadLoading(false);
+      if (res.success && res.ticket) {
+        setActiveTicket(res.ticket as unknown as UserTicket);
+        setMessages((res.messages || []) as ChatMessage[]);
+        scrollToBottom();
+      } else {
+        toast.error(res.error || "Failed to load conversation thread.");
+        setView("list");
+      }
+    },
+    [scrollToBottom],
+  );
+
+  // Load ticket list on open
+  useEffect(() => {
+    if (open) {
+      loadTickets();
+      if (initialTicketId) {
+        openThread(initialTicketId);
+      }
     }
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
+  }, [open, initialTicketId, loadTickets, openThread]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,12 +188,22 @@ export function TicketChatModal({
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!createSubject.trim()) {
-      toast.error("Please enter a subject for your request.");
-      return;
-    }
-    if (!createMessage.trim()) {
-      toast.error("Please describe your issue or question.");
+    setCreateErrors({});
+
+    const result = SupportTicketCreateSchema.safeParse({
+      name: createName.trim() || user?.name || "User",
+      email: createEmail.trim() || user?.email || "",
+      subject: createSubject.trim(),
+      message: createMessage.trim(),
+      priority: createPriority,
+    });
+
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        errors[err.path[0] as string] = err.message;
+      });
+      setCreateErrors(errors);
       return;
     }
 
@@ -530,8 +545,11 @@ export function TicketChatModal({
                   value={createName}
                   onChange={(e) => setCreateName(e.target.value)}
                   placeholder="Your full name"
-                  className="w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+                  className={`w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground ${createErrors.name ? "border-red-500" : ""}`}
                 />
+                {createErrors.name && (
+                  <p className="text-xs text-red-500">{createErrors.name}</p>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -555,9 +573,11 @@ export function TicketChatModal({
                 value={createEmail}
                 onChange={(e) => setCreateEmail(e.target.value)}
                 placeholder="name@company.co.za"
-                required
-                className="w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+                className={`w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground ${createErrors.email ? "border-red-500" : ""}`}
               />
+              {createErrors.email && (
+                <p className="text-xs text-red-500">{createErrors.email}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -569,9 +589,11 @@ export function TicketChatModal({
                 value={createSubject}
                 onChange={(e) => setCreateSubject(e.target.value)}
                 placeholder="e.g., Error uploading tender compliance document"
-                required
-                className="w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+                className={`w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground ${createErrors.subject ? "border-red-500" : ""}`}
               />
+              {createErrors.subject && (
+                <p className="text-xs text-red-500">{createErrors.subject}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -583,9 +605,11 @@ export function TicketChatModal({
                 value={createMessage}
                 onChange={(e) => setCreateMessage(e.target.value)}
                 placeholder="Describe what you need help with (supports @mentions, `code`, **bold**)..."
-                required
-                className="w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground resize-y"
+                className={`w-full px-3 py-2 bg-muted/40 border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary placeholder:text-muted-foreground resize-y ${createErrors.message ? "border-red-500" : ""}`}
               />
+              {createErrors.message && (
+                <p className="text-xs text-red-500">{createErrors.message}</p>
+              )}
             </div>
 
             <div className="pt-2 flex items-center justify-end gap-2">

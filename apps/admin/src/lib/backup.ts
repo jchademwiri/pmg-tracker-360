@@ -102,6 +102,13 @@ export interface BackupData {
 /*  Table lists                                                        */
 /* ------------------------------------------------------------------ */
 
+/** Strictly validates a table name against an allowlist pattern before SQL interpolation. */
+function assertSafeTableName(name: string): asserts name is string {
+  if (!/^[a-z][a-z0-9_]*$/.test(name)) {
+    throw new Error(`Unsafe table name rejected: ${name}`);
+  }
+}
+
 const ALL_TABLES = [
   "user",
   "session",
@@ -284,6 +291,7 @@ export async function createBackup(): Promise<BackupResult> {
 
     for (const tableName of ALL_TABLES) {
       try {
+        assertSafeTableName(tableName);
         const rows = await sql.unsafe(
           `SELECT * FROM "${tableName.replace(/"/g, '""')}"`,
         );
@@ -446,6 +454,7 @@ export async function restoreFull(key: string): Promise<BackupResult> {
     for (const tableName of reversed) {
       if (!backup.tables[tableName]) continue;
       try {
+        assertSafeTableName(tableName);
         await sql.unsafe(`DELETE FROM "${tableName.replace(/"/g, '""')}"`);
       } catch (err) {
         console.warn(
@@ -499,6 +508,7 @@ export async function restoreOrganization(
     const reversed = [...INSERT_ORDER].reverse();
     for (const tableName of reversed) {
       if (!ORG_SCOPED_TABLES.has(tableName)) continue;
+      assertSafeTableName(tableName);
 
       try {
         if (tableName === "organization") {

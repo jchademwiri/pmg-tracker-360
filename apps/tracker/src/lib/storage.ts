@@ -70,8 +70,12 @@ export class StorageService {
       ]
         .filter(Boolean)
         .join(", ");
-      console.warn(`Storage not configured: Missing [${missing || "credentials"}]`);
-      throw new Error(`Storage configuration missing (${missing || "Check R2 environment variables"})`);
+      console.warn(
+        `Storage not configured: Missing [${missing || "credentials"}]`,
+      );
+      throw new Error(
+        `Storage configuration missing (${missing || "Check R2 environment variables"})`,
+      );
     }
 
     const command = new PutObjectCommand({
@@ -125,9 +129,7 @@ export class StorageService {
       const host = new URL(url).hostname;
       const endpoint =
         s3Api ||
-        (accountId
-          ? `https://${accountId}.r2.cloudflarestorage.com`
-          : null);
+        (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : null);
       if (!endpoint) return false;
       const allowedHost = new URL(endpoint).hostname;
       return host === allowedHost || host.endsWith(`.${allowedHost}`);

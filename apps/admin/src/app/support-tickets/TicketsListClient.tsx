@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { TicketWithUser, TicketMessageItem } from "@/lib/admin-queries";
 import DataTable, { type Column } from "@/components/DataTable";
 import StatusBadge from "@/components/StatusBadge";
@@ -163,41 +163,46 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
     }
   }, [urlTicketId, initialTickets]);
 
+  const showNotification = useCallback(
+    (type: "success" | "error", message: string) => {
+      setNotification({ type, message });
+      setTimeout(() => setNotification(null), 4000);
+    },
+    [],
+  );
+
+  const loadThread = useCallback(
+    async (ticketId: string) => {
+      setThreadLoading(true);
+      const res = await getTicketThreadAction(ticketId);
+      setThreadLoading(false);
+      if (res.success && res.ticket) {
+        setActiveTicket(res.ticket as TicketWithUser);
+        setMessages((res.messages as TicketMessageItem[]) || []);
+        setTickets((prev) =>
+          prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t)),
+        );
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("admin-support-count-updated"));
+        }
+      } else {
+        showNotification("error", res.error || "Failed to load thread.");
+      }
+    },
+    [showNotification],
+  );
+
   // Load thread whenever selectedTicketId changes
   useEffect(() => {
     if (selectedTicketId) {
       loadThread(selectedTicketId);
     }
-  }, [selectedTicketId]);
+  }, [selectedTicketId, loadThread]);
 
   // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  const showNotification = (type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 4000);
-  };
-
-  const loadThread = async (ticketId: string) => {
-    setThreadLoading(true);
-    const res = await getTicketThreadAction(ticketId);
-    setThreadLoading(false);
-    if (res.success && res.ticket) {
-      setActiveTicket(res.ticket as TicketWithUser);
-      setMessages((res.messages as TicketMessageItem[]) || []);
-      // Mark unread as 0 locally
-      setTickets((prev) =>
-        prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t)),
-      );
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("admin-support-count-updated"));
-      }
-    } else {
-      showNotification("error", res.error || "Failed to load thread.");
-    }
-  };
 
   const handleRefresh = async () => {
     setRefreshing(true);

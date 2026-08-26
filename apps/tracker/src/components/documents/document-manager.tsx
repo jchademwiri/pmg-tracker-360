@@ -628,7 +628,8 @@ export function DocumentManager({
                 {uploadCategory === "extension" && (
                   <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-lg">
                     <label className="text-xs text-amber-300 whitespace-nowrap font-semibold">
-                      New Validity Date <span className="text-rose-400">*</span>:
+                      New Validity Date <span className="text-rose-400">*</span>
+                      :
                     </label>
                     <input
                       type="date"

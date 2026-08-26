@@ -104,7 +104,9 @@ export const auth = betterAuth({
     magicLink({
       sendMagicLink: async ({ email, token }) => {
         try {
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          const otp = String(
+            100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000),
+          );
           const magicLinkUrl = getAdminMagicLinkUrl(token);
 
           await db.insert(schema.verification).values({
