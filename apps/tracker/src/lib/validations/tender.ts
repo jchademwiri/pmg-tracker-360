@@ -17,6 +17,27 @@ const optionalEmail = z
   .optional()
   .nullable();
 
+const requiredText = z
+  .string()
+  .trim()
+  .min(1, "This field is required")
+  .transform((value) => value || null)
+  .optional()
+  .nullable();
+
+const requiredEmail = z
+  .union([
+    z
+      .string()
+      .trim()
+      .min(1, "Email is required")
+      .email("Enter a valid email address"),
+    z.literal(""),
+  ])
+  .transform((value) => value || null)
+  .optional()
+  .nullable();
+
 export const TenderCreateSchema = z.object({
   tenderNumber: z
     .string()
@@ -52,8 +73,8 @@ export const TenderCreateSchema = z.object({
   ]),
   validityDays: z.number().int().nonnegative().nullable().optional(),
   validityDate: z.coerce.date().optional().nullable(),
-  contactName: optionalText,
-  contactEmail: optionalEmail,
+  contactName: requiredText,
+  contactEmail: requiredEmail,
   contactPhone: optionalText,
   briefingDate: z.coerce.date().optional().nullable(),
   briefingLocation: z.string().optional().nullable(),
