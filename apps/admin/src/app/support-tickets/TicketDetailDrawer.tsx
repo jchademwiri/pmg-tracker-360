@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { AdminReplySchema } from "@/lib/validations";
 import {
   Sheet,
   SheetContent,
@@ -113,9 +114,21 @@ export function TicketDetailDrawer({
     setTimeout(() => setNotification(null), 4000);
   };
 
+  const [messageError, setMessageError] = useState<string | null>(null);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentTicket) return;
+    setMessageError(null);
+
+    if (!currentTicket) return;
+
+    const result = AdminReplySchema.safeParse({ message: newMessage.trim() });
+    if (!result.success) {
+      setMessageError(
+        result.error.errors[0]?.message || "Message cannot be empty",
+      );
+      return;
+    }
 
     setSending(true);
     const res = await sendAdminTicketMessageAction({
@@ -391,7 +404,10 @@ export function TicketDetailDrawer({
             <textarea
               rows={2}
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                if (messageError) setMessageError(null);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -404,11 +420,16 @@ export function TicketDetailDrawer({
                   : "Type your message to the customer (Enter to send, Shift+Enter for newline)..."
               }
               className={`flex-1 px-3 py-2 bg-zinc-950 border rounded-xl text-xs sm:text-sm text-white focus:outline-none placeholder:text-zinc-600 resize-none ${
-                isInternal
-                  ? "border-amber-900/60 focus:border-amber-500/80"
-                  : "border-zinc-800 focus:border-amber-500/80"
+                messageError
+                  ? "border-red-500"
+                  : isInternal
+                    ? "border-amber-900/60 focus:border-amber-500/80"
+                    : "border-zinc-800 focus:border-amber-500/80"
               }`}
             />
+            {messageError && (
+              <p className="text-xs text-red-400">{messageError}</p>
+            )}
 
             <button
               type="submit"

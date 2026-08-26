@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { createSystemAdmin } from "../actions";
+import { AdminSetupSchema } from "@/lib/validations";
 import {
   ShieldAlert,
   Loader,
@@ -18,10 +19,23 @@ export default function SetupForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
+
+    const result = AdminSetupSchema.safeParse({ name, email, password });
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        errors[err.path[0] as string] = err.message;
+      });
+      setFieldErrors(errors);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -108,11 +122,20 @@ export default function SetupForm() {
                 required
                 disabled={loading}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (fieldErrors.name) {
+                    const { name: _, ...rest } = fieldErrors;
+                    setFieldErrors(rest);
+                  }
+                }}
                 placeholder="Chief Administrator"
-                className="w-full pl-11 pr-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                className={`w-full pl-11 pr-4 py-3.5 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.name ? "border-red-500" : "border-zinc-800"}`}
               />
             </div>
+            {fieldErrors.name && (
+              <p className="text-xs text-red-400">{fieldErrors.name}</p>
+            )}
           </div>
 
           {/* Email input field */}
@@ -127,11 +150,20 @@ export default function SetupForm() {
                 required
                 disabled={loading}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) {
+                    const { email: _, ...rest } = fieldErrors;
+                    setFieldErrors(rest);
+                  }
+                }}
                 placeholder="admin@tendertrack360.co.za"
-                className="w-full pl-11 pr-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                className={`w-full pl-11 pr-4 py-3.5 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.email ? "border-red-500" : "border-zinc-800"}`}
               />
             </div>
+            {fieldErrors.email && (
+              <p className="text-xs text-red-400">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Password input field */}
@@ -146,11 +178,20 @@ export default function SetupForm() {
                 required
                 disabled={loading}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) {
+                    const { password: _, ...rest } = fieldErrors;
+                    setFieldErrors(rest);
+                  }
+                }}
                 placeholder="••••••••••••"
-                className="w-full pl-11 pr-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                className={`w-full pl-11 pr-4 py-3.5 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.password ? "border-red-500" : "border-zinc-800"}`}
               />
             </div>
+            {fieldErrors.password && (
+              <p className="text-xs text-red-400">{fieldErrors.password}</p>
+            )}
           </div>
         </div>
 

@@ -489,21 +489,22 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
         steps={steps}
         currentStep={currentStep}
         onStepClick={async (step) => {
-          if (mode === "edit") {
-            // In edit mode, allow direct non-linear tab switching
+          // Allow going backward without validation
+          if (step < currentStep) {
             setCurrentStep(step);
-          } else {
-            // In create mode, validate previous steps before proceeding
-            if (step < currentStep) {
-              setCurrentStep(step);
-            } else if (step === 2 && currentStep === 1) {
-              const isValid = await form.trigger(["tenderNumber", "clientId"]);
-              if (isValid) setCurrentStep(2);
-            } else if (step === 3 && currentStep === 2) {
-              const isValid = await form.trigger(["tenderNumber", "clientId"]);
-              if (isValid) setCurrentStep(3);
-            }
+            return;
           }
+          // Validate step 1 before advancing to step 2+
+          if (currentStep === 1 && step >= 2) {
+            const isValid = await form.trigger(["tenderNumber", "clientId"]);
+            if (!isValid) return;
+          }
+          // Validate step 2 before advancing to step 3
+          if (currentStep === 2 && step === 3) {
+            const isValid = await form.trigger(["submissionDate", "value"]);
+            if (!isValid) return;
+          }
+          setCurrentStep(step);
         }}
       />
 
@@ -1226,17 +1227,15 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             onCancel={handleCancel}
             onPrevious={() => setCurrentStep((prev) => prev - 1)}
             onNext={async () => {
-              if (mode === "edit") {
+              let fieldsToValidate: Array<keyof TenderCreateInput> = [];
+              if (currentStep === 1) {
+                fieldsToValidate = ["tenderNumber", "clientId"];
+              } else if (currentStep === 2) {
+                fieldsToValidate = ["submissionDate", "value"];
+              }
+              const isValid = await form.trigger(fieldsToValidate);
+              if (isValid) {
                 setCurrentStep((prev) => prev + 1);
-              } else {
-                let fieldsToValidate: Array<keyof TenderCreateInput> = [];
-                if (currentStep === 1) {
-                  fieldsToValidate = ["tenderNumber", "clientId"];
-                }
-                const isValid = await form.trigger(fieldsToValidate);
-                if (isValid) {
-                  setCurrentStep((prev) => prev + 1);
-                }
               }
             }}
             currentStep={currentStep}

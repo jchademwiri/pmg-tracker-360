@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import { setOwnPassword } from "../actions";
+import { AdminSetPasswordSchema } from "@/lib/validations";
 import { ShieldAlert, Loader, Lock, ShieldCheck } from "lucide-react";
-
-const MIN_PASSWORD_LENGTH = 8;
 
 export default function SetPasswordForm({ email }: { email: string }) {
   const [password, setPassword] = useState("");
@@ -12,17 +11,23 @@ export default function SetPasswordForm({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+    const result = AdminSetPasswordSchema.safeParse({
+      password,
+      confirmPassword,
+    });
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        errors[err.path[0] as string] = err.message;
+      });
+      setFieldErrors(errors);
       return;
     }
 
@@ -100,11 +105,20 @@ export default function SetPasswordForm({ email }: { email: string }) {
                 required
                 disabled={loading}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) {
+                    const { password: _, ...rest } = fieldErrors;
+                    setFieldErrors(rest);
+                  }
+                }}
                 placeholder="••••••••••••"
-                className="w-full pl-11 pr-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                className={`w-full pl-11 pr-4 py-3.5 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.password ? "border-red-500" : "border-zinc-800"}`}
               />
             </div>
+            {fieldErrors.password && (
+              <p className="text-xs text-red-400">{fieldErrors.password}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -118,11 +132,22 @@ export default function SetPasswordForm({ email }: { email: string }) {
                 required
                 disabled={loading}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (fieldErrors.confirmPassword) {
+                    const { confirmPassword: _, ...rest } = fieldErrors;
+                    setFieldErrors(rest);
+                  }
+                }}
                 placeholder="••••••••••••"
-                className="w-full pl-11 pr-4 py-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
+                className={`w-full pl-11 pr-4 py-3.5 bg-zinc-950 border rounded-xl text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50 ${fieldErrors.confirmPassword ? "border-red-500" : "border-zinc-800"}`}
               />
             </div>
+            {fieldErrors.confirmPassword && (
+              <p className="text-xs text-red-400">
+                {fieldErrors.confirmPassword}
+              </p>
+            )}
           </div>
         </div>
 

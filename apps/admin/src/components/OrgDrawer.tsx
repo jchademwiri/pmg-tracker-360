@@ -5,6 +5,7 @@ import { AlertCircle, X } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import ConfirmDialog from "./ConfirmDialog";
 import { getOrgDetail, type OrgDetail } from "../app/organizations/actions";
+import { AdminOrgEditSchema } from "@/lib/validations";
 
 /* ─── State Machine ─────────────────────────────────────────────────────── */
 
@@ -94,6 +95,9 @@ function DrawerBody({
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState(org.name);
   const [slugInput, setSlugInput] = useState(org.slug ?? "");
+  const [orgFieldErrors, setOrgFieldErrors] = useState<Record<string, string>>(
+    {},
+  );
   const [suspendReason, setSuspendReason] = useState("");
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -122,8 +126,23 @@ function DrawerBody({
 
   async function handleSaveDetails(e: React.FormEvent) {
     e.preventDefault();
-    setActionLoading(true);
     setErrorMsg(null);
+    setOrgFieldErrors({});
+
+    const result = AdminOrgEditSchema.safeParse({
+      name: nameInput,
+      slug: slugInput,
+    });
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        errors[err.path[0] as string] = err.message;
+      });
+      setOrgFieldErrors(errors);
+      return;
+    }
+
+    setActionLoading(true);
     const res = await updateOrgDetails(org.id, nameInput, slugInput);
     setActionLoading(false);
     if (res.success) {
@@ -344,19 +363,37 @@ function DrawerBody({
               type="text"
               required
               value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none"
+              onChange={(e) => {
+                setNameInput(e.target.value);
+                if (orgFieldErrors.name) {
+                  const { name, ...rest } = orgFieldErrors;
+                  setOrgFieldErrors(rest);
+                }
+              }}
+              className={`w-full px-3 py-2 bg-zinc-950 border rounded-lg text-sm text-white focus:outline-none ${orgFieldErrors.name ? "border-red-500" : "border-zinc-800"}`}
             />
+            {orgFieldErrors.name && (
+              <p className="text-xs text-red-400">{orgFieldErrors.name}</p>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-xs text-zinc-400">Slug</label>
             <input
               type="text"
               value={slugInput}
-              onChange={(e) => setSlugInput(e.target.value)}
+              onChange={(e) => {
+                setSlugInput(e.target.value);
+                if (orgFieldErrors.slug) {
+                  const { slug, ...rest } = orgFieldErrors;
+                  setOrgFieldErrors(rest);
+                }
+              }}
               placeholder="organization-slug"
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-sm text-white focus:outline-none"
+              className={`w-full px-3 py-2 bg-zinc-950 border rounded-lg text-sm text-white focus:outline-none ${orgFieldErrors.slug ? "border-red-500" : "border-zinc-800"}`}
             />
+            {orgFieldErrors.slug && (
+              <p className="text-xs text-red-400">{orgFieldErrors.slug}</p>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button
