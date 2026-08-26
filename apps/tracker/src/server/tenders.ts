@@ -43,6 +43,7 @@ import { randomUUID } from "crypto";
 import { getServerSession } from "@/lib/auth";
 import { nowInSAST } from "@/lib/timezone";
 import { sanitizeTenderNumber } from "@/lib/tender-utils";
+import { recordClientContact } from "@/server/contacts";
 
 /**
  * Automatically creates a project record in the database for an awarded tender.
@@ -403,6 +404,18 @@ export async function createTender(
       })
       .returning();
 
+    // Remember the contact for future autocomplete
+    if (
+      validatedData.contactName?.trim() ||
+      validatedData.contactEmail?.trim()
+    ) {
+      await recordClientContact(organizationId, validatedData.clientId, {
+        name: validatedData.contactName,
+        email: validatedData.contactEmail,
+        phone: validatedData.contactPhone,
+      });
+    }
+
     let projectId: string | undefined;
     if (validatedData.status === "awarded") {
       projectId = await autoCreateProjectForTender(
@@ -695,6 +708,21 @@ export async function updateTender(
       })
       .where(eq(tender.id, tenderId))
       .returning();
+
+    // Remember the contact for future autocomplete
+    const contactClientId =
+      validatedData.clientId || existingTender[0].clientId;
+    if (
+      (validatedData.contactName?.trim() ||
+        validatedData.contactEmail?.trim()) &&
+      contactClientId
+    ) {
+      await recordClientContact(organizationId, contactClientId, {
+        name: validatedData.contactName,
+        email: validatedData.contactEmail,
+        phone: validatedData.contactPhone,
+      });
+    }
 
     let projectId: string | undefined;
     if (validatedData.status === "awarded") {

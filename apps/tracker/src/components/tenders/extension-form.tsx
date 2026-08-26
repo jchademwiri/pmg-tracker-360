@@ -39,6 +39,7 @@ import {
 } from "@/server/modules/extensions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ContactAutocomplete } from "@/components/common/contact-autocomplete";
 
 const extensionFormSchema = z.object({
   extensionDate: z.string().min(1, "Extension date is required"),
@@ -66,6 +67,8 @@ export interface EditableExtension {
 interface ExtensionFormProps {
   organizationId: string;
   tenderId: string;
+  /** The client ID for contact autocomplete suggestions */
+  clientId?: string | null;
   /** If provided, the form opens in edit mode for this extension */
   extension?: EditableExtension;
   /** Whether this extension is the latest (governing the tender's live evaluation date) */
@@ -87,6 +90,7 @@ function toDateInputValue(date?: Date | string | null): string {
 export function ExtensionForm({
   organizationId,
   tenderId,
+  clientId,
   extension,
   isLatestExtension,
   open: controlledOpen,
@@ -315,14 +319,19 @@ export function ExtensionForm({
                         Contact Person Name
                       </FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            placeholder="Official contact name"
-                            className="pl-9 text-xs sm:text-sm"
-                            {...field}
-                          />
-                        </div>
+                        <ContactAutocomplete
+                          organizationId={organizationId}
+                          clientId={clientId || null}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          onSelectContact={(contact) => {
+                            form.setValue("contactName", contact.name);
+                            form.setValue("contactEmail", contact.email);
+                            form.setValue("contactPhone", contact.phone);
+                          }}
+                          placeholder="Official contact name"
+                          disabled={isPending}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
