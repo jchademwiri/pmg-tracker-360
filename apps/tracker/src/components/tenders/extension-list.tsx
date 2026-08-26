@@ -51,12 +51,14 @@ interface ExtensionListProps {
   extensions: ExtendedTenderExtension[];
   organizationId: string;
   tenderId: string;
+  clientId?: string | null;
 }
 
 export function ExtensionList({
   extensions,
   organizationId,
   tenderId,
+  clientId,
 }: ExtensionListProps) {
   const router = useRouter();
   const [deleteDialogId, setDeleteDialogId] = useState<string | null>(null);
@@ -109,7 +111,11 @@ export function ExtensionList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Extension History</h3>
-        <ExtensionForm organizationId={organizationId} tenderId={tenderId} />
+        <ExtensionForm
+          organizationId={organizationId}
+          tenderId={tenderId}
+          clientId={clientId}
+        />
       </div>
 
       {extensions.length === 0 ? (
@@ -261,6 +267,7 @@ export function ExtensionList({
       <ExtensionForm
         organizationId={organizationId}
         tenderId={tenderId}
+        clientId={clientId}
         extension={editExtensionData}
         isLatestExtension={isEditingLatestExtension}
         open={editExtensionId !== null}

@@ -73,6 +73,7 @@ import { FileUploader } from "@/components/ui/file-uploader";
 import { uploadDocument } from "@/server/documents";
 import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { formatDate as sharedFormatDate } from "@/lib/format";
+import { ContactAutocomplete } from "@/components/common/contact-autocomplete";
 
 interface TenderWithClient {
   id: string;
@@ -792,16 +793,19 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                           Contact Person Name
                         </FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
-                            <Input
-                              placeholder="e.g. SCM Specialist / Bid Secretary"
-                              className="pl-9 text-xs sm:text-sm"
-                              {...field}
-                              value={field.value || ""}
-                              disabled={isPending}
-                            />
-                          </div>
+                          <ContactAutocomplete
+                            organizationId={organizationId}
+                            clientId={form.watch("clientId") || null}
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            onSelectContact={(contact) => {
+                              form.setValue("contactName", contact.name);
+                              form.setValue("contactEmail", contact.email);
+                              form.setValue("contactPhone", contact.phone);
+                            }}
+                            placeholder="e.g. SCM Specialist / Bid Secretary"
+                            disabled={isPending}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

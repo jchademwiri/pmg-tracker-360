@@ -485,6 +485,39 @@ export const client = pgTable(
   }),
 );
 
+// Client Contact Directory (organization-scoped memory of contacts per client)
+export const clientContact = pgTable(
+  "client_contact",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => client.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: text("email"),
+    phone: text("phone"),
+    role: text("role"),
+    lastUsedAt: timestamp("last_used_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => ({
+    orgClientIdx: index("idx_client_contact_org_client").on(
+      table.organizationId,
+      table.clientId,
+    ),
+    orgClientNameIdx: index("idx_client_contact_org_client_name").on(
+      table.organizationId,
+      table.clientId,
+      table.name,
+    ),
+  }),
+);
+
 // Tender table with unique tender numbers
 export const tender = pgTable(
   "tender",
@@ -821,6 +854,7 @@ export const organizationRelations = relations(organization, ({ many }) => ({
   projects: many(project),
   tenders: many(tender),
   clients: many(client),
+  clientContacts: many(clientContact),
 }));
 
 export const memberRelations = relations(member, ({ one }) => ({
@@ -852,6 +886,9 @@ export type Notification = typeof notification.$inferSelect;
 export type OwnershipTransfer = typeof ownershipTransfer.$inferSelect;
 export type SecurityAuditLog = typeof securityAuditLog.$inferSelect;
 export type SessionTracking = typeof sessionTracking.$inferSelect;
+
+// Client Contact Directory Type
+export type ClientContact = typeof clientContact.$inferSelect;
 
 // Tender Management Types
 export type Client = typeof client.$inferSelect;
@@ -943,6 +980,7 @@ export const clientRelations = relations(client, ({ one, many }) => ({
   }),
   tenders: many(tender),
   projects: many(project),
+  contacts: many(clientContact),
 }));
 
 export const tenderRelations = relations(tender, ({ one, many }) => ({
@@ -1054,6 +1092,17 @@ export const purchaseOrderDeliveryItemRelations = relations(
     }),
   }),
 );
+
+export const clientContactRelations = relations(clientContact, ({ one }) => ({
+  organization: one(organization, {
+    fields: [clientContact.organizationId],
+    references: [organization.id],
+  }),
+  client: one(client, {
+    fields: [clientContact.clientId],
+    references: [client.id],
+  }),
+}));
 
 export const tenderExtensionRelations = relations(
   tenderExtension,

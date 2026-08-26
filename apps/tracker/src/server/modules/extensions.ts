@@ -1,11 +1,7 @@
 "use server";
 
 import { db } from "@pmg/db";
-import {
-  tenderExtension,
-  document,
-  type TenderExtension,
-} from "@pmg/db/schema";
+import { tenderExtension, tender, document } from "@pmg/db/schema";
 import { eq, desc, and, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/auth";
@@ -17,6 +13,7 @@ import {
   logTenderActivity,
   recomputeEvaluationDateForTender,
 } from "../tenders";
+import { recordClientContact } from "@/server/contacts";
 
 const createExtensionSchema = z.object({
   tenderId: z.string(),
@@ -78,7 +75,22 @@ export async function createTenderExtension(
       return [inserted];
     });
 
-    // 4. Handle File Upload
+    // 4. Remember the contact for future autocomplete
+    const [tenderRecord] = await db
+      .select({ clientId: tender.clientId })
+      .from(tender)
+      .where(eq(tender.id, validatedData.tenderId))
+      .limit(1);
+
+    if (tenderRecord?.clientId) {
+      await recordClientContact(organizationId, tenderRecord.clientId, {
+        name: validatedData.contactName,
+        email: validatedData.contactEmail,
+        phone: validatedData.contactPhone,
+      });
+    }
+
+    // 5. Handle File Upload
     const file = formData.get("file");
     if (file && file instanceof File && file.size > 0) {
       const uploadResult = await uploadDocument(organizationId, formData, {
@@ -245,6 +257,21 @@ export async function updateTenderExtension(
     // Recompute the tender's evaluation date from the latest remaining
     // extension (falls back to validityDate/validityDays if none remain).
     await recomputeEvaluationDateForTender(existing.tenderId);
+
+    // Remember the contact for future autocomplete
+    const [tenderRecord] = await db
+      .select({ clientId: tender.clientId })
+      .from(tender)
+      .where(eq(tender.id, existing.tenderId))
+      .limit(1);
+
+    if (tenderRecord?.clientId) {
+      await recordClientContact(organizationId, tenderRecord.clientId, {
+        name: validatedData.contactName,
+        email: validatedData.contactEmail,
+        phone: validatedData.contactPhone,
+      });
+    }
 
     // Handle file upload (replace old file if new one provided)
     if (formData) {

@@ -705,6 +705,7 @@ export function TenderDetails({
                 extensions={extensions}
                 organizationId={organizationId}
                 tenderId={tender.id}
+                clientId={tender.client?.id}
               />
             </TabsContent>
 
