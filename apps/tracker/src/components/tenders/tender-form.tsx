@@ -790,7 +790,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-semibold">
-                          Contact Person Name
+                          Contact Person Name{" "}
+                          <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <ContactAutocomplete
@@ -818,7 +819,8 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-xs font-semibold">
-                          Enquiry Email Address
+                          Enquiry Email Address{" "}
+                          <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <div className="relative">
@@ -1233,7 +1235,12 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
             onNext={async () => {
               let fieldsToValidate: Array<keyof TenderCreateInput> = [];
               if (currentStep === 1) {
-                fieldsToValidate = ["tenderNumber", "clientId"];
+                fieldsToValidate = [
+                  "tenderNumber",
+                  "clientId",
+                  "contactName",
+                  "contactEmail",
+                ];
               } else if (currentStep === 2) {
                 fieldsToValidate = ["submissionDate", "value"];
               }
