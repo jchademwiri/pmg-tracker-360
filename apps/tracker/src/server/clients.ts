@@ -3,6 +3,7 @@
 import { db } from "@pmg/db";
 import { client, tender, project, purchaseOrder } from "@pmg/db/schema";
 import { validateSessionAndOrg } from "./utils";
+import { getServerSession } from "@/lib/auth";
 import { eq, and, isNull, ilike, or, desc, ne, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -497,6 +498,37 @@ export async function getClientsList(organizationId: string) {
   } catch (error: any) {
     console.error("Error getting clients list:", error);
     return { success: false, clients: [], error: error.message };
+  }
+}
+
+// Get client breadcrumb label (name) for dynamic breadcrumbs
+export async function getClientBreadcrumbLabel(clientId: string) {
+  try {
+    const session = await getServerSession();
+    const organizationId = session?.session.activeOrganizationId;
+
+    if (!session?.user || !organizationId) {
+      return null;
+    }
+
+    await validateSessionAndOrg(organizationId);
+
+    const clientData = await db
+      .select({ name: client.name })
+      .from(client)
+      .where(
+        and(
+          eq(client.id, clientId),
+          eq(client.organizationId, organizationId),
+          isNull(client.deletedAt),
+        ),
+      )
+      .limit(1);
+
+    return clientData[0]?.name || null;
+  } catch (error) {
+    console.error("Error fetching client breadcrumb label:", error);
+    return null;
   }
 }
 
