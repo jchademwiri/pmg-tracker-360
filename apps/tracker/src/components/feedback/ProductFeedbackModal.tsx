@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { submitFeedback } from "@/server/feedback";
+import { FeedbackFormSchema } from "@/lib/validations/feedback";
 import { usePathname } from "next/navigation";
 import { useSessionUser } from "@/lib/client-session-store";
 import { authClient } from "@/lib/auth-client";
@@ -50,6 +51,7 @@ export function ProductFeedbackModal({
   const [feedbackHp, setFeedbackHp] = useState("");
   const [formMountedAt, setFormMountedAt] = useState<number>(() => Date.now());
   const [submitted, setSubmitted] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
 
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
@@ -86,10 +88,21 @@ export function ProductFeedbackModal({
   };
 
   const handleSubmit = () => {
-    if (!feedbackMessage.trim()) {
-      toast.error("Please provide details for your feedback.");
+    const result = FeedbackFormSchema.safeParse({
+      message: feedbackMessage.trim(),
+      type: feedbackType,
+      name: feedbackName.trim() || undefined,
+      email: feedbackEmail.trim() || undefined,
+      honeypot: feedbackHp,
+      formMountedAt,
+    });
+
+    if (!result.success) {
+      const msgError = result.error.errors.find((e) => e.path[0] === "message");
+      setMessageError(msgError?.message || "Please provide valid feedback.");
       return;
     }
+    setMessageError(null);
 
     startTransition(async () => {
       const result = await submitFeedback({
@@ -305,7 +318,10 @@ export function ProductFeedbackModal({
               <Textarea
                 id="fb-message"
                 value={feedbackMessage}
-                onChange={(e) => setFeedbackMessage(e.target.value)}
+                onChange={(e) => {
+                  setFeedbackMessage(e.target.value);
+                  if (messageError) setMessageError(null);
+                }}
                 placeholder={
                   feedbackType === "bug"
                     ? "What happened? Steps to reproduce the issue..."
@@ -315,8 +331,11 @@ export function ProductFeedbackModal({
                 }
                 rows={5}
                 maxLength={1000}
-                className="rounded-2xl bg-muted/20 border-border/70 text-sm p-4 leading-relaxed focus:border-primary resize-none"
+                className={`rounded-2xl bg-muted/20 text-sm p-4 leading-relaxed focus:border-primary resize-none ${messageError ? "border-red-500" : "border-border/70"}`}
               />
+              {messageError && (
+                <p className="text-xs text-red-500 mt-1">{messageError}</p>
+              )}
             </div>
 
             {/* Dialog Footer Actions */}
