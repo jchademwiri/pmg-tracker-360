@@ -16,17 +16,42 @@ import {
   getPurchaseOrderBreadcrumbLabel,
 } from "@/server/purchase-orders";
 import { getProjectBreadcrumbLabel } from "@/server/projects";
+import { getClientBreadcrumbLabel } from "@/server/clients";
 
 const STATIC_SEGMENT_LABELS: Record<string, string> = {
   tenders: "Tenders",
   overview: "Overview",
-  create: "Add Tender",
   edit: "Edit",
   projects: "Projects",
+  clients: "Clients",
   items: "Items",
   new: "New",
   deliveries: "Deliveries",
+  contracts: "Contracts",
+  "purchase-orders": "Purchase Orders",
 };
+
+/**
+ * Context-aware labels for the "create" segment.
+ * Determines the correct label based on the parent segment in the URL.
+ */
+function getCreateLabel(pathSegments: string[], index: number): string {
+  const parentSegment = pathSegments[index - 1];
+  switch (parentSegment) {
+    case "tenders":
+      return "Add Tender";
+    case "projects":
+      return "Create Project";
+    case "purchase-orders":
+      return "Create PO";
+    case "items":
+      return "New Item";
+    case "deliveries":
+      return "New Delivery";
+    default:
+      return "Create";
+  }
+}
 
 const TENDER_STATIC_ROUTES = new Set(["overview", "create"]);
 const PROJECT_STATIC_ROUTES = new Set([
@@ -61,6 +86,7 @@ export function DynamicBreadcrumb() {
   const [projectLineItemLabels, setProjectLineItemLabels] = useState<
     Record<string, string>
   >({});
+  const [clientLabels, setClientLabels] = useState<Record<string, string>>({});
 
   const pathSegments = useMemo(
     () => pathname.split("/").filter(Boolean),
@@ -184,6 +210,33 @@ export function DynamicBreadcrumb() {
     };
   }, [pathSegments, projectLineItemLabels]);
 
+  useEffect(() => {
+    const clientId = pathSegments.find((segment, index) => {
+      return pathSegments[index - 1] === "clients" && segment !== "create";
+    });
+
+    if (!clientId || clientLabels[clientId]) {
+      return;
+    }
+
+    let isMounted = true;
+
+    getClientBreadcrumbLabel(clientId).then((label) => {
+      if (!isMounted || !label) {
+        return;
+      }
+
+      setClientLabels((current) => ({
+        ...current,
+        [clientId]: label,
+      }));
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathSegments, clientLabels]);
+
   return (
     <Breadcrumb>
       <BreadcrumbList>
@@ -205,12 +258,19 @@ export function DynamicBreadcrumb() {
             !PROJECT_STATIC_ROUTES.has(segment);
           const isProjectLineItemId =
             pathSegments[index - 1] === "items" && segment !== "new";
+          const isClientId =
+            pathSegments[index - 1] === "clients" && segment !== "create";
+          const isCreateSegment = segment === "create";
           const displayName =
             (isTenderId ? tenderLabels[segment] : undefined) ||
             (isProjectId ? projectLabels[segment] : undefined) ||
             (isPurchaseOrderId ? purchaseOrderLabels[segment] : undefined) ||
             (isProjectLineItemId
               ? projectLineItemLabels[segment]
+              : undefined) ||
+            (isClientId ? clientLabels[segment] : undefined) ||
+            (isCreateSegment
+              ? getCreateLabel(pathSegments, index)
               : undefined) ||
             STATIC_SEGMENT_LABELS[segment] ||
             formatSegmentName(segment);
