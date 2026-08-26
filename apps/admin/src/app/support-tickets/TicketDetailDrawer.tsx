@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -77,6 +77,28 @@ export function TicketDetailDrawer({
   } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, []);
+
+  const loadThread = useCallback(
+    async (id: string) => {
+      setLoading(true);
+      const res = await getTicketThreadAction(id);
+      setLoading(false);
+      if (res.success && res.messages) {
+        setMessages(res.messages as TicketMessageItem[]);
+        if (res.ticket) {
+          setCurrentTicket(res.ticket as TicketWithUser);
+        }
+        scrollToBottom();
+      }
+    },
+    [scrollToBottom],
+  );
+
   // Load thread messages
   useEffect(() => {
     if (open && ticket?.id) {
@@ -84,26 +106,7 @@ export function TicketDetailDrawer({
       setNotification(null);
       loadThread(ticket.id);
     }
-  }, [open, ticket?.id]);
-
-  const loadThread = async (id: string) => {
-    setLoading(true);
-    const res = await getTicketThreadAction(id);
-    setLoading(false);
-    if (res.success && res.messages) {
-      setMessages(res.messages as TicketMessageItem[]);
-      if (res.ticket) {
-        setCurrentTicket(res.ticket as TicketWithUser);
-      }
-      scrollToBottom();
-    }
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
+  }, [open, ticket, loadThread]);
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });

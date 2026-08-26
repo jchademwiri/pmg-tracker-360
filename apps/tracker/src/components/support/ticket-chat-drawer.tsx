@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -114,17 +114,13 @@ export function TicketChatModal({
     }
   }, [user, open]);
 
-  // Load ticket list on open
-  useEffect(() => {
-    if (open) {
-      loadTickets();
-      if (initialTicketId) {
-        openThread(initialTicketId);
-      }
-    }
-  }, [open, initialTicketId]);
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, []);
 
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     setLoading(true);
     const res = await getUserSupportTickets();
     setLoading(false);
@@ -134,29 +130,36 @@ export function TicketChatModal({
         setView("create");
       }
     }
-  };
+  }, [activeTicketId]);
 
-  const openThread = async (ticketId: string) => {
-    setActiveTicketId(ticketId);
-    setView("thread");
-    setThreadLoading(true);
-    const res = await getUserTicketThread(ticketId);
-    setThreadLoading(false);
-    if (res.success && res.ticket) {
-      setActiveTicket(res.ticket as unknown as UserTicket);
-      setMessages((res.messages || []) as ChatMessage[]);
-      scrollToBottom();
-    } else {
-      toast.error(res.error || "Failed to load conversation thread.");
-      setView("list");
+  const openThread = useCallback(
+    async (ticketId: string) => {
+      setActiveTicketId(ticketId);
+      setView("thread");
+      setThreadLoading(true);
+      const res = await getUserTicketThread(ticketId);
+      setThreadLoading(false);
+      if (res.success && res.ticket) {
+        setActiveTicket(res.ticket as unknown as UserTicket);
+        setMessages((res.messages || []) as ChatMessage[]);
+        scrollToBottom();
+      } else {
+        toast.error(res.error || "Failed to load conversation thread.");
+        setView("list");
+      }
+    },
+    [scrollToBottom],
+  );
+
+  // Load ticket list on open
+  useEffect(() => {
+    if (open) {
+      loadTickets();
+      if (initialTicketId) {
+        openThread(initialTicketId);
+      }
     }
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
+  }, [open, initialTicketId, loadTickets, openThread]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();

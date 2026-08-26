@@ -27,9 +27,7 @@ export function OrganizationCardSkeleton({
                 {/* Role badge skeleton */}
                 <Skeleton className="h-4 w-16 rounded-full" />
                 {/* Active badge skeleton (sometimes) */}
-                {Math.random() > 0.5 && (
-                  <Skeleton className="h-4 w-12 rounded-full" />
-                )}
+                <Skeleton className="h-4 w-12 rounded-full" />
               </div>
             </div>
           </div>
@@ -54,7 +52,7 @@ export function OrganizationCardSkeleton({
           <div className="flex gap-2">
             <Skeleton className="flex-1 h-8 rounded-md" />
             {/* Settings button skeleton (sometimes) */}
-            {Math.random() > 0.5 && <Skeleton className="h-8 w-8 rounded-md" />}
+            <Skeleton className="h-8 w-8 rounded-md" />
           </div>
         </div>
       </CardContent>
