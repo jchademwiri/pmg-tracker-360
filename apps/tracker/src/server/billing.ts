@@ -136,7 +136,12 @@ export async function getUserUsageStats() {
       if (typeof log.details === "string") {
         try {
           detailsObj = JSON.parse(log.details);
-        } catch (e) {}
+        } catch (e) {
+          console.warn(
+            `Failed to parse billing audit log details for log ${log.id}:`,
+            e,
+          );
+        }
       } else if (log.details && typeof log.details === "object") {
         detailsObj = log.details;
       }

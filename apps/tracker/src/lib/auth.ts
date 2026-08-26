@@ -113,7 +113,9 @@ export const auth = betterAuth({
     try {
       const requestOrigin = new URL(request?.url || "").origin;
       if (requestOrigin && isTrustedOrigin(requestOrigin)) {
-        return Array.from(new Set([...staticOrigins.filter(Boolean), requestOrigin])) as string[];
+        return Array.from(
+          new Set([...staticOrigins.filter(Boolean), requestOrigin]),
+        ) as string[];
       }
       return staticOrigins.filter(Boolean) as string[];
     } catch {
@@ -238,7 +240,9 @@ export const auth = betterAuth({
     magicLink({
       sendMagicLink: async ({ email, url, token }) => {
         try {
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          const otp = String(
+            100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000),
+          );
           const magicLinkUrl = getPublicAuthEmailUrl(url);
 
           await db.insert(schema.verification).values({
