@@ -111,11 +111,13 @@ async function checkDrift() {
       console.log(`\n⚠️ Database is BEHIND by ${pending.length} migration(s):`);
       pending.forEach((p) => console.log(`   ⏳ Pending: ${p.tag}.sql (idx: ${p.idx})`));
       console.log(`\n💡 To apply pending migrations, run: bun run db:migrate\n`);
+      process.exit(1);
     } else if (applied.length === journalEntries.length) {
       console.log("\n🎉 Database is 100% IN SYNC with repository migrations!\n");
     } else {
       console.warn(`\n⚠️ Database has MORE applied migrations (${applied.length}) than repository (${journalEntries.length}).`);
       console.warn("   This indicates the database was migrated with untracked/divergent migrations.\n");
+      process.exit(1);
     }
   } catch (error) {
     console.error("❌ Failed to query database for migration status:", error);

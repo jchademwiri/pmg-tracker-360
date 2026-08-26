@@ -91,4 +91,4 @@ jobs:
           DATABASE_URL: ${{ steps.db_env.outputs.DB_URL }}
         run: |
           echo "✅ Verifying database sync state..."
-          bun run db:check
+          bun run db:check || (echo "❌ Drift detected after migration! The database is not in sync." && exit 1)
