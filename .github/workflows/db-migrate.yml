@@ -38,6 +38,9 @@ jobs:
   migrate:
     name: Deploy Database Migrations
     runs-on: ubuntu-latest
+    outputs:
+      migration_status: ${{ steps.verify.outputs.status }}
+      drift_detected: ${{ steps.verify.outputs.drift_detected }}
 
     steps:
       - name: Checkout
@@ -70,15 +73,41 @@ jobs:
             echo "DB_URL=${{ secrets.DATABASE_URL_STAGING || secrets.DATABASE_URL_DEV || secrets.DATABASE_URL }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check Pre-Migration Sync Status
+      - name: Pre-Migration Validation
+        id: pre_check
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
         env:
           DATABASE_URL: ${{ steps.db_env.outputs.DB_URL }}
         run: |
-          echo "🔍 Checking status on target environment: ${{ steps.db_env.outputs.TARGET }}"
-          bun run db:check
+          echo "🔍 Pre-migration validation on: ${{ steps.db_env.outputs.TARGET }}"
+
+          # Count expected migrations from journal
+          EXPECTED=$(cat packages/db/migrations/meta/_journal.json | python3 -c "import sys,json; print(len(json.load(sys.stdin)['entries']))")
+          echo "Expected migrations in repo: $EXPECTED"
+
+          # Count applied migrations from database
+          APPLIED=$(bun run db:check 2>&1 | grep -oP 'Applied migrations in DB: \K[0-9]+' || echo "0")
+          echo "Applied migrations in DB: $APPLIED"
+
+          PENDING=$((EXPECTED - APPLIED))
+          echo "Pending migrations: $PENDING"
+
+          echo "expected=$EXPECTED" >> $GITHUB_OUTPUT
+          echo "applied=$APPLIED" >> $GITHUB_OUTPUT
+          echo "pending=$PENDING" >> $GITHUB_OUTPUT
+
+          if [ "$PENDING" -gt 0 ]; then
+            echo "⏳ $PENDING migration(s) will be applied."
+          elif [ "$PENDING" -eq 0 ]; then
+            echo "✅ Database is already up to date. No migrations to apply."
+          else
+            echo "⚠️ WARNING: Database has MORE migrations than repo ($APPLIED > $EXPECTED)"
+            echo "   This may indicate divergent/untracked migrations."
+          fi
 
       - name: Apply Migrations
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
+        id: migrate
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) && steps.pre_check.outputs.pending != '0' }}
         env:
           DATABASE_URL: ${{ steps.db_env.outputs.DB_URL }}
         run: |
@@ -86,9 +115,73 @@ jobs:
           bun run db:migrate
 
       - name: Verify Post-Migration Sync Status
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) }}
+        id: verify
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == true) && steps.pre_check.outputs.pending != '0' }}
         env:
           DATABASE_URL: ${{ steps.db_env.outputs.DB_URL }}
         run: |
           echo "✅ Verifying database sync state..."
-          bun run db:check || (echo "❌ Drift detected after migration! The database is not in sync." && exit 1)
+          if bun run db:check; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+          else
+            echo "status=drift_detected" >> $GITHUB_OUTPUT
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+
+            # Capture drift details for the alert job
+            DRIFT_OUTPUT=$(bun run db:check 2>&1 || true)
+            echo "drift_details<<EOF" >> $GITHUB_OUTPUT
+            echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            echo ""
+            echo "❌ Drift detected after migration! The database is not in sync."
+            exit 1
+          fi
+
+  alert-on-failure:
+    name: Alert on Migration Failure
+    needs: [migrate]
+    if: always() && needs.migrate.outputs.drift_detected == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const driftDetails = `${{ needs.migrate.outputs.drift_details }}`;
+            const targetEnv = '${{ needs.migrate.outputs.drift_detected }}' === 'true' ? 'unknown' : 'known';
+
+            const title = `🚨 Migration Drift Detected — ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Database Migration Drift Detected
+
+            A database migration was applied but the post-migration drift check detected that the database is not in sync.
+
+            ### Drift Details
+            \`\`\`
+            ${driftDetails}
+            \`\`\`
+
+            ### Workflow Run
+            [View the full workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### How to Fix
+            1. Check pending migrations: \`bun run db:check\`
+            2. Try applying manually: \`bun run db:migrate\`
+            3. If that fails, debug: \`bun run debug:migrate\`
+            4. As a last resort, force-apply: \`cd packages/db && bun run push\`
+
+            ---
+            *Auto-created by [db-migrate](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['database', 'drift', 'bug'],
+            });
+            core.info(`Created issue #${issue.data.number}`);

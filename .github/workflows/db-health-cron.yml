@@ -14,6 +14,9 @@ jobs:
   check-staging:
     name: Check Staging DB Health & Drift
     runs-on: ubuntu-latest
+    outputs:
+      drift_detected: ${{ steps.check.outputs.drift_detected }}
+      drift_details: ${{ steps.check.outputs.drift_details }}
 
     steps:
       - name: Check Staging Secret Configuration
@@ -43,16 +46,33 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Check Staging Database Migration State
+        id: check
         if: steps.check_secret.outputs.configured == 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING || secrets.DATABASE_URL_DEV }}
         run: |
           echo "🔍 Checking Staging Database..."
-          bun run db:check
+          if bun run db:check; then
+            echo "✅ Staging database is in sync."
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+            echo "drift_details=" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Drift detected in staging database!"
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+            # Capture drift details for the alert job
+            DRIFT_OUTPUT=$(bun run db:check 2>&1 || true)
+            echo "drift_details<<EOF" >> $GITHUB_OUTPUT
+            echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          fi
 
   check-production:
     name: Check Production DB Health & Drift
     runs-on: ubuntu-latest
+    outputs:
+      drift_detected: ${{ steps.check.outputs.drift_detected }}
+      drift_details: ${{ steps.check.outputs.drift_details }}
 
     steps:
       - name: Check Production Secret Configuration
@@ -82,9 +102,110 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Check Production Database Migration State
+        id: check
         if: steps.check_secret.outputs.configured == 'true'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION || secrets.DATABASE_URL }}
         run: |
           echo "🔍 Checking Production Database..."
-          bun run db:check
+          if bun run db:check; then
+            echo "✅ Production database is in sync."
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+            echo "drift_details=" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Drift detected in production database!"
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+            DRIFT_OUTPUT=$(bun run db:check 2>&1 || true)
+            echo "drift_details<<EOF" >> $GITHUB_OUTPUT
+            echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  alert-on-drift:
+    name: Create Drift Alert Issue
+    needs: [check-staging, check-production]
+    if: always() && (needs.check-staging.outputs.drift_detected == 'true' || needs.check-production.outputs.drift_detected == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Determine Drift Source
+        id: source
+        run: |
+          SOURCES=""
+          if [ "${{ needs.check-staging.outputs.drift_detected }}" = "true" ]; then
+            SOURCES="${SOURCES}- **Staging** database\n"
+          fi
+          if [ "${{ needs.check-production.outputs.drift_detected }}" = "true" ]; then
+            SOURCES="${SOURCES}- **Production** database\n"
+          fi
+          echo "sources<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$SOURCES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const stagingDrift = '${{ needs.check-staging.outputs.drift_detected }}' === 'true';
+            const prodDrift = '${{ needs.check-production.outputs.drift_detected }}' === 'true';
+
+            let driftBody = '';
+            if (stagingDrift) {
+              driftBody += `### Staging Database\n\`\`\`\n${{ needs.check-staging.outputs.drift_details }}\n\`\`\`\n\n`;
+            }
+            if (prodDrift) {
+              driftBody += `### Production Database\n\`\`\`\n${{ needs.check-production.outputs.drift_details }}\n\`\`\`\n\n`;
+            }
+
+            const title = `🚨 Database Drift Detected — ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Database Drift Detected by Daily Health Check
+
+            The following database(s) have migration drift:
+            ${{ steps.source.outputs.sources }}
+
+            ### Drift Details
+            ${driftBody}
+
+            ### How to Fix
+            1. Check which migrations are pending: \`bun run db:check\`
+            2. Apply pending migrations: \`bun run db:migrate\`
+            3. If migrations fail, investigate with: \`bun run debug:migrate\`
+
+            ---
+            *Auto-created by [db-health-cron](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})*`;
+
+            // Check for existing open drift issues to avoid duplicates
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'database,drift',
+              per_page: 5,
+            });
+
+            const existingDriftIssue = existingIssues.data.find(i =>
+              i.title.includes('Database Drift Detected')
+            );
+
+            if (existingDriftIssue) {
+              // Comment on existing issue instead of creating a new one
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingDriftIssue.number,
+                body: `## 🔄 Drift Re-detected — ${new Date().toISOString()}\n\n${driftBody}`,
+              });
+              core.info(`Updated existing issue #${existingDriftIssue.number}`);
+            } else {
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['database', 'drift', 'bug'],
+              });
+              core.info(`Created issue #${issue.data.number}`);
+            }
