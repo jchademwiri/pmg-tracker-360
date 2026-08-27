@@ -81,12 +81,20 @@ jobs:
         run: |
           echo "🔍 Pre-migration validation on: ${{ steps.db_env.outputs.TARGET }}"
 
-          # Count expected migrations from journal
+          # Count expected migrations from journal (always available, no DB query needed)
           EXPECTED=$(cat packages/db/migrations/meta/_journal.json | python3 -c "import sys,json; print(len(json.load(sys.stdin)['entries']))")
           echo "Expected migrations in repo: $EXPECTED"
 
-          # Count applied migrations from database
-          APPLIED=$(bun run db:check 2>&1 | grep -oP 'Applied migrations in DB: \K[0-9]+' || echo "0")
+          # Run drift check to determine current state
+          CHECK_OUTPUT=$(bun run db:check 2>&1 || true)
+          echo "$CHECK_OUTPUT"
+
+          # Parse applied count from output
+          APPLIED=$(echo "$CHECK_OUTPUT" | grep -oP 'Applied migrations in DB: \K[0-9]+')
+          if [ -z "$APPLIED" ]; then
+            # If pattern not found (e.g., table doesn't exist), assume 0 applied
+            APPLIED=0
+          fi
           echo "Applied migrations in DB: $APPLIED"
 
           PENDING=$((EXPECTED - APPLIED))
@@ -121,19 +129,20 @@ jobs:
           DATABASE_URL: ${{ steps.db_env.outputs.DB_URL }}
         run: |
           echo "✅ Verifying database sync state..."
-          if bun run db:check; then
+          set +e
+          DRIFT_OUTPUT=$(bun run db:check 2>&1)
+          DRIFT_EXIT=$?
+          set -e
+          echo "$DRIFT_OUTPUT"
+          echo "drift_details<<EOF" >> $GITHUB_OUTPUT
+          echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $DRIFT_EXIT -eq 0 ]; then
             echo "status=success" >> $GITHUB_OUTPUT
             echo "drift_detected=false" >> $GITHUB_OUTPUT
           else
             echo "status=drift_detected" >> $GITHUB_OUTPUT
             echo "drift_detected=true" >> $GITHUB_OUTPUT
-
-            # Capture drift details for the alert job
-            DRIFT_OUTPUT=$(bun run db:check 2>&1 || true)
-            echo "drift_details<<EOF" >> $GITHUB_OUTPUT
-            echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-
             echo ""
             echo "❌ Drift detected after migration! The database is not in sync."
             exit 1

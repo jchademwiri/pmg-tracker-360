@@ -52,18 +52,20 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_STAGING || secrets.DATABASE_URL_DEV }}
         run: |
           echo "🔍 Checking Staging Database..."
-          if bun run db:check; then
+          set +e
+          DRIFT_OUTPUT=$(bun run db:check 2>&1)
+          DRIFT_EXIT=$?
+          set -e
+          echo "$DRIFT_OUTPUT"
+          echo "drift_details<<EOF" >> $GITHUB_OUTPUT
+          echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $DRIFT_EXIT -eq 0 ]; then
             echo "✅ Staging database is in sync."
             echo "drift_detected=false" >> $GITHUB_OUTPUT
-            echo "drift_details=" >> $GITHUB_OUTPUT
           else
             echo "❌ Drift detected in staging database!"
             echo "drift_detected=true" >> $GITHUB_OUTPUT
-            # Capture drift details for the alert job
-            DRIFT_OUTPUT=$(bun run db:check 2>&1 || true)
-            echo "drift_details<<EOF" >> $GITHUB_OUTPUT
-            echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -108,17 +110,20 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION || secrets.DATABASE_URL }}
         run: |
           echo "🔍 Checking Production Database..."
-          if bun run db:check; then
+          set +e
+          DRIFT_OUTPUT=$(bun run db:check 2>&1)
+          DRIFT_EXIT=$?
+          set -e
+          echo "$DRIFT_OUTPUT"
+          echo "drift_details<<EOF" >> $GITHUB_OUTPUT
+          echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ $DRIFT_EXIT -eq 0 ]; then
             echo "✅ Production database is in sync."
             echo "drift_detected=false" >> $GITHUB_OUTPUT
-            echo "drift_details=" >> $GITHUB_OUTPUT
           else
             echo "❌ Drift detected in production database!"
             echo "drift_detected=true" >> $GITHUB_OUTPUT
-            DRIFT_OUTPUT=$(bun run db:check 2>&1 || true)
-            echo "drift_details<<EOF" >> $GITHUB_OUTPUT
-            echo "$DRIFT_OUTPUT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
 
