@@ -48,6 +48,13 @@ export async function updateMemberRole(
   newRole: Role,
 ): Promise<ServerActionResult<void>> {
   try {
+    if (!["admin", "manager", "member"].includes(newRole)) {
+      return createServerActionError(
+        "FORBIDDEN",
+        "Ownership changes must use the ownership transfer workflow",
+      );
+    }
+
     const { currentUser } = await getCurrentUser();
 
     if (!currentUser?.id) {
@@ -86,19 +93,11 @@ export async function updateMemberRole(
       return createServerActionError("NOT_FOUND", "Member not found");
     }
 
-    // Prevent changing owner role unless current user is owner
-    if (targetMember.role === "owner" && userMembership.role !== "owner") {
+    // Ownership may only be changed through the dedicated, transactional flow.
+    if (targetMember.role === "owner") {
       return createServerActionError(
         "FORBIDDEN",
-        "Only owners can change owner roles",
-      );
-    }
-
-    // Prevent non-owners from assigning owner role
-    if (newRole === "owner" && userMembership.role !== "owner") {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Only owners can assign owner role",
+        "Ownership changes must use the ownership transfer workflow",
       );
     }
 

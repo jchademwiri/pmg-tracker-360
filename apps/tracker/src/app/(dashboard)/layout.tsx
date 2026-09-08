@@ -17,6 +17,7 @@ import {
 } from "@/server/organizations";
 import { getCurrentUser } from "@/server/users";
 import { SessionUserSync } from "@/components/shared/session-user-sync";
+import { redirect } from "next/navigation";
 
 // Force dynamic rendering for dashboard layout since it uses server functions with headers
 export const dynamic = "force-dynamic";
@@ -27,6 +28,18 @@ export default async function MainDashboardLayout({
   children: React.ReactNode;
 }) {
   const sessionCheck = await checkUserSession();
+
+  if (!sessionCheck.hasSession) {
+    redirect("/login");
+  }
+
+  if (!sessionCheck.hasOrganization) {
+    redirect(
+      sessionCheck.organizationCount && sessionCheck.organizationCount > 0
+        ? "/organization/select"
+        : "/onboarding",
+    );
+  }
   let notifications: any[] = [];
   let unreadCount = 0;
 

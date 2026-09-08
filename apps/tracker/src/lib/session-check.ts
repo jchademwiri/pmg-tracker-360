@@ -18,7 +18,11 @@ export async function checkUserSession() {
       .from(member)
       .innerJoin(organization, eq(member.organizationId, organization.id))
       .where(
-        and(eq(member.userId, session.user.id), isNull(organization.deletedAt)),
+        and(
+          eq(member.userId, session.user.id),
+          isNull(member.deletedAt),
+          isNull(organization.deletedAt),
+        ),
       );
 
     const hasOrganization = !!session.session.activeOrganizationId;

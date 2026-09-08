@@ -42,6 +42,11 @@ jest.mock("../utils", () => ({
     session: { user: { id: "user-1" } },
     role: "admin",
   })),
+  requireOrgRole: jest.fn(async () => ({
+    userId: "user-1",
+    session: { user: { id: "user-1" } },
+    role: "admin",
+  })),
 }));
 
 jest.mock("next/headers", () => ({

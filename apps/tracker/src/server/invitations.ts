@@ -64,7 +64,7 @@ export async function inviteMember(
     }
 
     // Validate role
-    if (!role || !["owner", "admin", "member"].includes(role)) {
+    if (!role || !["admin", "manager", "member"].includes(role)) {
       return {
         success: false,
         error: {
@@ -90,13 +90,26 @@ export async function inviteMember(
       };
     }
 
-    // Only owners and admins can invite members
-    if (!["owner", "admin"].includes(userMembership.role)) {
+    // Managers can invite operational roles, but cannot elevate users.
+    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
       return {
         success: false,
         error: {
           code: "INSUFFICIENT_PERMISSIONS",
           message: "You do not have permission to invite members",
+        },
+      };
+    }
+
+    if (
+      userMembership.role === "manager" &&
+      !["manager", "member"].includes(role)
+    ) {
+      return {
+        success: false,
+        error: {
+          code: "INSUFFICIENT_PERMISSIONS",
+          message: "Managers can only invite managers or members",
         },
       };
     }
@@ -272,8 +285,13 @@ export async function cancelInvitation(
       };
     }
 
-    // Only owners and admins can cancel invitations
-    if (!["owner", "admin"].includes(userMembership.role)) {
+    const canCancel =
+      ["owner", "admin"].includes(userMembership.role) ||
+      (userMembership.role === "manager" &&
+        (invitationRecord.inviterId === currentUser.id ||
+          invitationRecord.role !== "admin"));
+
+    if (!canCancel) {
       return {
         success: false,
         error: {
