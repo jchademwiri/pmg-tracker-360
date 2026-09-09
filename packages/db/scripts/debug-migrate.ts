@@ -41,6 +41,9 @@ async function debugMigrate() {
           return;
         }
       }
+
+      await sql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES (${entry.tag}, ${Date.now()});`;
+      console.log(`  ✓ Recorded migration ${entry.tag} in drizzle.__drizzle_migrations`);
     }
   } finally {
     await sql.end();

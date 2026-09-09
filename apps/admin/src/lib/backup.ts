@@ -6,6 +6,10 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
 } from "@aws-sdk/client-s3";
 import { createGzip, createGunzip } from "node:zlib";
 import postgres from "postgres";
@@ -70,6 +74,17 @@ function getS3Client(): S3Client | null {
       secretAccessKey: R2_SECRET_ACCESS_KEY,
     },
   });
+}
+
+/**
+ * Resolved backup storage, or null when the R2 env vars are incomplete.
+ * Exported for the startup/health checks so credential problems surface at
+ * deploy time instead of as a 401 on the first backup or listing.
+ */
+export function getBackupStorage(): { s3: S3Client; bucket: string } | null {
+  const s3 = getS3Client();
+  if (!s3 || !R2_BUCKET_NAME) return null;
+  return { s3, bucket: R2_BUCKET_NAME };
 }
 
 /* ------------------------------------------------------------------ */
@@ -213,17 +228,6 @@ function getTimestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 }
 
-function compressBuffer(data: Buffer): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const gzip = createGzip();
-    const chunks: Buffer[] = [];
-    gzip.on("data", (chunk: Buffer) => chunks.push(chunk));
-    gzip.on("end", () => resolve(Buffer.concat(chunks)));
-    gzip.on("error", reject);
-    gzip.end(data);
-  });
-}
-
 function decompressBuffer(data: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const gunzip = createGunzip();
@@ -232,6 +236,148 @@ function decompressBuffer(data: Buffer): Promise<Buffer> {
     gunzip.on("end", () => resolve(Buffer.concat(chunks)));
     gunzip.on("error", reject);
     gunzip.end(data);
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Streaming upload to R2                                             */
+/* ------------------------------------------------------------------ */
+
+// Comfortably above S3's 5 MB minimum for non-final multipart parts, small
+// enough that pending compressed bytes never approach the function's memory.
+const PART_SIZE = 8 * 1024 * 1024;
+// Rows fetched per DB round-trip while streaming a table.
+const ROW_BATCH_SIZE = 500;
+
+/**
+ * Buffers compressed output and uploads it to R2/S3 as multipart parts so a
+ * backup of any size can be produced without holding it in memory.
+ */
+class MultipartGzipUploader {
+  private parts: Array<{ PartNumber: number; ETag: string }> = [];
+  private pending: Buffer[] = [];
+  private pendingBytes = 0;
+  private uploadedBytes = 0;
+  private uploadId: string | null = null;
+  private completed = false;
+
+  constructor(
+    private readonly s3: S3Client,
+    private readonly bucket: string,
+    private readonly key: string,
+    private readonly metadata?: Record<string, string>,
+  ) {}
+
+  async start(): Promise<void> {
+    const res = await this.s3.send(
+      new CreateMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: this.key,
+        ContentType: "application/gzip",
+        Metadata: this.metadata,
+      }),
+    );
+    this.uploadId = res.UploadId ?? null;
+    if (!this.uploadId) {
+      throw new Error("Storage did not return an upload ID for multipart upload");
+    }
+  }
+
+  /** Called from the gzip 'data' listener — only buffers, never awaits. */
+  write(chunk: Buffer): void {
+    this.pending.push(chunk);
+    this.pendingBytes += chunk.length;
+  }
+
+  /**
+   * Flushes buffered bytes to storage once they exceed PART_SIZE. Awaited
+   * between row batches so memory stays bounded and upload errors propagate
+   * into the backup's failure handling.
+   */
+  async drain(): Promise<void> {
+    if (this.pendingBytes < PART_SIZE) return;
+    await this.flush();
+  }
+
+  private async flush(): Promise<void> {
+    if (this.pendingBytes === 0 || !this.uploadId) return;
+    const body = Buffer.concat(this.pending);
+    this.pending = [];
+    this.pendingBytes = 0;
+
+    const partNumber = this.parts.length + 1;
+    const res = await this.s3.send(
+      new UploadPartCommand({
+        Bucket: this.bucket,
+        Key: this.key,
+        UploadId: this.uploadId,
+        PartNumber: partNumber,
+        Body: body,
+      }),
+    );
+    this.uploadedBytes += body.length;
+    this.parts.push({ PartNumber: partNumber, ETag: res.ETag ?? "" });
+  }
+
+  /**
+   * Flushes the remaining bytes (the final part, exempt from the 5 MB
+   * minimum) and completes the upload. Returns the total uploaded size.
+   */
+  async complete(): Promise<number> {
+    if (this.completed) throw new Error("Uploader already completed");
+    this.completed = true;
+
+    await this.flush();
+
+    if (this.parts.length === 0) {
+      // Nothing was written (e.g. an empty input) — fall back to an empty object.
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: this.key,
+          ContentType: "application/gzip",
+          Metadata: this.metadata,
+        }),
+      );
+      return 0;
+    }
+
+    await this.s3.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: this.key,
+        UploadId: this.uploadId!,
+        MultipartUpload: {
+          Parts: [...this.parts].sort((a, b) => a.PartNumber - b.PartNumber),
+        },
+      }),
+    );
+    return this.uploadedBytes;
+  }
+
+  /** Best-effort cleanup so failed uploads don't leave orphaned parts in R2. */
+  async abort(): Promise<void> {
+    if (!this.uploadId || this.completed) return;
+    try {
+      await this.s3.send(
+        new AbortMultipartUploadCommand({
+          Bucket: this.bucket,
+          Key: this.key,
+          UploadId: this.uploadId,
+        }),
+      );
+    } catch (err) {
+      console.error(
+        "Failed to abort multipart upload:",
+        (err as Error).message,
+      );
+    }
+  }
+}
+
+function endGzip(gzip: ReturnType<typeof createGzip>): Promise<void> {
+  return new Promise((resolve, reject) => {
+    gzip.end((err: Error | null) => (err ? reject(err) : resolve()));
   });
 }
 
@@ -283,83 +429,146 @@ async function insertRows(
 /*  Core Backup Functions                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Creates a full backup and uploads it to R2 as gzip-compressed JSON.
+ *
+ * The previous implementation loaded every row of every table into memory,
+ * then built the entire JSON document as a single string before compressing
+ * and uploading — which pushed the daily cron invocation past its duration
+ * and memory limits as the database grew. It now:
+ *   1. starts a multipart upload up front,
+ *   2. streams each table in row batches via postgres.js cursors,
+ *   3. feeds row JSON through a gzip stream into 8 MB parts.
+ *
+ * The output format is byte-for-byte compatible with the old backups
+ * ({ version, createdAt, tables }), so restore still works unchanged.
+ */
 export async function createBackup(): Promise<BackupResult> {
+  const s3 = getS3Client();
+  if (!s3 || !R2_BUCKET_NAME) {
+    return { success: false, message: "R2 storage not configured." };
+  }
+
+  const createdAt = new Date().toISOString();
+  const filename = `backup-${getTimestamp()}.json.gz`;
+  const key = `${BACKUP_PREFIX}${filename}`;
+  const uploader = new MultipartGzipUploader(s3, R2_BUCKET_NAME, key, {
+    "created-at": createdAt,
+  });
+
   try {
     const sql = await getDb();
-    const tables: Record<string, Record<string, unknown>[]> = {};
+    await uploader.start();
+
+    const gzip = createGzip();
+    let gzipError: Error | null = null;
+    gzip.on("error", (err) => {
+      gzipError = err;
+    });
+    gzip.on("data", (chunk: Buffer) => uploader.write(chunk));
+
+    // Document header — restore parses this shape identically to old backups.
+    gzip.write(
+      `{"version":1,"createdAt":"${createdAt}","tables":{`,
+      "utf-8",
+    );
+
+    const emittedTables: string[] = [];
     let totalRows = 0;
+    let needsComma = false;
 
     for (const tableName of ALL_TABLES) {
+      assertSafeTableName(tableName);
+
+      let wroteTable = false;
+      let wroteRow = false;
       try {
-        assertSafeTableName(tableName);
-        const rows = await sql.unsafe(
-          `SELECT * FROM "${tableName.replace(/"/g, '""')}"`,
-        );
-        tables[tableName] = rows as Record<string, unknown>[];
-        totalRows += rows.length;
+        await sql
+          .unsafe(`SELECT * FROM "${tableName.replace(/"/g, '""')}"`)
+          .cursor(ROW_BATCH_SIZE, async (rows: Record<string, unknown>[]) => {
+            if (!wroteTable) {
+              gzip.write(
+                `${needsComma ? "," : ""}"${tableName}":`,
+                "utf-8",
+              );
+              needsComma = true;
+              wroteTable = true;
+              emittedTables.push(tableName);
+            }
+            const batchJson = rows
+              .map((row) => JSON.stringify(row))
+              .join(",");
+            gzip.write(`${wroteRow ? "," : ""}${batchJson}`, "utf-8");
+            wroteRow = true;
+            totalRows += rows.length;
+            // Hand compressed bytes to storage between batches to bound memory.
+            await uploader.drain();
+          });
+
+        if (!wroteTable) {
+          // Empty table: still emit an empty array so the schema of the
+          // backup matches the old format.
+          gzip.write(`${needsComma ? "," : ""}"${tableName}":[]`, "utf-8");
+          needsComma = true;
+          emittedTables.push(tableName);
+        } else {
+          gzip.write("]", "utf-8");
+        }
       } catch (err) {
+        if (wroteTable) {
+          // Partial table data already streamed — a silent partial backup is
+          // worse than a failed one, so abort loudly.
+          throw err;
+        }
         console.warn(`Skipping table ${tableName}:`, (err as Error).message);
       }
     }
 
-    const backupData: BackupData = {
-      version: 1,
-      createdAt: new Date().toISOString(),
-      tables,
-    };
+    gzip.write("}}", "utf-8");
+    await endGzip(gzip);
+    if (gzipError) throw gzipError;
 
-    const jsonStr = JSON.stringify(backupData);
-    const filename = `backup-${getTimestamp()}.json.gz`;
-    const key = `${BACKUP_PREFIX}${filename}`;
-
-    const s3 = getS3Client();
-    if (!s3 || !R2_BUCKET_NAME) {
-      return { success: false, message: "R2 storage not configured." };
-    }
-
-    const compressed = await compressBuffer(Buffer.from(jsonStr, "utf-8"));
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
-        Key: key,
-        Body: compressed,
-        ContentType: "application/gzip",
-        Metadata: {
-          "created-at": new Date().toISOString(),
-          "row-count": String(totalRows),
-          "table-count": String(Object.keys(tables).length),
-        },
-      }),
-    );
-
+    const sizeBytes = await uploader.complete();
     await deleteOldBackups(s3);
 
     const meta: BackupMeta = {
       key,
       filename,
-      sizeBytes: compressed.length,
-      createdAt: backupData.createdAt,
-      tables: Object.keys(tables),
+      sizeBytes,
+      createdAt,
+      tables: emittedTables,
       rowCount: totalRows,
     };
 
     return {
       success: true,
-      message: `Backup created: ${filename} (${formatBytes(compressed.length)}, ${totalRows} rows across ${Object.keys(tables).length} tables)`,
+      message: `Backup created: ${filename} (${formatBytes(sizeBytes)}, ${totalRows} rows across ${emittedTables.length} tables)`,
       key,
       meta,
     };
   } catch (err) {
+    await uploader.abort();
     const msg = (err as Error).message || "Unknown error";
     console.error("Backup failed:", err);
     return { success: false, message: `Backup failed: ${msg}` };
   }
 }
 
+/**
+ * Lists backups in R2, newest first.
+ *
+ * Storage failures are rethrown, not swallowed: an unreadable bucket must
+ * surface as "Failed to load backups" in the console, never as a fake empty
+ * list (which previously masked credential/bucket misconfiguration as
+ * "No backups yet").
+ */
 export async function listBackups(): Promise<BackupMeta[]> {
   const s3 = getS3Client();
-  if (!s3 || !R2_BUCKET_NAME) return [];
+  if (!s3 || !R2_BUCKET_NAME) {
+    throw new Error(
+      "R2 storage is not configured (R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET_NAME).",
+    );
+  }
 
   try {
     const response = await s3.send(
@@ -403,7 +612,9 @@ export async function listBackups(): Promise<BackupMeta[]> {
     return backups;
   } catch (err) {
     console.error("Failed to list backups:", err);
-    return [];
+    throw err instanceof Error
+      ? err
+      : new Error("Failed to list backups in storage.");
   }
 }
 

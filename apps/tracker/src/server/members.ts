@@ -1,11 +1,12 @@
 "use server";
 
 import { db } from "@pmg/db";
-import { member } from "@pmg/db/schema";
+import { member, user, type Role } from "@pmg/db/schema";
+import { activeMemberWhere } from "@pmg/db/membership";
 import { auth } from "@/lib/auth";
-import { Role } from "@pmg/db/schema";
-import { eq } from "drizzle-orm/sql/expressions/conditions";
-import { checkIfAdmin } from "@/server";
+import { and, eq, isNull } from "drizzle-orm";
+import { requireOrgRole } from "./utils";
+import { removeMemberFromOrganization } from "./organization-members";
 
 export const addMember = async (
   organizationId: string,
@@ -13,48 +14,45 @@ export const addMember = async (
   role: Role,
 ) => {
   try {
-    await auth.api.addMember({
-      body: {
-        userId,
-        organizationId,
-        role,
-      },
+    await requireOrgRole(organizationId, ["owner", "admin"]);
+    if (!["admin", "manager", "member"].includes(role)) {
+      throw new Error(
+        "Ownership changes must use the ownership transfer workflow",
+      );
+    }
+    const targetUser = await db.query.user.findFirst({
+      where: and(eq(user.id, userId), isNull(user.deletedAt)),
     });
-    return {
-      success: true,
-      message: "Member added successfully",
-    };
+    if (!targetUser) throw new Error("User not found");
+    await auth.api.addMember({ body: { userId, organizationId, role } });
+    return { success: true, message: "Member added successfully" };
   } catch (error) {
-    const e = error as Error;
     return {
       success: false,
-      message: e.message || "An unknown error occurred",
+      message: error instanceof Error ? error.message : "Unable to add member",
     };
   }
 };
 
 export const removeMember = async (memberId: string) => {
-  const isAdmin = await checkIfAdmin();
-  if (!isAdmin) {
-    return {
-      success: false,
-      message: "You do not have permission to remove members",
-    };
-  }
-
   try {
-    await db.delete(member).where(eq(member.id, memberId));
+    const target = await db.query.member.findFirst({
+      where: activeMemberWhere(eq(member.id, memberId)),
+    });
+    if (!target) throw new Error("Member not found");
+    const result = await removeMemberFromOrganization(
+      target.organizationId,
+      memberId,
+    );
+    const error = result.error?.message ?? null;
     return {
-      success: true,
-      message: "Member removed successfully",
-      error: null,
+      success: result.success,
+      message: error ?? "Member removed successfully",
+      error,
     };
   } catch (error) {
-    const e = error as Error;
-    return {
-      success: false,
-      message: e.message || "An unknown error occurred",
-      error: e.message || "An unknown error occurred",
-    };
+    const message =
+      error instanceof Error ? error.message : "Unable to remove member";
+    return { success: false, message, error: message };
   }
 };

@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { db, getPlanLimits } from "@pmg/db";
 import {
@@ -51,10 +52,12 @@ export async function getUserUsageStats() {
       .from(member)
       .innerJoin(organization, eq(member.organizationId, organization.id))
       .where(
-        and(
-          eq(member.userId, currentUser.id),
-          eq(member.role, "owner"),
-          isNull(organization.deletedAt),
+        activeMemberWhere(
+          and(
+            eq(member.userId, currentUser.id),
+            eq(member.role, "owner"),
+            isNull(organization.deletedAt),
+          ),
         ),
       );
 
@@ -291,7 +294,11 @@ export async function updateUserPlan(plan: "free" | "starter" | "pro") {
     const ownerMemberships = await db
       .select({ organizationId: member.organizationId })
       .from(member)
-      .where(and(eq(member.userId, currentUser.id), eq(member.role, "owner")));
+      .where(
+        activeMemberWhere(
+          and(eq(member.userId, currentUser.id), eq(member.role, "owner")),
+        ),
+      );
 
     const primaryOrgId = ownerMemberships[0]?.organizationId;
     const planPrice = plan === "pro" ? 499 : plan === "starter" ? 249 : 0;

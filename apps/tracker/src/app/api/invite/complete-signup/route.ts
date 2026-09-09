@@ -1,8 +1,9 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@pmg/db";
 import { user, member, invitation } from "@pmg/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,20 +99,29 @@ export async function POST(request: NextRequest) {
         // Guard against duplicate member rows for this organization only.
         // A user can belong to multiple organizations, so userId alone is not enough.
         const existingMember = await tx.query.member.findFirst({
-          where: and(
-            eq(member.userId, userId),
-            eq(member.organizationId, invite.organizationId),
+          where: activeMemberWhere(
+            and(
+              eq(member.userId, userId),
+              eq(member.organizationId, invite.organizationId),
+            ),
           ),
         });
 
         if (!existingMember) {
-          await tx.insert(member).values({
-            id: crypto.randomUUID(),
-            organizationId: invite.organizationId,
-            userId,
-            role: invite.role ?? "member",
-            createdAt: new Date(),
-          });
+          await tx
+            .insert(member)
+            .values({
+              id: crypto.randomUUID(),
+              organizationId: invite.organizationId,
+              userId,
+              role: invite.role ?? "member",
+              createdAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: [member.organizationId, member.userId],
+              set: { role: invite.role ?? "member", deletedAt: null },
+              setWhere: isNotNull(member.deletedAt),
+            });
         }
 
         await tx

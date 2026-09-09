@@ -55,11 +55,16 @@ export default function BackupsClient() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [backupList, orgList] = await Promise.all([
+      const [backupResult, orgList] = await Promise.all([
         listBackupsAction(),
         getOrganizationsAction(),
       ]);
-      setBackups(backupList);
+      if (backupResult.ok) {
+        setBackups(backupResult.backups);
+      } else {
+        setBackups([]);
+        setMessage({ type: "error", text: backupResult.error });
+      }
       setOrgs(orgList as OrgOption[]);
     } catch (err) {
       setMessage({ type: "error", text: "Failed to load backups." });

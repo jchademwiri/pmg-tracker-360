@@ -18,6 +18,7 @@ const customJestConfig = {
     customExportConditions: [''],
   },
   moduleNameMapper: {
+    '^@/emails/(.*)$': '<rootDir>/emails/$1',
     '^bun:test$': '<rootDir>/src/test/bun-test-shim.ts',
     '^@t3-oss/env-nextjs$': '<rootDir>/src/test/mocks/env-nextjs.ts',
     '^better-auth/plugins/access$':

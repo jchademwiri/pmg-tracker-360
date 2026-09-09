@@ -1,7 +1,11 @@
 "use server";
 
 import { db, getPlanLimits } from "@pmg/db";
-import { validateSessionAndOrg, getOrganizationOwnerPlan } from "./utils";
+import {
+  getOrganizationOwnerPlan,
+  requireOrgRole,
+  validateSessionAndOrg,
+} from "./utils";
 import {
   tender,
   client,
@@ -280,7 +284,12 @@ export async function createTender(
   data: TenderCreateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+      "member",
+    ]);
     // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderCreateSchema.parse(data);
     if (validatedData.tenderNumber) {
@@ -532,7 +541,12 @@ export async function updateTender(
   data: TenderUpdateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+      "member",
+    ]);
     // Validate input (Zod transform already sanitizes, but safety net here too)
     const validatedData = TenderUpdateSchema.parse(data);
     if (validatedData.tenderNumber) {
@@ -938,7 +952,12 @@ export async function updateTenderStatus(
 // Soft delete tender
 export async function deleteTender(organizationId: string, tenderId: string) {
   try {
-    await validateSessionAndOrg(organizationId);
+    const { role } = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+      "member",
+    ]);
     // Check if tender exists and belongs to organization
     const existingTender = await db
       .select()
@@ -954,6 +973,16 @@ export async function deleteTender(organizationId: string, tenderId: string) {
 
     if (existingTender.length === 0) {
       return { success: false, error: "Tender not found" };
+    }
+
+    if (
+      (role === "manager" || role === "member") &&
+      existingTender[0].status !== "open"
+    ) {
+      return {
+        success: false,
+        error: "Only open tenders can be deleted by your role",
+      };
     }
 
     // Check if tender has active projects before deletion

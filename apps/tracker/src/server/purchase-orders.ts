@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@pmg/db";
-import { validateSessionAndOrg } from "./utils";
+import { requireOrgRole, validateSessionAndOrg } from "./utils";
 import {
   purchaseOrder,
   project,
@@ -279,13 +279,14 @@ export async function createProjectLineItem(
   },
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["create"],
         },
@@ -395,13 +396,14 @@ export async function updateProjectLineItem(
   },
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["update"],
         },
@@ -503,13 +505,14 @@ export async function archiveProjectLineItem(
   lineItemId: string,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["delete"],
         },
@@ -668,6 +671,7 @@ export async function getPurchaseOrders(
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["read"],
         },
@@ -790,13 +794,14 @@ export async function createPurchaseOrder(
   data: PurchaseOrderCreateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["create"],
         },
@@ -935,6 +940,7 @@ export async function getPurchaseOrderById(
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["read"],
         },
@@ -1013,13 +1019,14 @@ export async function updatePurchaseOrder(
   data: PurchaseOrderUpdateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["update"],
         },
@@ -1212,7 +1219,7 @@ export async function updatePurchaseOrderStatus(
   data: PurchaseOrderStatusUpdateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     // Validate input
     const validatedData = PurchaseOrderStatusUpdateSchema.parse(data);
 
@@ -1306,13 +1313,14 @@ export async function deletePurchaseOrder(
   poId: string,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["delete"],
         },
@@ -1382,13 +1390,14 @@ export async function recordPODelivery(
   },
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     const { auth } = await import("@/lib/auth");
     const { headers } = await import("next/headers");
 
     const { success: hasPermission } = await auth.api.hasPermission({
       headers: await headers(),
       body: {
+        organizationId,
         permissions: {
           purchase_order: ["update"],
         },
@@ -1632,7 +1641,11 @@ export async function verifyDeliveryNote(
   deliveryNoteId: string,
 ) {
   try {
-    const { userId } = await validateSessionAndOrg(organizationId);
+    const { userId } = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
 
     // Fetch delivery note with purchase order to verify org ownership
     const note = await db.query.purchaseOrderDeliveryNote.findFirst({
@@ -1759,7 +1772,11 @@ export async function voidDeliveryNote(
   deliveryNoteId: string,
 ) {
   try {
-    const { userId } = await validateSessionAndOrg(organizationId);
+    const { userId } = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
 
     // Fetch delivery note with purchase order to verify org ownership
     const note = await db.query.purchaseOrderDeliveryNote.findFirst({

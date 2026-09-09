@@ -1,7 +1,7 @@
 import { getServerSession } from "@/lib/auth";
 import { db } from "@pmg/db";
-import { member, user } from "@pmg/db/schema";
-import { and, eq } from "drizzle-orm";
+import { member, user, type Role } from "@pmg/db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 
 export async function validateSessionAndOrg(organizationId: string) {
   // 1. Fetch current session from Better Auth
@@ -11,27 +11,53 @@ export async function validateSessionAndOrg(organizationId: string) {
     throw new Error("Authentication required");
   }
 
-  // 2. Validate user is a member of the target organization
+  // 2. Validate user is an active, non-deleted member of the target organization
   const membership = await db
-    .select()
+    .select({
+      id: member.id,
+      role: member.role,
+      userDeletedAt: user.deletedAt,
+    })
     .from(member)
+    .innerJoin(user, eq(member.userId, user.id))
     .where(
       and(
         eq(member.organizationId, organizationId),
         eq(member.userId, session.user.id),
+        isNull(member.deletedAt),
+        isNull(user.deletedAt),
       ),
     )
     .limit(1);
 
   if (membership.length === 0) {
-    throw new Error("Access denied: User is not a member of this organization");
+    throw new Error("Access denied: User is not an active member of this organization");
   }
 
   return {
     userId: session.user.id,
     session,
-    role: membership[0].role, // owner, admin, manager, member
+    role: membership[0].role as Role, // owner, admin, manager, member
   };
+}
+
+/**
+ * Validates session and organization membership, then asserts that
+ * the user has one of the required roles. Throws if unauthorized.
+ */
+export async function requireOrgRole(
+  organizationId: string,
+  allowedRoles: Role[],
+) {
+  const context = await validateSessionAndOrg(organizationId);
+
+  if (!allowedRoles.includes(context.role)) {
+    throw new Error(
+      `Insufficient permissions: action requires one of [${allowedRoles.join(", ")}], but your role is '${context.role}'.`,
+    );
+  }
+
+  return context;
 }
 
 /**
@@ -46,7 +72,12 @@ export async function getOrganizationOwnerPlan(
     .from(member)
     .innerJoin(user, eq(member.userId, user.id))
     .where(
-      and(eq(member.organizationId, organizationId), eq(member.role, "owner")),
+      and(
+        eq(member.organizationId, organizationId),
+        eq(member.role, "owner"),
+        isNull(member.deletedAt),
+        isNull(user.deletedAt),
+      ),
     )
     .limit(1);
 

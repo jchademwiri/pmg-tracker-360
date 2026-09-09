@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateOrganizationForm } from "@/components/shared/forms/create-organization-form";
 import { SessionUserSync } from "@/components/shared/session-user-sync";
@@ -28,7 +29,7 @@ export default async function OnboardingPage() {
   const userMemberships = await db
     .select()
     .from(member)
-    .where(eq(member.userId, currentUser.id));
+    .where(activeMemberWhere(eq(member.userId, currentUser.id)));
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
