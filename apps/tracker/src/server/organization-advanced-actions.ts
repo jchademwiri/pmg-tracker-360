@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from "./users";
 import { getUserOrganizationMembership } from "./organizations";
+import { requireOrgRole } from "./utils";
 import {
   organizationDeletionManager,
   type DeletionConfirmation,
@@ -69,10 +70,7 @@ export async function initiateOrganizationDeletion(
     }
 
     // Check if user has permission to delete organization
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
+    const userMembership = await requireOrgRole(organizationId, ["owner"]);
     if (!userMembership) {
       return createServerActionError(
         "FORBIDDEN",
@@ -212,10 +210,7 @@ export async function forcePermanentDeletion(
     }
 
     // Check if user has permission to force permanent deletion
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
+    const userMembership = await requireOrgRole(organizationId, ["owner"]);
     if (!userMembership) {
       return createServerActionError(
         "FORBIDDEN",
@@ -288,10 +283,9 @@ export async function initiateOwnershipTransfer(
     }
 
     // Check if user has permission to initiate transfer
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      request.organizationId,
-    );
+    const userMembership = await requireOrgRole(request.organizationId, [
+      "owner",
+    ]);
     if (!userMembership) {
       return createServerActionError(
         "FORBIDDEN",
@@ -476,10 +470,10 @@ export async function bulkUpdateMemberRoles(
     }
 
     // Check if user has permission to update member roles
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
+    const userMembership = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+    ]);
     if (!userMembership) {
       return createServerActionError(
         "FORBIDDEN",
@@ -520,10 +514,11 @@ export async function bulkRemoveMembers(
     }
 
     // Check if user has permission to remove members
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
+    const userMembership = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
     if (!userMembership) {
       return createServerActionError(
         "FORBIDDEN",
@@ -564,10 +559,11 @@ export async function bulkInviteMembers(
     }
 
     // Check if user has permission to invite members
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
+    const userMembership = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
     if (!userMembership) {
       return createServerActionError(
         "FORBIDDEN",

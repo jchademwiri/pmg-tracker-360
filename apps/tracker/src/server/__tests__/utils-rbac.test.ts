@@ -1,9 +1,13 @@
 import { describe, expect, it } from "bun:test";
 
 let mockCurrentRole = "member";
+let mockHasMembership = true;
+let mockHasSession = true;
 
 jest.mock("@/lib/auth", () => ({
-  getServerSession: jest.fn(async () => ({ user: { id: "user-1" } })),
+  getServerSession: jest.fn(async () =>
+    mockHasSession ? { user: { id: "user-1" } } : null,
+  ),
 }));
 
 jest.mock("@pmg/db", () => ({
@@ -12,7 +16,10 @@ jest.mock("@pmg/db", () => ({
       from: () => ({
         innerJoin: () => ({
           where: () => ({
-            limit: async () => [{ id: "member-1", role: mockCurrentRole }],
+            limit: async () =>
+              mockHasMembership
+                ? [{ id: "member-1", role: mockCurrentRole }]
+                : [],
           }),
         }),
       }),
@@ -38,4 +45,19 @@ describe("requireOrgRole", () => {
       requireOrgRole("organization-1", ["owner", "admin"]),
     ).rejects.toThrow("Insufficient permissions");
   });
+});
+
+it("rejects revoked membership even when the session still exists", async () => {
+  mockHasMembership = false;
+  await expect(
+    requireOrgRole("organization-1", ["owner", "admin"]),
+  ).rejects.toThrow("not an active member");
+  mockHasMembership = true;
+});
+it("rejects unauthenticated requests", async () => {
+  mockHasSession = false;
+  await expect(requireOrgRole("organization-1", ["owner"])).rejects.toThrow(
+    "Authentication required",
+  );
+  mockHasSession = true;
 });

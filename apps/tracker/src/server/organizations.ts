@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { db } from "@pmg/db";
 import {
@@ -70,7 +71,7 @@ export async function getorganizations(): Promise<OrganizationWithStats[]> {
 
     // Get user's memberships with role information (including soft-deleted organizations for the list)
     const userMemberships = await db.query.member.findMany({
-      where: eq(member.userId, currentUser.id),
+      where: activeMemberWhere(eq(member.userId, currentUser.id)),
       with: {
         organization: true,
       },
@@ -87,7 +88,11 @@ export async function getorganizations(): Promise<OrganizationWithStats[]> {
         const memberCountResult = await db
           .select({ count: count() })
           .from(member)
-          .where(eq(member.organizationId, membership.organizationId));
+          .where(
+            activeMemberWhere(
+              eq(member.organizationId, membership.organizationId),
+            ),
+          );
 
         const memberCount = memberCountResult[0]?.count || 0;
 
@@ -120,7 +125,7 @@ export async function getActiveOrganizations(): Promise<
 
     // Get user's memberships with role information, excluding soft-deleted organizations
     const userMemberships = await db.query.member.findMany({
-      where: eq(member.userId, currentUser.id),
+      where: activeMemberWhere(eq(member.userId, currentUser.id)),
       with: {
         organization: true,
       },
@@ -142,7 +147,11 @@ export async function getActiveOrganizations(): Promise<
         const memberCountResult = await db
           .select({ count: count() })
           .from(member)
-          .where(eq(member.organizationId, membership.organizationId));
+          .where(
+            activeMemberWhere(
+              eq(member.organizationId, membership.organizationId),
+            ),
+          );
 
         const memberCount = memberCountResult[0]?.count || 0;
 
@@ -174,7 +183,7 @@ export async function getActiveOrganizations(): Promise<
 export async function getOrganizationsForProvider() {
   const { currentUser } = await getCurrentUser();
   const members = await db.query.member.findMany({
-    where: eq(member.userId, currentUser?.id),
+    where: activeMemberWhere(eq(member.userId, currentUser?.id)),
   });
   const organizations = await db.query.organization.findMany({
     where: and(
@@ -203,9 +212,11 @@ export async function getActiveOrganization(userId: string) {
 
   if (currentUser?.lastActiveOrganizationId) {
     const savedMembership = await db.query.member.findFirst({
-      where: and(
-        eq(member.userId, userId),
-        eq(member.organizationId, currentUser.lastActiveOrganizationId),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, userId),
+          eq(member.organizationId, currentUser.lastActiveOrganizationId),
+        ),
       ),
       with: {
         organization: true,
@@ -218,7 +229,7 @@ export async function getActiveOrganization(userId: string) {
   }
 
   const memberships = await db.query.member.findMany({
-    where: eq(member.userId, userId),
+    where: activeMemberWhere(eq(member.userId, userId)),
     with: {
       organization: true,
     },
@@ -258,9 +269,11 @@ export async function rememberActiveOrganization(organizationId: string) {
     const { currentUser } = await getCurrentUser();
 
     const membership = await db.query.member.findFirst({
-      where: and(
-        eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationId),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, currentUser.id),
+          eq(member.organizationId, organizationId),
+        ),
       ),
       with: {
         organization: true,
@@ -298,9 +311,8 @@ export async function getUserOrganizationMembership(
   organizationId: string,
 ) {
   const membership = await db.query.member.findFirst({
-    where: and(
-      eq(member.userId, userId),
-      eq(member.organizationId, organizationId),
+    where: activeMemberWhere(
+      and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
     ),
     with: {
       organization: true,
@@ -316,12 +328,22 @@ export async function getOrganizationBySlug(slug: string) {
       where: eq(organization.slug, slug),
       with: {
         members: {
+          where: activeMemberWhere(),
           with: {
             user: true,
           },
         },
       },
     });
+    if (!organizationBySlug) return null;
+    const { currentUser } = await getCurrentUser();
+    if (
+      !(await getUserOrganizationMembership(
+        currentUser.id,
+        organizationBySlug.id,
+      ))
+    )
+      return null;
     return organizationBySlug;
   } catch (error) {
     console.error("Error fetching organization by slug:", error);
@@ -342,6 +364,7 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
       where: eq(organization.slug, slug),
       with: {
         members: {
+          where: activeMemberWhere(),
           with: {
             user: true,
           },
@@ -355,17 +378,23 @@ export async function getOrganizationBySlugWithUserRole(slug: string) {
 
     // Get user's role in this organization
     const userMembership = await db.query.member.findFirst({
-      where: and(
-        eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationBySlug.id),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, currentUser.id),
+          eq(member.organizationId, organizationBySlug.id),
+        ),
       ),
     });
+
+    if (!userMembership) return null;
 
     // Get member count
     const memberCountResult = await db
       .select({ count: count() })
       .from(member)
-      .where(eq(member.organizationId, organizationBySlug.id));
+      .where(
+        activeMemberWhere(eq(member.organizationId, organizationBySlug.id)),
+      );
 
     const memberCount = memberCountResult[0]?.count || 0;
 
@@ -426,9 +455,11 @@ export async function getOrganizationStats(
 
     // Verify user has access to this organization
     const userMembership = await db.query.member.findFirst({
-      where: and(
-        eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationId),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, currentUser.id),
+          eq(member.organizationId, organizationId),
+        ),
       ),
     });
 
@@ -440,7 +471,7 @@ export async function getOrganizationStats(
     const memberCountResult = await db
       .select({ count: count() })
       .from(member)
-      .where(eq(member.organizationId, organizationId));
+      .where(activeMemberWhere(eq(member.organizationId, organizationId)));
 
     const memberCount = memberCountResult[0]?.count || 0;
 
@@ -478,9 +509,11 @@ export async function getOrganizationsStats(
 
     // Verify user has access to these organizations
     const userMemberships = await db.query.member.findMany({
-      where: and(
-        eq(member.userId, currentUser.id),
-        inArray(member.organizationId, organizationIds),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, currentUser.id),
+          inArray(member.organizationId, organizationIds),
+        ),
       ),
     });
 
@@ -549,7 +582,7 @@ export async function getOrganizationMembers(
 
     // Fetch all members of the organization
     const members = await db.query.member.findMany({
-      where: eq(member.organizationId, organizationId),
+      where: activeMemberWhere(eq(member.organizationId, organizationId)),
       with: {
         user: {
           columns: {

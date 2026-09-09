@@ -1,9 +1,11 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { betterAuth } from "better-auth";
 import { env } from "@/env";
 import { organization, magicLink } from "better-auth/plugins";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { withActiveAuthRows } from "@/lib/auth/database";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@pmg/db";
 import { schema } from "@pmg/db/schema";
@@ -181,7 +183,8 @@ export const auth = betterAuth({
     },
   },
   callbacks: {},
-  database: drizzleAdapter(db, {
+  experimental: { joins: false },
+  database: drizzleAdapter(withActiveAuthRows(db), {
     provider: "pg", // or "mysql", "sqlite"
     schema,
   }),
@@ -326,9 +329,11 @@ export const auth = betterAuth({
           .select({ count: count() })
           .from(schema.member)
           .where(
-            and(
-              eq(schema.member.userId, user.id),
-              eq(schema.member.role, "owner"),
+            activeMemberWhere(
+              and(
+                eq(schema.member.userId, user.id),
+                eq(schema.member.role, "owner"),
+              ),
             ),
           );
 

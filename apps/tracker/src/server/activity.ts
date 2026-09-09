@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { db } from "@pmg/db";
 import { member, organization } from "@pmg/db/schema";
@@ -26,7 +27,7 @@ export async function getRecentActivities(
 
     // Get user's organization memberships
     const userMemberships = await db.query.member.findMany({
-      where: eq(member.userId, currentUser.id),
+      where: activeMemberWhere(eq(member.userId, currentUser.id)),
       with: {
         organization: true,
       },
@@ -48,7 +49,7 @@ export async function getRecentActivities(
 
     // Get recent member joins across all user's organizations
     const recentMembers = await db.query.member.findMany({
-      where: inArray(member.organizationId, organizationIds),
+      where: activeMemberWhere(inArray(member.organizationId, organizationIds)),
       with: {
         user: true,
         organization: true,
@@ -148,9 +149,11 @@ export async function getActivitySummaries(
 
     // Verify user has access to these organizations
     const userMemberships = await db.query.member.findMany({
-      where: and(
-        eq(member.userId, currentUser.id),
-        inArray(member.organizationId, organizationIds),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, currentUser.id),
+          inArray(member.organizationId, organizationIds),
+        ),
       ),
     });
 
@@ -163,15 +166,17 @@ export async function getActivitySummaries(
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const recentMembersCount = await db.query.member.findMany({
-        where: and(
-          eq(member.organizationId, orgId),
-          gte(member.createdAt, thirtyDaysAgo),
+        where: activeMemberWhere(
+          and(
+            eq(member.organizationId, orgId),
+            gte(member.createdAt, thirtyDaysAgo),
+          ),
         ),
       });
 
       // Get most recent activity (latest member join or org creation)
       const latestMember = await db.query.member.findFirst({
-        where: eq(member.organizationId, orgId),
+        where: activeMemberWhere(eq(member.organizationId, orgId)),
         orderBy: [desc(member.createdAt)],
       });
 
@@ -217,9 +222,11 @@ export async function getOrganizationActivities(
 
     // Verify user has access to this organization
     const userMembership = await db.query.member.findFirst({
-      where: and(
-        eq(member.userId, currentUser.id),
-        eq(member.organizationId, organizationId),
+      where: activeMemberWhere(
+        and(
+          eq(member.userId, currentUser.id),
+          eq(member.organizationId, organizationId),
+        ),
       ),
     });
 
@@ -231,7 +238,7 @@ export async function getOrganizationActivities(
 
     // Get recent member joins for this organization
     const recentMembers = await db.query.member.findMany({
-      where: eq(member.organizationId, organizationId),
+      where: activeMemberWhere(eq(member.organizationId, organizationId)),
       with: {
         user: true,
         organization: true,

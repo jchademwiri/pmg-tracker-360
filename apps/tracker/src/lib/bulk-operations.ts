@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { db } from "@pmg/db";
 import { member, invitation } from "@pmg/db/schema";
 import type { Role } from "@pmg/db/schema";
@@ -79,9 +80,11 @@ class BulkOperationsManager {
       // Get all members to validate
       const memberIds = updates.map((u) => u.memberId);
       const members = await db.query.member.findMany({
-        where: and(
-          eq(member.organizationId, organizationId),
-          inArray(member.id, memberIds),
+        where: activeMemberWhere(
+          and(
+            eq(member.organizationId, organizationId),
+            inArray(member.id, memberIds),
+          ),
         ),
         with: {
           user: true,
@@ -137,7 +140,13 @@ class BulkOperationsManager {
           await db
             .update(member)
             .set({ role: update.newRole })
-            .where(eq(member.id, update.memberId));
+            .where(
+              activeMemberWhere(
+                eq(member.id, update.memberId),
+                eq(member.organizationId, organizationId),
+                eq(member.role, targetMember.role),
+              ),
+            );
 
           // Log the individual role change
           await auditLogger.logMemberRoleUpdated(
@@ -254,9 +263,11 @@ class BulkOperationsManager {
 
       // Get all members to validate
       const members = await db.query.member.findMany({
-        where: and(
-          eq(member.organizationId, organizationId),
-          inArray(member.id, memberIds),
+        where: activeMemberWhere(
+          and(
+            eq(member.organizationId, organizationId),
+            inArray(member.id, memberIds),
+          ),
         ),
         with: {
           user: true,
@@ -305,7 +316,16 @@ class BulkOperationsManager {
           });
 
           // Remove the member
-          await db.delete(member).where(eq(member.id, memberId));
+          await db
+            .update(member)
+            .set({ deletedAt: new Date() })
+            .where(
+              activeMemberWhere(
+                eq(member.id, memberId),
+                eq(member.organizationId, organizationId),
+                eq(member.role, targetMember.role),
+              ),
+            );
 
           // Log the individual member removal
           await auditLogger.logMemberRemoved(
@@ -425,7 +445,7 @@ class BulkOperationsManager {
       });
 
       const existingMembers = await db.query.member.findMany({
-        where: eq(member.organizationId, organizationId),
+        where: activeMemberWhere(eq(member.organizationId, organizationId)),
         with: {
           user: true,
         },
@@ -576,14 +596,11 @@ class BulkOperationsManager {
       return "Cannot change your own role";
     }
 
-    // Cannot change owner role unless performer is owner
-    if (currentRole === "owner" && performingUserRole !== "owner") {
-      return "Only owners can change owner roles";
-    }
-
-    // Cannot assign owner role unless performer is owner
-    if (newRole === "owner" && performingUserRole !== "owner") {
-      return "Only owners can assign owner role";
+    if (
+      currentRole === "owner" ||
+      !["admin", "manager", "member"].includes(newRole)
+    ) {
+      return "Ownership changes must use the ownership transfer workflow";
     }
 
     // Admins cannot change other admin or manager roles

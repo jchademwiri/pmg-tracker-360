@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { db } from "@pmg/db";
 import { member, user } from "@pmg/db/schema";
 import { eq } from "drizzle-orm";
@@ -26,7 +27,7 @@ export async function getReminderRecipients(
     })
     .from(member)
     .innerJoin(user, eq(member.userId, user.id))
-    .where(eq(member.organizationId, organizationId));
+    .where(activeMemberWhere(eq(member.organizationId, organizationId)));
 
   return rows;
 }

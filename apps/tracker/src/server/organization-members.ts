@@ -1,11 +1,12 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { db } from "@pmg/db";
 import { member, organization } from "@pmg/db/schema";
 import type { Role } from "@pmg/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { getCurrentUser } from "./users";
-import { getUserOrganizationMembership } from "./organizations";
+import { requireOrgRole } from "./utils";
 import { StorageService } from "@/lib/storage";
 import { revalidatePath } from "next/cache";
 
@@ -61,31 +62,12 @@ export async function updateMemberRole(
       return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
-    // Check if user has permission to update member roles
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
-    if (!userMembership) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Access denied to this organization",
-      );
-    }
-
-    // Only owners and admins can change roles
-    if (!["owner", "admin"].includes(userMembership.role)) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Insufficient permissions to change member roles",
-      );
-    }
+    await requireOrgRole(organizationId, ["owner", "admin"]);
 
     // Get the target member to check their current role
     const targetMember = await db.query.member.findFirst({
-      where: and(
-        eq(member.id, memberId),
-        eq(member.organizationId, organizationId),
+      where: activeMemberWhere(
+        and(eq(member.id, memberId), eq(member.organizationId, organizationId)),
       ),
     });
 
@@ -113,7 +95,13 @@ export async function updateMemberRole(
     await db
       .update(member)
       .set({ role: newRole })
-      .where(eq(member.id, memberId));
+      .where(
+        activeMemberWhere(
+          eq(member.id, memberId),
+          eq(member.organizationId, organizationId),
+          eq(member.role, targetMember.role),
+        ),
+      );
 
     // Revalidate the organization page
     revalidatePath("/organization", "layout");
@@ -140,31 +128,16 @@ export async function removeMemberFromOrganization(
       return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
-    // Check if user has permission to remove members
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
-    if (!userMembership) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Access denied to this organization",
-      );
-    }
-
-    // Only owners, admins, and managers can remove members
-    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Insufficient permissions to remove members",
-      );
-    }
+    const userMembership = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
 
     // Get the target member to check their role
     const targetMember = await db.query.member.findFirst({
-      where: and(
-        eq(member.id, memberId),
-        eq(member.organizationId, organizationId),
+      where: activeMemberWhere(
+        and(eq(member.id, memberId), eq(member.organizationId, organizationId)),
       ),
     });
 
@@ -200,7 +173,16 @@ export async function removeMemberFromOrganization(
     }
 
     // Remove the member
-    await db.delete(member).where(eq(member.id, memberId));
+    await db
+      .update(member)
+      .set({ deletedAt: new Date() })
+      .where(
+        activeMemberWhere(
+          eq(member.id, memberId),
+          eq(member.organizationId, organizationId),
+          eq(member.role, targetMember.role),
+        ),
+      );
 
     // Revalidate the organization page
     revalidatePath("/organization", "layout");
@@ -224,31 +206,19 @@ export async function bulkRemoveMembersFromOrganization(
       return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
-    // Check if user has permission to remove members
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
-    if (!userMembership) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Access denied to this organization",
-      );
-    }
-
-    // Only owners, admins, and managers can remove members
-    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Insufficient permissions to remove members",
-      );
-    }
+    const userMembership = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
 
     // Get all target members to validate permissions
     const targetMembers = await db.query.member.findMany({
-      where: and(
-        eq(member.organizationId, organizationId),
-        // Note: We'd need to use inArray here, but let's validate each member individually
+      where: activeMemberWhere(
+        and(
+          eq(member.organizationId, organizationId),
+          inArray(member.id, memberIds),
+        ),
       ),
     });
 
@@ -290,9 +260,21 @@ export async function bulkRemoveMembersFromOrganization(
     }
 
     // Remove valid members
-    for (const memberId of validMemberIds) {
-      await db.delete(member).where(eq(member.id, memberId));
-    }
+    await db
+      .update(member)
+      .set({ deletedAt: new Date() })
+      .where(
+        activeMemberWhere(
+          eq(member.organizationId, organizationId),
+          inArray(member.id, validMemberIds),
+          inArray(
+            member.role,
+            userMembership.role === "manager"
+              ? ["member"]
+              : ["admin", "manager", "member"],
+          ),
+        ),
+      );
     // Revalidate the organization page
     revalidatePath("/organization", "layout");
 
@@ -325,25 +307,7 @@ export async function updateOrganizationDetails(
       return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
-    // Check if user has permission to update organization details
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
-    if (!userMembership) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Access denied to this organization",
-      );
-    }
-
-    // Only owners, admins, and managers can update organization details
-    if (!["owner", "admin", "manager"].includes(userMembership.role)) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Insufficient permissions to update organization details",
-      );
-    }
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
 
     // Prepare update data - only include fields that are provided
     const updateData: Partial<{
@@ -439,25 +403,7 @@ export async function updateOrganizationSettings(
       return createServerActionError("UNAUTHORIZED", "User not authenticated");
     }
 
-    // Check if user has permission to update organization settings
-    const userMembership = await getUserOrganizationMembership(
-      currentUser.id,
-      organizationId,
-    );
-    if (!userMembership) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Access denied to this organization",
-      );
-    }
-
-    // Only owners and admins can update organization settings
-    if (!["owner", "admin"].includes(userMembership.role)) {
-      return createServerActionError(
-        "FORBIDDEN",
-        "Insufficient permissions to update organization settings",
-      );
-    }
+    await requireOrgRole(organizationId, ["owner", "admin"]);
 
     // Get current organization to preserve existing metadata
     const currentOrg = await db.query.organization.findFirst({

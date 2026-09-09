@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { db } from "@pmg/db";
 import {
   organization,
@@ -176,6 +177,7 @@ class OrganizationDeletionManager {
         where: eq(organization.id, organizationId),
         with: {
           members: {
+            where: activeMemberWhere(),
             with: { user: true },
           },
           tenders: {

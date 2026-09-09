@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { db, getPlanLimits } from "@pmg/db";
 import {
@@ -336,9 +337,11 @@ export async function updateOrganizationPlan(
       .from(member)
       .innerJoin(user, eq(member.userId, user.id))
       .where(
-        and(
-          eq(member.organizationId, organizationId),
-          eq(member.role, "owner"),
+        activeMemberWhere(
+          and(
+            eq(member.organizationId, organizationId),
+            eq(member.role, "owner"),
+          ),
         ),
       )
       .limit(1);

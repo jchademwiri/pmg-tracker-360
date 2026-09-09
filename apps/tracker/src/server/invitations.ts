@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { db } from "@pmg/db";
 import { invitation, member, organization, user } from "@pmg/db/schema";
@@ -121,9 +122,11 @@ export async function inviteMember(
 
     if (existingUser) {
       const existingMember = await db.query.member.findFirst({
-        where: and(
-          eq(member.userId, existingUser.id),
-          eq(member.organizationId, organizationId),
+        where: activeMemberWhere(
+          and(
+            eq(member.userId, existingUser.id),
+            eq(member.organizationId, organizationId),
+          ),
         ),
       });
 
@@ -604,7 +607,7 @@ export async function bulkRemoveMembers(
 
     // Get all member records
     const memberRecords = await db.query.member.findMany({
-      where: inArray(member.id, memberIds),
+      where: activeMemberWhere(inArray(member.id, memberIds)),
       with: {
         organization: true,
       },
@@ -658,8 +661,30 @@ export async function bulkRemoveMembers(
       };
     }
 
-    // Remove all members
-    await db.delete(member).where(inArray(member.id, memberIds));
+    if (memberRecords.some((m) => m.role === "owner")) {
+      return {
+        success: false,
+        error: {
+          code: "CANNOT_REMOVE_OWNER",
+          message: "Cannot remove organization owner",
+        },
+      };
+    }
+
+    // Only mutate the active records whose organizations were authorized above.
+    const removed = await db
+      .update(member)
+      .set({ deletedAt: new Date() })
+      .where(
+        activeMemberWhere(
+          inArray(
+            member.id,
+            memberRecords.map((m) => m.id),
+          ),
+          inArray(member.role, ["admin", "manager", "member"]),
+        ),
+      )
+      .returning({ id: member.id });
 
     // Revalidate organization pages
     for (const orgId of organizationIds) {
@@ -674,7 +699,7 @@ export async function bulkRemoveMembers(
     return {
       success: true,
       data: {
-        removedCount: memberRecords.length,
+        removedCount: removed.length,
       },
     };
   } catch (error) {

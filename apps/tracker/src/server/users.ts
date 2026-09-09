@@ -1,8 +1,10 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
+
 import { db } from "@pmg/db";
 import { member, user, verification } from "@pmg/db/schema";
 import { auth, getServerSession } from "@/lib/auth";
-import { eq, inArray, not } from "drizzle-orm";
+import { eq, inArray, not, and, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { StorageService } from "@/lib/storage";
 import { revalidatePath } from "next/cache";
@@ -15,7 +17,7 @@ export const getCurrentUser = async () => {
     redirect("/login");
   }
   const currentUser = await db.query.user.findFirst({
-    where: eq(user.id, session.user.id),
+    where: and(eq(user.id, session.user.id), isNull(user.deletedAt)),
   });
   if (!currentUser) {
     redirect("/login");
@@ -167,16 +169,16 @@ export const getAllUsers = async (organizationId: string) => {
     }
 
     const members = await db.query.member.findMany({
-      where: eq(member.organizationId, organizationId),
+      where: activeMemberWhere(eq(member.organizationId, organizationId)),
     });
     const memberUserIds = members.map((m) => m.userId);
 
     if (memberUserIds.length === 0) {
-      return await db.query.user.findMany();
+      return await db.query.user.findMany({ where: isNull(user.deletedAt) });
     }
 
     const users = await db.query.user.findMany({
-      where: not(inArray(user.id, memberUserIds)),
+      where: and(not(inArray(user.id, memberUserIds)), isNull(user.deletedAt)),
     });
     return users;
   } catch (error) {

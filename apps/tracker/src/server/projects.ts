@@ -621,7 +621,7 @@ export async function updateProjectStatus(
   data: ProjectStatusUpdateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     // Validate input
     const validatedData = ProjectStatusUpdateSchema.parse(data);
 
@@ -995,7 +995,11 @@ export async function addProjectRisk(
   data: ProjectRiskInput,
 ) {
   try {
-    const { userId } = await validateSessionAndOrg(organizationId);
+    const { userId } = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
     const validatedData = ProjectRiskSchema.parse(data);
 
     // Verify project exists
@@ -1090,7 +1094,11 @@ export async function updateProjectRiskStatus(
   mitigationPlan?: string,
 ) {
   try {
-    const { userId } = await validateSessionAndOrg(organizationId);
+    const { userId } = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
 
     // Verify risk exists
     const riskData = await db
@@ -1143,7 +1151,11 @@ export async function submitProjectCloseOut(
   data: ProjectCloseOutInput,
 ) {
   try {
-    const { userId } = await validateSessionAndOrg(organizationId);
+    const { userId } = await requireOrgRole(organizationId, [
+      "owner",
+      "admin",
+      "manager",
+    ]);
     const validatedData = ProjectCloseOutSchema.parse(data);
 
     // Verify project exists

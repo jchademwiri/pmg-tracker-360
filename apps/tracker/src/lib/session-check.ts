@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { getServerSession } from "@/lib/auth";
 import { db } from "@pmg/db";
@@ -18,19 +19,25 @@ export async function checkUserSession() {
       .from(member)
       .innerJoin(organization, eq(member.organizationId, organization.id))
       .where(
-        and(
-          eq(member.userId, session.user.id),
-          isNull(member.deletedAt),
-          isNull(organization.deletedAt),
+        activeMemberWhere(
+          and(
+            eq(member.userId, session.user.id),
+            isNull(member.deletedAt),
+            isNull(organization.deletedAt),
+          ),
         ),
       );
 
-    const hasOrganization = !!session.session.activeOrganizationId;
+    const hasOrganization = memberships.some(
+      (m) => m.organizationId === session.session.activeOrganizationId,
+    );
 
     return {
       hasSession: true,
       hasOrganization,
-      activeOrganizationId: session.session.activeOrganizationId,
+      activeOrganizationId: hasOrganization
+        ? session.session.activeOrganizationId
+        : null,
       organizationCount: memberships.length,
     };
   } catch (error) {
