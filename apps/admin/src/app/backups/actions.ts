@@ -10,6 +10,7 @@ import {
   restoreOrganization,
   getOrganizationsForRestore,
   runAutomatedBackup,
+  type BackupMeta,
 } from "@/lib/backup";
 
 /**
@@ -39,12 +40,31 @@ export async function runBackupAction() {
 
 /**
  * Lists all available backups.
+ *
+ * Returns a structured result instead of throwing: server-action errors are
+ * redacted in production, so a storage failure (bad R2 credentials, missing
+ * bucket) would otherwise reach the UI as an opaque catch. Surfacing the
+ * specific message is what distinguishes "bucket is empty" from "bucket is
+ * unreachable" — previously both rendered as "No backups yet".
  */
-export async function listBackupsAction() {
+export async function listBackupsAction(): Promise<
+  { ok: true; backups: BackupMeta[] } | { ok: false; error: string }
+> {
   const auth = await requireAdmin();
-  if (!auth.authorized) return [];
+  if (!auth.authorized) return { ok: false, error: auth.error };
 
-  return listBackups();
+  try {
+    return { ok: true, backups: await listBackups() };
+  } catch (err) {
+    console.error("listBackupsAction failed:", err);
+    return {
+      ok: false,
+      error:
+        err instanceof Error && err.message
+          ? err.message
+          : "Failed to list backups.",
+    };
+  }
 }
 
 /**

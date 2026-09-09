@@ -1,4 +1,5 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -75,7 +76,7 @@ export async function getUserDetail(userId: string): Promise<UserDetail> {
     })
     .from(member)
     .innerJoin(organization, eq(member.organizationId, organization.id))
-    .where(eq(member.userId, userId));
+    .where(activeMemberWhere(eq(member.userId, userId)));
 
   const [acct] = await db
     .select({ providerId: account.providerId })

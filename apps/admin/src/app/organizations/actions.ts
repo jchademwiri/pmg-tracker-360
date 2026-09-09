@@ -1,10 +1,11 @@
 "use server";
+import { activeMemberWhere } from "@pmg/db/membership";
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@pmg/db";
 import { organization, member, user, invitation } from "@pmg/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 /* ─── Return Types ─────────────────────────────────────────────────────── */
@@ -104,7 +105,7 @@ export async function getOrgDetail(orgId: string): Promise<OrgDetail> {
     })
     .from(member)
     .innerJoin(user, eq(member.userId, user.id))
-    .where(eq(member.organizationId, orgId));
+    .where(activeMemberWhere(eq(member.organizationId, orgId)));
 
   const ownerRow = memberRows.find((m) => m.role === "owner") || memberRows[0];
   const owner = ownerRow
@@ -280,7 +281,9 @@ export async function suspendOrg(orgId: string, reason?: string) {
 
     // Get owner email for notification
     const ownerMember = await db.query.member.findFirst({
-      where: and(eq(member.organizationId, orgId), eq(member.role, "owner")),
+      where: activeMemberWhere(
+        and(eq(member.organizationId, orgId), eq(member.role, "owner")),
+      ),
       with: { user: true },
     });
 
@@ -369,7 +372,9 @@ export async function purgeOrg(orgId: string, reason?: string) {
 
     // Send 30-day purge alert email
     const ownerMember = await db.query.member.findFirst({
-      where: and(eq(member.organizationId, orgId), eq(member.role, "owner")),
+      where: activeMemberWhere(
+        and(eq(member.organizationId, orgId), eq(member.role, "owner")),
+      ),
       with: { user: true },
     });
 
@@ -414,7 +419,9 @@ export async function cancelPendingDeletion(orgId: string) {
       .where(eq(organization.id, orgId));
 
     const ownerMember = await db.query.member.findFirst({
-      where: and(eq(member.organizationId, orgId), eq(member.role, "owner")),
+      where: activeMemberWhere(
+        and(eq(member.organizationId, orgId), eq(member.role, "owner")),
+      ),
       with: { user: true },
     });
 
@@ -479,9 +486,22 @@ export async function removeOrgMember(orgId: string, userId: string) {
   }
 
   try {
-    await db
-      .delete(member)
-      .where(and(eq(member.organizationId, orgId), eq(member.userId, userId)));
+    const removed = await db
+      .update(member)
+      .set({ deletedAt: new Date() })
+      .where(
+        activeMemberWhere(
+          eq(member.organizationId, orgId),
+          eq(member.userId, userId),
+          ne(member.role, "owner"),
+        ),
+      )
+      .returning({ id: member.id });
+    if (removed.length === 0)
+      return {
+        success: false,
+        error: "Member not found or organization owner cannot be removed.",
+      };
 
     return { success: true, message: "Member removed from organization." };
   } catch (err) {
