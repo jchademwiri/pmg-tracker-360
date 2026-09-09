@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
+    "db:migrate": "bun run ../../scripts/migrate-if-needed.mjs",
     "start": "next start",
     "lint": "eslint",
     "check-types": "tsc --noEmit",

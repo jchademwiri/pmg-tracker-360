@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bun run ../../scripts/vercel-build.mjs",
+  "buildCommand": "bun run db:migrate && turbo run build",
   "crons": [
     {
       "path": "/api/cron/reminders",
