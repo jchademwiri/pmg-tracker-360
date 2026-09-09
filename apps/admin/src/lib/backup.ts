@@ -76,6 +76,17 @@ function getS3Client(): S3Client | null {
   });
 }
 
+/**
+ * Resolved backup storage, or null when the R2 env vars are incomplete.
+ * Exported for the startup/health checks so credential problems surface at
+ * deploy time instead of as a 401 on the first backup or listing.
+ */
+export function getBackupStorage(): { s3: S3Client; bucket: string } | null {
+  const s3 = getS3Client();
+  if (!s3 || !R2_BUCKET_NAME) return null;
+  return { s3, bucket: R2_BUCKET_NAME };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
