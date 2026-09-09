@@ -72,8 +72,7 @@ export async function getCloudflareR2StorageStats(
   const pmgStorageMB = Number((pmgDbBytes / (1024 * 1024)).toFixed(2));
   const pmgStorageGB = Number((pmgDbBytes / (1024 * 1024 * 1024)).toFixed(3));
 
-  // If no Cloudflare API token is configured, return DB-tracked usage with single configured bucket
-  if (!accountId || !apiToken) {
+  const makeFallbackStats = (): CloudflareStorageOverview => {
     const totalUsedBytes = pmgDbBytes;
     const totalUsedMB = pmgStorageMB;
     const totalUsedGB = pmgStorageGB;
@@ -123,6 +122,11 @@ export async function getCloudflareR2StorageStats(
       otherAppsStorageMB: 0,
       otherAppsStorageGB: 0,
     };
+  };
+
+  // If no Cloudflare API token is configured, return DB-tracked usage with single configured bucket
+  if (!accountId || !apiToken) {
+    return makeFallbackStats();
   }
 
   try {
@@ -139,9 +143,12 @@ export async function getCloudflareR2StorageStats(
     );
 
     if (!bucketsRes.ok) {
-      throw new Error(
-        `Cloudflare R2 Buckets API returned HTTP ${bucketsRes.status}`,
+      console.warn(
+        `Cloudflare R2 Buckets API returned HTTP ${bucketsRes.status}. ` +
+          "Verify that CLOUDFLARE_API_TOKEN has 'Workers R2 Storage: Read' permission on this Cloudflare Account. " +
+          "Falling back to DB-tracked storage metrics.",
       );
+      return makeFallbackStats();
     }
 
     const bucketsData = await bucketsRes.json();
@@ -149,7 +156,8 @@ export async function getCloudflareR2StorageStats(
       bucketsData.result?.buckets || [];
 
     if (rawBuckets.length === 0) {
-      throw new Error("No buckets found in Cloudflare account");
+      console.warn("No buckets found in Cloudflare account. Falling back to DB-tracked storage metrics.");
+      return makeFallbackStats();
     }
 
     // 2. Query usage for each bucket in parallel
@@ -287,56 +295,6 @@ export async function getCloudflareR2StorageStats(
     };
   } catch (error) {
     console.error("Error fetching live Cloudflare R2 storage metrics:", error);
-
-    // Graceful fallback to DB-tracked PMG storage
-    const totalUsedBytes = pmgDbBytes;
-    const totalUsedMB = pmgStorageMB;
-    const totalUsedGB = pmgStorageGB;
-    const availableStorageMB = Math.max(
-      0,
-      Number((totalCapacityMB - totalUsedMB).toFixed(2)),
-    );
-    const availableStorageGB = Math.max(
-      0,
-      Number((availableStorageMB / 1024).toFixed(3)),
-    );
-    const utilizationPct = Math.min(
-      100,
-      Number(((totalUsedMB / totalCapacityMB) * 100).toFixed(1)),
-    );
-
-    let warningStatus: "healthy" | "warning" | "critical" = "healthy";
-    if (utilizationPct >= 90) warningStatus = "critical";
-    else if (utilizationPct >= 75) warningStatus = "warning";
-
-    return {
-      connectedLiveApi: false,
-      totalCapacityGB,
-      totalCapacityMB,
-      totalUsedBytes,
-      totalUsedMB,
-      totalUsedGB,
-      availableStorageGB,
-      availableStorageMB,
-      utilizationPct,
-      warningStatus,
-      buckets: [
-        {
-          name: currentBucketName,
-          isCurrentApp: true,
-          objectCount: pmgDocCount,
-          sizeBytes: pmgDbBytes,
-          sizeMB: pmgStorageMB,
-          sizeGB: pmgStorageGB,
-          percentage: 100,
-        },
-      ],
-      pmgDocumentCount: pmgDocCount,
-      pmgStorageBytes: pmgDbBytes,
-      pmgStorageMB,
-      pmgStorageGB,
-      otherAppsStorageMB: 0,
-      otherAppsStorageGB: 0,
-    };
+    return makeFallbackStats();
   }
 }
