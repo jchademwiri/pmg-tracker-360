@@ -12,8 +12,7 @@ const senderName = process.env.SENDER_NAME || "Tender Track 360";
 const senderEmail =
   process.env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
 const SENDER = `${senderName} <${senderEmail}>`;
-const REPLY_TO =
-  process.env.REPLY_TO_EMAIL || "info@tendertrack360.co.za";
+const REPLY_TO = process.env.REPLY_TO_EMAIL || "info@tendertrack360.co.za";
 
 /**
  * Set DRY_RUN_EMAILS=true to log rendered reminder emails to the console
@@ -26,23 +25,28 @@ export async function sendReminderEmail({
   to,
   subject,
   react,
+  idempotencyKey,
 }: {
   to: string;
   subject: string;
   react: ReactElement;
+  idempotencyKey: string;
 }): Promise<void> {
   if (DRY_RUN) {
     console.log(`[DRY_RUN_EMAILS] Would send "${subject}" to ${to}`);
     return;
   }
 
-  const { error } = await resend.emails.send({
-    from: SENDER,
-    to,
-    subject,
-    replyTo: REPLY_TO,
-    react,
-  });
+  const { error } = await resend.emails.send(
+    {
+      from: SENDER,
+      to,
+      subject,
+      replyTo: REPLY_TO,
+      react,
+    },
+    { idempotencyKey },
+  );
 
   if (error) {
     throw new Error(`Failed to send reminder email to ${to}: ${error.message}`);
