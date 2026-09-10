@@ -12,7 +12,8 @@
   },
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
+    "migrate": "bun scripts/migrate-with-lock.ts",
+    "migrate:raw": "drizzle-kit migrate",
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio",
     "dev": "drizzle-kit studio",

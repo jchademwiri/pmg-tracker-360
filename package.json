@@ -10,10 +10,12 @@
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
-    "db:check": "bun --cwd packages/db scripts/check-drift.ts",
-    "db:generate": "bun --cwd packages/db generate",
-    "db:migrate": "bun --cwd packages/db migrate",
-    "db:studio": "bun --cwd packages/db studio"
+    "db:check": "bun run --cwd packages/db db:check",
+    "db:safety": "bun run --cwd packages/db db:safety",
+    "db:status": "bun run --cwd packages/db db:status",
+    "db:generate": "bun run --cwd packages/db generate",
+    "db:migrate": "bun run --cwd packages/db migrate",
+    "db:studio": "bun run --cwd packages/db studio"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
