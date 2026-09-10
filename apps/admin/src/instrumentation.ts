@@ -22,6 +22,11 @@ export async function register(): Promise<void> {
       return;
     }
 
+    if (result.reason === "not_configured" && process.env.NODE_ENV !== "production") {
+      console.warn(`[startup] R2 backup storage skipped: ${result.message}`);
+      return;
+    }
+
     console.error(`[startup] R2 BACKUP STORAGE PROBLEM: ${result.message}`);
 
     if (process.env.NODE_ENV === "production" && process.env.BACKUP_ALERT_EMAIL) {
