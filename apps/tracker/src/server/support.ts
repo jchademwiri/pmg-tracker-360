@@ -161,7 +161,7 @@ export async function createSupportTicket(input: SupportTicketInput) {
     const safeEmail = escapeHtml(effectiveEmail);
     const safePriority = (validated.priority || "medium").toUpperCase();
     const senderEmail =
-      process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+      process.env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
     const adminUrl =
       process.env.ADMIN_APP_URL ||
       "https://admin.tendertrack360.co.za/support-tickets";
@@ -184,7 +184,7 @@ export async function createSupportTicket(input: SupportTicketInput) {
         const recipients =
           adminEmails.length > 0
             ? adminEmails
-            : ["info@contact.tendertrack360.co.za"];
+            : ["info@info.tendertrack360.co.za"];
 
         // Alert Admins of new ticket
         await resend.emails.send({
@@ -522,7 +522,7 @@ export async function emailUserTicketTranscript(ticketId: string) {
       .join("");
 
     const senderEmailAddr =
-      process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+      process.env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
 
     if (process.env.RESEND_API_KEY) {
       const { Resend } = await import("resend");

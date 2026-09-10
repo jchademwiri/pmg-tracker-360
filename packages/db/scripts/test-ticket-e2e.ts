@@ -62,7 +62,7 @@ async function runE2ETest() {
     senderId: null,
     senderType: 'admin',
     senderName: 'Tender Track Support Team',
-    senderEmail: 'support@contact.tendertrack360.co.za',
+    senderEmail: 'support@info.tendertrack360.co.za',
     message: 'Hello! We have received your request and verified your tender documents. Everything is in order.',
     isInternal: false,
     createdAt: new Date(),

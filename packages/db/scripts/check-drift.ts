@@ -62,6 +62,10 @@ async function checkDrift() {
   // Check against live database if DATABASE_URL is available
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
+    if (process.env.REQUIRE_DB === "true" || process.env.CI === "true" || process.env.VERCEL === "1") {
+      console.error("❌ DATABASE_URL is required for migration drift check but was not set.");
+      process.exit(1);
+    }
     console.log("\nℹ️ DATABASE_URL not set — skipped live database comparison.");
     console.log("   Set DATABASE_URL to check sync state against a live database.\n");
     return;
@@ -94,9 +98,15 @@ async function checkDrift() {
     const migrationsTableExists = tableCheck[0]?.exists;
 
     if (!migrationsTableExists) {
-      console.warn("⚠️ '__drizzle_migrations' table not found in 'drizzle' schema. Database might be uninitialized.");
+      if (journalEntries.length === 0) {
+        console.log("ℹ️ No migrations registered in repo and '__drizzle_migrations' table does not exist. Clean state.");
+        await sql.end();
+        return;
+      }
+      console.error(`❌ '__drizzle_migrations' table not found in 'drizzle' schema! Database is uninitialized or unmigrated.`);
+      console.error(`   Found ${journalEntries.length} migration(s) in repository that have not been applied.`);
       await sql.end();
-      return;
+      process.exit(1);
     }
 
     const applied = await sql<{ id: number; hash: string; created_at: number }[]>`

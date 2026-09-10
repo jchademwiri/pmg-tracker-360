@@ -252,7 +252,7 @@ export async function sendAdminTicketMessageAction(
 
     const adminName = session.user.name || "System Support";
     const adminEmail =
-      session.user.email || "support@contact.tendertrack360.co.za";
+      session.user.email || "support@info.tendertrack360.co.za";
 
     // 1. Insert message
     const messageId = crypto.randomUUID();

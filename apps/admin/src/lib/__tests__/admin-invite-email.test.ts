@@ -4,8 +4,8 @@ const sendMock = vi.fn();
 
 vi.mock("@/lib/email-config", () => ({
   resend: { emails: { send: (...args: unknown[]) => sendMock(...args) } },
-  SENDER: "Tender Track 360 <no-reply@contact.tendertrack360.co.za>",
-  REPLY_TO: "info@contact.tendertrack360.co.za",
+  SENDER: "Tender Track 360 <no-reply@info.tendertrack360.co.za>",
+  REPLY_TO: "info@tendertrack360.co.za",
 }));
 
 vi.mock("@/lib/urls", () => ({
@@ -27,9 +27,9 @@ describe("sendAdminInvitationEmail", () => {
     });
 
     const payload = sendMock.mock.calls[0][0];
-    expect(payload.from).toContain("@contact.tendertrack360.co.za");
+    expect(payload.from).toContain("@info.tendertrack360.co.za");
     expect(payload.to).toBe("new@example.com");
-    expect(payload.replyTo).toBe("info@contact.tendertrack360.co.za");
+    expect(payload.replyTo).toBe("info@tendertrack360.co.za");
   });
 
   it("links to the admin sign-in and never includes a password", async () => {

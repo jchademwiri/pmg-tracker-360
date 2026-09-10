@@ -170,7 +170,7 @@ class OwnershipTransferManager {
           from:
             process.env.SENDER_EMAIL && process.env.SENDER_NAME
               ? `${process.env.SENDER_NAME} <${process.env.SENDER_EMAIL}>`
-              : "Tender Track 360 <hello@contact.tendertrack360.co.za>",
+              : "Tender Track 360 <no-reply@info.tendertrack360.co.za>",
           // MVP: All emails to info@tendertrack360.co.za
           to: toUser.email,
           subject: `Ownership Transfer Request for ${org.name}`,
@@ -533,7 +533,7 @@ class OwnershipTransferManager {
 
       // Notify New Owner
       await resend.emails.send({
-        from: "Tender Track 360 <hello@contact.tendertrack360.co.za>",
+        from: "Tender Track 360 <no-reply@info.tendertrack360.co.za>",
         to: transfer.toUser.email,
         subject: `Ownership Transferred: ${transfer.organization.name}`,
         html: `<p>Congratulations! You are now the owner of <strong>${transfer.organization.name}</strong>.</p>`,
@@ -541,7 +541,7 @@ class OwnershipTransferManager {
 
       // Notify Old Owner
       await resend.emails.send({
-        from: "Tender Track 360 <hello@contact.tendertrack360.co.za>",
+        from: "Tender Track 360 <no-reply@info.tendertrack360.co.za>",
         to: transfer.fromUser.email, // Assuming fromUser still has access or we just email them
         subject: `Ownership Transfer Complete: ${transfer.organization.name}`,
         html: `<p>You have successfully transferred ownership of <strong>${transfer.organization.name}</strong> to ${transfer.toUser.name}.</p>`,
@@ -568,7 +568,7 @@ class OwnershipTransferManager {
 
       // Notify intended recipient that it was cancelled
       await resend.emails.send({
-        from: "Tender Track 360 <hello@contact.tendertrack360.co.za>",
+        from: "Tender Track 360 <no-reply@info.tendertrack360.co.za>",
         to: transfer.toUser.email,
         subject: `Ownership Transfer Cancelled: ${transfer.organization.name}`,
         html: `<p>The ownership transfer request for <strong>${transfer.organization.name}</strong> has been cancelled.</p>`,
