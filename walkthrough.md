@@ -27,7 +27,7 @@ ever arrived.
   format unchanged — restore untouched.
 - No notification path existed at all. The cron route now emails `BACKUP_ALERT_EMAIL`
   via Resend on failure (backup error and alert-send error reported separately).
-- `maxDuration = 800` on the cron route.
+- `maxDuration = 60` on the cron route (capped for Vercel Hobby plan compatibility).
 - `listBackups` swallowed R2 errors as `[]`, rendering "No backups yet" for an
   unreachable bucket. It now throws; the action returns `{ok:false,error}` and the UI
   shows the actual storage error.
