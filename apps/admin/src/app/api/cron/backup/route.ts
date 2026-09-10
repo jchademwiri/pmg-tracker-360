@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { runAutomatedBackup } from "@/lib/backup";
 import { sendBackupFailureEmail } from "@/lib/backup-alerts";
 
-// The backup streams every table through gzip into multipart R2 uploads, so it
-// can legitimately run for minutes on a grown database. Hobby caps at 300s,
-// Pro/Enterprise at 800s — Vercel clamps this to the plan maximum.
-export const maxDuration = 800;
+// The backup streams every table through gzip into multipart R2 uploads.
+// Vercel Hobby functions are capped at 60s (or up to 300s with Fluid Compute).
+// Capping at 60 prevents deployment validation failure on Hobby accounts.
+export const maxDuration = 60;
 
 /**
  * Vercel Cron Job endpoint for automatic daily backups.

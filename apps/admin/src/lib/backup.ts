@@ -124,7 +124,7 @@ function assertSafeTableName(name: string): asserts name is string {
   }
 }
 
-const ALL_TABLES = [
+export const ALL_TABLES = [
   "user",
   "session",
   "account",
@@ -138,10 +138,12 @@ const ALL_TABLES = [
   "security_audit_log",
   "session_tracking",
   "client",
+  "client_contact",
   "tender",
   "tender_extension",
   "tender_follow_up",
   "tender_activity",
+  "reminder_log",
   "project",
   "project_line_item",
   "project_activity",
@@ -154,6 +156,8 @@ const ALL_TABLES = [
   "waitlist",
   "feedback",
   "support_tickets",
+  "support_ticket_messages",
+  "subscription_plan",
 ];
 
 const INSERT_ORDER = [
@@ -170,10 +174,12 @@ const INSERT_ORDER = [
   "security_audit_log",
   "session_tracking",
   "client",
+  "client_contact",
   "tender",
   "tender_extension",
   "tender_follow_up",
   "tender_activity",
+  "reminder_log",
   "project",
   "project_line_item",
   "project_activity",
@@ -186,6 +192,8 @@ const INSERT_ORDER = [
   "waitlist",
   "feedback",
   "support_tickets",
+  "support_ticket_messages",
+  "subscription_plan",
 ];
 
 const ORG_SCOPED_TABLES = new Set([
@@ -193,10 +201,12 @@ const ORG_SCOPED_TABLES = new Set([
   "member",
   "invitation",
   "client",
+  "client_contact",
   "tender",
   "tender_extension",
   "tender_follow_up",
   "tender_activity",
+  "reminder_log",
   "project",
   "project_line_item",
   "project_activity",
@@ -211,6 +221,15 @@ const ORG_SCOPED_TABLES = new Set([
   "ownership_transfer",
   "document",
 ]);
+
+/**
+ * Repairs backup JSON generated during the streaming bug window where table
+ * array openings were emitted as `"tableName":{` instead of `"tableName":[{`.
+ */
+export function healBackupJson(rawJson: string): string {
+  const pattern = new RegExp(`"(${ALL_TABLES.join("|")})":\\s*\\{`, "g");
+  return rawJson.replace(pattern, '"$1":[{');
+}
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -488,7 +507,7 @@ export async function createBackup(): Promise<BackupResult> {
           .cursor(ROW_BATCH_SIZE, async (rows: Record<string, unknown>[]) => {
             if (!wroteTable) {
               gzip.write(
-                `${needsComma ? "," : ""}"${tableName}":`,
+                `${needsComma ? "," : ""}"${tableName}":[`,
                 "utf-8",
               );
               needsComma = true;
@@ -630,7 +649,14 @@ async function downloadBackup(key: string): Promise<BackupData | null> {
     if (!body) return null;
 
     const decompressed = await decompressBuffer(Buffer.from(body));
-    return JSON.parse(decompressed.toString("utf-8")) as BackupData;
+    const rawJson = decompressed.toString("utf-8");
+    try {
+      return JSON.parse(rawJson) as BackupData;
+    } catch {
+      // Self-healing fallback: handle historical backups affected by the missing array bracket bug
+      const healedJson = healBackupJson(rawJson);
+      return JSON.parse(healedJson) as BackupData;
+    }
   } catch (err) {
     console.error(`Failed to download backup ${key}:`, err);
     return null;
