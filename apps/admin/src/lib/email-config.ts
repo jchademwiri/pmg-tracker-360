@@ -13,8 +13,8 @@ import { env } from "@/env";
 export const resend = new Resend(env.RESEND_API_KEY);
 
 const senderName = env.SENDER_NAME || "Tender Track 360";
-const senderEmail = env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+const senderEmail = env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
 
 export const SENDER = `${senderName} <${senderEmail}>`;
 export const REPLY_TO =
-  env.REPLY_TO_EMAIL || "info@contact.tendertrack360.co.za";
+  env.REPLY_TO_EMAIL || "info@tendertrack360.co.za";

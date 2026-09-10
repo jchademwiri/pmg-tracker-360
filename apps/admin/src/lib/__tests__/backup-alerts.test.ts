@@ -4,8 +4,8 @@ const sendMock = vi.fn();
 
 vi.mock("@/lib/email-config", () => ({
   resend: { emails: { send: (...args: unknown[]) => sendMock(...args) } },
-  SENDER: "Tender Track 360 <no-reply@contact.tendertrack360.co.za>",
-  REPLY_TO: "info@contact.tendertrack360.co.za",
+  SENDER: "Tender Track 360 <no-reply@info.tendertrack360.co.za>",
+  REPLY_TO: "info@tendertrack360.co.za",
 }));
 
 import { sendBackupFailureEmail } from "../backup-alerts";
@@ -23,9 +23,9 @@ describe("sendBackupFailureEmail", () => {
     });
 
     const payload = sendMock.mock.calls[0][0];
-    expect(payload.from).toContain("@contact.tendertrack360.co.za");
+    expect(payload.from).toContain("@info.tendertrack360.co.za");
     expect(payload.to).toBe("ops@example.com");
-    expect(payload.replyTo).toBe("info@contact.tendertrack360.co.za");
+    expect(payload.replyTo).toBe("info@tendertrack360.co.za");
   });
 
   it("includes the failure message in the subject and body", async () => {

@@ -14,7 +14,7 @@ import OrganizationInvitation from "@/emails/organization-invitation";
 
 const senderName = process.env.SENDER_NAME || "Tender Track 360";
 const senderEmail =
-  process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+  process.env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
 const SENDER = `${senderName} <${senderEmail}>`;
 
 // Server Action Result type for consistent error handling

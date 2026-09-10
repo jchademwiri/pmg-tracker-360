@@ -117,7 +117,7 @@ export async function submitFeedback(input: FeedbackInput) {
             ? adminEmails
             : [
                 process.env.RECEIVER_SUPPORT_EMAIL ||
-                  "info@contact.tendertrack360.co.za",
+                  "info@info.tendertrack360.co.za",
               ];
 
         const escapeHtml = (unsafe: string) =>
@@ -140,7 +140,7 @@ export async function submitFeedback(input: FeedbackInput) {
           : "No email provided";
         const safeUrl = validated.url ? escapeHtml(validated.url) : "N/A";
         const senderEmail =
-          process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+          process.env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
         const adminUrl =
           process.env.ADMIN_APP_URL ||
           "https://admin.tendertrack360.co.za/feedback";

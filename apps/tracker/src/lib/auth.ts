@@ -25,10 +25,10 @@ const resend = new Resend(
 
 const senderName = process.env.SENDER_NAME || "Tender Track 360";
 const senderEmail =
-  process.env.SENDER_EMAIL || "no-reply@contact.tendertrack360.co.za";
+  process.env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
 const SENDER = `${senderName} <${senderEmail}>`;
 const REPLY_TO =
-  process.env.REPLY_TO_EMAIL || "info@contact.tendertrack360.co.za";
+  process.env.REPLY_TO_EMAIL || "info@tendertrack360.co.za";
 const TRACKER_PRODUCTION_URL = "https://tendertrack360.co.za";
 const LOCAL_AUTH_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0"]);
 
