@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import { db } from "@pmg/db";
 import {
   ownershipTransfer,
@@ -62,10 +63,12 @@ class OwnershipTransferManager {
 
     // Check if fromUser is the owner via Member table
     const currentOwnerMember = await db.query.member.findFirst({
-      where: and(
-        eq(member.organizationId, organizationId),
-        eq(member.userId, fromUserId),
-        eq(member.role, "owner"),
+      where: activeMemberWhere(
+        and(
+          eq(member.organizationId, organizationId),
+          eq(member.userId, fromUserId),
+          eq(member.role, "owner"),
+        ),
       ),
     });
 
@@ -73,6 +76,19 @@ class OwnershipTransferManager {
       return {
         isValid: false,
         errors: ["Only the current owner can initiate transfer"],
+      };
+    }
+
+    const recipient = await db.query.member.findFirst({
+      where: activeMemberWhere(
+        eq(member.organizationId, organizationId),
+        eq(member.userId, toUserId),
+      ),
+    });
+    if (!recipient || fromUserId === toUserId) {
+      return {
+        isValid: false,
+        errors: ["New owner must be another active member"],
       };
     }
 
@@ -221,6 +237,23 @@ class OwnershipTransferManager {
 
         const orgId = transfer.organizationId;
 
+        const activeMembers = await tx
+          .select({ id: member.id, userId: member.userId, role: member.role })
+          .from(member)
+          .where(activeMemberWhere(eq(member.organizationId, orgId)))
+          .for("update");
+        const oldOwner = activeMembers.find(
+          (m) => m.userId === transfer.fromUserId && m.role === "owner",
+        );
+        const newOwner = activeMembers.find(
+          (m) => m.userId === acceptingUserId,
+        );
+        if (!oldOwner || !newOwner || oldOwner.id === newOwner.id) {
+          throw new Error(
+            "Both owners must still be active organization members",
+          );
+        }
+
         // 2. Key: Perform Role Swaps
         // Note: Organization table does not have ownerId, so we rely on Member roles.
 
@@ -229,10 +262,7 @@ class OwnershipTransferManager {
           .update(member)
           .set({ role: "admin" })
           .where(
-            and(
-              eq(member.organizationId, orgId),
-              eq(member.userId, transfer.fromUserId),
-            ),
+            and(eq(member.organizationId, orgId), eq(member.id, oldOwner.id)),
           );
 
         // Update New Owner Role to 'owner'
@@ -240,10 +270,7 @@ class OwnershipTransferManager {
           .update(member)
           .set({ role: "owner" })
           .where(
-            and(
-              eq(member.organizationId, orgId),
-              eq(member.userId, acceptingUserId),
-            ),
+            and(eq(member.organizationId, orgId), eq(member.id, newOwner.id)),
           );
 
         // 3. Mark Transfer as Accepted

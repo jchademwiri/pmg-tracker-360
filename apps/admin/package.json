@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
+    "db:migrate": "bun run ../../scripts/migrate-if-needed.mjs",
     "start": "next start",
     "lint": "eslint",
     "check-types": "tsc --noEmit",
@@ -46,6 +47,7 @@
     "eslint-config-next": "16.2.4",
     "fast-check": "3.22.0",
     "jsdom": "26.1.0",
+    "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "3.2.4"

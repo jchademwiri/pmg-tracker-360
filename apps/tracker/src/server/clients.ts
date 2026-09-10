@@ -2,7 +2,7 @@
 
 import { db } from "@pmg/db";
 import { client, tender, project, purchaseOrder } from "@pmg/db/schema";
-import { validateSessionAndOrg } from "./utils";
+import { requireOrgRole, validateSessionAndOrg } from "./utils";
 import { getServerSession } from "@/lib/auth";
 import { eq, and, isNull, ilike, or, desc, ne, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -75,7 +75,7 @@ export async function createClient(
   data: ClientCreateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     // Validate input
     const validatedData = ClientCreateSchema.parse(data);
 
@@ -160,7 +160,7 @@ export async function updateClient(
   data: ClientUpdateInput,
 ) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin", "manager"]);
     // Validate input
     const validatedData = ClientUpdateSchema.parse(data);
 
@@ -235,7 +235,7 @@ export async function updateClient(
 // Soft delete client
 export async function deleteClient(organizationId: string, clientId: string) {
   try {
-    await validateSessionAndOrg(organizationId);
+    await requireOrgRole(organizationId, ["owner", "admin"]);
     // Check if client exists and belongs to organization
     const existingClient = await db
       .select()

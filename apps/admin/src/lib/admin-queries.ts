@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import "server-only";
 
 import { db } from "@pmg/db";
@@ -453,7 +454,10 @@ export async function getOrganizationsWithCounts(): Promise<OrgWithCounts[]> {
       poCount: sql<number>`COUNT(DISTINCT ${purchaseOrder.id})`,
     })
     .from(organization)
-    .leftJoin(member, eq(member.organizationId, organization.id))
+    .leftJoin(
+      member,
+      activeMemberWhere(eq(member.organizationId, organization.id)),
+    )
     .leftJoin(tender, eq(tender.organizationId, organization.id))
     .leftJoin(project, eq(project.organizationId, organization.id))
     .leftJoin(purchaseOrder, eq(purchaseOrder.organizationId, organization.id))
@@ -519,7 +523,8 @@ export async function getUsersWithMemberships(): Promise<
         role: member.role,
       })
       .from(member)
-      .leftJoin(organization, eq(member.organizationId, organization.id)),
+      .leftJoin(organization, eq(member.organizationId, organization.id))
+      .where(activeMemberWhere()),
     // all accounts, most recent per user
     db
       .select({

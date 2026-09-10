@@ -1,3 +1,4 @@
+import { activeMemberWhere } from "@pmg/db/membership";
 import "server-only";
 
 import { db } from "@pmg/db";
@@ -492,7 +493,7 @@ export async function getStorageBreakdown(): Promise<{
       db
         .select({ count: count() })
         .from(member)
-        .where(eq(member.organizationId, t.id)),
+        .where(activeMemberWhere(eq(member.organizationId, t.id))),
     ]);
 
     const bytes = Number(t.storageBytes);
@@ -639,7 +640,7 @@ export async function getAllTenantsUtilization(): Promise<
       db
         .select({ count: count() })
         .from(member)
-        .where(eq(member.organizationId, org.id)),
+        .where(activeMemberWhere(eq(member.organizationId, org.id))),
     ]);
 
     const bytes = Number(org.storageBytes);

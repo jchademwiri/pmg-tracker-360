@@ -41,6 +41,7 @@ export const user = pgTable("user", {
    * they set their own password. Used to force that prompt on first login.
    */
   mustSetPassword: boolean("must_set_password").default(false).notNull(),
+  deletedAt: timestamp("deleted_at"),
 });
 
 export type User = typeof user.$inferSelect;
@@ -194,12 +195,16 @@ export const member = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     role: role("role").default("member").notNull(),
     createdAt: timestamp("created_at").notNull(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => ({
     orgUserUnique: unique("member_organization_id_user_id_unique").on(
       table.organizationId,
       table.userId,
     ),
+    singleOwnerPerOrg: uniqueIndex("member_organization_id_owner_unique")
+      .on(table.organizationId)
+      .where(sql`role = 'owner' AND deleted_at IS NULL`),
     orgIdIdx: index("idx_member_org_id").on(table.organizationId),
     userIdIdx: index("idx_member_user_id").on(table.userId),
   }),

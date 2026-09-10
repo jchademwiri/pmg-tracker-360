@@ -4,6 +4,7 @@ import { db } from "@pmg/db";
 import { clientContact, type ClientContact } from "@pmg/db/schema";
 import { eq, and, isNull, ilike, or, desc } from "drizzle-orm";
 import { getServerSession } from "@/lib/auth";
+import { validateSessionAndOrg } from "@/server/utils";
 import { nanoid } from "nanoid";
 
 /**
@@ -16,6 +17,7 @@ export async function getClientContacts(
   query?: string,
 ): Promise<ClientContact[]> {
   try {
+    await validateSessionAndOrg(organizationId);
     const session = await getServerSession();
     if (
       !session ||

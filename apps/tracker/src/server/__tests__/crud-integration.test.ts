@@ -26,9 +26,20 @@ jest.mock("next/cache", () => ({
 }));
 
 // Mock validateSessionAndOrg for integration tests
+//
+// requireOrgRole must be mocked alongside validateSessionAndOrg: it calls
+// validateSessionAndOrg through the module's internal binding, which Jest's
+// automock of the exported symbol cannot intercept. Without this, the real
+// auth path runs, calls next/headers outside a request scope, and every
+// guarded CRUD action fails with "headers was called outside a request scope".
 jest.mock("@/server/utils", () => ({
   ...jest.requireActual("@/server/utils"),
   validateSessionAndOrg: jest.fn(async () => ({
+    userId: "test_user_id",
+    role: "owner",
+    session: { user: { id: "test_user_id", name: "Test User" } },
+  })),
+  requireOrgRole: jest.fn(async () => ({
     userId: "test_user_id",
     role: "owner",
     session: { user: { id: "test_user_id", name: "Test User" } },

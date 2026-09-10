@@ -5,6 +5,7 @@ import { tenderExtension, tender, document } from "@pmg/db/schema";
 import { eq, desc, and, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "@/lib/auth";
+import { validateSessionAndOrg } from "@/server/utils";
 import { nanoid } from "nanoid";
 import { uploadDocument } from "@/server/documents";
 import { StorageService } from "@/lib/storage";
@@ -34,6 +35,7 @@ export async function createTenderExtension(
 ) {
   try {
     // 1. Auth Check
+    await validateSessionAndOrg(organizationId);
     const session = await getServerSession();
 
     if (
@@ -144,6 +146,7 @@ export async function getTenderExtensions(
   tenderId: string,
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const session = await getServerSession();
 
     if (
@@ -215,6 +218,7 @@ export async function updateTenderExtension(
   formData?: FormData,
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const session = await getServerSession();
 
     if (
@@ -332,6 +336,7 @@ export async function deleteTenderExtension(
   extensionId: string,
 ) {
   try {
+    await validateSessionAndOrg(organizationId);
     const session = await getServerSession();
 
     if (

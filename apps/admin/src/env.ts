@@ -41,7 +41,21 @@ function loadEnv(): ServerEnv {
     const issues = parsed.error.issues
       .map((i) => `  ${i.path.join(".")}: ${i.message}`)
       .join("\n");
-    throw new Error(`Invalid admin environment variables:\n${issues}`);
+
+    // Fail fast only where it matters: real production builds. `next build`
+    // always runs with NODE_ENV=production (previews included), so VERCEL_ENV
+    // is the only reliable discriminator. Preview/local builds without email
+    // credentials must still succeed — they just warn, since a preview can't
+    // send mail anyway and a hard throw made every admin preview deployment
+    // fail when RESEND_API_KEY was scoped to Production only.
+    if (process.env.VERCEL_ENV === "production") {
+      throw new Error(`Invalid admin environment variables:\n${issues}`);
+    }
+
+    console.warn(
+      `[env] Warning: admin email environment is incomplete (preview/local build):\n${issues}\n[env] Email sending will fail at runtime in this deployment.`,
+    );
+    return raw as ServerEnv;
   }
 
   return parsed.data;
