@@ -1,4 +1,5 @@
 import { db } from "@pmg/db";
+import { createHash } from "node:crypto";
 import {
   tender,
   tenderExtension,
@@ -61,17 +62,18 @@ function sastDayDiff(fieldDate: Date, now: Date): number {
 }
 
 /** Which stage (if any) a given date currently falls into, relative to now. */
-function matchStage(fieldDate: Date, now: Date): ReminderStageValue | null {
+export function matchStage(
+  fieldDate: Date,
+  now: Date,
+): ReminderStageValue | null {
   const diff = sastDayDiff(fieldDate, now);
-  if (diff < 0) return "overdue";
   for (const stage of REMINDER_STAGES) {
-    if (stage === "overdue") continue;
     if (REMINDER_STAGE_OFFSETS[stage] === diff) return stage;
   }
   return null;
 }
 
-interface Candidate {
+export interface Candidate {
   entityType: ReminderTypeValue;
   entityId: string;
   organizationId: string;
@@ -392,10 +394,59 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
   return candidates;
 }
 
-async function alreadySent(candidate: Candidate): Promise<boolean> {
-  const [existing] = await db
-    .select({ id: reminderLog.id })
-    .from(reminderLog)
+/**
+ * Atomically claim the reminder slot for this candidate BEFORE dispatching
+ * any emails.
+ *
+ * The `reminder_log_dedup_unique` constraint on
+ * (entity_type, entity_id, stage, target_date) is the source of truth: the
+ * first sweep to insert the row wins the right to send, and any concurrent
+ * or later sweep — including one running the same day — gets zero rows back
+ * and skips. This prevents the duplicate-overdue-email flood where a sweep
+ * died after sending but before logging, causing the same reminder to
+ * re-send every day while the stage kept matching.
+ *
+ * Returns true if this call claimed the slot (caller should send), false if
+ * another run already claimed it or sent it previously.
+ *
+ * Exported for tests; not intended for use outside the sweep.
+ */
+export async function claimReminderSlot(
+  candidate: Candidate,
+): Promise<boolean> {
+  const inserted = await db
+    .insert(reminderLog)
+    .values({
+      id: nanoid(),
+      organizationId: candidate.organizationId,
+      entityType: candidate.entityType,
+      entityId: candidate.entityId,
+      stage: candidate.stage,
+      targetDate: candidate.targetDate,
+      recipientCount: 0,
+    })
+    .onConflictDoNothing({
+      target: [
+        reminderLog.entityType,
+        reminderLog.entityId,
+        reminderLog.stage,
+        reminderLog.targetDate,
+      ],
+    })
+    .returning({ id: reminderLog.id });
+
+  return inserted.length > 0;
+}
+
+/**
+ * Best-effort rollback if dispatch fails after claiming, so the next sweep
+ * can retry the send instead of silently dropping the reminder forever.
+ *
+ * Exported for tests; not intended for use outside the sweep.
+ */
+export async function releaseReminderSlot(candidate: Candidate): Promise<void> {
+  await db
+    .delete(reminderLog)
     .where(
       and(
         eq(reminderLog.entityType, candidate.entityType),
@@ -403,9 +454,142 @@ async function alreadySent(candidate: Candidate): Promise<boolean> {
         eq(reminderLog.stage, candidate.stage),
         eq(reminderLog.targetDate, candidate.targetDate),
       ),
-    )
-    .limit(1);
-  return !!existing;
+    );
+}
+
+export type ReminderCandidateOutcome =
+  | { status: "skipped" }
+  | { status: "sent" }
+  | { status: "partial"; error: string }
+  | { status: "failed"; error: string };
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function reminderIdempotencyKey(
+  candidate: Candidate,
+  recipientUserId: string,
+): string {
+  const identity = [
+    candidate.organizationId,
+    candidate.entityType,
+    candidate.entityId,
+    candidate.stage,
+    candidate.targetDate.toISOString(),
+    recipientUserId,
+  ].join(":");
+  const digest = createHash("sha256").update(identity).digest("hex");
+  return `reminder/${digest}`;
+}
+
+/**
+ * Process one reminder candidate with at-most-once external side effects.
+ * Once an email or notification has been attempted, an ambiguous failure
+ * keeps the claim so a retry cannot duplicate a delivery that may have
+ * succeeded outside this process.
+ *
+ * Exported for focused regression tests; the sweep remains the production
+ * entry point.
+ */
+export async function processReminderCandidate(
+  candidate: Candidate,
+): Promise<ReminderCandidateOutcome> {
+  let claimed = false;
+  let deliveryAttempted = false;
+
+  try {
+    claimed = await claimReminderSlot(candidate);
+    if (!claimed) return { status: "skipped" };
+
+    const recipients = await recipientsForOrg(candidate.organizationId);
+    const preferenceKey = REMINDER_PREFERENCE_GATE[candidate.entityType];
+
+    let recipientCount = 0;
+    let failure: unknown = null;
+    for (const recipient of recipients) {
+      try {
+        const prefs = await getReminderPreferences(recipient.userId);
+        if (!prefs[preferenceKey]) continue;
+
+        const { subject, react } = candidate.render(recipient.name);
+
+        if (prefs.emailNotifications) {
+          deliveryAttempted = true;
+          await sendReminderEmail({
+            to: recipient.email,
+            subject,
+            react,
+            idempotencyKey: reminderIdempotencyKey(candidate, recipient.userId),
+          });
+        }
+
+        deliveryAttempted = true;
+        await createNotification({
+          userId: recipient.userId,
+          organizationId: candidate.organizationId,
+          title: subject,
+          message: subject,
+          type: candidate.stage === "overdue" ? "warning" : "info",
+        });
+
+        recipientCount++;
+      } catch (error) {
+        // Avoid logging recipient email addresses. The internal user ID is
+        // sufficient to correlate the failure without exposing PII.
+        console.error(
+          `Reminder dispatch failed for user ${recipient.userId} (${candidate.entityType}:${candidate.entityId}:${candidate.stage})`,
+          error,
+        );
+        failure = error;
+      }
+    }
+
+    if (recipientCount > 0) {
+      await db
+        .update(reminderLog)
+        .set({ recipientCount })
+        .where(
+          and(
+            eq(reminderLog.entityType, candidate.entityType),
+            eq(reminderLog.entityId, candidate.entityId),
+            eq(reminderLog.stage, candidate.stage),
+            eq(reminderLog.targetDate, candidate.targetDate),
+          ),
+        );
+
+      return failure
+        ? { status: "partial", error: errorMessage(failure) }
+        : { status: "sent" };
+    }
+
+    if (failure) {
+      // A provider timeout can occur after it accepted the message. Once a
+      // delivery was attempted, retain the claim rather than risk a resend.
+      if (!deliveryAttempted) await releaseReminderSlot(candidate);
+      return { status: "failed", error: errorMessage(failure) };
+    }
+
+    // Nobody was eligible for either delivery channel, so no external side
+    // effect occurred and the unused claim can be released safely.
+    await releaseReminderSlot(candidate);
+    return { status: "skipped" };
+  } catch (error) {
+    // Release only when failure is known to have happened before an external
+    // side effect. After any attempt, the outcome may be ambiguous.
+    if (claimed && !deliveryAttempted) {
+      try {
+        await releaseReminderSlot(candidate);
+      } catch (releaseError) {
+        console.error(
+          `Failed to release reminder slot for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}`,
+          releaseError,
+        );
+      }
+    }
+
+    return { status: "failed", error: errorMessage(error) };
+  }
 }
 
 export async function runReminderSweep(): Promise<{
@@ -424,52 +608,21 @@ export async function runReminderSweep(): Promise<{
   ];
 
   for (const candidate of candidates) {
-    try {
-      if (await alreadySent(candidate)) continue;
-
-      const recipients = await recipientsForOrg(candidate.organizationId);
-      const preferenceKey = REMINDER_PREFERENCE_GATE[candidate.entityType];
-
-      let recipientCount = 0;
-      for (const recipient of recipients) {
-        const prefs = await getReminderPreferences(recipient.userId);
-        if (!prefs[preferenceKey]) continue;
-
-        const { subject, react } = candidate.render(recipient.name);
-
-        if (prefs.emailNotifications) {
-          await sendReminderEmail({ to: recipient.email, subject, react });
-        }
-
-        await createNotification({
-          userId: recipient.userId,
-          organizationId: candidate.organizationId,
-          title: subject,
-          message: subject,
-          type: candidate.stage === "overdue" ? "warning" : "info",
-        });
-
-        recipientCount++;
-      }
-
-      await db.insert(reminderLog).values({
-        id: nanoid(),
-        organizationId: candidate.organizationId,
-        entityType: candidate.entityType,
-        entityId: candidate.entityId,
-        stage: candidate.stage,
-        targetDate: candidate.targetDate,
-        recipientCount,
-      });
-
+    const outcome = await processReminderCandidate(candidate);
+    if (outcome.status === "sent") {
       sent++;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(
-        `Reminder sweep failed for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}`,
-        err,
+    } else if (outcome.status === "partial") {
+      sent++;
+      errors.push(
+        `${candidate.entityType}:${candidate.entityId}: partial — ${outcome.error}`,
       );
-      errors.push(`${candidate.entityType}:${candidate.entityId}: ${message}`);
+    } else if (outcome.status === "failed") {
+      console.error(
+        `Reminder sweep failed for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}: ${outcome.error}`,
+      );
+      errors.push(
+        `${candidate.entityType}:${candidate.entityId}: ${outcome.error}`,
+      );
     }
   }
 
