@@ -17,13 +17,13 @@ export interface PdfRenderContext {
 
 export interface PdfBranding {
   organizationName: string;
-  logoDataUri?: string;
-  phone?: string;
-  address?: string;
-  email?: string;
-  website?: string;
-  taxNumber?: string;
-  registrationNumber?: string;
+  logoDataUri?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  email?: string | null;
+  website?: string | null;
+  taxNumber?: string | null;
+  registrationNumber?: string | null;
 }
 
 export interface PdfRenderResult {
