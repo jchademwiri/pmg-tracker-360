@@ -34,7 +34,9 @@ export function formatDateSa(
       month: "short",
       year: "numeric",
       timeZone: "Africa/Johannesburg",
-    }).format(d);
+    })
+      .format(d)
+      .toUpperCase();
   } catch {
     return fallback;
   }
@@ -58,7 +60,9 @@ export function formatDateTimeSa(
       minute: "2-digit",
       hour12: false,
       timeZone: "Africa/Johannesburg",
-    }).format(d);
+    })
+      .format(d)
+      .toUpperCase();
   } catch {
     return fallback;
   }

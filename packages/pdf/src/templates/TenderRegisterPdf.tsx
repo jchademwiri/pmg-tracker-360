@@ -11,10 +11,10 @@ import { formatDateSa, formatZar } from "../formatters/index";
 
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();
-  if (s === "awarded" || s === "won") return <Badge variant="success">Awarded</Badge>;
-  if (s === "submitted") return <Badge variant="primary">Submitted</Badge>;
-  if (s === "evaluation" || s === "evaluated") return <Badge variant="primary">Evaluation</Badge>;
-  if (s === "preparation" || s === "draft") return <Badge variant="warning">Preparation</Badge>;
+  if (s === "awarded" || s === "won") return <Badge variant="success">AWARDED</Badge>;
+  if (s === "submitted") return <Badge variant="primary">SUBMITTED</Badge>;
+  if (s === "evaluation" || s === "evaluated") return <Badge variant="primary">EVALUATION</Badge>;
+  if (s === "preparation" || s === "draft") return <Badge variant="warning">PREPARATION</Badge>;
   if (s === "lost" || s === "cancelled") return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
   return <Badge variant="outline">{status.toUpperCase()}</Badge>;
 }
@@ -25,8 +25,8 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
     ? `CLIENT TENDER REPORT: ${data.clientName || "Client"}`
     : "TENDER REGISTER REPORT";
   const subtitle = isClientVariant
-    ? `Tender portfolio and submission history for ${data.clientName || "Client"}`
-    : "Comprehensive master register and submission tracking";
+    ? `TENDER PORTFOLIO AND SUBMISSION HISTORY FOR ${(data.clientName || "CLIENT").toUpperCase()}`
+    : "COMPREHENSIVE MASTER REGISTER AND SUBMISSION TRACKING";
 
   const portfolioColumns = [
     {
@@ -34,7 +34,7 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "TENDER #",
       width: "14%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 700, fontFamily: "monospace", color: trackerTheme.colors.primary }}>
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
           {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
         </span>
       ),
@@ -44,14 +44,16 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "CLIENT",
       width: "20%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 600 }}>{row.client || "—"}</span>
+        <span style={{ fontWeight: 600, textTransform: "uppercase" }}>{row.client || "—"}</span>
       ),
     },
     {
       id: "description",
       header: "DESCRIPTION",
       width: "32%",
-      accessorKey: "description" as const,
+      render: (row: TenderRegisterRowModel) => (
+        <span style={{ textTransform: "uppercase" }}>{row.description || "—"}</span>
+      ),
     },
     {
       id: "status",
@@ -79,7 +81,7 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "TENDER #",
       width: "16%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 700, fontFamily: "monospace", color: trackerTheme.colors.primary }}>
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
           {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
         </span>
       ),
@@ -88,13 +90,17 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       id: "description",
       header: "DESCRIPTION",
       width: "38%",
-      accessorKey: "description" as const,
+      render: (row: TenderRegisterRowModel) => (
+        <span style={{ textTransform: "uppercase" }}>{row.description || "—"}</span>
+      ),
     },
     {
       id: "contact",
       header: "CONTACT PERSON",
       width: "20%",
-      render: (row: TenderRegisterRowModel) => row.contactPerson || "—",
+      render: (row: TenderRegisterRowModel) => (
+        <span style={{ textTransform: "uppercase" }}>{row.contactPerson || "—"}</span>
+      ),
     },
     {
       id: "status",

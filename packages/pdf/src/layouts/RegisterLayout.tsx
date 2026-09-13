@@ -97,7 +97,7 @@ export function RegisterLayout({
           </div>
 
           {subtitle && (
-            <div style={{ fontSize: "9.5px", color: theme.colors.mutedForeground, lineHeight: "13px" }}>
+            <div style={{ fontSize: "9.5px", color: theme.colors.mutedForeground, lineHeight: "13px", textTransform: "uppercase" }}>
               {subtitle}
             </div>
           )}
@@ -125,8 +125,8 @@ export function RegisterLayout({
             </div>
           )}
 
-          <div style={{ fontSize: "9px", color: theme.colors.mutedForeground, marginTop: "2px" }}>
-            Exported: {generatedAtText}
+          <div style={{ fontSize: "9px", color: theme.colors.mutedForeground, marginTop: "2px", textTransform: "uppercase" }}>
+            EXPORTED: {generatedAtText}
           </div>
         </div>
       </div>

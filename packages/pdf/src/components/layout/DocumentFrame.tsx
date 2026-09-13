@@ -54,6 +54,7 @@ export function DocumentFrame({
 
 export interface RunningFooterProps {
   theme: PdfTheme;
+  orientation?: "portrait" | "landscape";
   branding?: PdfBranding;
   confidential?: boolean;
   generatedAtText?: string;
@@ -62,54 +63,68 @@ export interface RunningFooterProps {
 
 export function RunningFooter({
   theme,
+  orientation = "landscape",
   branding,
   confidential = false,
   generatedAtText,
   documentTitle,
 }: RunningFooterProps) {
-  const footerStyle: CSSProperties = {
-    display: "flex",
-    width: "100%",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingLeft: "32px",
-    paddingRight: "32px",
-    paddingTop: "6px",
-    paddingBottom: "8px",
-    borderTop: "1px solid #CBD5E1",
-    fontSize: "9px",
-    lineHeight: "12px",
-    color: theme.colors.mutedForeground,
-    fontFamily: theme.fontFamily,
-    boxSizing: "border-box",
-  };
+  const isLandscape = orientation === "landscape";
+  const margins = isLandscape ? theme.margins.landscape : theme.margins.portrait;
 
   return (
-    <div style={footerStyle} className="pdf-running-footer">
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        <span style={{ fontWeight: 700, color: theme.colors.primary, textTransform: "uppercase" }}>
-          {branding?.organizationName || "PMG TRACKER 360"}
-        </span>
-        {documentTitle && (
-          <>
-            <span>•</span>
-            <span style={{ fontWeight: 600, color: theme.colors.foreground, textTransform: "uppercase" }}>
-              {documentTitle}
-            </span>
-          </>
-        )}
-        {confidential && (
-          <span style={{ color: theme.colors.destructive, fontWeight: 700, marginLeft: "6px" }}>
-            CONFIDENTIAL
+    <div
+      style={{
+        width: "100%",
+        paddingLeft: `${margins.left}px`,
+        paddingRight: `${margins.right}px`,
+        boxSizing: "border-box",
+      }}
+      className="pdf-running-footer-wrapper"
+    >
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingTop: "6px",
+          paddingBottom: "8px",
+          borderTop: "1px solid #CBD5E1",
+          fontSize: "9px",
+          lineHeight: "12px",
+          color: theme.colors.mutedForeground,
+          fontFamily: theme.fontFamily,
+          textTransform: "uppercase",
+          boxSizing: "border-box",
+        }}
+        className="pdf-running-footer"
+      >
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <span style={{ fontWeight: 700, color: theme.colors.primary }}>
+            {branding?.organizationName || "PMG TRACKER 360"}
           </span>
-        )}
-      </div>
+          {documentTitle && (
+            <>
+              <span>•</span>
+              <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
+                {documentTitle}
+              </span>
+            </>
+          )}
+          {confidential && (
+            <span style={{ color: theme.colors.destructive, fontWeight: 700, marginLeft: "6px" }}>
+              CONFIDENTIAL
+            </span>
+          )}
+        </div>
 
-      <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-        {generatedAtText && <span>Generated: {generatedAtText}</span>}
-        <span style={{ fontWeight: 700, color: theme.colors.primary }}>
-          Page <PageNumber /> of <TotalPages />
-        </span>
+        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          {generatedAtText && <span>GENERATED: {generatedAtText}</span>}
+          <span style={{ fontWeight: 700, color: theme.colors.primary }}>
+            PAGE <PageNumber /> OF <TotalPages />
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -117,6 +132,7 @@ export function RunningFooter({
 
 export interface RunningHeaderProps {
   theme: PdfTheme;
+  orientation?: "portrait" | "landscape";
   branding?: PdfBranding;
   documentTitle?: string;
   documentNumber?: string;
@@ -124,37 +140,51 @@ export interface RunningHeaderProps {
 
 export function RunningHeader({
   theme,
+  orientation = "landscape",
   branding,
   documentTitle,
   documentNumber,
 }: RunningHeaderProps) {
-  const headerStyle: CSSProperties = {
-    display: "flex",
-    width: "100%",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingLeft: "32px",
-    paddingRight: "32px",
-    paddingTop: "8px",
-    paddingBottom: "8px",
-    borderBottom: `1px solid ${theme.colors.borderLight}`,
-    fontSize: "9px",
-    lineHeight: "12px",
-    color: theme.colors.mutedForeground,
-    fontFamily: theme.fontFamily,
-    boxSizing: "border-box",
-  };
+  const isLandscape = orientation === "landscape";
+  const margins = isLandscape ? theme.margins.landscape : theme.margins.portrait;
 
   return (
-    <div style={headerStyle} className="pdf-running-header">
-      <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
-        {branding?.organizationName || "PMG Tracker 360"}
-      </span>
-      {documentTitle && (
-        <span>
-          {documentTitle} {documentNumber ? `(${documentNumber})` : ""}
+    <div
+      style={{
+        width: "100%",
+        paddingLeft: `${margins.left}px`,
+        paddingRight: `${margins.right}px`,
+        boxSizing: "border-box",
+      }}
+      className="pdf-running-header-wrapper"
+    >
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingTop: "8px",
+          paddingBottom: "8px",
+          borderBottom: `1px solid ${theme.colors.borderLight}`,
+          fontSize: "9px",
+          lineHeight: "12px",
+          color: theme.colors.mutedForeground,
+          fontFamily: theme.fontFamily,
+          textTransform: "uppercase",
+          boxSizing: "border-box",
+        }}
+        className="pdf-running-header"
+      >
+        <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
+          {branding?.organizationName || "PMG TRACKER 360"}
         </span>
-      )}
+        {documentTitle && (
+          <span>
+            {documentTitle} {documentNumber ? `(${documentNumber})` : ""}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

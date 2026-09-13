@@ -57,7 +57,7 @@ function getStatusBadge(status: string) {
 
 export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
   const title = "MANAGEMENT TENDER FOLLOW-UP REPORT";
-  const subtitle = "Pipeline tracking, client contact details, and offer validity expiry for management action";
+  const subtitle = "PIPELINE TRACKING, CLIENT CONTACT DETAILS, AND OFFER VALIDITY EXPIRY FOR MANAGEMENT ACTION";
 
   const columns = [
     {
@@ -66,7 +66,7 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       width: "14%",
       render: (row: TenderFollowUpRowModel) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          <span style={{ fontWeight: 700, fontFamily: "monospace", color: trackerTheme.colors.primary }}>
+          <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
             {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
           </span>
           <div style={{ marginTop: "1px" }}>
@@ -80,7 +80,7 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       header: "CLIENT",
       width: "18%",
       render: (row: TenderFollowUpRowModel) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground }}>
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground, textTransform: "uppercase" }}>
           {row.client || "—"}
         </span>
       ),
@@ -90,7 +90,7 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       header: "DESCRIPTION",
       width: "26%",
       render: (row: TenderFollowUpRowModel) => (
-        <div style={{ fontSize: "9px", lineHeight: "13px", color: trackerTheme.colors.foreground }}>
+        <div style={{ fontSize: "9px", lineHeight: "13px", color: trackerTheme.colors.foreground, textTransform: "uppercase" }}>
           {row.description || "—"}
         </div>
       ),
@@ -102,24 +102,24 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       render: (row: TenderFollowUpRowModel) => {
         const hasContact = row.contactName || row.contactEmail || row.contactPhone;
         if (!hasContact) {
-          return <span style={{ color: trackerTheme.colors.mutedForeground }}>Not specified</span>;
+          return <span style={{ color: trackerTheme.colors.mutedForeground }}>NOT SPECIFIED</span>;
         }
 
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px", fontSize: "9px" }}>
             {row.contactName && (
-              <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground }}>
+              <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground, textTransform: "uppercase" }}>
                 {row.contactName}
               </span>
             )}
             {row.contactEmail && (
-              <span style={{ color: trackerTheme.colors.accent, wordBreak: "break-all" }}>
+              <span style={{ color: trackerTheme.colors.accent, wordBreak: "break-all", textTransform: "uppercase" }}>
                 {row.contactEmail}
               </span>
             )}
             {row.contactPhone && (
               <span style={{ color: trackerTheme.colors.mutedForeground }}>
-                Tel: {row.contactPhone}
+                TEL: {row.contactPhone}
               </span>
             )}
           </div>
@@ -161,7 +161,7 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
         data={data.rows}
         dense={true}
         orientation="landscape"
-        emptyMessage="No pending tenders found requiring management follow-up."
+        emptyMessage="NO PENDING TENDERS FOUND REQUIRING MANAGEMENT FOLLOW-UP."
       />
     </RegisterLayout>
   );
