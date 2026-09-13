@@ -7,6 +7,8 @@ import { jsPDF } from "jspdf";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import { getStatusConfig } from "@/components/ui/status-badge";
+import React from "react";
+import { isPdfcnEnabled, renderToPdf, TenderDetailPdf } from "@pmg/pdf";
 import {
   PAGE,
   splitText,
@@ -288,8 +290,51 @@ export async function generateTenderPdf(
   const orgMeta = parseOrganizationMetadata(org.metadata);
   const logoDataUri = await fetchLogoBase64(org.logo);
 
+  const fileName = `Tender-${row.tenderNumber}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, "-");
+
+  if (isPdfcnEnabled("tender-detail")) {
+    const result = await renderToPdf(
+      React.createElement(TenderDetailPdf, {
+        data: {
+          branding: {
+            organizationName: org.name,
+            logoDataUri,
+            phone: orgMeta.phone,
+            address: orgMeta.address,
+            website: orgMeta.website,
+          },
+          tenderNumber: row.tenderNumber,
+          status: row.status,
+          priority: row.priority,
+          clientName: row.clientName || "Not specified",
+          clientContact: {
+            name: row.contactName,
+            email: row.contactEmail,
+            phone: row.contactPhone,
+          },
+          description: row.description,
+          submissionDate: row.submissionDate,
+          evaluationDate: row.evaluationDate,
+          validityExpiryDate: row.validityDate,
+          estimatedValue: row.value ? parseFloat(row.value) || 0 : null,
+          awardValue: row.awardValue ? parseFloat(row.awardValue) || 0 : null,
+          briefingDate: row.briefingDate,
+          briefingLocation: row.briefingLocation,
+          lossReason: row.lossReason,
+          lossDetails: row.lossDetails,
+        },
+      }),
+      { orientation: "portrait" }
+    );
+
+    return {
+      fileName,
+      buffer: Buffer.from(result.bytes),
+    };
+  }
+
   return {
-    fileName: `Tender-${row.tenderNumber}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, "-"),
+    fileName,
     buffer: renderPdf({
       org: {
         name: org.name,

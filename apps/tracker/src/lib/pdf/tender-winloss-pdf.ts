@@ -3,6 +3,8 @@ import "server-only";
 import { jsPDF } from "jspdf";
 
 import { formatCurrency, formatDate } from "@/lib/format";
+import React from "react";
+import { isPdfcnEnabled, renderToPdf, TenderWinLossPdf } from "@pmg/pdf";
 import { getTenderWinLossReport } from "@/server/tender-reports";
 import {
   PAGE,
@@ -181,9 +183,62 @@ export async function generateTenderWinLossPdf(organizationId: string) {
   if (!result.success) return null;
 
   const logoDataUri = await fetchLogoBase64(result.data.org.logo);
+  const orgMeta = parseOrganizationMetadata(result.data.org.metadata as any);
+  const fileName = `Tender-Win-Loss-Summary-${new Date().toISOString().split("T")[0]}.pdf`;
+
+  if (isPdfcnEnabled("tender-win-loss")) {
+    const totalLostReasonCount = result.data.lossReasons.reduce((acc, r) => acc + r.count, 0);
+
+    const pdfResult = await renderToPdf(
+      React.createElement(TenderWinLossPdf, {
+        data: {
+          branding: {
+            organizationName: result.data.org.name,
+            logoDataUri,
+            phone: orgMeta.phone,
+            address: orgMeta.address,
+            website: orgMeta.website,
+          },
+          periodLabel: `As at ${formatDate(new Date())}`,
+          totalSubmissions: result.data.summary.wonCount + result.data.summary.lostCount,
+          awardedCount: result.data.summary.wonCount,
+          lostCount: result.data.summary.lostCount,
+          winRate: parseFloat(String(result.data.summary.winRate)) || 0,
+          awardedValueTotal: parseFloat(String(result.data.summary.totalWonValue)) || 0,
+          lostValueTotal: parseFloat(String(result.data.summary.totalLostValue)) || 0,
+          awardedTenders: result.data.awarded.map((t) => ({
+            tenderNumber: t.tenderNumber,
+            client: t.clientName || "—",
+            description: "",
+            awardValue: parseFloat(String(t.awardValue)) || 0,
+            awardDate: t.submissionDate,
+          })),
+          lostTenders: result.data.lost.map((t) => ({
+            tenderNumber: t.tenderNumber,
+            client: t.clientName || "—",
+            description: "",
+            estimatedValue: parseFloat(String(t.value)) || 0,
+            lossReason: t.lossReason,
+          })),
+          lossReasonsSummary: result.data.lossReasons.map((r) => ({
+            reason: r.reason,
+            count: r.count,
+            value: 0,
+            percentage: totalLostReasonCount > 0 ? (r.count / totalLostReasonCount) * 100 : 0,
+          })),
+        },
+      }),
+      { orientation: "portrait" }
+    );
+
+    return {
+      fileName,
+      buffer: Buffer.from(pdfResult.bytes),
+    };
+  }
 
   return {
-    fileName: `Tender-Win-Loss-Summary-${new Date().toISOString().split("T")[0]}.pdf`,
+    fileName,
     buffer: renderPdf(result.data, logoDataUri),
   };
 }

@@ -6,4 +6,6 @@ export * from "./renderer/index.js";
 export * from "./components/index.js";
 export * from "./layouts/index.js";
 export * from "./templates/PurchaseOrderPdf.js";
+export * from "./templates/TenderDetailPdf.js";
+export * from "./templates/TenderWinLossPdf.js";
 export * from "./utils/feature-flags.js";

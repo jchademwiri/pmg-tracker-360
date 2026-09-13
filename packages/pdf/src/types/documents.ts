@@ -48,6 +48,7 @@ export interface TenderDetailPdfModel {
   } | null;
   description?: string | null;
   submissionDate?: Date | string | null;
+  evaluationDate?: Date | string | null;
   briefingDate?: Date | string | null;
   briefingLocation?: string | null;
   validityExpiryDate?: Date | string | null;
