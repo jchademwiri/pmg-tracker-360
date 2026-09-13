@@ -263,6 +263,13 @@ function drawTable(
   };
 
   drawHeader();
+  if (rows.length === 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY);
+    doc.text("No tenders found for the selected criteria.", MARGIN + 2, y + 8);
+    return y + 16;
+  }
   rows.forEach(drawRow);
   return y;
 }
@@ -462,26 +469,27 @@ export async function getTenderRegisterPdf(
   organizationId: string,
   filterOrClientId?: string | TenderReportFilterOptions,
 ) {
-  await validateSessionAndOrg(organizationId);
+  try {
+    await validateSessionAndOrg(organizationId);
 
-  const filterOptions: TenderReportFilterOptions =
-    typeof filterOrClientId === "string"
-      ? { clientId: filterOrClientId }
-      : filterOrClientId || {};
+    const filterOptions: TenderReportFilterOptions =
+      typeof filterOrClientId === "string"
+        ? { clientId: filterOrClientId }
+        : filterOrClientId || {};
 
-  const clientId = filterOptions.clientId;
-  const periodLabel = filterOptions.periodLabel || "All Time";
+    const clientId = filterOptions.clientId;
+    const periodLabel = filterOptions.periodLabel || "All Time";
 
-  const org = await db.query.organization.findFirst({
-    where: eq(organization.id, organizationId),
-  });
-  const orgName = org?.name || "";
-  const rows = await getRows(organizationId, filterOptions);
-  if (clientId && !rows.length)
-    return {
-      success: false as const,
-      error: "Client not found or has no tenders in selected period.",
-    };
+    const org = await db.query.organization.findFirst({
+      where: eq(organization.id, organizationId),
+    });
+    const orgName = org?.name || "";
+    const rows = await getRows(organizationId, filterOptions);
+    if (clientId && !rows.length)
+      return {
+        success: false as const,
+        error: "Client not found or has no tenders in selected period.",
+      };
 
   const periodSlug = filterOptions.preset && filterOptions.preset !== "all"
     ? `-${filterOptions.preset}`
@@ -577,9 +585,16 @@ export async function getTenderRegisterPdf(
     ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
     : renderPortfolio(rows, orgName);
 
-  return {
-    success: true as const,
-    buffer,
-    filename,
-  };
+    return {
+      success: true as const,
+      buffer,
+      filename,
+    };
+  } catch (error: unknown) {
+    console.error("Error generating tender register PDF:", error);
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Failed to generate tender register PDF.",
+    };
+  }
 }

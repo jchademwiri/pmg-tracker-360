@@ -36,24 +36,37 @@ export async function GET(request: Request) {
   const { calculateDateRange } = await import("@/lib/date-range-presets");
   const range = calculateDateRange(preset, customStart, customEnd);
 
-  const result = await getTenderRegisterPdf(
-    session.session.activeOrganizationId,
-    {
-      clientId,
-      preset: range.preset,
-      startDate: range.startDate,
-      endDate: range.endDate,
-      periodLabel: range.periodLabel,
-    },
-  );
-  if (!result.success)
-    return NextResponse.json({ error: result.error }, { status: 500 });
+  try {
+    const result = await getTenderRegisterPdf(
+      session.session.activeOrganizationId,
+      {
+        clientId,
+        preset: range.preset,
+        startDate: range.startDate,
+        endDate: range.endDate,
+        periodLabel: range.periodLabel,
+      },
+    );
+    if (!result.success)
+      return NextResponse.json({ error: result.error || "Failed to generate PDF." }, { status: 500 });
 
-  return new NextResponse(result.buffer as BodyInit, {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${result.filename}"`,
-      "Cache-Control": "no-store",
-    },
-  });
+    return new NextResponse(result.buffer as BodyInit, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${result.filename}"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("Tender register PDF export failed:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred generating PDF report.",
+      },
+      { status: 500 },
+    );
+  }
 }

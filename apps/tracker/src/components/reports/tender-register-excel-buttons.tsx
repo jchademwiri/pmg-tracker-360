@@ -24,7 +24,7 @@ async function downloadReport(url: string, fallbackFilename: string) {
   const response = await fetch(url);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error || "Report export failed");
+    throw new Error(body?.error || `Export failed with status ${response.status}`);
   }
   const blob = await response.blob();
   const disposition = response.headers.get("content-disposition");
