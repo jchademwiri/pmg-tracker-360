@@ -182,11 +182,11 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
               {currentMonth}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-3 flex-1 min-h-0 bg-background/20 overflow-auto">
+          <CardContent className="p-3 flex-1 min-h-0 bg-background/20 overflow-hidden flex flex-col justify-between">
             {isPending && (
-              <div className="h-0.5 w-full bg-primary animate-pulse rounded-full mb-2" />
+              <div className="h-0.5 w-full bg-primary animate-pulse rounded-full mb-2 shrink-0" />
             )}
-            <div className="mini-calendar text-xs">
+            <div className="mini-calendar text-xs flex-1 flex flex-col">
               <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
@@ -194,13 +194,20 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                 dayHeaderFormat={{ weekday: "short" }}
                 events={events}
                 datesSet={handleDatesSet}
-                height="auto"
+                height="100%"
                 dayMaxEvents={2}
               />
               <style jsx global>{`
                 .mini-calendar .fc {
                   --fc-border-color: rgba(255, 255, 255, 0.05);
                   --fc-page-bg-color: transparent;
+                  height: 100% !important;
+                }
+                .mini-calendar .fc-scroller {
+                  overflow: hidden !important;
+                }
+                .mini-calendar .fc-scroller-liquid-absolute {
+                  overflow: hidden !important;
                 }
                 .mini-calendar .fc-header-toolbar {
                   margin-bottom: 0.5rem !important;
