@@ -27,11 +27,24 @@ export async function GET(request: Request) {
       { status: 403 },
     );
 
-  const clientId =
-    new URL(request.url).searchParams.get("clientId") || undefined;
+  const url = new URL(request.url);
+  const clientId = url.searchParams.get("clientId") || undefined;
+  const preset = (url.searchParams.get("preset") as any) || "all";
+  const customStart = url.searchParams.get("startDate");
+  const customEnd = url.searchParams.get("endDate");
+
+  const { calculateDateRange } = await import("@/lib/date-range-presets");
+  const range = calculateDateRange(preset, customStart, customEnd);
+
   const result = await getTendersExportExcel(
     session.session.activeOrganizationId,
-    clientId,
+    {
+      clientId,
+      preset: range.preset,
+      startDate: range.startDate,
+      endDate: range.endDate,
+      periodLabel: range.periodLabel,
+    },
   );
   if (!result.success)
     return NextResponse.json({ error: result.error }, { status: 500 });

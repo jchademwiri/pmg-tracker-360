@@ -4,7 +4,7 @@ import "server-only";
 
 import { db } from "@pmg/db";
 import { client, organization, tender, tenderExtension } from "@pmg/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { jsPDF } from "jspdf";
 
 import { getStatusConfig } from "@/components/ui/status-badge";
@@ -12,6 +12,15 @@ import { validateSessionAndOrg } from "./utils";
 import React from "react";
 import { isPdfcnEnabled, renderToPdf, TenderRegisterPdf, formatZar } from "@pmg/pdf";
 import { fetchLogoBase64, parseOrganizationMetadata } from "@/lib/pdf/pdf-layout";
+import type { DateRangePreset } from "@/lib/date-range-presets";
+
+export interface TenderReportFilterOptions {
+  clientId?: string;
+  preset?: DateRangePreset;
+  startDate?: Date;
+  endDate?: Date;
+  periodLabel?: string;
+}
 
 const NAVY = [23, 54, 93] as const;
 const BLUE = [47, 117, 181] as const;
@@ -362,7 +371,14 @@ function renderClient(
   return Buffer.from(doc.output("arraybuffer"));
 }
 
-async function getRows(organizationId: string, clientId?: string) {
+async function getRows(
+  organizationId: string,
+  options?: TenderReportFilterOptions,
+) {
+  const clientId = options?.clientId;
+  const startDate = options?.startDate;
+  const endDate = options?.endDate;
+
   const raw = await db
     .select({
       id: tender.id,
@@ -386,6 +402,8 @@ async function getRows(organizationId: string, clientId?: string) {
         eq(tender.organizationId, organizationId),
         isNull(tender.deletedAt),
         ...(clientId ? [eq(tender.clientId, clientId)] : []),
+        ...(startDate ? [gte(tender.submissionDate, startDate)] : []),
+        ...(endDate ? [lte(tender.submissionDate, endDate)] : []),
       ),
     );
 
@@ -439,26 +457,38 @@ async function getRows(organizationId: string, clientId?: string) {
 
 export async function getTenderRegisterPdf(
   organizationId: string,
-  clientId?: string,
+  filterOrClientId?: string | TenderReportFilterOptions,
 ) {
   await validateSessionAndOrg(organizationId);
+
+  const filterOptions: TenderReportFilterOptions =
+    typeof filterOrClientId === "string"
+      ? { clientId: filterOrClientId }
+      : filterOrClientId || {};
+
+  const clientId = filterOptions.clientId;
+  const periodLabel = filterOptions.periodLabel || "All Time";
+
   const org = await db.query.organization.findFirst({
     where: eq(organization.id, organizationId),
   });
   const orgName = org?.name || "";
-  const rows = await getRows(organizationId, clientId);
+  const rows = await getRows(organizationId, filterOptions);
   if (clientId && !rows.length)
     return {
       success: false as const,
-      error: "Client not found or has no tenders.",
+      error: "Client not found or has no tenders in selected period.",
     };
 
+  const periodSlug = filterOptions.preset && filterOptions.preset !== "all"
+    ? `-${filterOptions.preset}`
+    : "";
   const slug =
     (clientId ? rows[0]?.clientName : "tender-register")
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "tender-register";
-  const filename = `${slug}-${new Date().toISOString().slice(0, 10)}.pdf`;
+  const filename = `${slug}${periodSlug}-${new Date().toISOString().slice(0, 10)}.pdf`;
 
   if (isPdfcnEnabled("tender-register")) {
     const orgMeta = parseOrganizationMetadata(org?.metadata);
@@ -495,6 +525,15 @@ export async function getTenderRegisterPdf(
       ];
     }
 
+    const filterPills = [
+      ...(clientId
+        ? [{ label: "Client", value: text(rows[0]?.clientName) || "Client" }]
+        : [{ label: "Scope", value: "Master Register" }]),
+      ...(filterOptions.periodLabel && filterOptions.periodLabel !== "All Time"
+        ? [{ label: "Period", value: filterOptions.periodLabel }]
+        : []),
+    ];
+
     const pdfResult = await renderToPdf(
       React.createElement(TenderRegisterPdf, {
         data: {
@@ -507,9 +546,7 @@ export async function getTenderRegisterPdf(
           },
           variant: clientId ? "client" : "portfolio",
           clientName: clientId ? (text(rows[0]?.clientName) || "Client") : null,
-          filterPills: clientId
-            ? [{ label: "Client", value: text(rows[0]?.clientName) || "Client" }]
-            : [{ label: "Scope", value: "Master Register" }],
+          filterPills,
           kpiCards,
           rows: rows.map((r) => ({
             tenderNumber: r.tenderNumber || "—",
