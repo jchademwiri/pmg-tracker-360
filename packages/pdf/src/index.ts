@@ -9,4 +9,5 @@ export * from "./templates/PurchaseOrderPdf.js";
 export * from "./templates/TenderDetailPdf.js";
 export * from "./templates/TenderWinLossPdf.js";
 export * from "./templates/TenderRegisterPdf.js";
+export * from "./templates/AdminReportPdf.js";
 export * from "./utils/feature-flags.js";
