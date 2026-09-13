@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import clsx from "clsx";
-import type { KpiCardItem, PdfTheme } from "../../types/index.js";
+import type { KpiCardItem, PdfTheme } from "../../types/index";
 
 export interface KpiCardsProps {
   theme: PdfTheme;

@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
-import type { DataTableColumn, PdfTheme } from "../../types/index.js";
-import { EmptyState } from "../display/EmptyState.js";
+import type { DataTableColumn, PdfTheme } from "../../types/index";
+import { EmptyState } from "../display/EmptyState";
 
 export interface DataTableProps<T> {
   theme: PdfTheme;

@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
-import type { BadgeVariant } from "../../types/index.js";
+import type { BadgeVariant } from "../../types/index";
 
 export interface BadgeProps {
   children?: ReactNode;

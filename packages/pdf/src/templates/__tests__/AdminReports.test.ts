@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import React from "react";
-import { renderToPdf } from "../../renderer/index.js";
-import { AdminReportPdf } from "../AdminReportPdf.js";
-import type { AdminReportPdfModel } from "../../types/documents.js";
+import { renderToPdf } from "../../renderer/index";
+import { AdminReportPdf } from "../AdminReportPdf";
+import type { AdminReportPdfModel } from "../../types/documents";
 
 describe("AdminReportPdf Template", () => {
   it("renders a Platform Executive report successfully", async () => {

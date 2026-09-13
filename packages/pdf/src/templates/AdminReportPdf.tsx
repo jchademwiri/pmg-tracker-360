@@ -3,17 +3,17 @@ import type {
   AdminReportMetricItem,
   AdminReportPdfModel,
   AdminReportSectionModel,
-} from "../types/documents.js";
-import type { DataTableColumn, KpiCardItem } from "../types/index.js";
-import { adminTheme } from "../themes/admin.js";
+} from "../types/documents";
+import type { DataTableColumn, KpiCardItem } from "../types/index";
+import { adminTheme } from "../themes/admin";
 import {
   AnalyticalLayout,
   type AnalyticalSection,
-} from "../layouts/AnalyticalLayout.js";
-import { KpiCards } from "../components/display/KpiCards.js";
-import { DataTable } from "../components/table/DataTable.js";
-import { Badge } from "../components/primitives/Badge.js";
-import { Text } from "../components/primitives/Text.js";
+} from "../layouts/AnalyticalLayout";
+import { KpiCards } from "../components/display/KpiCards";
+import { DataTable } from "../components/table/DataTable";
+import { Badge } from "../components/primitives/Badge";
+import { Text } from "../components/primitives/Text";
 
 function getStatusBadgeVariant(status?: string): "success" | "warning" | "destructive" | "primary" | "secondary" {
   if (!status) return "secondary";

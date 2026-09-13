@@ -1,3 +1,3 @@
-export * from "./TransactionalLayout.js";
-export * from "./RegisterLayout.js";
-export * from "./AnalyticalLayout.js";
+export * from "./TransactionalLayout";
+export * from "./RegisterLayout";
+export * from "./AnalyticalLayout";

@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { KpiCardItem, PdfBranding, PdfTheme } from "../types/index.js";
-import { DocumentFrame } from "../components/layout/DocumentFrame.js";
-import { PageHeader } from "../components/layout/PageHeader.js";
-import { KpiCards } from "../components/display/KpiCards.js";
-import { Heading } from "../components/primitives/Heading.js";
-import { formatDateTimeSa } from "../formatters/index.js";
+import type { KpiCardItem, PdfBranding, PdfTheme } from "../types/index";
+import { DocumentFrame } from "../components/layout/DocumentFrame";
+import { PageHeader } from "../components/layout/PageHeader";
+import { KpiCards } from "../components/display/KpiCards";
+import { Heading } from "../components/primitives/Heading";
+import { formatDateTimeSa } from "../formatters/index";
 
 export interface AnalyticalSection {
   id: string;

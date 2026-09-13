@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { PdfBranding, PdfTheme } from "../types/index.js";
-import { DocumentFrame, RunningFooter, RunningHeader } from "../components/layout/DocumentFrame.js";
-import { PageHeader } from "../components/layout/PageHeader.js";
-import { TwoColumnCards } from "../components/display/KeyValueGrid.js";
-import { Divider } from "../components/primitives/Divider.js";
-import { formatDateTimeSa, formatZar } from "../formatters/index.js";
+import type { PdfBranding, PdfTheme } from "../types/index";
+import { DocumentFrame, RunningFooter, RunningHeader } from "../components/layout/DocumentFrame";
+import { PageHeader } from "../components/layout/PageHeader";
+import { TwoColumnCards } from "../components/display/KeyValueGrid";
+import { Divider } from "../components/primitives/Divider";
+import { formatDateTimeSa, formatZar } from "../formatters/index";
 
 export interface TransactionalTotals {
   subtotal: number | string;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { isPdfcnEnabled, parsePdfcnAllowlist } from "../feature-flags.js";
+import { isPdfcnEnabled, parsePdfcnAllowlist } from "../feature-flags";
 
 describe("PDFCN Feature Flags", () => {
   it("returns empty set when env is undefined or empty", () => {

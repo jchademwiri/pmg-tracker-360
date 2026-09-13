@@ -1,14 +1,14 @@
-export * from "./primitives/Text.js";
-export * from "./primitives/Heading.js";
-export * from "./primitives/Badge.js";
-export * from "./primitives/Divider.js";
-export * from "./primitives/Stack.js";
+export * from "./primitives/Text";
+export * from "./primitives/Heading";
+export * from "./primitives/Badge";
+export * from "./primitives/Divider";
+export * from "./primitives/Stack";
 
-export * from "./layout/DocumentFrame.js";
-export * from "./layout/PageHeader.js";
+export * from "./layout/DocumentFrame";
+export * from "./layout/PageHeader";
 
-export * from "./display/KeyValueGrid.js";
-export * from "./display/KpiCards.js";
-export * from "./display/EmptyState.js";
+export * from "./display/KeyValueGrid";
+export * from "./display/KpiCards";
+export * from "./display/EmptyState";
 
-export * from "./table/DataTable.js";
+export * from "./table/DataTable";

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import React from "react";
-import { renderToPdf } from "../../renderer/index.js";
-import { PurchaseOrderPdf } from "../PurchaseOrderPdf.js";
-import type { PurchaseOrderPdfModel } from "../../types/documents.js";
+import { renderToPdf } from "../../renderer/index";
+import { PurchaseOrderPdf } from "../PurchaseOrderPdf";
+import type { PurchaseOrderPdfModel } from "../../types/documents";
 
 describe("PurchaseOrderPdf Template", () => {
   const mockBaseData: PurchaseOrderPdfModel = {

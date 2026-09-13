@@ -1,4 +1,4 @@
-import type { PdfBranding } from "./index.js";
+import type { PdfBranding } from "./index";
 
 export interface PurchaseOrderLineItem {
   itemNumber: string;

@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import type {
   TenderRegisterPdfModel,
   TenderRegisterRowModel,
-} from "../types/documents.js";
-import { trackerTheme } from "../themes/tracker.js";
-import { RegisterLayout } from "../layouts/RegisterLayout.js";
-import { DataTable } from "../components/table/DataTable.js";
-import { Badge } from "../components/primitives/Badge.js";
-import { formatDateSa, formatZar } from "../formatters/index.js";
+} from "../types/documents";
+import { trackerTheme } from "../themes/tracker";
+import { RegisterLayout } from "../layouts/RegisterLayout";
+import { DataTable } from "../components/table/DataTable";
+import { Badge } from "../components/primitives/Badge";
+import { formatDateSa, formatZar } from "../formatters/index";
 
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();

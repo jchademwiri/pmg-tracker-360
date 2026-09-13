@@ -1,4 +1,4 @@
-import type { PdfTheme } from "../types/index.js";
+import type { PdfTheme } from "../types/index";
 
 export const trackerTheme: PdfTheme = {
   name: "tracker",

@@ -1,4 +1,4 @@
-import type { PdfDocumentKind } from "../types/index.js";
+import type { PdfDocumentKind } from "../types/index";
 
 const VALID_DOCUMENT_KINDS: ReadonlySet<string> = new Set<PdfDocumentKind>([
   "purchase-order",

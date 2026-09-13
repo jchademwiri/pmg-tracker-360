@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import React from "react";
-import { renderToPdf } from "../index.js";
-import { trackerTheme, adminTheme } from "../../themes/index.js";
-import { TransactionalLayout } from "../../layouts/TransactionalLayout.js";
-import { RegisterLayout } from "../../layouts/RegisterLayout.js";
-import { AnalyticalLayout } from "../../layouts/AnalyticalLayout.js";
-import { DataTable } from "../../components/table/DataTable.js";
-import { Badge } from "../../components/primitives/Badge.js";
-import { KeyValueCard } from "../../components/display/KeyValueGrid.js";
+import { renderToPdf } from "../index";
+import { trackerTheme, adminTheme } from "../../themes/index";
+import { TransactionalLayout } from "../../layouts/TransactionalLayout";
+import { RegisterLayout } from "../../layouts/RegisterLayout";
+import { AnalyticalLayout } from "../../layouts/AnalyticalLayout";
+import { DataTable } from "../../components/table/DataTable";
+import { Badge } from "../../components/primitives/Badge";
+import { KeyValueCard } from "../../components/display/KeyValueGrid";
 
 describe("@pmg/pdf Renderer & Layout Archetypes", () => {
   const mockBranding = {

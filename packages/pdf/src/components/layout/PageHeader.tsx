@@ -1,9 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
-import type { PdfBranding, PdfTheme } from "../../types/index.js";
-import { Heading } from "../primitives/Heading.js";
-import { Text } from "../primitives/Text.js";
-import { Stack } from "../primitives/Stack.js";
+import type { PdfBranding, PdfTheme } from "../../types/index";
+import { Heading } from "../primitives/Heading";
+import { Text } from "../primitives/Text";
+import { Stack } from "../primitives/Stack";
 
 export interface PageHeaderProps {
   theme: PdfTheme;

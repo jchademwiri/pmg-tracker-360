@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import type { PurchaseOrderLineItem, PurchaseOrderPdfModel } from "../types/documents.js";
-import type { BadgeVariant } from "../types/index.js";
-import { trackerTheme } from "../themes/tracker.js";
-import { TransactionalLayout } from "../layouts/TransactionalLayout.js";
-import { KeyValueCard } from "../components/display/KeyValueGrid.js";
-import { DataTable } from "../components/table/DataTable.js";
-import { Badge } from "../components/primitives/Badge.js";
-import { formatDateSa, formatZar } from "../formatters/index.js";
+import type { PurchaseOrderLineItem, PurchaseOrderPdfModel } from "../types/documents";
+import type { BadgeVariant } from "../types/index";
+import { trackerTheme } from "../themes/tracker";
+import { TransactionalLayout } from "../layouts/TransactionalLayout";
+import { KeyValueCard } from "../components/display/KeyValueGrid";
+import { DataTable } from "../components/table/DataTable";
+import { Badge } from "../components/primitives/Badge";
+import { formatDateSa, formatZar } from "../formatters/index";
 
 function getPoBadgeVariant(status: string): BadgeVariant {
   const s = status.toLowerCase();

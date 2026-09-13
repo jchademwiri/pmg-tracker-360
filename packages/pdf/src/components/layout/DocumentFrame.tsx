@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
-import type { PdfBranding, PdfTheme } from "../../types/index.js";
+import type { PdfBranding, PdfTheme } from "../../types/index";
 import { PageNumber, TotalPages } from "takumi-pdf/primitives";
 
 export interface DocumentFrameProps {

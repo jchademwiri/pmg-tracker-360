@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
-import type { KeyValueItem, PdfTheme } from "../../types/index.js";
+import type { KeyValueItem, PdfTheme } from "../../types/index";
 
 export interface KeyValueCardProps {
   theme: PdfTheme;

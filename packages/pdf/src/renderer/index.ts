@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import path from "node:path";
 import type { ReactNode } from "react";
 import * as takumi from "takumi-pdf/no-init";
 import type {
@@ -9,7 +10,7 @@ import type {
   PdfMetadata,
   RenderOptions,
 } from "takumi-pdf/no-init";
-import type { PdfOrientation, PdfRenderResult } from "../types/index.js";
+import type { PdfOrientation, PdfRenderResult } from "../types/index";
 
 let isWasmInitialized = false;
 
@@ -18,7 +19,8 @@ function ensureWasmInitialized(): void {
 
   try {
     const require = createRequire(import.meta.url);
-    const wasmPath = require.resolve("takumi-pdf/takumi_pdf_wasm_bg.wasm");
+    const noInitEntry = require.resolve("takumi-pdf/no-init");
+    const wasmPath = path.join(path.dirname(noInitEntry), "..", "pkg", "takumi_pdf_wasm_bg.wasm");
     const wasmBytes = readFileSync(wasmPath);
     takumi.initSync({ module: wasmBytes });
     isWasmInitialized = true;

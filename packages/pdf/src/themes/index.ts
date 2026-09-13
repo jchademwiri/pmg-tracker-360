@@ -1,9 +1,9 @@
-export * from "./tracker.js";
-export * from "./admin.js";
+export * from "./tracker";
+export * from "./admin";
 
-import { trackerTheme } from "./tracker.js";
-import { adminTheme } from "./admin.js";
-import type { PdfTheme } from "../types/index.js";
+import { trackerTheme } from "./tracker";
+import { adminTheme } from "./admin";
+import type { PdfTheme } from "../types/index";
 
 export function getTheme(themeName?: "tracker" | "admin"): PdfTheme {
   if (themeName === "admin") return adminTheme;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import React from "react";
-import { renderToPdf } from "../../renderer/index.js";
-import { TenderDetailPdf } from "../TenderDetailPdf.js";
-import { TenderWinLossPdf } from "../TenderWinLossPdf.js";
-import type { TenderDetailPdfModel, TenderWinLossPdfModel } from "../../types/documents.js";
+import { renderToPdf } from "../../renderer/index";
+import { TenderDetailPdf } from "../TenderDetailPdf";
+import { TenderWinLossPdf } from "../TenderWinLossPdf";
+import type { TenderDetailPdfModel, TenderWinLossPdfModel } from "../../types/documents";
 
 describe("Tender Detail and Win/Loss Templates", () => {
   const mockBranding = {

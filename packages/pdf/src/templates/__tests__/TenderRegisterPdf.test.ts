@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import React from "react";
-import { renderToPdf } from "../../renderer/index.js";
-import { TenderRegisterPdf } from "../TenderRegisterPdf.js";
-import type { TenderRegisterPdfModel } from "../../types/documents.js";
+import { renderToPdf } from "../../renderer/index";
+import { TenderRegisterPdf } from "../TenderRegisterPdf";
+import type { TenderRegisterPdfModel } from "../../types/documents";
 
 describe("TenderRegisterPdf Template", () => {
   const mockBranding = {

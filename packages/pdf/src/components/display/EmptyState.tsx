@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import clsx from "clsx";
-import type { PdfTheme } from "../../types/index.js";
+import type { PdfTheme } from "../../types/index";
 
 export interface EmptyStateProps {
   theme: PdfTheme;

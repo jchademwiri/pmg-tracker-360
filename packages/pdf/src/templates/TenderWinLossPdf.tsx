@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import type { TenderWinLossPdfModel } from "../types/documents.js";
-import { trackerTheme } from "../themes/tracker.js";
-import { AnalyticalLayout, type AnalyticalSection } from "../layouts/AnalyticalLayout.js";
-import { DataTable } from "../components/table/DataTable.js";
-import { formatDateSa, formatPercent, formatZar } from "../formatters/index.js";
+import type { TenderWinLossPdfModel } from "../types/documents";
+import { trackerTheme } from "../themes/tracker";
+import { AnalyticalLayout, type AnalyticalSection } from "../layouts/AnalyticalLayout";
+import { DataTable } from "../components/table/DataTable";
+import { formatDateSa, formatPercent, formatZar } from "../formatters/index";
 
 export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
   const kpiCards = [

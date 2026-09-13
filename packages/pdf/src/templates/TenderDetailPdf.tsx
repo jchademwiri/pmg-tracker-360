@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import type { TenderDetailPdfModel } from "../types/documents.js";
-import type { BadgeVariant } from "../types/index.js";
-import { trackerTheme } from "../themes/tracker.js";
-import { TransactionalLayout } from "../layouts/TransactionalLayout.js";
-import { KeyValueCard } from "../components/display/KeyValueGrid.js";
-import { Badge } from "../components/primitives/Badge.js";
-import { Heading } from "../components/primitives/Heading.js";
-import { formatDateSa, formatZar } from "../formatters/index.js";
+import type { TenderDetailPdfModel } from "../types/documents";
+import type { BadgeVariant } from "../types/index";
+import { trackerTheme } from "../themes/tracker";
+import { TransactionalLayout } from "../layouts/TransactionalLayout";
+import { KeyValueCard } from "../components/display/KeyValueGrid";
+import { Badge } from "../components/primitives/Badge";
+import { Heading } from "../components/primitives/Heading";
+import { formatDateSa, formatZar } from "../formatters/index";
 
 function getTenderBadgeVariant(status: string): BadgeVariant {
   const s = status.toLowerCase();
