@@ -6,6 +6,8 @@ import { and, eq, isNull } from "drizzle-orm";
 import { jsPDF } from "jspdf";
 
 import { formatCurrency, formatDate } from "@/lib/format";
+import React from "react";
+import { isPdfcnEnabled, renderToPdf, PurchaseOrderPdf } from "@pmg/pdf";
 import {
   PAGE,
   splitText,
@@ -269,8 +271,42 @@ export async function generatePurchaseOrderPdf(
     totals: { subtotal, vat, total: subtotal + vat },
   };
 
+  const fileName = `PO-${po.poNumber}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, "-");
+
+  if (isPdfcnEnabled("purchase-order")) {
+    const result = await renderToPdf(
+      React.createElement(PurchaseOrderPdf, {
+        data: {
+          branding: {
+            organizationName: data.org.name,
+            logoDataUri: data.org.logoDataUri,
+            phone: data.org.phone,
+            address: data.org.address,
+            website: data.org.website,
+          },
+          poNumber: data.poNumber,
+          status: data.status,
+          description: data.description,
+          supplierName: data.supplierName,
+          deliveryAddress: data.deliveryAddress,
+          poDate: data.poDate,
+          expectedDeliveryDate: data.expectedDeliveryDate,
+          project: data.project,
+          lineItems: data.lineItems,
+          totals: data.totals,
+        },
+      }),
+      { orientation: "portrait" },
+    );
+
+    return {
+      fileName,
+      buffer: Buffer.from(result.bytes),
+    };
+  }
+
   return {
-    fileName: `PO-${po.poNumber}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, "-"),
+    fileName,
     buffer: renderPdf(data),
   };
 }

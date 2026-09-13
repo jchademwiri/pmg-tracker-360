@@ -10,6 +10,7 @@ import {
   LifeBuoy,
   Truck,
   HardDrive,
+  FileDown,
 } from "lucide-react";
 
 export const dashboadLinks = {
@@ -51,6 +52,11 @@ export const dashboadLinks = {
       title: "Reports",
       url: "/reports",
       icon: BarChart3,
+    },
+    {
+      title: "Downloads",
+      url: "/downloads",
+      icon: FileDown,
     },
     {
       title: "Storage",

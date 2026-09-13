@@ -1,4 +1,13 @@
 import { jsPDF } from "jspdf";
+import React from "react";
+import {
+  AdminReportPdf,
+  formatDateSa,
+  formatZar,
+  isPdfcnEnabled,
+  renderToPdf,
+  type AdminReportPdfModel,
+} from "@pmg/pdf";
 import {
   getPlatformOverviewStats,
   getStorageBreakdown,
@@ -13,6 +22,227 @@ export async function generatePlatformExecutivePdf(): Promise<Buffer> {
     getAllTenantsUtilization(),
     getSecurityComplianceMetrics(),
   ]);
+
+  if (isPdfcnEnabled("platform-executive")) {
+    const model: AdminReportPdfModel = {
+      branding: {
+        organizationName: "PMG Tracker 360",
+      },
+      kind: "platform-executive",
+      title: "PMG TRACKER 360",
+      subtitle: "Platform Executive Overview & Multi-Tenant Utilization",
+      periodLabel: new Date().toLocaleDateString("en-GB", {
+        month: "short",
+        year: "numeric",
+      }),
+      systemStatus:
+        overview.storageWarningStatus === "healthy"
+          ? "System Optimal"
+          : overview.storageWarningStatus.toUpperCase(),
+      kpiCards: [
+        {
+          label: "Total Organizations",
+          value: `${overview.activeTenants} Active`,
+          subtext: `${overview.totalTenants} registered (${overview.softDeletedTenants} archived)`,
+          variant: "primary",
+        },
+        {
+          label: "Platform Users",
+          value: `${overview.totalUsers} Total`,
+          subtext: `${overview.verifiedUsers} verified (${overview.verificationRate}% rate)`,
+          variant: "default",
+        },
+        {
+          label: "Tender Pipeline Value",
+          value: formatZar(overview.totalTenderPipelineValue),
+          subtext: `${overview.totalTenders} total bids across all organizations`,
+          variant: "success",
+        },
+        {
+          label: "Platform S3 Storage",
+          value: `${overview.totalStorageMB.toLocaleString()} MB`,
+          subtext: `${overview.totalDocuments.toLocaleString()} files (${overview.totalStorageGB} GB)`,
+          variant: "default",
+        },
+      ],
+      sections: [
+        {
+          id: "operations",
+          title: "Comprehensive Platform Operations Schedule",
+          description:
+            "Key platform vitals, financial metrics, and operational counts",
+          table: {
+            columns: [
+              { id: "metric", header: "Core Metric", width: "35%" },
+              { id: "value", header: "Value / Total", width: "25%" },
+              { id: "context", header: "Operational Context", width: "40%" },
+            ],
+            rows: [
+              {
+                metric: "Total Registered Organizations",
+                value: `${overview.totalTenants} organizations`,
+                context: `${overview.activeTenants} active, ${overview.softDeletedTenants} archived`,
+              },
+              {
+                metric: "Total Platform Users",
+                value: `${overview.totalUsers} accounts`,
+                context: `${overview.verifiedUsers} verified (${overview.verificationRate}% rate)`,
+              },
+              {
+                metric: "Total Awarded Tender Sum",
+                value: formatZar(overview.totalTenderAwardedValue),
+                context: "Cumulative contract value awarded from won tenders",
+              },
+              {
+                metric: "Active Awarded Projects",
+                value: `${overview.activeProjects} active projects`,
+                context: `${overview.totalProjects} lifetime projects logged in system`,
+              },
+              {
+                metric: "Purchase Orders Committed",
+                value: `${overview.totalPOs} POs (${formatZar(overview.totalPOAmount)})`,
+                context: "Total financial commitment across suppliers",
+              },
+              {
+                metric: "Open Support Tickets",
+                value: `${overview.openSupportTickets} tickets open`,
+                context: "Support inquiries awaiting resolution",
+              },
+              {
+                metric: "User Feedback Submissions",
+                value: `${overview.totalFeedbackCount} submissions`,
+                context: "User-submitted bug reports & feature requests",
+              },
+              {
+                metric: "Waitlist Prospective Leads",
+                value: `${overview.waitlistCount} prospective companies`,
+                context: "Leads registered on waitlist",
+              },
+            ],
+          },
+        },
+        {
+          id: "tenants",
+          title: "Full Tenant Portfolio Schedule",
+          description: `Total: ${allTenants.length} registered organizations`,
+          table: {
+            columns: [
+              { id: "name", header: "Organization Name", width: "28%" },
+              { id: "status", header: "Status", width: "12%" },
+              { id: "created", header: "Created", width: "14%" },
+              {
+                id: "members",
+                header: "Members",
+                width: "10%",
+                align: "right",
+              },
+              {
+                id: "tenders",
+                header: "Tenders",
+                width: "10%",
+                align: "right",
+              },
+              {
+                id: "projects",
+                header: "Projects",
+                width: "10%",
+                align: "right",
+              },
+              {
+                id: "storage",
+                header: "Storage (MB)",
+                width: "16%",
+                align: "right",
+              },
+            ],
+            rows: allTenants.map((t) => ({
+              name: t.name,
+              status: t.deletedAt ? "Archived" : "Active",
+              created: formatDateSa(t.createdAt),
+              members: t.memberCount.toString(),
+              tenders: t.tenderCount.toString(),
+              projects: t.projectCount.toString(),
+              storage: `${t.storageMB.toLocaleString()} MB`,
+            })),
+          },
+        },
+        {
+          id: "storage",
+          title: "File Category Distribution Schedule",
+          callouts: [
+            `Total Storage Consumed: ${overview.totalStorageMB.toLocaleString()} MB (${overview.totalStorageGB} GB) across ${overview.totalDocuments.toLocaleString()} uploaded files`,
+            `Top Category: ${storageData.categories[0]?.category ?? "N/A"} accounting for ${storageData.categories[0]?.percentage ?? 0}% of all storage`,
+          ],
+          table: {
+            columns: [
+              { id: "category", header: "Resource Category", width: "40%" },
+              {
+                id: "count",
+                header: "File Count",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "size",
+                header: "Storage (MB)",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "share",
+                header: "Share (%)",
+                width: "20%",
+                align: "right",
+              },
+            ],
+            rows: storageData.categories.map((c) => ({
+              category: c.category,
+              count: c.count.toLocaleString(),
+              size: `${c.sizeMB.toLocaleString()} MB`,
+              share: `${c.percentage}%`,
+            })),
+          },
+        },
+        {
+          id: "security",
+          title: "Critical Security Audit Events Log",
+          callouts: [
+            `Total Security Audit Events Recorded: ${security.totalLogs.toLocaleString()}`,
+            `Severity Breakdown: ${security.criticalEvents} Critical | ${security.warningEvents} Warning | ${security.infoEvents} Info`,
+            `Active Sessions Monitored: ${security.totalSessions.toLocaleString()} (${security.suspiciousSessions} flagged as suspicious logins)`,
+          ],
+          table: {
+            columns: [
+              { id: "action", header: "Action", width: "25%" },
+              { id: "resource", header: "Resource", width: "25%" },
+              { id: "severity", header: "Severity", width: "15%" },
+              { id: "ip", header: "IP Address", width: "15%" },
+              {
+                id: "dateTime",
+                header: "Date & Time",
+                width: "20%",
+                align: "right",
+              },
+            ],
+            rows: security.recentCriticalLogs.map((log) => ({
+              action: log.action,
+              resource: log.resourceType,
+              severity: log.severity,
+              ip: log.ipAddress ?? "—",
+              dateTime: formatDateSa(log.createdAt),
+            })),
+          },
+        },
+      ],
+      confidential: true,
+      generatedAt: new Date(),
+    };
+
+    const result = await renderToPdf(
+      React.createElement(AdminReportPdf, { data: model }),
+    );
+    return Buffer.from(result.bytes);
+  }
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -625,6 +855,122 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
     getAllTenantsUtilization(),
   ]);
 
+  if (isPdfcnEnabled("storage-audit")) {
+    const model: AdminReportPdfModel = {
+      branding: {
+        organizationName: "PMG Tracker 360",
+      },
+      kind: "storage-audit",
+      title: "PMG TRACKER 360",
+      subtitle: "Cloudflare R2 Storage Utilization & Multi-Bucket Audit",
+      periodLabel: new Date().toLocaleDateString("en-GB", {
+        month: "short",
+        year: "numeric",
+      }),
+      systemStatus:
+        (overview.storageWarningStatus ?? "healthy") === "healthy"
+          ? "Storage Healthy"
+          : (overview.storageWarningStatus ?? "normal").toUpperCase(),
+      kpiCards: [
+        {
+          label: "Total Storage Consumed",
+          value: `${overview.totalStorageMB?.toLocaleString() ?? 0} MB`,
+          subtext: `${overview.totalStorageGB ?? 0} GB consumed (${(overview.totalDocuments ?? 0).toLocaleString()} files)`,
+          variant: "primary",
+        },
+        {
+          label: "Provisioned Capacity",
+          value: `${overview.totalStorageCapacityGB ?? 10}.00 GB`,
+          subtext: `Available: ${overview.availableStorageGB ?? 10} GB (${overview.availableStorageMB?.toLocaleString() ?? 0} MB)`,
+          variant: "default",
+        },
+        {
+          label: "Capacity Utilization",
+          value: `${overview.storageUtilizationPct ?? 0}%`,
+          subtext: `Status: ${(overview.storageWarningStatus ?? "normal").toUpperCase()} | Buckets: ${storageData.storageOverview?.buckets?.length ?? 0}`,
+          variant:
+            (overview.storageUtilizationPct ?? 0) > 85
+              ? "destructive"
+              : "success",
+        },
+      ],
+      sections: [
+        {
+          id: "categories",
+          title: "File Category Distribution Schedule",
+          callouts: [
+            `Total Storage Consumed: ${overview.totalStorageMB?.toLocaleString() ?? 0} MB (${overview.totalStorageGB ?? 0} GB) across ${(overview.totalDocuments ?? 0).toLocaleString()} uploaded files`,
+            `Top Category: ${storageData.categories[0]?.category ?? "N/A"} accounting for ${storageData.categories[0]?.percentage ?? 0}% of all storage`,
+          ],
+          table: {
+            columns: [
+              { id: "category", header: "Resource Category", width: "40%" },
+              {
+                id: "count",
+                header: "File Count",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "size",
+                header: "Storage (MB)",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "share",
+                header: "Share (%)",
+                width: "20%",
+                align: "right",
+              },
+            ],
+            rows: storageData.categories.map((c) => ({
+              category: c.category,
+              count: c.count.toLocaleString(),
+              size: `${c.sizeMB.toLocaleString()} MB`,
+              share: `${c.percentage}%`,
+            })),
+          },
+        },
+        {
+          id: "tenant-quotas",
+          title: "Organization Storage Footprint Schedule",
+          description:
+            "Complete tenant storage consumption and quota allocations",
+          table: {
+            columns: [
+              { id: "name", header: "Organization Name", width: "50%" },
+              {
+                id: "count",
+                header: "Files Uploaded",
+                width: "25%",
+                align: "right",
+              },
+              {
+                id: "storage",
+                header: "Storage (MB)",
+                width: "25%",
+                align: "right",
+              },
+            ],
+            rows: allTenants.map((t) => ({
+              name: t.name,
+              count: t.documentCount.toLocaleString(),
+              storage: `${t.storageMB.toLocaleString()} MB`,
+            })),
+          },
+        },
+      ],
+      confidential: true,
+      generatedAt: new Date(),
+    };
+
+    const result = await renderToPdf(
+      React.createElement(AdminReportPdf, { data: model }),
+    );
+    return Buffer.from(result.bytes);
+  }
+
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -841,6 +1187,92 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
  */
 export async function generateSecurityAuditPdf(): Promise<Buffer> {
   const security = await getSecurityComplianceMetrics();
+
+  if (isPdfcnEnabled("security-audit")) {
+    const model: AdminReportPdfModel = {
+      branding: {
+        organizationName: "PMG Tracker 360",
+      },
+      kind: "security-audit",
+      title: "PMG TRACKER 360",
+      subtitle: "Security & Compliance Forensics Trail",
+      periodLabel: new Date().toLocaleDateString("en-GB", {
+        month: "short",
+        year: "numeric",
+      }),
+      systemStatus:
+        security.criticalEvents > 0
+          ? `${security.criticalEvents} Critical Alerts`
+          : security.suspiciousSessions > 0
+            ? "Suspicious Logins Detected"
+            : "Platform Secure",
+      kpiCards: [
+        {
+          label: "Total Audit Events",
+          value: security.totalLogs.toLocaleString(),
+          subtext: "Immutable system activity entries",
+          variant: "default",
+        },
+        {
+          label: "Critical Events",
+          value: security.criticalEvents.toString(),
+          subtext: "Security alarms requiring triage",
+          variant: security.criticalEvents > 0 ? "destructive" : "success",
+        },
+        {
+          label: "Suspicious Sessions",
+          value: `${security.suspiciousSessions} flagged`,
+          subtext: `Of ${security.totalSessions.toLocaleString()} active logins`,
+          variant: security.suspiciousSessions > 0 ? "warning" : "default",
+        },
+      ],
+      sections: [
+        {
+          id: "security-overview",
+          title: "Platform Security Health & Session Status",
+          callouts: [
+            `Total Security Audit Events Recorded: ${security.totalLogs.toLocaleString()}`,
+            `Severity Breakdown: ${security.criticalEvents} Critical | ${security.warningEvents} Warning | ${security.infoEvents} Info`,
+            `Active Sessions Monitored: ${security.totalSessions.toLocaleString()} (${security.suspiciousSessions} flagged as suspicious logins)`,
+          ],
+        },
+        {
+          id: "critical-events",
+          title: "Critical Security Audit Events Log",
+          description:
+            "Chronological security forensics and anomalous access events",
+          table: {
+            columns: [
+              { id: "action", header: "Action", width: "25%" },
+              { id: "resource", header: "Resource", width: "25%" },
+              { id: "severity", header: "Severity", width: "15%" },
+              { id: "ip", header: "IP Address", width: "15%" },
+              {
+                id: "dateTime",
+                header: "Date & Time",
+                width: "20%",
+                align: "right",
+              },
+            ],
+            rows: security.recentCriticalLogs.map((log) => ({
+              action: log.action,
+              resource: log.resourceType,
+              severity: log.severity,
+              ip: log.ipAddress ?? "—",
+              dateTime: formatDateSa(log.createdAt),
+            })),
+          },
+        },
+      ],
+      confidential: true,
+      generatedAt: new Date(),
+    };
+
+    const result = await renderToPdf(
+      React.createElement(AdminReportPdf, { data: model }),
+    );
+    return Buffer.from(result.bytes);
+  }
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();

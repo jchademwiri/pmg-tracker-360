@@ -97,7 +97,9 @@ interface CandidateIdentity {
   targetDate?: Date;
 }
 
-function extractCandidateIdentity(predicate: unknown): CandidateIdentity | null {
+function extractCandidateIdentity(
+  predicate: unknown,
+): CandidateIdentity | null {
   if (!predicate) return null;
   const chunks: unknown[] = [];
   function collect(item: unknown) {
@@ -139,7 +141,8 @@ function extractCandidateIdentity(predicate: unknown): CandidateIdentity | null 
   if (!identity.entityType || !identity.entityId) {
     const values = chunks.filter(
       (c) =>
-        (typeof c === "string" && !["(", ")", "", " and ", " = "].includes(c)) ||
+        (typeof c === "string" &&
+          !["(", ")", "", " and ", " = "].includes(c)) ||
         c instanceof Date,
     );
     if (values.length >= 4) {
@@ -158,7 +161,10 @@ function rowMatchesCandidate(
   identity: CandidateIdentity | null,
 ): boolean {
   if (!identity) return true;
-  if (identity.entityType !== undefined && row.entityType !== identity.entityType)
+  if (
+    identity.entityType !== undefined &&
+    row.entityType !== identity.entityType
+  )
     return false;
   if (identity.entityId !== undefined && row.entityId !== identity.entityId)
     return false;

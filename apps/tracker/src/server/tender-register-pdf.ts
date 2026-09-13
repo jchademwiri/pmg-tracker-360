@@ -4,11 +4,34 @@ import "server-only";
 
 import { db } from "@pmg/db";
 import { client, organization, tender, tenderExtension } from "@pmg/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { jsPDF } from "jspdf";
 
 import { getStatusConfig } from "@/components/ui/status-badge";
 import { validateSessionAndOrg } from "./utils";
+import React from "react";
+import {
+  isPdfcnEnabled,
+  renderToPdf,
+  TenderRegisterPdf,
+  RunningFooter,
+  trackerTheme,
+  formatZar,
+  formatDateTimeSa,
+} from "@pmg/pdf";
+import {
+  fetchLogoBase64,
+  parseOrganizationMetadata,
+} from "@/lib/pdf/pdf-layout";
+import type { DateRangePreset } from "@/lib/date-range-presets";
+
+export interface TenderReportFilterOptions {
+  clientId?: string;
+  preset?: DateRangePreset;
+  startDate?: Date;
+  endDate?: Date;
+  periodLabel?: string;
+}
 
 const NAVY = [23, 54, 93] as const;
 const BLUE = [47, 117, 181] as const;
@@ -177,12 +200,15 @@ function drawTable(
 
   const drawHeader = () => {
     let x = MARGIN;
+    // Draw solid full-width background bar
     doc.setFillColor(...BLUE);
+    doc.rect(MARGIN, y, width - MARGIN * 2, ROW_HEIGHT, "F");
+
+    // Draw header labels
     doc.setTextColor(...WHITE);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     for (const [label, columnWidth] of scaled) {
-      doc.rect(x, y, columnWidth, ROW_HEIGHT, "F");
       doc.text(label, x + 2, y + 5.2, { maxWidth: columnWidth - 4 });
       x += columnWidth;
     }
@@ -248,6 +274,13 @@ function drawTable(
   };
 
   drawHeader();
+  if (rows.length === 0) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY);
+    doc.text("No tenders found for the selected criteria.", MARGIN + 2, y + 8);
+    return y + 16;
+  }
   rows.forEach(drawRow);
   return y;
 }
@@ -359,7 +392,14 @@ function renderClient(
   return Buffer.from(doc.output("arraybuffer"));
 }
 
-async function getRows(organizationId: string, clientId?: string) {
+async function getRows(
+  organizationId: string,
+  options?: TenderReportFilterOptions,
+) {
+  const clientId = options?.clientId;
+  const startDate = options?.startDate;
+  const endDate = options?.endDate;
+
   const raw = await db
     .select({
       id: tender.id,
@@ -383,6 +423,8 @@ async function getRows(organizationId: string, clientId?: string) {
         eq(tender.organizationId, organizationId),
         isNull(tender.deletedAt),
         ...(clientId ? [eq(tender.clientId, clientId)] : []),
+        ...(startDate ? [gte(tender.submissionDate, startDate)] : []),
+        ...(endDate ? [lte(tender.submissionDate, endDate)] : []),
       ),
     );
 
@@ -436,30 +478,161 @@ async function getRows(organizationId: string, clientId?: string) {
 
 export async function getTenderRegisterPdf(
   organizationId: string,
-  clientId?: string,
+  filterOrClientId?: string | TenderReportFilterOptions,
 ) {
-  await validateSessionAndOrg(organizationId);
-  const org = await db.query.organization.findFirst({
-    where: eq(organization.id, organizationId),
-  });
-  const orgName = org?.name || "";
-  const rows = await getRows(organizationId, clientId);
-  if (clientId && !rows.length)
+  try {
+    await validateSessionAndOrg(organizationId);
+
+    const filterOptions: TenderReportFilterOptions =
+      typeof filterOrClientId === "string"
+        ? { clientId: filterOrClientId }
+        : filterOrClientId || {};
+
+    const clientId = filterOptions.clientId;
+    const periodLabel = filterOptions.periodLabel || "All Time";
+
+    const org = await db.query.organization.findFirst({
+      where: eq(organization.id, organizationId),
+    });
+    const orgName = org?.name || "";
+    const rows = await getRows(organizationId, filterOptions);
+    if (clientId && !rows.length)
+      return {
+        success: false as const,
+        error: "Client not found or has no tenders in selected period.",
+      };
+
+    const periodSlug =
+      filterOptions.preset && filterOptions.preset !== "all"
+        ? `-${filterOptions.preset}`
+        : "";
+    const slug =
+      (clientId ? rows[0]?.clientName : "tender-register")
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "tender-register";
+    const filename = `${slug}${periodSlug}-${new Date().toISOString().slice(0, 10)}.pdf`;
+
+    if (isPdfcnEnabled("tender-register")) {
+      const orgMeta = parseOrganizationMetadata(org?.metadata);
+      const logoDataUri = await fetchLogoBase64(org?.logo ?? null);
+
+      const submitted = rows.filter(
+        (row) => timing(row.submissionDate) === "Submitted",
+      ).length;
+      const due = rows.length - submitted;
+
+      let kpiCards: any[] = [];
+      if (clientId) {
+        const estimated = rows.reduce(
+          (sum, row) => sum + (Number(row.value) || 0),
+          0,
+        );
+        kpiCards = [
+          { label: "Total Tenders", value: String(rows.length) },
+          { label: "Submitted", value: String(submitted), variant: "primary" },
+          { label: "Not Yet Due", value: String(due), variant: "warning" },
+          {
+            label: "Estimated Value",
+            value: formatZar(estimated),
+            variant: "success",
+          },
+        ];
+      } else {
+        const clients = new Set(rows.map((row) => row.clientId).filter(Boolean))
+          .size;
+        const pipeline = rows
+          .filter((row) => timing(row.submissionDate) === "Not Yet Due")
+          .reduce((sum, row) => sum + (Number(row.value) || 0), 0);
+        kpiCards = [
+          { label: "Total Tenders", value: String(rows.length) },
+          { label: "Submitted", value: String(submitted), variant: "primary" },
+          { label: "Not Yet Due", value: String(due), variant: "warning" },
+          { label: "Number of Clients", value: String(clients) },
+          {
+            label: "Pipeline Value",
+            value: formatZar(pipeline),
+            variant: "success",
+          },
+        ];
+      }
+
+      const filterPills = [
+        ...(clientId
+          ? [{ label: "Client", value: text(rows[0]?.clientName) || "Client" }]
+          : [{ label: "Scope", value: "Master Register" }]),
+        ...(filterOptions.periodLabel &&
+        filterOptions.periodLabel !== "All Time"
+          ? [{ label: "Period", value: filterOptions.periodLabel }]
+          : []),
+      ];
+
+      const reportTitle = clientId
+        ? `CLIENT TENDER REPORT: ${text(rows[0]?.clientName) || "Client"}`
+        : "TENDER REGISTER REPORT";
+
+      const pdfResult = await renderToPdf(
+        React.createElement(TenderRegisterPdf, {
+          data: {
+            branding: {
+              organizationName: orgName,
+              logoDataUri,
+              phone: orgMeta.phone,
+              address: orgMeta.address,
+              website: orgMeta.website,
+            },
+            variant: clientId ? "client" : "portfolio",
+            clientName: clientId ? text(rows[0]?.clientName) || "Client" : null,
+            filterPills,
+            kpiCards,
+            rows: rows.map((r) => ({
+              tenderNumber: r.tenderNumber || "—",
+              client: r.clientName || "—",
+              description: r.description || "—",
+              status: r.status,
+              priority: r.priority,
+              submissionDate: r.submissionDate,
+              validityDate: r.validityDate,
+              contactPerson: contact(r),
+            })),
+          },
+        }),
+        {
+          orientation: "landscape",
+          footer: React.createElement(RunningFooter, {
+            theme: trackerTheme,
+            branding: { organizationName: orgName },
+            documentTitle: reportTitle,
+            confidential: false,
+            generatedAtText: formatDateTimeSa(new Date()),
+          }),
+        },
+      );
+
+      return {
+        success: true as const,
+        buffer: Buffer.from(pdfResult.bytes),
+        filename,
+      };
+    }
+
+    const buffer = clientId
+      ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
+      : renderPortfolio(rows, orgName);
+
+    return {
+      success: true as const,
+      buffer,
+      filename,
+    };
+  } catch (error: unknown) {
+    console.error("Error generating tender register PDF:", error);
     return {
       success: false as const,
-      error: "Client not found or has no tenders.",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to generate tender register PDF.",
     };
-  const buffer = clientId
-    ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
-    : renderPortfolio(rows, orgName);
-  const slug =
-    (clientId ? rows[0]?.clientName : "tender-register")
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "tender-register";
-  return {
-    success: true as const,
-    buffer,
-    filename: `${slug}-${new Date().toISOString().slice(0, 10)}.pdf`,
-  };
+  }
 }

@@ -46,7 +46,9 @@ export async function sendBackupFailureEmail({
     // A failed alert must never look like a success (same rule as
     // admin-invite-email): surface the Resend error to the caller so the cron
     // response records it.
-    throw new Error(`Resend reported an error sending backup alert: ${error.message}`);
+    throw new Error(
+      `Resend reported an error sending backup alert: ${error.message}`,
+    );
   }
 }
 

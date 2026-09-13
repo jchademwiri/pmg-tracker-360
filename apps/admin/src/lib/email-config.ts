@@ -16,5 +16,4 @@ const senderName = env.SENDER_NAME || "Tender Track 360";
 const senderEmail = env.SENDER_EMAIL || "no-reply@info.tendertrack360.co.za";
 
 export const SENDER = `${senderName} <${senderEmail}>`;
-export const REPLY_TO =
-  env.REPLY_TO_EMAIL || "info@tendertrack360.co.za";
+export const REPLY_TO = env.REPLY_TO_EMAIL || "info@tendertrack360.co.za";

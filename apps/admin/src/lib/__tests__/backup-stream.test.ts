@@ -9,7 +9,8 @@ import { getTableConfig } from "drizzle-orm/pg-core";
 
 describe("backup stream formatting and self-healing", () => {
   it("heals malformed backup JSON missing the opening bracket", () => {
-    const brokenJson = '{"version":1,"createdAt":"2026-09-09T09:57:36.000Z","tables":{"user":{"id":"u1","name":"Alice"}],"client_contact":{"id":"c1","name":"Bob"}],"empty_tbl":[]}}';
+    const brokenJson =
+      '{"version":1,"createdAt":"2026-09-09T09:57:36.000Z","tables":{"user":{"id":"u1","name":"Alice"}],"client_contact":{"id":"c1","name":"Bob"}],"empty_tbl":[]}}';
 
     // Normal JSON.parse should fail on the broken JSON
     expect(() => JSON.parse(brokenJson)).toThrow();
