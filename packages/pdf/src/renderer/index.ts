@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import type { ReactNode } from "react";
@@ -14,13 +14,43 @@ import type { PdfOrientation, PdfRenderResult } from "../types/index";
 
 let isWasmInitialized = false;
 
-function ensureWasmInitialized(): void {
-  if (isWasmInitialized) return;
+function resolveWasmBinaryPath(): string {
+  const candidatePaths: string[] = [
+    // 1. Current working directory node_modules (e.g. apps/tracker/node_modules/takumi-pdf/...)
+    path.join(process.cwd(), "node_modules", "takumi-pdf", "pkg", "takumi_pdf_wasm_bg.wasm"),
+    // 2. Monorepo root node_modules when running from an app folder
+    path.join(process.cwd(), "..", "..", "node_modules", "takumi-pdf", "pkg", "takumi_pdf_wasm_bg.wasm"),
+    // 3. One level up node_modules
+    path.join(process.cwd(), "..", "node_modules", "takumi-pdf", "pkg", "takumi_pdf_wasm_bg.wasm"),
+  ];
 
   try {
     const require = createRequire(import.meta.url);
     const noInitEntry = require.resolve("takumi-pdf/no-init");
-    const wasmPath = path.join(path.dirname(noInitEntry), "..", "pkg", "takumi_pdf_wasm_bg.wasm");
+    // Strip any Turbopack virtual prefixes if present
+    const cleanEntry = noInitEntry.replace(/^.*\[project\][\\/]/, "").replace(/^.*\(takumi-pdf[^,]+,\s*cjs,\s*/, "").replace(/\)$/, "");
+    candidatePaths.push(path.join(path.dirname(cleanEntry), "..", "pkg", "takumi_pdf_wasm_bg.wasm"));
+    candidatePaths.push(path.join(path.dirname(noInitEntry), "..", "pkg", "takumi_pdf_wasm_bg.wasm"));
+  } catch {
+    // Best-effort fallback to candidatePaths
+  }
+
+  for (const candidate of candidatePaths) {
+    if (candidate && existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `Takumi PDF wasm binary could not be found. Checked:\n${candidatePaths.filter(Boolean).join("\n")}`
+  );
+}
+
+function ensureWasmInitialized(): void {
+  if (isWasmInitialized) return;
+
+  try {
+    const wasmPath = resolveWasmBinaryPath();
     const wasmBytes = readFileSync(wasmPath);
     takumi.initSync({ module: wasmBytes });
     isWasmInitialized = true;
