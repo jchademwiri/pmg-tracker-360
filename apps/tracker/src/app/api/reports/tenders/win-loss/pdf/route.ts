@@ -34,22 +34,35 @@ export async function GET() {
     );
   }
 
-  const result = await generateTenderWinLossPdf(
-    session.session.activeOrganizationId,
-  );
+  try {
+    const result = await generateTenderWinLossPdf(
+      session.session.activeOrganizationId,
+    );
 
-  if (!result) {
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to generate report." },
+        { status: 500 },
+      );
+    }
+
+    return new NextResponse(new Uint8Array(result.buffer), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${result.fileName}"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("Tender win/loss PDF route failed:", error);
     return NextResponse.json(
-      { error: "Failed to generate report." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred generating win/loss PDF.",
+      },
       { status: 500 },
     );
   }
-
-  return new NextResponse(new Uint8Array(result.buffer), {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${result.fileName}"`,
-      "Cache-Control": "no-store",
-    },
-  });
 }

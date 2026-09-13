@@ -180,7 +180,9 @@ function renderPdf(data: TenderWinLossReportData, logoDataUri: string | null) {
 
 export async function generateTenderWinLossPdf(organizationId: string) {
   const result = await getTenderWinLossReport(organizationId);
-  if (!result.success) return null;
+  if (!result.success) {
+    return { success: false as const, error: result.error || "Failed to build win/loss report data." };
+  }
 
   const logoDataUri = await fetchLogoBase64(result.data.org.logo);
   const orgMeta = parseOrganizationMetadata(result.data.org.metadata as any);
@@ -232,12 +234,14 @@ export async function generateTenderWinLossPdf(organizationId: string) {
     );
 
     return {
+      success: true as const,
       fileName,
       buffer: Buffer.from(pdfResult.bytes),
     };
   }
 
   return {
+    success: true as const,
     fileName,
     buffer: renderPdf(result.data, logoDataUri),
   };
