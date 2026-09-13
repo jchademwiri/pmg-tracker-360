@@ -1,0 +1,35 @@
+import type { PdfTheme } from "../types/index.js";
+
+export const trackerTheme: PdfTheme = {
+  name: "tracker",
+  colors: {
+    background: "#FFFFFF",
+    foreground: "#0F172A",
+    muted: "#F8FAFC",
+    mutedForeground: "#64748B",
+    primary: "#4F46E5",
+    primaryForeground: "#FFFFFF",
+    accent: "#3B82F6",
+    accentForeground: "#FFFFFF",
+    border: "#E2E8F0",
+    borderLight: "#F1F5F9",
+    destructive: "#DC2626",
+    destructiveForeground: "#FFFFFF",
+    success: "#16A34A",
+    successForeground: "#FFFFFF",
+    warning: "#D97706",
+    warningForeground: "#FFFFFF",
+    info: "#0284C7",
+    infoForeground: "#FFFFFF",
+    card: "#FFFFFF",
+    cardForeground: "#0F172A",
+    tableHeaderBg: "#F1F5F9",
+    tableRowEven: "#FFFFFF",
+    tableRowOdd: "#F8FAFC",
+  },
+  fontFamily: "Helvetica, Arial, sans-serif",
+  margins: {
+    portrait: { top: 40, right: 36, bottom: 40, left: 36 },
+    landscape: { top: 32, right: 32, bottom: 32, left: 32 },
+  },
+};
