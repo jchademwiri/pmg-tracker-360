@@ -189,12 +189,15 @@ function drawTable(
 
   const drawHeader = () => {
     let x = MARGIN;
+    // Draw solid full-width background bar
     doc.setFillColor(...BLUE);
+    doc.rect(MARGIN, y, width - MARGIN * 2, ROW_HEIGHT, "F");
+
+    // Draw header labels
     doc.setTextColor(...WHITE);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     for (const [label, columnWidth] of scaled) {
-      doc.rect(x, y, columnWidth, ROW_HEIGHT, "F");
       doc.text(label, x + 2, y + 5.2, { maxWidth: columnWidth - 4 });
       x += columnWidth;
     }
