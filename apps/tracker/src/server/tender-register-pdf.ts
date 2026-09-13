@@ -10,7 +10,15 @@ import { jsPDF } from "jspdf";
 import { getStatusConfig } from "@/components/ui/status-badge";
 import { validateSessionAndOrg } from "./utils";
 import React from "react";
-import { isPdfcnEnabled, renderToPdf, TenderRegisterPdf, formatZar } from "@pmg/pdf";
+import {
+  isPdfcnEnabled,
+  renderToPdf,
+  TenderRegisterPdf,
+  RunningFooter,
+  trackerTheme,
+  formatZar,
+  formatDateTimeSa,
+} from "@pmg/pdf";
 import { fetchLogoBase64, parseOrganizationMetadata } from "@/lib/pdf/pdf-layout";
 import type { DateRangePreset } from "@/lib/date-range-presets";
 
@@ -545,6 +553,10 @@ export async function getTenderRegisterPdf(
         : []),
     ];
 
+    const reportTitle = clientId
+      ? `CLIENT TENDER REPORT: ${text(rows[0]?.clientName) || "Client"}`
+      : "TENDER REGISTER REPORT";
+
     const pdfResult = await renderToPdf(
       React.createElement(TenderRegisterPdf, {
         data: {
@@ -571,7 +583,16 @@ export async function getTenderRegisterPdf(
           })),
         },
       }),
-      { orientation: "landscape" }
+      {
+        orientation: "landscape",
+        footer: React.createElement(RunningFooter, {
+          theme: trackerTheme,
+          branding: { organizationName: orgName },
+          documentTitle: reportTitle,
+          confidential: false,
+          generatedAtText: formatDateTimeSa(new Date()),
+        }),
+      }
     );
 
     return {

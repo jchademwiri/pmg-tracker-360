@@ -53,36 +53,54 @@ export function RegisterLayout({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: `2px solid ${theme.colors.border}`,
+          alignItems: "flex-start",
+          borderBottom: `2px solid ${theme.colors.primary}`,
           paddingBottom: "10px",
           marginBottom: "14px",
           width: "100%",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          {branding?.logoDataUri ? (
-            <img
-              src={branding.logoDataUri}
-              alt={branding.organizationName}
-              style={{ maxHeight: "32px", maxWidth: "120px", objectFit: "contain" }}
-            />
-          ) : (
-            <span style={{ fontSize: "15px", fontWeight: 800, color: theme.colors.primary }}>
-              {branding?.organizationName || "PMG TRACKER 360"}
-            </span>
-          )}
-
-          <div style={{ borderLeft: `1px solid ${theme.colors.borderLight}`, paddingLeft: "12px" }}>
-            <Heading level={2} color={theme.colors.foreground} style={{ fontSize: "16px", lineHeight: "20px" }}>
-              {title}
-            </Heading>
-            {subtitle && (
-              <Text variant="muted" style={{ fontSize: "10px", lineHeight: "13px" }}>
-                {subtitle}
-              </Text>
+        {/* Left Stacked Titles: Organisation on Top, Document Title Below */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {branding?.logoDataUri && (
+              <img
+                src={branding.logoDataUri}
+                alt={branding.organizationName}
+                style={{ maxHeight: "28px", maxWidth: "110px", objectFit: "contain" }}
+              />
             )}
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: 800,
+                color: theme.colors.primary,
+                letterSpacing: "-0.2px",
+                textTransform: "uppercase",
+              }}
+            >
+              {branding?.organizationName || "PMG TRACKER 360"}
+            </div>
           </div>
+
+          <div
+            style={{
+              fontSize: "14px",
+              fontWeight: 800,
+              color: theme.colors.foreground,
+              letterSpacing: "0.5px",
+              textTransform: "uppercase",
+              lineHeight: "18px",
+            }}
+          >
+            {title}
+          </div>
+
+          {subtitle && (
+            <div style={{ fontSize: "9.5px", color: theme.colors.mutedForeground, lineHeight: "13px" }}>
+              {subtitle}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
@@ -94,20 +112,20 @@ export function RegisterLayout({
                   key={idx}
                   style={{
                     fontSize: "9px",
-                    padding: "2px 6px",
-                    backgroundColor: theme.colors.muted,
-                    border: `1px solid ${theme.colors.borderLight}`,
+                    padding: "2.5px 8px",
+                    backgroundColor: "#EFF6FF",
+                    border: "1px solid #BFDBFE",
                     borderRadius: "3px",
-                    color: theme.colors.mutedForeground,
+                    color: "#1E40AF",
                   }}
                 >
-                  <strong style={{ color: theme.colors.foreground }}>{pill.label}:</strong> {pill.value}
+                  <strong style={{ color: "#1E3A8A" }}>{pill.label.toUpperCase()}:</strong> {pill.value.toUpperCase()}
                 </span>
               ))}
             </div>
           )}
 
-          <div style={{ fontSize: "9px", color: theme.colors.mutedForeground }}>
+          <div style={{ fontSize: "9px", color: theme.colors.mutedForeground, marginTop: "2px" }}>
             Exported: {generatedAtText}
           </div>
         </div>

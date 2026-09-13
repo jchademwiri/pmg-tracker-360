@@ -74,9 +74,9 @@ export function RunningFooter({
     alignItems: "center",
     paddingLeft: "32px",
     paddingRight: "32px",
-    paddingTop: "8px",
+    paddingTop: "6px",
     paddingBottom: "8px",
-    borderTop: `1px solid ${theme.colors.border}`,
+    borderTop: "1px solid #CBD5E1",
     fontSize: "9px",
     lineHeight: "12px",
     color: theme.colors.mutedForeground,
@@ -86,13 +86,20 @@ export function RunningFooter({
 
   return (
     <div style={footerStyle} className="pdf-running-footer">
-      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
-          {branding?.organizationName || "PMG Tracker 360"}
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <span style={{ fontWeight: 700, color: theme.colors.primary, textTransform: "uppercase" }}>
+          {branding?.organizationName || "PMG TRACKER 360"}
         </span>
-        {documentTitle && <span>• {documentTitle}</span>}
+        {documentTitle && (
+          <>
+            <span>•</span>
+            <span style={{ fontWeight: 600, color: theme.colors.foreground, textTransform: "uppercase" }}>
+              {documentTitle}
+            </span>
+          </>
+        )}
         {confidential && (
-          <span style={{ color: theme.colors.destructive, fontWeight: 700 }}>
+          <span style={{ color: theme.colors.destructive, fontWeight: 700, marginLeft: "6px" }}>
             CONFIDENTIAL
           </span>
         )}
@@ -100,7 +107,7 @@ export function RunningFooter({
 
       <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
         {generatedAtText && <span>Generated: {generatedAtText}</span>}
-        <span>
+        <span style={{ fontWeight: 700, color: theme.colors.primary }}>
           Page <PageNumber /> of <TotalPages />
         </span>
       </div>

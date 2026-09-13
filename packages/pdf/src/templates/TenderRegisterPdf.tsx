@@ -14,7 +14,7 @@ function getStatusBadge(status: string) {
   if (s === "awarded" || s === "won") return <Badge variant="success">Awarded</Badge>;
   if (s === "submitted") return <Badge variant="primary">Submitted</Badge>;
   if (s === "evaluation" || s === "evaluated") return <Badge variant="primary">Evaluation</Badge>;
-  if (s === "preparation" || s === "draft") return <Badge variant="secondary">Preparation</Badge>;
+  if (s === "preparation" || s === "draft") return <Badge variant="warning">Preparation</Badge>;
   if (s === "lost" || s === "cancelled") return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
   return <Badge variant="outline">{status.toUpperCase()}</Badge>;
 }
@@ -31,17 +31,17 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
   const portfolioColumns = [
     {
       id: "tenderNumber",
-      header: "Tender #",
+      header: "TENDER #",
       width: "14%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 700, fontFamily: "monospace" }}>
-          {row.tenderNumber || "—"}
+        <span style={{ fontWeight: 700, fontFamily: "monospace", color: trackerTheme.colors.primary }}>
+          {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
         </span>
       ),
     },
     {
       id: "client",
-      header: "Client",
+      header: "CLIENT",
       width: "20%",
       render: (row: TenderRegisterRowModel) => (
         <span style={{ fontWeight: 600 }}>{row.client || "—"}</span>
@@ -49,25 +49,25 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
     },
     {
       id: "description",
-      header: "Description",
+      header: "DESCRIPTION",
       width: "32%",
       accessorKey: "description" as const,
     },
     {
       id: "status",
-      header: "Status",
+      header: "STATUS",
       width: "12%",
       render: (row: TenderRegisterRowModel) => getStatusBadge(row.status),
     },
     {
       id: "submissionDate",
-      header: "Submission",
+      header: "SUBMISSION",
       width: "11%",
       render: (row: TenderRegisterRowModel) => formatDateSa(row.submissionDate),
     },
     {
       id: "validityDate",
-      header: "Validity",
+      header: "VALIDITY",
       width: "11%",
       render: (row: TenderRegisterRowModel) => formatDateSa(row.validityDate),
     },
@@ -76,35 +76,35 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
   const clientColumns = [
     {
       id: "tenderNumber",
-      header: "Tender #",
+      header: "TENDER #",
       width: "16%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 700, fontFamily: "monospace" }}>
-          {row.tenderNumber || "—"}
+        <span style={{ fontWeight: 700, fontFamily: "monospace", color: trackerTheme.colors.primary }}>
+          {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
         </span>
       ),
     },
     {
       id: "description",
-      header: "Description",
+      header: "DESCRIPTION",
       width: "38%",
       accessorKey: "description" as const,
     },
     {
       id: "contact",
-      header: "Contact Person",
+      header: "CONTACT PERSON",
       width: "20%",
       render: (row: TenderRegisterRowModel) => row.contactPerson || "—",
     },
     {
       id: "status",
-      header: "Status",
+      header: "STATUS",
       width: "13%",
       render: (row: TenderRegisterRowModel) => getStatusBadge(row.status),
     },
     {
       id: "submissionDate",
-      header: "Submission",
+      header: "SUBMISSION",
       width: "13%",
       render: (row: TenderRegisterRowModel) => formatDateSa(row.submissionDate),
     },

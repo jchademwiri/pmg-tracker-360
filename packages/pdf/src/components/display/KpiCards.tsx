@@ -30,13 +30,33 @@ export function KpiCards({
   return (
     <div style={containerStyle} className={clsx("pdf-kpi-cards-grid", className)}>
       {items.map((item, idx) => {
+        let borderTopColor = theme.colors.accent;
+        let valueColor = theme.colors.foreground;
+
+        if (item.variant === "primary") {
+          borderTopColor = "#2563EB";
+          valueColor = "#1E40AF";
+        } else if (item.variant === "success") {
+          borderTopColor = "#16A34A";
+          valueColor = "#15803D";
+        } else if (item.variant === "warning") {
+          borderTopColor = "#D97706";
+          valueColor = "#B45309";
+        } else if (item.variant === "destructive") {
+          borderTopColor = "#DC2626";
+          valueColor = "#B91C1C";
+        } else if (item.variant === "default") {
+          borderTopColor = "#6366F1";
+          valueColor = "#4338CA";
+        }
+
         return (
           <div
             key={idx}
             style={{
               backgroundColor: theme.colors.card,
               border: `1px solid ${theme.colors.border}`,
-              borderTop: `2px solid ${theme.colors.accent}`,
+              borderTop: `3px solid ${borderTopColor}`,
               borderRadius: "4px",
               padding: "9px 12px",
               display: "flex",
@@ -46,8 +66,8 @@ export function KpiCards({
           >
             <div
               style={{
-                fontSize: "9px",
-                fontWeight: 600,
+                fontSize: "8.5px",
+                fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
                 color: theme.colors.mutedForeground,
@@ -58,10 +78,10 @@ export function KpiCards({
 
             <div
               style={{
-                fontSize: "18px",
-                fontWeight: 700,
-                lineHeight: "22px",
-                color: theme.colors.foreground,
+                fontSize: "17px",
+                fontWeight: 800,
+                lineHeight: "21px",
+                color: valueColor,
               }}
             >
               {item.value}
