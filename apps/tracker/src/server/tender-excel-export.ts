@@ -3,10 +3,11 @@
 import ExcelJS from "exceljs";
 import { db } from "@pmg/db";
 import { client, organization, tender } from "@pmg/db/schema";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, lte } from "drizzle-orm";
 
 import { validateSessionAndOrg } from "./utils";
 import { getStatusConfig } from "@/components/ui/status-badge";
+import type { TenderReportFilterOptions } from "./tender-register-pdf";
 
 const NAVY = "17365D";
 const BLUE = "2F75B5";
@@ -157,10 +158,20 @@ const dateValue = (date: Date | null) => (date ? date : undefined);
 
 export async function getTendersExportExcel(
   organizationId: string,
-  clientId?: string,
+  filterOrClientId?: string | TenderReportFilterOptions,
 ) {
   try {
     await validateSessionAndOrg(organizationId);
+
+    const filterOptions: TenderReportFilterOptions =
+      typeof filterOrClientId === "string"
+        ? { clientId: filterOrClientId }
+        : filterOrClientId || {};
+
+    const clientId = filterOptions.clientId;
+    const startDate = filterOptions.startDate;
+    const endDate = filterOptions.endDate;
+
     const org = await db.query.organization.findFirst({
       where: eq(organization.id, organizationId),
     });
@@ -188,6 +199,8 @@ export async function getTendersExportExcel(
           eq(tender.organizationId, organizationId),
           isNull(tender.deletedAt),
           ...(clientId ? [eq(tender.clientId, clientId)] : []),
+          ...(startDate ? [gte(tender.submissionDate, startDate)] : []),
+          ...(endDate ? [lte(tender.submissionDate, endDate)] : []),
         ),
       )
       .orderBy(asc(tender.submissionDate), asc(tender.tenderNumber));
@@ -205,7 +218,7 @@ export async function getTendersExportExcel(
     if (clientId && rows.length === 0)
       return {
         success: false as const,
-        error: "Client not found or has no tenders.",
+        error: "Client not found or has no tenders in selected period.",
       };
 
     const workbook = new ExcelJS.Workbook();
@@ -252,12 +265,20 @@ export async function getTendersExportExcel(
 
     const buffer = await workbook.xlsx.writeBuffer();
     const date = new Date().toISOString().slice(0, 10);
+    const periodSlug =
+      filterOptions.preset && filterOptions.preset !== "all"
+        ? `-${filterOptions.preset}`
+        : "";
     const slug =
       (clientId ? rows[0]?.clientName : "tender-register")
         ?.toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || "tender-register";
-    return { success: true as const, buffer, filename: `${slug}-${date}.xlsx` };
+    return {
+      success: true as const,
+      buffer,
+      filename: `${slug}${periodSlug}-${date}.xlsx`,
+    };
   } catch (error: unknown) {
     console.error("Error exporting tenders Excel:", error);
     return {

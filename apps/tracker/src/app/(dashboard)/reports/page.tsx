@@ -1,22 +1,13 @@
-import { FileSpreadsheet, Users, Trophy } from "lucide-react";
+import Link from "next/link";
+import { FileDown, ArrowRight } from "lucide-react";
 
-import { getCurrentUser, getClientsList } from "@/server";
+import { getCurrentUser } from "@/server";
 import { getReportStats, getTenderSubmissionTrend } from "@/server/reports";
 import { ReportStatsCards } from "@/components/reports/stats-cards";
 import { TenderPerformanceChart } from "@/components/reports/tender-performance-chart";
 import { TenderSubmissionTrendChart } from "@/components/reports/tender-submission-trend-chart";
-import { TenderWinLossPdfButton } from "@/components/reports/tender-winloss-pdf-button";
-import {
-  TenderRegisterButtons,
-  ClientTenderReportButtons,
-} from "@/components/reports/tender-register-excel-buttons";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -38,24 +29,31 @@ export default async function ReportsPage() {
     );
   }
 
-  const [result, clientsResult, trendResult] = await Promise.all([
+  const [result, trendResult] = await Promise.all([
     getReportStats(session.activeOrganizationId),
-    getClientsList(session.activeOrganizationId),
     getTenderSubmissionTrend(session.activeOrganizationId),
   ]);
   const stats = result.stats;
-  const clients = clientsResult.clients;
   const trendData = trendResult.success ? trendResult.data : [];
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Reports & Insights
-        </h1>
-        <p className="text-muted-foreground">
-          Analyze your tender performance and project metrics.
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Reports & Insights
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Analyze your tender performance and project metrics.
+          </p>
+        </div>
+
+        <Button asChild className="gap-2 shrink-0 shadow-sm">
+          <Link href="/downloads">
+            <FileDown className="h-4 w-4" />
+            <span>Download Center</span>
+          </Link>
+        </Button>
       </header>
 
       <ReportStatsCards stats={stats} />
@@ -73,74 +71,29 @@ export default async function ReportsPage() {
         <TenderSubmissionTrendChart data={trendData} />
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight">
-            Downloadable Reports
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Export polished Excel and PDF tender reports for management,
-            record-keeping, and client-level reporting.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="transition-shadow hover:shadow-md">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/20">
-                  <FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <CardTitle className="text-lg">Tender Register</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <CardDescription>
-                Full portfolio register with Contents, Summary, submission
-                timing, data-quality checks, and a dedicated client sheet for
-                every client.
-              </CardDescription>
-              <TenderRegisterButtons />
-            </CardContent>
-          </Card>
-
-          <Card className="transition-shadow hover:shadow-md">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/20">
-                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <CardTitle className="text-lg">Client Tender Report</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <CardDescription>
-                Select a client and download the same tender report as Excel or
-                PDF, including tenders, dates, contacts, submission timing, and
-                estimated values.
-              </CardDescription>
-              <ClientTenderReportButtons clients={clients} />
-            </CardContent>
-          </Card>
-
-          <Card className="transition-shadow hover:shadow-md">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/20">
-                  <Trophy className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <CardTitle className="text-lg">Win/Loss Summary</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <CardDescription>
-                Win rate, awarded and lost tenders, and loss reasons — a formal
-                PDF for performance review.
-              </CardDescription>
-              <TenderWinLossPdfButton />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Card className="border-white/10 bg-gradient-to-r from-primary/5 via-card/50 to-primary/5 shadow-md">
+        <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FileDown className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">
+                Looking for Downloadable Reports?
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Official Master Tender Registers, Management Follow-Up Reports,
+              Client Dossiers, and Win/Loss Summaries have moved to the
+              dedicated Download Center.
+            </p>
+          </div>
+          <Button asChild className="gap-2 shrink-0">
+            <Link href="/downloads">
+              <span>Go to Download Center</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

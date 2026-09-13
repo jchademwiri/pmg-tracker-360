@@ -298,7 +298,9 @@ class MultipartGzipUploader {
     );
     this.uploadId = res.UploadId ?? null;
     if (!this.uploadId) {
-      throw new Error("Storage did not return an upload ID for multipart upload");
+      throw new Error(
+        "Storage did not return an upload ID for multipart upload",
+      );
     }
   }
 
@@ -487,10 +489,7 @@ export async function createBackup(): Promise<BackupResult> {
     gzip.on("data", (chunk: Buffer) => uploader.write(chunk));
 
     // Document header — restore parses this shape identically to old backups.
-    gzip.write(
-      `{"version":1,"createdAt":"${createdAt}","tables":{`,
-      "utf-8",
-    );
+    gzip.write(`{"version":1,"createdAt":"${createdAt}","tables":{`, "utf-8");
 
     const emittedTables: string[] = [];
     let totalRows = 0;
@@ -506,17 +505,12 @@ export async function createBackup(): Promise<BackupResult> {
           .unsafe(`SELECT * FROM "${tableName.replace(/"/g, '""')}"`)
           .cursor(ROW_BATCH_SIZE, async (rows: Record<string, unknown>[]) => {
             if (!wroteTable) {
-              gzip.write(
-                `${needsComma ? "," : ""}"${tableName}":[`,
-                "utf-8",
-              );
+              gzip.write(`${needsComma ? "," : ""}"${tableName}":[`, "utf-8");
               needsComma = true;
               wroteTable = true;
               emittedTables.push(tableName);
             }
-            const batchJson = rows
-              .map((row) => JSON.stringify(row))
-              .join(",");
+            const batchJson = rows.map((row) => JSON.stringify(row)).join(",");
             gzip.write(`${wroteRow ? "," : ""}${batchJson}`, "utf-8");
             wroteRow = true;
             totalRows += rows.length;
