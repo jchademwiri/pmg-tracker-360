@@ -101,6 +101,7 @@ export interface TenderRegisterRowModel {
   priority?: string | null;
   submissionDate?: Date | string | null;
   briefingDate?: Date | string | null;
+  validityDate?: Date | string | null;
   estimatedValue?: number | null;
   awardValue?: number | null;
   contactPerson?: string | null;

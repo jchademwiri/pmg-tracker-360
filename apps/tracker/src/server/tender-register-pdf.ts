@@ -9,6 +9,9 @@ import { jsPDF } from "jspdf";
 
 import { getStatusConfig } from "@/components/ui/status-badge";
 import { validateSessionAndOrg } from "./utils";
+import React from "react";
+import { isPdfcnEnabled, renderToPdf, TenderRegisterPdf, formatZar } from "@pmg/pdf";
+import { fetchLogoBase64, parseOrganizationMetadata } from "@/lib/pdf/pdf-layout";
 
 const NAVY = [23, 54, 93] as const;
 const BLUE = [47, 117, 181] as const;
@@ -449,17 +452,94 @@ export async function getTenderRegisterPdf(
       success: false as const,
       error: "Client not found or has no tenders.",
     };
-  const buffer = clientId
-    ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
-    : renderPortfolio(rows, orgName);
+
   const slug =
     (clientId ? rows[0]?.clientName : "tender-register")
       ?.toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "tender-register";
+  const filename = `${slug}-${new Date().toISOString().slice(0, 10)}.pdf`;
+
+  if (isPdfcnEnabled("tender-register")) {
+    const orgMeta = parseOrganizationMetadata(org?.metadata);
+    const logoDataUri = await fetchLogoBase64(org?.logo ?? null);
+
+    const submitted = rows.filter(
+      (row) => timing(row.submissionDate) === "Submitted",
+    ).length;
+    const due = rows.length - submitted;
+
+    let kpiCards: any[] = [];
+    if (clientId) {
+      const estimated = rows.reduce(
+        (sum, row) => sum + (Number(row.value) || 0),
+        0,
+      );
+      kpiCards = [
+        { label: "Total Tenders", value: String(rows.length) },
+        { label: "Submitted", value: String(submitted), variant: "primary" },
+        { label: "Not Yet Due", value: String(due), variant: "warning" },
+        { label: "Estimated Value", value: formatZar(estimated), variant: "success" },
+      ];
+    } else {
+      const clients = new Set(rows.map((row) => row.clientId).filter(Boolean)).size;
+      const pipeline = rows
+        .filter((row) => timing(row.submissionDate) === "Not Yet Due")
+        .reduce((sum, row) => sum + (Number(row.value) || 0), 0);
+      kpiCards = [
+        { label: "Total Tenders", value: String(rows.length) },
+        { label: "Submitted", value: String(submitted), variant: "primary" },
+        { label: "Not Yet Due", value: String(due), variant: "warning" },
+        { label: "Number of Clients", value: String(clients) },
+        { label: "Pipeline Value", value: formatZar(pipeline), variant: "success" },
+      ];
+    }
+
+    const pdfResult = await renderToPdf(
+      React.createElement(TenderRegisterPdf, {
+        data: {
+          branding: {
+            organizationName: orgName,
+            logoDataUri,
+            phone: orgMeta.phone,
+            address: orgMeta.address,
+            website: orgMeta.website,
+          },
+          variant: clientId ? "client" : "portfolio",
+          clientName: clientId ? (text(rows[0]?.clientName) || "Client") : null,
+          filterPills: clientId
+            ? [{ label: "Client", value: text(rows[0]?.clientName) || "Client" }]
+            : [{ label: "Scope", value: "Master Register" }],
+          kpiCards,
+          rows: rows.map((r) => ({
+            tenderNumber: r.tenderNumber || "—",
+            client: r.clientName || "—",
+            description: r.description || "—",
+            status: r.status,
+            priority: r.priority,
+            submissionDate: r.submissionDate,
+            validityDate: r.validityDate,
+            contactPerson: contact(r),
+          })),
+        },
+      }),
+      { orientation: "landscape" }
+    );
+
+    return {
+      success: true as const,
+      buffer: Buffer.from(pdfResult.bytes),
+      filename,
+    };
+  }
+
+  const buffer = clientId
+    ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
+    : renderPortfolio(rows, orgName);
+
   return {
     success: true as const,
     buffer,
-    filename: `${slug}-${new Date().toISOString().slice(0, 10)}.pdf`,
+    filename,
   };
 }
