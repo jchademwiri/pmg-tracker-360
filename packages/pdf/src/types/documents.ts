@@ -67,26 +67,26 @@ export interface TenderWinLossPdfModel {
   awardedCount: number;
   lostCount: number;
   winRate: number;
-  awardedValueTotal: number;
-  lostValueTotal: number;
+  awardedValueTotal?: number;
+  lostValueTotal?: number;
   awardedTenders: Array<{
     tenderNumber: string;
     client: string;
     description: string;
-    awardValue: number;
+    awardValue?: number;
     awardDate?: Date | string | null;
   }>;
   lostTenders: Array<{
     tenderNumber: string;
     client: string;
     description: string;
-    estimatedValue: number;
+    estimatedValue?: number;
     lossReason?: string | null;
   }>;
   lossReasonsSummary: Array<{
     reason: string;
     count: number;
-    value: number;
+    value?: number;
     percentage: number;
   }>;
   generatedAt?: Date;

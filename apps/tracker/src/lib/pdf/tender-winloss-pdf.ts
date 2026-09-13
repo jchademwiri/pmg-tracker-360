@@ -4,7 +4,14 @@ import { jsPDF } from "jspdf";
 
 import { formatCurrency, formatDate } from "@/lib/format";
 import React from "react";
-import { isPdfcnEnabled, renderToPdf, TenderWinLossPdf } from "@pmg/pdf";
+import {
+  isPdfcnEnabled,
+  renderToPdf,
+  TenderWinLossPdf,
+  RunningFooter,
+  trackerTheme,
+  formatDateTimeSa,
+} from "@pmg/pdf";
 import { getTenderWinLossReport } from "@/server/tender-reports";
 import {
   PAGE,
@@ -211,14 +218,14 @@ export async function generateTenderWinLossPdf(organizationId: string) {
           awardedTenders: result.data.awarded.map((t) => ({
             tenderNumber: t.tenderNumber,
             client: t.clientName || "—",
-            description: "",
+            description: t.description || "—",
             awardValue: parseFloat(String(t.awardValue)) || 0,
             awardDate: t.submissionDate,
           })),
           lostTenders: result.data.lost.map((t) => ({
             tenderNumber: t.tenderNumber,
             client: t.clientName || "—",
-            description: "",
+            description: t.description || "—",
             estimatedValue: parseFloat(String(t.value)) || 0,
             lossReason: t.lossReason,
           })),
@@ -230,7 +237,17 @@ export async function generateTenderWinLossPdf(organizationId: string) {
           })),
         },
       }),
-      { orientation: "portrait" }
+      {
+        orientation: "portrait",
+        footer: React.createElement(RunningFooter, {
+          theme: trackerTheme,
+          orientation: "portrait",
+          branding: { organizationName: result.data.org.name },
+          documentTitle: "TENDER WIN/LOSS REPORT",
+          confidential: false,
+          generatedAtText: formatDateTimeSa(new Date()),
+        }),
+      }
     );
 
     return {

@@ -6,119 +6,175 @@ import { DataTable } from "../components/table/DataTable";
 import { formatDateSa, formatPercent, formatZar } from "../formatters/index";
 
 export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
+  const totalDecided = data.totalSubmissions || (data.awardedCount + data.lostCount);
+
   const kpiCards = [
     {
-      label: "Win Rate",
-      value: formatPercent(data.winRate / 100),
-      variant: (data.winRate >= 50 ? "success" : "warning") as "success" | "warning",
-    },
-    {
-      label: "Awarded Tenders",
-      value: data.awardedCount.toString(),
+      label: "TOTAL DECIDED",
+      value: totalDecided.toString(),
       variant: "primary" as const,
     },
     {
-      label: "Lost Tenders",
-      value: data.lostCount.toString(),
-      variant: "default" as const,
-    },
-    {
-      label: "Total Awarded Value",
-      value: formatZar(data.awardedValueTotal),
+      label: "AWARDED TENDERS",
+      value: data.awardedCount.toString(),
       variant: "success" as const,
     },
     {
-      label: "Total Lost Value",
-      value: formatZar(data.lostValueTotal),
-      variant: "default" as const,
+      label: "LOST TENDERS",
+      value: data.lostCount.toString(),
+      variant: (data.lostCount > 0 ? "destructive" : "default") as "destructive" | "default",
+    },
+    {
+      label: "WIN RATE",
+      value: formatPercent(data.winRate / 100),
+      variant: (data.winRate >= 50 ? "success" : "warning") as "success" | "warning",
     },
   ];
 
   const awardedColumns = [
-    { id: "tenderNumber", header: "Tender #", width: "20%", accessorKey: "tenderNumber" as const },
-    { id: "client", header: "Client", width: "25%", accessorKey: "client" as const },
-    { id: "description", header: "Description", width: "35%", accessorKey: "description" as const },
     {
-      id: "awardValue",
-      header: "Award Value",
+      id: "tenderNumber",
+      header: "TENDER #",
       width: "20%",
-      align: "right" as const,
       render: (row: any) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.success }}>
-          {formatZar(row.awardValue)}
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+          {row.tenderNumber ? String(row.tenderNumber).toUpperCase() : "—"}
+        </span>
+      ),
+    },
+    {
+      id: "client",
+      header: "CLIENT",
+      width: "25%",
+      render: (row: any) => (
+        <span style={{ fontWeight: 600, textTransform: "uppercase" }}>
+          {row.client || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "description",
+      header: "DESCRIPTION",
+      width: "55%",
+      render: (row: any) => (
+        <span style={{ textTransform: "uppercase" }}>
+          {row.description || "—"}
         </span>
       ),
     },
   ];
 
   const lostColumns = [
-    { id: "tenderNumber", header: "Tender #", width: "20%", accessorKey: "tenderNumber" as const },
-    { id: "client", header: "Client", width: "25%", accessorKey: "client" as const },
     {
-      id: "estimatedValue",
-      header: "Est. Value",
+      id: "tenderNumber",
+      header: "TENDER #",
       width: "20%",
-      align: "right" as const,
-      render: (row: any) => formatZar(row.estimatedValue),
+      render: (row: any) => (
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+          {row.tenderNumber ? String(row.tenderNumber).toUpperCase() : "—"}
+        </span>
+      ),
     },
-    { id: "lossReason", header: "Loss Reason", width: "35%", accessorKey: "lossReason" as const },
+    {
+      id: "client",
+      header: "CLIENT",
+      width: "25%",
+      render: (row: any) => (
+        <span style={{ fontWeight: 600, textTransform: "uppercase" }}>
+          {row.client || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "description",
+      header: "DESCRIPTION",
+      width: "30%",
+      render: (row: any) => (
+        <span style={{ textTransform: "uppercase" }}>
+          {row.description || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "lossReason",
+      header: "LOSS REASON",
+      width: "25%",
+      render: (row: any) => (
+        <span style={{ textTransform: "uppercase", color: trackerTheme.colors.mutedForeground }}>
+          {row.lossReason || "NOT SPECIFIED"}
+        </span>
+      ),
+    },
   ];
 
   const lossReasonColumns = [
-    { id: "reason", header: "Recorded Reason", width: "50%", accessorKey: "reason" as const },
+    {
+      id: "reason",
+      header: "RECORDED REASON",
+      width: "50%",
+      render: (row: any) => (
+        <span style={{ textTransform: "uppercase", fontWeight: 600 }}>
+          {row.reason || "NOT SPECIFIED"}
+        </span>
+      ),
+    },
     {
       id: "count",
-      header: "Count",
-      width: "20%",
+      header: "COUNT",
+      width: "25%",
       align: "right" as const,
       render: (row: any) => row.count.toString(),
     },
     {
       id: "percentage",
-      header: "Share",
-      width: "30%",
+      header: "SHARE",
+      width: "25%",
       align: "right" as const,
-      render: (row: any) => formatPercent(row.percentage / 100),
+      render: (row: any) => (
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary }}>
+          {formatPercent(row.percentage / 100)}
+        </span>
+      ),
     },
   ];
 
   const sections: AnalyticalSection[] = [
     {
       id: "awarded",
-      title: "Awarded Tenders",
-      description: "Tenders successfully won and converted to active projects.",
+      title: "AWARDED TENDERS",
+      description: "TENDERS SUCCESSFULLY WON AND CONVERTED TO ACTIVE PROJECTS.",
       children: (
         <DataTable
           theme={trackerTheme}
           columns={awardedColumns}
           data={data.awardedTenders}
-          emptyMessage="No tenders awarded in the selected period."
+          emptyMessage="NO TENDERS AWARDED IN THE SELECTED PERIOD."
         />
       ),
     },
     {
       id: "lost",
-      title: "Lost Tenders",
-      description: "Unsuccessful tender submissions and their estimated values.",
+      title: "LOST TENDERS",
+      description: "UNSUCCESSFUL TENDER SUBMISSIONS AND RECORDED OUTCOMES.",
       children: (
         <DataTable
           theme={trackerTheme}
           columns={lostColumns}
           data={data.lostTenders}
-          emptyMessage="No lost tenders recorded in the selected period."
+          emptyMessage="NO LOST TENDERS RECORDED IN THE SELECTED PERIOD."
         />
       ),
     },
     {
       id: "loss-reasons",
-      title: "Loss Reason Frequency Analysis",
-      description: "Distribution of reasons recorded during post-submission reviews.",
+      title: "LOSS REASON FREQUENCY ANALYSIS",
+      description: "DISTRIBUTION OF REASONS RECORDED DURING POST-SUBMISSION REVIEWS.",
       children: (
         <DataTable
           theme={trackerTheme}
           columns={lossReasonColumns}
           data={data.lossReasonsSummary}
-          emptyMessage="No loss reasons captured."
+          emptyMessage="NO LOSS REASONS CAPTURED."
         />
       ),
     },
@@ -129,7 +185,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       theme={trackerTheme}
       branding={data.branding}
       title="TENDER WIN/LOSS REPORT"
-      subtitle="Performance overview and win rate analysis"
+      subtitle="PERFORMANCE OVERVIEW AND WIN RATE ANALYSIS"
       periodLabel={data.periodLabel}
       kpiCards={kpiCards}
       sections={sections}

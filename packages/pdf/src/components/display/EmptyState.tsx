@@ -37,15 +37,16 @@ export function EmptyState({
     <div style={containerStyle} className={clsx("pdf-empty-state", className)}>
       <div
         style={{
-          fontSize: "13px",
-          fontWeight: 600,
+          fontSize: "12px",
+          fontWeight: 700,
           color: theme.colors.foreground,
           marginBottom: "4px",
+          textTransform: "uppercase",
         }}
       >
         {title}
       </div>
-      <div style={{ fontSize: "11px", color: theme.colors.mutedForeground, maxWidth: "320px" }}>
+      <div style={{ fontSize: "10px", color: theme.colors.mutedForeground, maxWidth: "340px", textTransform: "uppercase" }}>
         {description}
       </div>
     </div>

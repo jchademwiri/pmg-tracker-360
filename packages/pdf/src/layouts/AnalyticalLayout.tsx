@@ -49,8 +49,8 @@ export function AnalyticalLayout({
 
   const enrichedMetadata = [
     ...(metadataItems ?? []),
-    ...(periodLabel ? [{ label: "Reporting Period", value: periodLabel }] : []),
-    { label: "Generated", value: generatedAtText },
+    ...(periodLabel ? [{ label: "REPORTING PERIOD", value: periodLabel.toUpperCase() }] : []),
+    { label: "GENERATED", value: generatedAtText },
   ];
 
   return (
