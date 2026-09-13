@@ -9,5 +9,6 @@ export * from "./templates/PurchaseOrderPdf";
 export * from "./templates/TenderDetailPdf";
 export * from "./templates/TenderWinLossPdf";
 export * from "./templates/TenderRegisterPdf";
+export * from "./templates/TenderFollowUpPdf";
 export * from "./templates/AdminReportPdf";
 export * from "./utils/feature-flags";

@@ -31,8 +31,9 @@ describe("PDFCN Feature Flags", () => {
 
   it("enables all when 'all' is passed", () => {
     const list = parsePdfcnAllowlist("all");
-    expect(list.size).toBe(7);
+    expect(list.size).toBe(8);
     expect(list.has("purchase-order")).toBe(true);
+    expect(list.has("tender-follow-up")).toBe(true);
     expect(list.has("security-audit")).toBe(true);
   });
 });

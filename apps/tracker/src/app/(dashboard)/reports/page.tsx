@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Users, Trophy } from "lucide-react";
+import { FileSpreadsheet, Users, Trophy, CalendarClock } from "lucide-react";
 
 import { getCurrentUser, getClientsList } from "@/server";
 import { getReportStats, getTenderSubmissionTrend } from "@/server/reports";
@@ -6,6 +6,7 @@ import { ReportStatsCards } from "@/components/reports/stats-cards";
 import { TenderPerformanceChart } from "@/components/reports/tender-performance-chart";
 import { TenderSubmissionTrendChart } from "@/components/reports/tender-submission-trend-chart";
 import { TenderWinLossPdfButton } from "@/components/reports/tender-winloss-pdf-button";
+import { TenderFollowUpButton } from "@/components/reports/tender-follow-up-button";
 import {
   TenderRegisterButtons,
   ClientTenderReportButtons,
@@ -83,7 +84,7 @@ export default async function ReportsPage() {
             record-keeping, and client-level reporting.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
           <Card className="transition-shadow hover:shadow-md">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
@@ -100,6 +101,23 @@ export default async function ReportsPage() {
                 every client.
               </CardDescription>
               <TenderRegisterButtons />
+            </CardContent>
+          </Card>
+
+          <Card className="transition-shadow hover:shadow-md">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-indigo-100 p-2 dark:bg-indigo-900/20">
+                  <CalendarClock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <CardTitle className="text-lg">Management Follow-Up Report</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CardDescription>
+                Executive summary with tender number, description, closing date, client contact details, and offer validity expiry for management action.
+              </CardDescription>
+              <TenderFollowUpButton />
             </CardContent>
           </Card>
 

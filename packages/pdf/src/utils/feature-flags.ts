@@ -5,6 +5,7 @@ const VALID_DOCUMENT_KINDS: ReadonlySet<string> = new Set<PdfDocumentKind>([
   "tender-detail",
   "tender-win-loss",
   "tender-register",
+  "tender-follow-up",
   "platform-executive",
   "storage-audit",
   "security-audit",

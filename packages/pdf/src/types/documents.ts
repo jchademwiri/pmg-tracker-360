@@ -159,3 +159,32 @@ export interface AdminReportPdfModel {
   generatedAt?: Date;
   confidential?: boolean;
 }
+
+export interface TenderFollowUpRowModel {
+  tenderNumber: string;
+  client: string;
+  description: string;
+  closingDate?: Date | string | null;
+  validityExpiryDate?: Date | string | null;
+  validityDaysRemaining?: number | null;
+  isExpiringSoon?: boolean;
+  isExpired?: boolean;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  status: string;
+  estimatedValue?: number | string | null;
+}
+
+export interface TenderFollowUpPdfModel {
+  branding?: PdfBranding;
+  filterPills?: Array<{ label: string; value: string }>;
+  kpiCards?: Array<{
+    label: string;
+    value: string | number;
+    variant?: "default" | "primary" | "success" | "warning" | "destructive";
+  }>;
+  rows: TenderFollowUpRowModel[];
+  generatedAt?: Date;
+  confidential?: boolean;
+}

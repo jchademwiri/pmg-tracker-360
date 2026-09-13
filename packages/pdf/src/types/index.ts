@@ -5,6 +5,7 @@ export type PdfDocumentKind =
   | "tender-detail"
   | "tender-win-loss"
   | "tender-register"
+  | "tender-follow-up"
   | "platform-executive"
   | "storage-audit"
   | "security-audit";
