@@ -12,10 +12,11 @@ import { formatDateSa, formatZar } from "../formatters/index";
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();
   if (s === "awarded" || s === "won") return <Badge variant="success">Awarded</Badge>;
-  if (s === "submitted" || s === "evaluated") return <Badge variant="primary">Submitted</Badge>;
+  if (s === "submitted") return <Badge variant="primary">Submitted</Badge>;
+  if (s === "evaluation" || s === "evaluated") return <Badge variant="primary">Evaluation</Badge>;
   if (s === "preparation" || s === "draft") return <Badge variant="secondary">Preparation</Badge>;
-  if (s === "lost" || s === "cancelled") return <Badge variant="destructive">{status}</Badge>;
-  return <Badge variant="outline">{status}</Badge>;
+  if (s === "lost" || s === "cancelled") return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
+  return <Badge variant="outline">{status.toUpperCase()}</Badge>;
 }
 
 export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
@@ -125,6 +126,7 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
         columns={isClientVariant ? clientColumns : portfolioColumns}
         data={data.rows}
         dense={true}
+        orientation="landscape"
         emptyMessage="No tenders found matching the specified filters."
       />
     </RegisterLayout>

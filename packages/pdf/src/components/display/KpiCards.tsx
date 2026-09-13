@@ -30,23 +30,18 @@ export function KpiCards({
   return (
     <div style={containerStyle} className={clsx("pdf-kpi-cards-grid", className)}>
       {items.map((item, idx) => {
-        let accentColor = theme.colors.primary;
-        if (item.variant === "success") accentColor = theme.colors.success;
-        if (item.variant === "warning") accentColor = theme.colors.warning;
-        if (item.variant === "destructive") accentColor = theme.colors.destructive;
-
         return (
           <div
             key={idx}
             style={{
               backgroundColor: theme.colors.card,
               border: `1px solid ${theme.colors.border}`,
-              borderTop: `3px solid ${accentColor}`,
+              borderTop: `2px solid ${theme.colors.accent}`,
               borderRadius: "4px",
-              padding: "10px 12px",
+              padding: "9px 12px",
               display: "flex",
               flexDirection: "column",
-              gap: "4px",
+              gap: "3px",
             }}
           >
             <div

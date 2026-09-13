@@ -11,9 +11,42 @@ export interface DataTableProps<T> {
   striped?: boolean;
   bordered?: boolean;
   dense?: boolean;
+  orientation?: "portrait" | "landscape";
   footerRow?: ReactNode;
   style?: CSSProperties;
   className?: string;
+}
+
+function resolveColWidth<T>(
+  col: DataTableColumn<T>,
+  columns: DataTableColumn<T>[],
+  isLandscape: boolean
+): string | undefined {
+  if (!col.width) return undefined;
+
+  if (col.width.endsWith("%")) {
+    const pct = parseFloat(col.width);
+    if (isNaN(pct)) return undefined;
+
+    // Find the largest percentage column to let it flexibly absorb remaining width
+    let maxPct = 0;
+    for (const c of columns) {
+      if (c.width?.endsWith("%")) {
+        const val = parseFloat(c.width);
+        if (val > maxPct) maxPct = val;
+      }
+    }
+
+    // Leave the widest column undefined so it fills table width
+    if (pct === maxPct && pct >= 25) {
+      return undefined;
+    }
+
+    const baseWidth = isLandscape ? 770 : 520;
+    return `${Math.round((baseWidth * pct) / 100)}px`;
+  }
+
+  return col.width;
 }
 
 export function DataTable<T>({
@@ -24,6 +57,7 @@ export function DataTable<T>({
   striped = true,
   bordered = true,
   dense = false,
+  orientation,
   footerRow,
   style,
   className,
@@ -32,13 +66,15 @@ export function DataTable<T>({
     return <EmptyState theme={theme} title="No Data" description={emptyMessage} />;
   }
 
+  const isLandscape = orientation === "landscape" || (!orientation && columns.length >= 5);
   const paddingY = dense ? "6px" : "8px";
   const paddingX = dense ? "8px" : "10px";
-  const fontSize = dense ? "10px" : "11px";
+  const fontSize = dense ? "9.5px" : "10.5px";
 
   const tableStyle: CSSProperties = {
     width: "100%",
-    borderCollapse: "collapse",
+    borderSpacing: "0",
+    borderCollapse: "separate",
     fontSize,
     lineHeight: "14px",
     fontFamily: theme.fontFamily,
@@ -46,22 +82,25 @@ export function DataTable<T>({
     ...style,
   };
 
-  const thStyle = (col: DataTableColumn<T>): CSSProperties => ({
-    backgroundColor: theme.colors.tableHeaderBg,
-    color: theme.name === "admin" ? "#FFFFFF" : theme.colors.foreground,
-    paddingTop: paddingY,
-    paddingBottom: paddingY,
-    paddingLeft: paddingX,
-    paddingRight: paddingX,
-    textAlign: col.align ?? "left",
-    fontWeight: 700,
-    fontSize: "9px",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    width: col.width,
-    borderBottom: `2px solid ${theme.colors.border}`,
-    borderTop: bordered ? `1px solid ${theme.colors.border}` : undefined,
-  });
+  const thStyle = (col: DataTableColumn<T>): CSSProperties => {
+    const computedWidth = resolveColWidth(col, columns, isLandscape);
+    return {
+      backgroundColor: theme.colors.tableHeaderBg,
+      color: "#FFFFFF",
+      paddingTop: paddingY,
+      paddingBottom: paddingY,
+      paddingLeft: paddingX,
+      paddingRight: paddingX,
+      textAlign: col.align ?? "left",
+      fontWeight: 700,
+      fontSize: "9px",
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+      width: computedWidth,
+      borderBottom: `1px solid ${theme.colors.border}`,
+      boxSizing: "border-box",
+    };
+  };
 
   const tdStyle = (col: DataTableColumn<T>, rowIndex: number): CSSProperties => {
     const isEven = rowIndex % 2 === 0;
@@ -70,6 +109,7 @@ export function DataTable<T>({
         ? theme.colors.tableRowEven
         : theme.colors.tableRowOdd
       : theme.colors.tableRowEven;
+    const computedWidth = resolveColWidth(col, columns, isLandscape);
 
     return {
       backgroundColor: bg,
@@ -79,9 +119,11 @@ export function DataTable<T>({
       paddingLeft: paddingX,
       paddingRight: paddingX,
       textAlign: col.align ?? "left",
-      borderBottom: `1px solid ${theme.colors.borderLight}`,
+      borderBottom: `1px solid ${theme.colors.border}`,
       verticalAlign: "middle",
       wordBreak: "break-word",
+      width: computedWidth,
+      boxSizing: "border-box",
     };
   };
 
@@ -100,7 +142,7 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} style={{ pageBreakInside: "avoid" }}>
+            <tr key={rowIndex} style={{ pageBreakInside: "avoid", breakInside: "avoid" }}>
               {columns.map((col) => {
                 const cellContent = col.render
                   ? col.render(row, rowIndex)

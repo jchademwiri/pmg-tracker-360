@@ -5,76 +5,70 @@ import type { BadgeVariant } from "../../types/index";
 export interface BadgeProps {
   children?: ReactNode;
   variant?: BadgeVariant;
+  dot?: boolean | string;
   style?: CSSProperties;
   className?: string;
 }
 
+const dotColors: Record<BadgeVariant, string> = {
+  default: "#0F172A",
+  primary: "#2563EB",
+  secondary: "#64748B",
+  success: "#16A34A",
+  warning: "#D97706",
+  destructive: "#DC2626",
+  outline: "#94A3B8",
+};
+
 export function Badge({
   children,
   variant = "secondary",
+  dot = true,
   style,
   className,
 }: BadgeProps) {
-  const variantStyles: Record<BadgeVariant, CSSProperties> = {
-    default: {
-      backgroundColor: "#0F172A",
-      color: "#FFFFFF",
-      borderColor: "#0F172A",
-    },
-    primary: {
-      backgroundColor: "#EEF2FF",
-      color: "#4338CA",
-      borderColor: "#C7D2FE",
-    },
-    secondary: {
-      backgroundColor: "#F1F5F9",
-      color: "#334155",
-      borderColor: "#E2E8F0",
-    },
-    success: {
-      backgroundColor: "#F0FDF4",
-      color: "#166534",
-      borderColor: "#BBF7D0",
-    },
-    warning: {
-      backgroundColor: "#FFFBEB",
-      color: "#92400E",
-      borderColor: "#FDE68A",
-    },
-    destructive: {
-      backgroundColor: "#FEF2F2",
-      color: "#991B1B",
-      borderColor: "#FECACA",
-    },
-    outline: {
-      backgroundColor: "transparent",
-      color: "#334155",
-      borderColor: "#CBD5E1",
-    },
-  };
+  const isDefaultSolid = variant === "default";
 
   const baseStyle: CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: "4px",
+    gap: "5px",
+    borderRadius: "3px",
     borderWidth: "1px",
     borderStyle: "solid",
-    paddingLeft: "8px",
-    paddingRight: "8px",
+    borderColor: isDefaultSolid ? "#0F172A" : "#E2E8F0",
+    backgroundColor: isDefaultSolid ? "#0F172A" : "#F8FAFC",
+    color: isDefaultSolid ? "#FFFFFF" : "#1E293B",
+    paddingLeft: "7px",
+    paddingRight: "7px",
     paddingTop: "2px",
     paddingBottom: "2px",
-    fontSize: "10px",
+    fontSize: "8.5px",
     fontWeight: 600,
-    lineHeight: "14px",
+    lineHeight: "13px",
     textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    ...variantStyles[variant],
+    letterSpacing: "0.4px",
     ...style,
   };
 
+  const showDot = dot !== false && !isDefaultSolid;
+  const dotColor = typeof dot === "string" ? dot : dotColors[variant];
+
   return (
     <span style={baseStyle} className={clsx("pdf-badge", className)}>
+      {showDot && (
+        <span
+          style={{
+            width: "5px",
+            height: "5px",
+            borderRadius: "50%",
+            backgroundColor: dotColor,
+            display: "inline-block",
+            flexShrink: 0,
+          }}
+        />
+      )}
       {children}
     </span>
   );
