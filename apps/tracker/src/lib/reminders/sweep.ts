@@ -463,8 +463,16 @@ export type ReminderCandidateOutcome =
   | { status: "partial"; error: string }
   | { status: "failed"; error: string };
 
+function redactEmails(text: string): string {
+  return text.replace(
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    "[REDACTED]",
+  );
+}
+
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  const message = error instanceof Error ? error.message : String(error);
+  return redactEmails(message);
 }
 
 function reminderIdempotencyKey(
@@ -613,15 +621,17 @@ export async function runReminderSweep(): Promise<{
       sent++;
     } else if (outcome.status === "partial") {
       sent++;
+      const safeError = redactEmails(outcome.error);
       errors.push(
-        `${candidate.entityType}:${candidate.entityId}: partial — ${outcome.error}`,
+        `${candidate.entityType}:${candidate.entityId}: partial — ${safeError}`,
       );
     } else if (outcome.status === "failed") {
+      const safeError = redactEmails(outcome.error);
       console.error(
-        `Reminder sweep failed for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}: ${outcome.error}`,
+        `Reminder sweep failed for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}: ${safeError}`,
       );
       errors.push(
-        `${candidate.entityType}:${candidate.entityId}: ${outcome.error}`,
+        `${candidate.entityType}:${candidate.entityId}: ${safeError}`,
       );
     }
   }

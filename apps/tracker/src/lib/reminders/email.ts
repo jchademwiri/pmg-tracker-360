@@ -49,6 +49,6 @@ export async function sendReminderEmail({
   );
 
   if (error) {
-    throw new Error(`Failed to send reminder email to ${to}: ${error.message}`);
+    throw new Error(`Failed to send reminder email: ${error.message}`);
   }
 }

@@ -34,4 +34,29 @@ describe("sendReminderEmail", () => {
       { idempotencyKey: "reminder/stable-key" },
     );
   });
+
+  it("does not include recipient email in thrown error on failure", async () => {
+    mockResendSend.mockResolvedValueOnce({
+      data: null,
+      error: { message: "rate limit exceeded" },
+    });
+
+    let thrown: Error | null = null;
+    try {
+      await sendReminderEmail({
+        to: "sensitive-recipient@example.com",
+        subject: "Reminder",
+        react: null as never,
+        idempotencyKey: "reminder/key",
+      });
+    } catch (err) {
+      thrown = err as Error;
+    }
+
+    expect(thrown).not.toBeNull();
+    expect(thrown?.message).toBe(
+      "Failed to send reminder email: rate limit exceeded",
+    );
+    expect(thrown?.message).not.toContain("sensitive-recipient@example.com");
+  });
 });

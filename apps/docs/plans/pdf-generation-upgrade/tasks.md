@@ -49,9 +49,9 @@ Each checkbox represents an independently verifiable deliverable. A phase MUST N
 - [ ] Implement the pdfcn purchase-order template using shared header, key-value, table, totals, and footer components.
 - [ ] Preserve the existing 15% VAT calculation and South African date/currency formatting.
 - [ ] Ensure repeated table headers and row/footer separation across page breaks.
-- [ ] Add `PDFCN_DOCUMENTS` parser and select the renderer for `purchase-order` only.
-- [ ] Run the route contract suite with the allowlist disabled and enabled.
-- [ ] Verify valid, missing, rejected, corrupt, oversized, and timed-out logo paths.
+- [ ] Add `PDFCN_DOCUMENTS` parser with unit test coverage for missing/empty values, unknown values reported once, duplicate and whitespace entries, and disabled-until-complete "all" behavior.
+- [ ] Select the renderer for `purchase-order` only, verifying selected-renderer failures use the existing route error path without fallback, and run the route contract suite with the allowlist disabled and enabled.
+- [ ] Verify valid, missing, rejected, corrupt, oversized, timed-out, unsupported media types, and malformed content logo paths.
 - [ ] Compare semantic content, visual output, page count, byte size, and p95 latency against Phase 0.
 - [ ] Deploy to preview, download representative PDFs, and inspect them in browser and desktop readers.
 - [ ] Enable `purchase-order` for an internal/canary environment and verify telemetry and rollback.
@@ -119,6 +119,7 @@ Each checkbox represents an independently verifiable deliverable. A phase MUST N
 - [ ] Enable all seven pdfcn document kinds in production and start the seven-day observation window, exercising each kind at least ten times through real or approved synthetic requests.
 - [ ] Monitor PDF endpoint failure rate, render duration, output size, WASM failures, and user-reported rendering issues.
 - [ ] Exercise an operational rollback during a controlled window and re-enable the new renderer.
+- [ ] Start and record a fresh seven-day observation window after each rollback and re-enablement before removing jsPDF or migration flags.
 - [ ] Confirm generated output in current Chromium, Firefox, Edge, Adobe Acrobat Reader, and the platform-supported mobile viewer.
 - [ ] Confirm all semantic, visual, security, route, type-check, lint, test, and production-build suites pass from a clean checkout.
 - [ ] Remove legacy jsPDF renderer branches only after the observation window completes.

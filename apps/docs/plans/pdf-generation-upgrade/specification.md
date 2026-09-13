@@ -151,7 +151,9 @@ Templates MUST NOT fetch remote resources. Logos MUST be resolved before renderi
 - No followed redirects.
 - Five-second timeout.
 - Two-megabyte maximum.
-- Missing, rejected, corrupt, or unsupported logos fall back to a text header.
+- Explicit inert image media-type allowlist (`image/png`, `image/jpeg`, `image/webp`).
+- `fetchLogoBase64` MUST validate both the declared media type and decoded content (e.g. magic byte inspection) before constructing the data URI.
+- Invalid input, unsupported media types, malformed content, missing, rejected, corrupt, or oversized logos MUST fall back to a text header.
 
 User-controlled strings MUST be rendered as text and MUST NOT be interpreted as HTML or renderer markup. Document metadata MUST exclude secrets, internal object keys, session identifiers, and raw user-agent or IP data unless that field is explicitly part of the security report contract.
 

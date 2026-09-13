@@ -61,12 +61,13 @@ function conflictsWith(row: MockLogRow): boolean {
  * fake table.
  */
 function makeChain(
-  terminal: () => Promise<unknown> = () => Promise.resolve([]),
+  terminal: (ctx: { predicate?: unknown }) => Promise<unknown> = () =>
+    Promise.resolve([]),
 ) {
+  const ctx: { predicate?: unknown } = {};
   const chain: Record<string, unknown> = {};
   for (const method of [
     "from",
-    "where",
     "innerJoin",
     "leftJoin",
     "orderBy",
@@ -78,11 +79,97 @@ function makeChain(
   ]) {
     chain[method] = jest.fn(() => chain);
   }
+  chain.where = jest.fn((predicate: unknown) => {
+    ctx.predicate = predicate;
+    return chain;
+  });
   chain.then = (
     resolve: (value: unknown) => unknown,
     reject: (reason: unknown) => unknown,
-  ) => terminal().then(resolve, reject);
+  ) => terminal(ctx).then(resolve, reject);
   return chain;
+}
+
+interface CandidateIdentity {
+  entityType?: string;
+  entityId?: string;
+  stage?: string;
+  targetDate?: Date;
+}
+
+function extractCandidateIdentity(predicate: unknown): CandidateIdentity | null {
+  if (!predicate) return null;
+  const chunks: unknown[] = [];
+  function collect(item: unknown) {
+    if (!item) return;
+    if (
+      typeof item === "object" &&
+      "queryChunks" in item &&
+      Array.isArray((item as { queryChunks: unknown[] }).queryChunks)
+    ) {
+      for (const chunk of (item as { queryChunks: unknown[] }).queryChunks) {
+        collect(chunk);
+      }
+    } else {
+      chunks.push(item);
+    }
+  }
+  collect(predicate);
+
+  const identity: CandidateIdentity = {};
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    if (chunk && typeof chunk === "object" && "name" in chunk) {
+      const colName = (chunk as { name: string }).name;
+      for (let j = i + 1; j < chunks.length; j++) {
+        const next = chunks[j];
+        if (next && typeof next === "object" && "name" in next) break;
+        if (typeof next === "string" || next instanceof Date) {
+          if (colName === "entityType") identity.entityType = next as string;
+          if (colName === "entityId") identity.entityId = next as string;
+          if (colName === "stage") identity.stage = next as string;
+          if (colName === "targetDate") identity.targetDate = next as Date;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!identity.entityType || !identity.entityId) {
+    const values = chunks.filter(
+      (c) =>
+        (typeof c === "string" && !["(", ")", "", " and ", " = "].includes(c)) ||
+        c instanceof Date,
+    );
+    if (values.length >= 4) {
+      identity.entityType = values[0] as string;
+      identity.entityId = values[1] as string;
+      identity.stage = values[2] as string;
+      identity.targetDate = values[3] as Date;
+    }
+  }
+
+  return identity;
+}
+
+function rowMatchesCandidate(
+  row: MockLogRow,
+  identity: CandidateIdentity | null,
+): boolean {
+  if (!identity) return true;
+  if (identity.entityType !== undefined && row.entityType !== identity.entityType)
+    return false;
+  if (identity.entityId !== undefined && row.entityId !== identity.entityId)
+    return false;
+  if (identity.stage !== undefined && row.stage !== identity.stage)
+    return false;
+  if (
+    identity.targetDate !== undefined &&
+    row.targetDate.getTime() !== identity.targetDate.getTime()
+  )
+    return false;
+  return true;
 }
 
 // --- insert: captures .values(row), executes the unique-claim on .returning()
@@ -103,21 +190,33 @@ const insertBuilder = {
 // --- select: resolves to [] for every query shape (no candidates, no log hits)
 const selectBuilder = makeChain(() => Promise.resolve([]));
 
-// --- update: captures .set(patch), applies it to all rows on .where()
+// --- update: captures .set(patch), applies it only to rows matching .where()
 const updateBuilder = {
   set: jest.fn((patch: Partial<MockLogRow>) =>
-    makeChain(() => {
+    makeChain((ctx) => {
+      const identity = extractCandidateIdentity(ctx.predicate);
       for (const row of reminderLogTable) {
-        Object.assign(row, patch);
+        if (rowMatchesCandidate(row, identity)) {
+          Object.assign(row, patch);
+        }
       }
       return Promise.resolve();
     }),
   ),
 };
 
-// --- delete: clears the fake table on .where()
-const deleteBuilder = makeChain(() => {
-  reminderLogTable.length = 0;
+// --- delete: deletes only the matching row on .where(), or clears all if untargeted
+const deleteBuilder = makeChain((ctx) => {
+  const identity = extractCandidateIdentity(ctx.predicate);
+  if (!identity || (!identity.entityType && !identity.entityId)) {
+    reminderLogTable.length = 0;
+  } else {
+    for (let i = reminderLogTable.length - 1; i >= 0; i--) {
+      if (rowMatchesCandidate(reminderLogTable[i], identity)) {
+        reminderLogTable.splice(i, 1);
+      }
+    }
+  }
   return Promise.resolve();
 });
 
@@ -130,15 +229,26 @@ jest.mock("@pmg/db", () => ({
   },
 }));
 
-jest.mock("@pmg/db/schema", () => ({
-  tender: {},
-  tenderExtension: {},
-  tenderFollowUp: {},
-  project: {},
-  purchaseOrder: {},
-  client: {},
-  reminderLog: {},
-}));
+jest.mock("@pmg/db/schema", () => {
+  const col = (name: string) => ({ name });
+  return {
+    tender: {},
+    tenderExtension: {},
+    tenderFollowUp: {},
+    project: {},
+    purchaseOrder: {},
+    client: {},
+    reminderLog: {
+      id: col("id"),
+      entityType: col("entityType"),
+      entityId: col("entityId"),
+      stage: col("stage"),
+      targetDate: col("targetDate"),
+      recipientCount: col("recipientCount"),
+      organizationId: col("organizationId"),
+    },
+  };
+});
 
 import {
   claimReminderSlot,
@@ -311,6 +421,40 @@ describe("reminder sweep dedup (claim-before-send)", () => {
       error: "preferences unavailable",
     });
     expect(reminderLogTable).toHaveLength(0);
+  });
+
+  it("releases only the matching candidate slot and preserves other candidate slots", async () => {
+    const candidateA = { ...candidate, entityId: "tender-A" };
+    const candidateB = { ...candidate, entityId: "tender-B" };
+
+    await claimReminderSlot(candidateA);
+    await claimReminderSlot(candidateB);
+    expect(reminderLogTable).toHaveLength(2);
+
+    await releaseReminderSlot(candidateA);
+    expect(reminderLogTable).toHaveLength(1);
+    expect(reminderLogTable[0].entityId).toBe("tender-B");
+  });
+
+  it("redacts recipient email addresses if present in provider errors", async () => {
+    mockRecipients.mockResolvedValue([
+      { userId: "u-err", name: "ErrorUser", email: "secret-user@example.com" },
+    ]);
+    mockSend.mockRejectedValueOnce(
+      new Error("Failed delivery to secret-user@example.com: mailbox full"),
+    );
+
+    const errorCandidate = {
+      ...candidate,
+      organizationId: "org-error-redact",
+    };
+
+    const outcome = await processReminderCandidate(errorCandidate);
+    expect(outcome.status).toBe("failed");
+    if (outcome.status === "failed") {
+      expect(outcome.error).not.toContain("secret-user@example.com");
+      expect(outcome.error).toContain("[REDACTED]");
+    }
   });
 
   it("runReminderSweep no-ops safely when no candidates match", async () => {
