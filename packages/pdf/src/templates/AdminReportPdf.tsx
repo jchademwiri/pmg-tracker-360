@@ -1,9 +1,4 @@
-import type { ReactNode } from "react";
-import type {
-  AdminReportMetricItem,
-  AdminReportPdfModel,
-  AdminReportSectionModel,
-} from "../types/documents";
+import type { AdminReportPdfModel } from "../types/documents";
 import type { DataTableColumn, KpiCardItem } from "../types/index";
 import { adminTheme } from "../themes/admin";
 import {
@@ -47,13 +42,13 @@ export function AdminReportPdf({ data }: { data: AdminReportPdfModel }) {
   }));
 
   const sections: AnalyticalSection[] = data.sections.map((sec, idx) => {
-    const columns: DataTableColumn<any>[] = (sec.table?.columns ?? []).map((col) => ({
+    const columns: DataTableColumn<Record<string, unknown>>[] = (sec.table?.columns ?? []).map((col) => ({
       id: col.id,
       header: col.header,
       width: col.width,
       align: col.align,
       accessorKey: col.id,
-      render: (row: any) => {
+      render: (row: Record<string, unknown>) => {
         const val = row[col.id];
         if (col.id === "severity" && typeof val === "string") {
           const isCritical = val.toLowerCase() === "critical";
@@ -88,7 +83,7 @@ export function AdminReportPdf({ data }: { data: AdminReportPdfModel }) {
             </span>
           );
         }
-        return val ?? "—";
+        return val !== undefined && val !== null ? String(val) : "—";
       },
     }));
 

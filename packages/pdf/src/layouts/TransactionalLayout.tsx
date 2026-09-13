@@ -1,10 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { PdfBranding, PdfTheme } from "../types/index";
-import { DocumentFrame, RunningFooter, RunningHeader } from "../components/layout/DocumentFrame";
+import { DocumentFrame } from "../components/layout/DocumentFrame";
 import { PageHeader } from "../components/layout/PageHeader";
 import { TwoColumnCards } from "../components/display/KeyValueGrid";
 import { Divider } from "../components/primitives/Divider";
-import { formatDateTimeSa, formatZar } from "../formatters/index";
+import { formatZar } from "../formatters/index";
 
 export interface TransactionalTotals {
   subtotal: number | string;
@@ -53,8 +53,6 @@ export function TransactionalLayout({
   generatedAt,
   style,
 }: TransactionalLayoutProps) {
-  const generatedAtText = formatDateTimeSa(generatedAt ?? new Date());
-
   return (
     <DocumentFrame
       theme={theme}

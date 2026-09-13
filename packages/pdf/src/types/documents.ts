@@ -142,7 +142,7 @@ export interface AdminReportSectionModel {
   metrics?: AdminReportMetricItem[];
   table?: {
     columns: Array<{ id: string; header: string; width?: string; align?: "left" | "center" | "right" }>;
-    rows: Array<Record<string, any>>;
+    rows: Array<Record<string, unknown>>;
   };
   callouts?: string[];
 }

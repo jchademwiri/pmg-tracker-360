@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { PurchaseOrderLineItem, PurchaseOrderPdfModel } from "../types/documents";
 import type { BadgeVariant } from "../types/index";
 import { trackerTheme } from "../themes/tracker";

@@ -20,11 +20,6 @@ export function DocumentFrame({
   children,
   theme,
   orientation = "portrait",
-  branding,
-  documentTitle,
-  documentSubtitle,
-  confidential = false,
-  generatedAt,
   style,
   className,
 }: DocumentFrameProps) {

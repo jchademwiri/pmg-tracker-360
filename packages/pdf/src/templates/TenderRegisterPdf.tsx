@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type {
   TenderRegisterPdfModel,
   TenderRegisterRowModel,
@@ -7,7 +6,7 @@ import { trackerTheme } from "../themes/tracker";
 import { RegisterLayout } from "../layouts/RegisterLayout";
 import { DataTable } from "../components/table/DataTable";
 import { Badge } from "../components/primitives/Badge";
-import { formatDateSa, formatZar } from "../formatters/index";
+import { formatDateSa } from "../formatters/index";
 
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();

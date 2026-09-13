@@ -1,9 +1,8 @@
-import type { ReactNode } from "react";
 import type { TenderWinLossPdfModel } from "../types/documents";
 import { trackerTheme } from "../themes/tracker";
 import { AnalyticalLayout, type AnalyticalSection } from "../layouts/AnalyticalLayout";
 import { DataTable } from "../components/table/DataTable";
-import { formatDateSa, formatPercent, formatZar } from "../formatters/index";
+import { formatPercent } from "../formatters/index";
 
 export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
   const totalDecided = data.totalSubmissions || (data.awardedCount + data.lostCount);
@@ -31,12 +30,16 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
     },
   ];
 
+  type AwardedRow = TenderWinLossPdfModel["awardedTenders"][number];
+  type LostRow = TenderWinLossPdfModel["lostTenders"][number];
+  type LossReasonRow = TenderWinLossPdfModel["lossReasonsSummary"][number];
+
   const awardedColumns = [
     {
       id: "tenderNumber",
       header: "TENDER #",
       width: "20%",
-      render: (row: any) => (
+      render: (row: AwardedRow) => (
         <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
           {row.tenderNumber ? String(row.tenderNumber).toUpperCase() : "—"}
         </span>
@@ -46,7 +49,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "client",
       header: "CLIENT",
       width: "25%",
-      render: (row: any) => (
+      render: (row: AwardedRow) => (
         <span style={{ fontWeight: 600, textTransform: "uppercase" }}>
           {row.client || "—"}
         </span>
@@ -56,7 +59,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "description",
       header: "DESCRIPTION",
       width: "55%",
-      render: (row: any) => (
+      render: (row: AwardedRow) => (
         <span style={{ textTransform: "uppercase" }}>
           {row.description || "—"}
         </span>
@@ -69,7 +72,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "tenderNumber",
       header: "TENDER #",
       width: "20%",
-      render: (row: any) => (
+      render: (row: LostRow) => (
         <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
           {row.tenderNumber ? String(row.tenderNumber).toUpperCase() : "—"}
         </span>
@@ -79,7 +82,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "client",
       header: "CLIENT",
       width: "25%",
-      render: (row: any) => (
+      render: (row: LostRow) => (
         <span style={{ fontWeight: 600, textTransform: "uppercase" }}>
           {row.client || "—"}
         </span>
@@ -89,7 +92,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "description",
       header: "DESCRIPTION",
       width: "30%",
-      render: (row: any) => (
+      render: (row: LostRow) => (
         <span style={{ textTransform: "uppercase" }}>
           {row.description || "—"}
         </span>
@@ -99,7 +102,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "lossReason",
       header: "LOSS REASON",
       width: "25%",
-      render: (row: any) => (
+      render: (row: LostRow) => (
         <span style={{ textTransform: "uppercase", color: trackerTheme.colors.mutedForeground }}>
           {row.lossReason || "NOT SPECIFIED"}
         </span>
@@ -112,7 +115,7 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       id: "reason",
       header: "RECORDED REASON",
       width: "50%",
-      render: (row: any) => (
+      render: (row: LossReasonRow) => (
         <span style={{ textTransform: "uppercase", fontWeight: 600 }}>
           {row.reason || "NOT SPECIFIED"}
         </span>
@@ -123,14 +126,14 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       header: "COUNT",
       width: "25%",
       align: "right" as const,
-      render: (row: any) => row.count.toString(),
+      render: (row: LossReasonRow) => row.count.toString(),
     },
     {
       id: "percentage",
       header: "SHARE",
       width: "25%",
       align: "right" as const,
-      render: (row: any) => (
+      render: (row: LossReasonRow) => (
         <span style={{ fontWeight: 700, color: trackerTheme.colors.primary }}>
           {formatPercent(row.percentage / 100)}
         </span>

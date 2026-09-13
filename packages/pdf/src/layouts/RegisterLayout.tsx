@@ -1,8 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { KpiCardItem, PdfBranding, PdfTheme } from "../types/index";
 import { DocumentFrame } from "../components/layout/DocumentFrame";
-import { Heading } from "../components/primitives/Heading";
-import { Text } from "../components/primitives/Text";
 import { KpiCards } from "../components/display/KpiCards";
 import { formatDateTimeSa } from "../formatters/index";
 

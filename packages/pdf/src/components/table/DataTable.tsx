@@ -128,7 +128,14 @@ export function DataTable<T>({
   };
 
   return (
-    <div style={{ width: "100%", overflow: "hidden" }} className={clsx("pdf-table-container", className)}>
+    <div
+      style={{
+        width: "100%",
+        overflow: "hidden",
+        ...(bordered ? { border: `1px solid ${theme.colors.border}`, borderRadius: "4px" } : {}),
+      }}
+      className={clsx("pdf-table-container", className)}
+    >
       <table style={tableStyle} className="pdf-data-table">
         {/* Repeating header on page break */}
         <thead>

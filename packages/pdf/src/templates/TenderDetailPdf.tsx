@@ -1,11 +1,9 @@
-import type { ReactNode } from "react";
 import type { TenderDetailPdfModel } from "../types/documents";
 import type { BadgeVariant } from "../types/index";
 import { trackerTheme } from "../themes/tracker";
 import { TransactionalLayout } from "../layouts/TransactionalLayout";
 import { KeyValueCard } from "../components/display/KeyValueGrid";
 import { Badge } from "../components/primitives/Badge";
-import { Heading } from "../components/primitives/Heading";
 import { formatDateSa, formatZar } from "../formatters/index";
 
 function getTenderBadgeVariant(status: string): BadgeVariant {

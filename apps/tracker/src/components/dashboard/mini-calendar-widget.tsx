@@ -76,7 +76,7 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
     [startTransition],
   );
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
 
   // Filter events based on active category checkboxes
   const filteredEvents = useMemo(() => {
