@@ -95,4 +95,11 @@ export interface DataTableColumn<T> {
   accessorKey?: keyof T;
 }
 
-export type BadgeVariant = "default" | "primary" | "secondary" | "success" | "warning" | "destructive" | "outline";
+export type BadgeVariant =
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "warning"
+  | "destructive"
+  | "outline";

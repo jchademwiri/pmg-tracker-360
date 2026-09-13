@@ -3,7 +3,10 @@ import React from "react";
 import { renderToPdf } from "../../renderer/index";
 import { TenderDetailPdf } from "../TenderDetailPdf";
 import { TenderWinLossPdf } from "../TenderWinLossPdf";
-import type { TenderDetailPdfModel, TenderWinLossPdfModel } from "../../types/documents";
+import type {
+  TenderDetailPdfModel,
+  TenderWinLossPdfModel,
+} from "../../types/documents";
 
 describe("Tender Detail and Win/Loss Templates", () => {
   const mockBranding = {
@@ -28,7 +31,8 @@ describe("Tender Detail and Win/Loss Templates", () => {
         email: "lindiwe.khumalo@eskom.co.za",
         phone: "+27 11 800 2000",
       },
-      description: "Provision of Transformer Oil Regeneration and Dissolved Gas Analysis for Kendal & Matla Power Stations over 36 months.",
+      description:
+        "Provision of Transformer Oil Regeneration and Dissolved Gas Analysis for Kendal & Matla Power Stations over 36 months.",
       submissionDate: new Date("2026-10-15"),
       briefingDate: new Date("2026-09-22"),
       briefingLocation: "Kendal Power Station Main Boardroom",
@@ -55,7 +59,8 @@ describe("Tender Detail and Win/Loss Templates", () => {
       submissionDate: new Date("2026-04-10"),
       estimatedValue: 6400000,
       lossReason: "Pricing uncompetitive on primary switchgear line items",
-      lossDetails: "Competitor bid was 8% lower on imported vacuum circuit breakers. Delivery timeline was equal.",
+      lossDetails:
+        "Competitor bid was 8% lower on imported vacuum circuit breakers. Delivery timeline was equal.",
       generatedAt: fixedDate,
     };
 
@@ -101,8 +106,18 @@ describe("Tender Detail and Win/Loss Templates", () => {
         },
       ],
       lossReasonsSummary: [
-        { reason: "Pricing higher than winning bidder", count: 6, value: 11000000, percentage: 60 },
-        { reason: "Lead time on specialized components", count: 4, value: 7200000, percentage: 40 },
+        {
+          reason: "Pricing higher than winning bidder",
+          count: 6,
+          value: 11000000,
+          percentage: 60,
+        },
+        {
+          reason: "Lead time on specialized components",
+          count: 4,
+          value: 7200000,
+          percentage: 40,
+        },
       ],
       generatedAt: fixedDate,
     };

@@ -20,7 +20,9 @@ async function downloadReport(url: string, fallbackFilename: string) {
   const response = await fetch(url);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error || `Export failed with status ${response.status}`);
+    throw new Error(
+      body?.error || `Export failed with status ${response.status}`,
+    );
   }
   const blob = await response.blob();
   const disposition = response.headers.get("content-disposition");
@@ -61,7 +63,9 @@ export function TenderFollowUpButton() {
 
   const handleExport = async () => {
     if (preset === "custom" && !startDate && !endDate) {
-      toast.error("Please pick at least a start date or end date for custom range.");
+      toast.error(
+        "Please pick at least a start date or end date for custom range.",
+      );
       return;
     }
 
@@ -73,7 +77,9 @@ export function TenderFollowUpButton() {
       const url = `/api/reports/tenders/follow-up/pdf${qs}`;
       const fallback = `tender-follow-up-report-${new Date().toISOString().slice(0, 10)}.pdf`;
       await downloadReport(url, fallback);
-      toast.success("Follow-up report downloaded successfully", { id: toastId });
+      toast.success("Follow-up report downloaded successfully", {
+        id: toastId,
+      });
     } catch (error) {
       console.error("Management follow-up export failed:", error);
       toast.error(

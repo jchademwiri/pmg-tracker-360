@@ -16,7 +16,9 @@ export function TenderWinLossPdfButton() {
       const response = await fetch("/api/reports/tenders/win-loss/pdf");
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error || `Export failed with status ${response.status}`);
+        throw new Error(
+          data?.error || `Export failed with status ${response.status}`,
+        );
       }
 
       const blob = await response.blob();
@@ -35,7 +37,9 @@ export function TenderWinLossPdfButton() {
     } catch (error) {
       console.error("Win/loss PDF export failed:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to generate PDF. Please try again.",
+        error instanceof Error
+          ? error.message
+          : "Failed to generate PDF. Please try again.",
         { id: toastId },
       );
     } finally {

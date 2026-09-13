@@ -1,4 +1,7 @@
-import type { PurchaseOrderLineItem, PurchaseOrderPdfModel } from "../types/documents";
+import type {
+  PurchaseOrderLineItem,
+  PurchaseOrderPdfModel,
+} from "../types/documents";
 import type { BadgeVariant } from "../types/index";
 import { trackerTheme } from "../themes/tracker";
 import { TransactionalLayout } from "../layouts/TransactionalLayout";
@@ -9,7 +12,8 @@ import { formatDateSa, formatZar } from "../formatters/index";
 
 function getPoBadgeVariant(status: string): BadgeVariant {
   const s = status.toLowerCase();
-  if (s === "approved" || s === "fulfilled" || s === "completed") return "success";
+  if (s === "approved" || s === "fulfilled" || s === "completed")
+    return "success";
   if (s === "issued" || s === "sent" || s === "active") return "primary";
   if (s === "pending" || s === "under_review") return "warning";
   if (s === "cancelled" || s === "rejected") return "destructive";
@@ -45,13 +49,18 @@ export function PurchaseOrderPdf({ data }: { data: PurchaseOrderPdfModel }) {
       columns={1}
       items={[
         { label: "PO Date", value: formatDateSa(data.poDate) },
-        { label: "Expected Delivery", value: formatDateSa(data.expectedDeliveryDate) },
+        {
+          label: "Expected Delivery",
+          value: formatDateSa(data.expectedDeliveryDate),
+        },
         ...(data.project
           ? [
               {
                 label: "Project Reference",
                 value: `${data.project.projectNumber}${
-                  data.project.description ? ` - ${data.project.description}` : ""
+                  data.project.description
+                    ? ` - ${data.project.description}`
+                    : ""
                 }`,
               },
             ]
@@ -73,11 +82,18 @@ export function PurchaseOrderPdf({ data }: { data: PurchaseOrderPdfModel }) {
       width: "46%",
       render: (item: PurchaseOrderLineItem) => (
         <div>
-          <div style={{ fontWeight: 600, color: trackerTheme.colors.foreground }}>
+          <div
+            style={{ fontWeight: 600, color: trackerTheme.colors.foreground }}
+          >
             {item.description}
           </div>
           {item.sapReference && (
-            <div style={{ fontSize: "9px", color: trackerTheme.colors.mutedForeground }}>
+            <div
+              style={{
+                fontSize: "9px",
+                color: trackerTheme.colors.mutedForeground,
+              }}
+            >
               SAP Ref: {item.sapReference}
             </div>
           )}
@@ -110,7 +126,9 @@ export function PurchaseOrderPdf({ data }: { data: PurchaseOrderPdfModel }) {
       width: "11%",
       align: "right" as const,
       render: (item: PurchaseOrderLineItem) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground }}>
+        <span
+          style={{ fontWeight: 700, color: trackerTheme.colors.foreground }}
+        >
           {formatZar(item.subtotal)}
         </span>
       ),

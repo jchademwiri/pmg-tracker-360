@@ -18,13 +18,48 @@ interface BadgeStyleConfig {
 }
 
 const variantMap: Record<BadgeVariant, BadgeStyleConfig> = {
-  default: { bg: "#0F172A", border: "#0F172A", color: "#FFFFFF", dot: "#FFFFFF" },
-  primary: { bg: "#DBEAFE", border: "#93C5FD", color: "#1D4ED8", dot: "#2563EB" },
-  secondary: { bg: "#F1F5F9", border: "#CBD5E1", color: "#334155", dot: "#64748B" },
-  success: { bg: "#DCFCE7", border: "#86EFAC", color: "#15803D", dot: "#16A34A" },
-  warning: { bg: "#FEF3C7", border: "#FDE68A", color: "#B45309", dot: "#D97706" },
-  destructive: { bg: "#FEE2E2", border: "#FCA5A5", color: "#B91C1C", dot: "#DC2626" },
-  outline: { bg: "#FFFFFF", border: "#CBD5E1", color: "#334155", dot: "#64748B" },
+  default: {
+    bg: "#0F172A",
+    border: "#0F172A",
+    color: "#FFFFFF",
+    dot: "#FFFFFF",
+  },
+  primary: {
+    bg: "#DBEAFE",
+    border: "#93C5FD",
+    color: "#1D4ED8",
+    dot: "#2563EB",
+  },
+  secondary: {
+    bg: "#F1F5F9",
+    border: "#CBD5E1",
+    color: "#334155",
+    dot: "#64748B",
+  },
+  success: {
+    bg: "#DCFCE7",
+    border: "#86EFAC",
+    color: "#15803D",
+    dot: "#16A34A",
+  },
+  warning: {
+    bg: "#FEF3C7",
+    border: "#FDE68A",
+    color: "#B45309",
+    dot: "#D97706",
+  },
+  destructive: {
+    bg: "#FEE2E2",
+    border: "#FCA5A5",
+    color: "#B91C1C",
+    dot: "#DC2626",
+  },
+  outline: {
+    bg: "#FFFFFF",
+    border: "#CBD5E1",
+    color: "#334155",
+    dot: "#64748B",
+  },
 };
 
 export function Badge({

@@ -19,7 +19,8 @@ describe("TenderFollowUpPdf Template", () => {
       {
         tenderNumber: "A-CS-11-2026",
         client: "City of Ekurhuleni",
-        description: "Supply and delivery of personal protective equipment (PPE)",
+        description:
+          "Supply and delivery of personal protective equipment (PPE)",
         closingDate: new Date("2026-08-19"),
         validityExpiryDate: new Date("2026-11-19"),
         validityDaysRemaining: 67,

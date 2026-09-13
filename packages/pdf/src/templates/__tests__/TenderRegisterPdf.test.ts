@@ -18,9 +18,11 @@ describe("TenderRegisterPdf Template", () => {
   it("renders portfolio variant in landscape with repeated headers", async () => {
     const rows = Array.from({ length: 25 }, (_, i) => ({
       tenderNumber: `TND-2026-${100 + i}`,
-      client: i % 2 === 0 ? "Eskom Holdings SOC Ltd" : "City Power Johannesburg",
+      client:
+        i % 2 === 0 ? "Eskom Holdings SOC Ltd" : "City Power Johannesburg",
       description: `Transformer & Switchgear Refurbishment Contract #${i + 1}`,
-      status: i % 3 === 0 ? "awarded" : i % 3 === 1 ? "submitted" : "preparation",
+      status:
+        i % 3 === 0 ? "awarded" : i % 3 === 1 ? "submitted" : "preparation",
       submissionDate: new Date("2026-10-15"),
       validityDate: new Date("2027-01-15"),
       estimatedValue: 2500000 * (i + 1),

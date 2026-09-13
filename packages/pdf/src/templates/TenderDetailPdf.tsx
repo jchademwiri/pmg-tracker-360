@@ -11,7 +11,8 @@ function getTenderBadgeVariant(status: string): BadgeVariant {
   if (s === "awarded" || s === "won") return "success";
   if (s === "submitted" || s === "evaluated") return "primary";
   if (s === "preparation" || s === "draft") return "secondary";
-  if (s === "lost" || s === "cancelled" || s === "disqualified") return "destructive";
+  if (s === "lost" || s === "cancelled" || s === "disqualified")
+    return "destructive";
   return "secondary";
 }
 
@@ -38,7 +39,9 @@ export function TenderDetailPdf({ data }: { data: TenderDetailPdfModel }) {
         { label: "Client Name", value: data.clientName || "Not specified" },
         {
           label: "Contact Person",
-          value: contactPieces.length ? contactPieces.join(" • ") : "Not specified",
+          value: contactPieces.length
+            ? contactPieces.join(" • ")
+            : "Not specified",
         },
       ]}
     />
@@ -51,10 +54,15 @@ export function TenderDetailPdf({ data }: { data: TenderDetailPdfModel }) {
       columns={1}
       items={[
         { label: "Submission Date", value: formatDateSa(data.submissionDate) },
-        { label: "Validity Date", value: formatDateSa(data.validityExpiryDate) },
+        {
+          label: "Validity Date",
+          value: formatDateSa(data.validityExpiryDate),
+        },
         {
           label: "Estimated Value",
-          value: data.estimatedValue ? formatZar(data.estimatedValue) : "R 0.00",
+          value: data.estimatedValue
+            ? formatZar(data.estimatedValue)
+            : "R 0.00",
         },
         ...(data.awardValue
           ? [{ label: "Award Value", value: formatZar(data.awardValue) }]
@@ -69,7 +77,9 @@ export function TenderDetailPdf({ data }: { data: TenderDetailPdfModel }) {
       branding={data.branding}
       title="TENDER SUMMARY"
       documentNumber={data.tenderNumber}
-      subtitle={data.priority ? `${data.priority.toUpperCase()} PRIORITY` : undefined}
+      subtitle={
+        data.priority ? `${data.priority.toUpperCase()} PRIORITY` : undefined
+      }
       statusBadge={<Badge variant={statusVariant}>{statusText}</Badge>}
       leftCard={leftCard}
       rightCard={rightCard}
@@ -101,10 +111,21 @@ export function TenderDetailPdf({ data }: { data: TenderDetailPdfModel }) {
           >
             Briefing & Site Meeting
           </div>
-          <div style={{ fontSize: "11px", lineHeight: "16px", color: trackerTheme.colors.foreground }}>
-            <span style={{ fontWeight: 600 }}>Date:</span> {formatDateSa(data.briefingDate)}
+          <div
+            style={{
+              fontSize: "11px",
+              lineHeight: "16px",
+              color: trackerTheme.colors.foreground,
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>Date:</span>{" "}
+            {formatDateSa(data.briefingDate)}
             {data.briefingLocation && (
-              <span> • <span style={{ fontWeight: 600 }}>Location:</span> {data.briefingLocation}</span>
+              <span>
+                {" "}
+                • <span style={{ fontWeight: 600 }}>Location:</span>{" "}
+                {data.briefingLocation}
+              </span>
             )}
           </div>
         </div>
@@ -135,51 +156,70 @@ export function TenderDetailPdf({ data }: { data: TenderDetailPdfModel }) {
           >
             Scope of Work / Description
           </div>
-          <div style={{ fontSize: "11px", lineHeight: "16px", color: trackerTheme.colors.foreground }}>
+          <div
+            style={{
+              fontSize: "11px",
+              lineHeight: "16px",
+              color: trackerTheme.colors.foreground,
+            }}
+          >
             {data.description}
           </div>
         </div>
       )}
 
       {/* Lost Tender Analysis Section */}
-      {data.status.toLowerCase() === "lost" && (data.lossReason || data.lossDetails) && (
-        <div
-          style={{
-            backgroundColor: "#FEF2F2",
-            border: "1px solid #FECACA",
-            borderRadius: "6px",
-            padding: "12px 14px",
-            marginTop: "16px",
-            pageBreakInside: "avoid",
-          }}
-        >
+      {data.status.toLowerCase() === "lost" &&
+        (data.lossReason || data.lossDetails) && (
           <div
             style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-              color: "#991B1B",
-              borderBottom: "1px solid #FCA5A5",
-              paddingBottom: "6px",
-              marginBottom: "8px",
+              backgroundColor: "#FEF2F2",
+              border: "1px solid #FECACA",
+              borderRadius: "6px",
+              padding: "12px 14px",
+              marginTop: "16px",
+              pageBreakInside: "avoid",
             }}
           >
-            Loss Analysis & Post-Mortem
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                color: "#991B1B",
+                borderBottom: "1px solid #FCA5A5",
+                paddingBottom: "6px",
+                marginBottom: "8px",
+              }}
+            >
+              Loss Analysis & Post-Mortem
+            </div>
+            {data.lossReason && (
+              <div
+                style={{
+                  fontSize: "11px",
+                  lineHeight: "16px",
+                  marginBottom: "6px",
+                }}
+              >
+                <strong style={{ color: "#7F1D1D" }}>Primary Reason:</strong>{" "}
+                <span style={{ color: "#991B1B" }}>{data.lossReason}</span>
+              </div>
+            )}
+            {data.lossDetails && (
+              <div
+                style={{
+                  fontSize: "11px",
+                  lineHeight: "16px",
+                  color: "#7F1D1D",
+                }}
+              >
+                <strong>Details:</strong> {data.lossDetails}
+              </div>
+            )}
           </div>
-          {data.lossReason && (
-            <div style={{ fontSize: "11px", lineHeight: "16px", marginBottom: "6px" }}>
-              <strong style={{ color: "#7F1D1D" }}>Primary Reason:</strong>{" "}
-              <span style={{ color: "#991B1B" }}>{data.lossReason}</span>
-            </div>
-          )}
-          {data.lossDetails && (
-            <div style={{ fontSize: "11px", lineHeight: "16px", color: "#7F1D1D" }}>
-              <strong>Details:</strong> {data.lossDetails}
-            </div>
-          )}
-        </div>
-      )}
+        )}
     </TransactionalLayout>
   );
 }

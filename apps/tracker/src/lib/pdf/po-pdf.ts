@@ -296,7 +296,7 @@ export async function generatePurchaseOrderPdf(
           totals: data.totals,
         },
       }),
-      { orientation: "portrait" }
+      { orientation: "portrait" },
     );
 
     return {

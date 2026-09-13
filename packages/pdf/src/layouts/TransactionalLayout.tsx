@@ -84,9 +84,7 @@ export function TransactionalLayout({
       )}
 
       {/* Primary Content (Line items table, etc.) */}
-      <div style={{ marginTop: "12px", marginBottom: "16px" }}>
-        {children}
-      </div>
+      <div style={{ marginTop: "12px", marginBottom: "16px" }}>{children}</div>
 
       {/* Financial Totals Block */}
       {totals && (
@@ -110,19 +108,37 @@ export function TransactionalLayout({
               gap: "6px",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
-              <span style={{ color: theme.colors.mutedForeground }}>Subtotal:</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "11px",
+              }}
+            >
+              <span style={{ color: theme.colors.mutedForeground }}>
+                Subtotal:
+              </span>
               <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
-                {typeof totals.subtotal === "number" ? formatZar(totals.subtotal) : totals.subtotal}
+                {typeof totals.subtotal === "number"
+                  ? formatZar(totals.subtotal)
+                  : totals.subtotal}
               </span>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "11px",
+              }}
+            >
               <span style={{ color: theme.colors.mutedForeground }}>
                 VAT ({totals.vatRatePercent ?? 15}%):
               </span>
               <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
-                {typeof totals.vatAmount === "number" ? formatZar(totals.vatAmount) : (totals.vatAmount ?? "R 0.00")}
+                {typeof totals.vatAmount === "number"
+                  ? formatZar(totals.vatAmount)
+                  : (totals.vatAmount ?? "R 0.00")}
               </span>
             </div>
 
@@ -136,8 +152,12 @@ export function TransactionalLayout({
                   fontWeight: row.isBold ? 700 : 500,
                 }}
               >
-                <span style={{ color: theme.colors.mutedForeground }}>{row.label}:</span>
-                <span style={{ color: theme.colors.foreground }}>{row.value}</span>
+                <span style={{ color: theme.colors.mutedForeground }}>
+                  {row.label}:
+                </span>
+                <span style={{ color: theme.colors.foreground }}>
+                  {row.value}
+                </span>
               </div>
             ))}
 
@@ -152,9 +172,13 @@ export function TransactionalLayout({
                 fontWeight: 700,
               }}
             >
-              <span style={{ color: theme.colors.foreground }}>Total (ZAR):</span>
+              <span style={{ color: theme.colors.foreground }}>
+                Total (ZAR):
+              </span>
               <span style={{ color: theme.colors.primary }}>
-                {typeof totals.total === "number" ? formatZar(totals.total) : totals.total}
+                {typeof totals.total === "number"
+                  ? formatZar(totals.total)
+                  : totals.total}
               </span>
             </div>
           </div>
@@ -177,7 +201,13 @@ export function TransactionalLayout({
               >
                 Notes / Scope
               </div>
-              <div style={{ fontSize: "10px", lineHeight: "14px", color: theme.colors.foreground }}>
+              <div
+                style={{
+                  fontSize: "10px",
+                  lineHeight: "14px",
+                  color: theme.colors.foreground,
+                }}
+              >
                 {notes}
               </div>
             </div>
@@ -196,7 +226,13 @@ export function TransactionalLayout({
               >
                 Terms & Conditions
               </div>
-              <div style={{ fontSize: "9px", lineHeight: "13px", color: theme.colors.mutedForeground }}>
+              <div
+                style={{
+                  fontSize: "9px",
+                  lineHeight: "13px",
+                  color: theme.colors.mutedForeground,
+                }}
+              >
                 {terms}
               </div>
             </div>

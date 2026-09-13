@@ -65,7 +65,11 @@ export function RegisterLayout({
               <img
                 src={branding.logoDataUri}
                 alt={branding.organizationName}
-                style={{ maxHeight: "28px", maxWidth: "110px", objectFit: "contain" }}
+                style={{
+                  maxHeight: "28px",
+                  maxWidth: "110px",
+                  objectFit: "contain",
+                }}
               />
             )}
             <div
@@ -95,16 +99,37 @@ export function RegisterLayout({
           </div>
 
           {subtitle && (
-            <div style={{ fontSize: "9.5px", color: theme.colors.mutedForeground, lineHeight: "13px", textTransform: "uppercase" }}>
+            <div
+              style={{
+                fontSize: "9.5px",
+                color: theme.colors.mutedForeground,
+                lineHeight: "13px",
+                textTransform: "uppercase",
+              }}
+            >
               {subtitle}
             </div>
           )}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: "4px",
+          }}
+        >
           {/* Active Filter Pills */}
           {filterPills && filterPills.length > 0 && (
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "6px",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
+            >
               {filterPills.map((pill, idx) => (
                 <span
                   key={idx}
@@ -117,13 +142,23 @@ export function RegisterLayout({
                     color: "#1E40AF",
                   }}
                 >
-                  <strong style={{ color: "#1E3A8A" }}>{pill.label.toUpperCase()}:</strong> {pill.value.toUpperCase()}
+                  <strong style={{ color: "#1E3A8A" }}>
+                    {pill.label.toUpperCase()}:
+                  </strong>{" "}
+                  {pill.value.toUpperCase()}
                 </span>
               ))}
             </div>
           )}
 
-          <div style={{ fontSize: "9px", color: theme.colors.mutedForeground, marginTop: "2px", textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: "9px",
+              color: theme.colors.mutedForeground,
+              marginTop: "2px",
+              textTransform: "uppercase",
+            }}
+          >
             EXPORTED: {generatedAtText}
           </div>
         </div>

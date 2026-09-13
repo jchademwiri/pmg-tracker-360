@@ -23,7 +23,7 @@ describe("@pmg/pdf Renderer & Layout Archetypes", () => {
 
   it("renders a minimal document and outputs valid %PDF- header", async () => {
     const result = await renderToPdf(
-      React.createElement("div", null, "Hello PMG Tracker 360 PDF Engine")
+      React.createElement("div", null, "Hello PMG Tracker 360 PDF Engine"),
     );
 
     expect(result.bytes).toBeInstanceOf(Uint8Array);
@@ -72,7 +72,11 @@ describe("@pmg/pdf Renderer & Layout Archetypes", () => {
         title: "PURCHASE ORDER",
         documentNumber: "PO-2026-0842",
         subtitle: "Substation Refurbishment Phase 2",
-        statusBadge: React.createElement(Badge, { variant: "success" }, "APPROVED"),
+        statusBadge: React.createElement(
+          Badge,
+          { variant: "success" },
+          "APPROVED",
+        ),
         generatedAt: fixedDate,
         leftCard: React.createElement(KeyValueCard, {
           theme: trackerTheme,
@@ -100,21 +104,46 @@ describe("@pmg/pdf Renderer & Layout Archetypes", () => {
           vatAmount: 11250,
           total: 86250,
         },
-        notes: "All delivery vehicles must check in with security gate 2 hours prior to arrival.",
-        terms: "Standard PMG supply chain terms apply. Payment strictly within agreed terms.",
+        notes:
+          "All delivery vehicles must check in with security gate 2 hours prior to arrival.",
+        terms:
+          "Standard PMG supply chain terms apply. Payment strictly within agreed terms.",
       },
       React.createElement(DataTable<LineItem>, {
         theme: trackerTheme,
         columns: [
           { id: "itemNo", header: "#", width: "5%", accessorKey: "itemNo" },
-          { id: "description", header: "Description", width: "50%", accessorKey: "description" },
+          {
+            id: "description",
+            header: "Description",
+            width: "50%",
+            accessorKey: "description",
+          },
           { id: "unit", header: "Unit", width: "10%", accessorKey: "unit" },
-          { id: "qty", header: "Qty", width: "10%", align: "right", accessorKey: "qty" },
-          { id: "unitPrice", header: "Unit Price", width: "12%", align: "right", accessorKey: "unitPrice" },
-          { id: "subtotal", header: "Subtotal", width: "13%", align: "right", accessorKey: "subtotal" },
+          {
+            id: "qty",
+            header: "Qty",
+            width: "10%",
+            align: "right",
+            accessorKey: "qty",
+          },
+          {
+            id: "unitPrice",
+            header: "Unit Price",
+            width: "12%",
+            align: "right",
+            accessorKey: "unitPrice",
+          },
+          {
+            id: "subtotal",
+            header: "Subtotal",
+            width: "13%",
+            align: "right",
+            accessorKey: "subtotal",
+          },
         ],
         data: lineItems,
-      })
+      }),
     );
 
     const result = await renderToPdf(element, { orientation: "portrait" });
@@ -176,9 +205,24 @@ describe("@pmg/pdf Renderer & Layout Archetypes", () => {
         theme: trackerTheme,
         dense: true,
         columns: [
-          { id: "tenderNumber", header: "Tender #", width: "15%", accessorKey: "tenderNumber" },
-          { id: "client", header: "Client", width: "22%", accessorKey: "client" },
-          { id: "description", header: "Description", width: "33%", accessorKey: "description" },
+          {
+            id: "tenderNumber",
+            header: "Tender #",
+            width: "15%",
+            accessorKey: "tenderNumber",
+          },
+          {
+            id: "client",
+            header: "Client",
+            width: "22%",
+            accessorKey: "client",
+          },
+          {
+            id: "description",
+            header: "Description",
+            width: "33%",
+            accessorKey: "description",
+          },
           {
             id: "status",
             header: "Status",
@@ -186,14 +230,21 @@ describe("@pmg/pdf Renderer & Layout Archetypes", () => {
             render: (row) =>
               React.createElement(
                 Badge,
-                { variant: row.status === "Submitted" ? "primary" : "secondary" },
-                row.status
+                {
+                  variant: row.status === "Submitted" ? "primary" : "secondary",
+                },
+                row.status,
               ),
           },
-          { id: "submissionDate", header: "Submission", width: "18%", accessorKey: "submissionDate" },
+          {
+            id: "submissionDate",
+            header: "Submission",
+            width: "18%",
+            accessorKey: "submissionDate",
+          },
         ],
         data: rows,
-      })
+      }),
     );
 
     const result = await renderToPdf(element, { orientation: "landscape" });
@@ -203,35 +254,49 @@ describe("@pmg/pdf Renderer & Layout Archetypes", () => {
   });
 
   it("renders Archetype 3: AnalyticalLayout (Win/Loss & Admin Executive)", async () => {
-    const element = React.createElement(
-      AnalyticalLayout,
-      {
-        theme: adminTheme,
-        branding: mockBranding,
-        title: "EXECUTIVE PLATFORM REPORT",
-        subtitle: "PMG Tracker 360 System-wide Metrics",
-        periodLabel: "Last 30 Days",
-        generatedAt: fixedDate,
-        statusBadge: React.createElement(Badge, { variant: "success" }, "SYSTEM HEALTHY"),
-        kpiCards: [
-          { label: "Total Organizations", value: "18", variant: "primary" },
-          { label: "Active Users", value: "248", variant: "default" },
-          { label: "Tenders Managed", value: "1 420", variant: "success" },
-          { label: "Storage Used", value: "48.6 GB", variant: "default" },
-        ],
-        sections: [
-          {
-            id: "overview",
-            title: "Tenant Utilization Breakdown",
-            description: "Distribution of active users and resources by organization tier.",
-            children: React.createElement("div", { style: { fontSize: "11px", color: "#64748B" } }, [
-              React.createElement("p", { key: 1 }, "Enterprise tier tenants account for 78% of active tenders and 84% of document attachments."),
-              React.createElement("p", { key: 2 }, "Average response latency for search and query endpoints is 42ms."),
-            ]),
-          },
-        ],
-      }
-    );
+    const element = React.createElement(AnalyticalLayout, {
+      theme: adminTheme,
+      branding: mockBranding,
+      title: "EXECUTIVE PLATFORM REPORT",
+      subtitle: "PMG Tracker 360 System-wide Metrics",
+      periodLabel: "Last 30 Days",
+      generatedAt: fixedDate,
+      statusBadge: React.createElement(
+        Badge,
+        { variant: "success" },
+        "SYSTEM HEALTHY",
+      ),
+      kpiCards: [
+        { label: "Total Organizations", value: "18", variant: "primary" },
+        { label: "Active Users", value: "248", variant: "default" },
+        { label: "Tenders Managed", value: "1 420", variant: "success" },
+        { label: "Storage Used", value: "48.6 GB", variant: "default" },
+      ],
+      sections: [
+        {
+          id: "overview",
+          title: "Tenant Utilization Breakdown",
+          description:
+            "Distribution of active users and resources by organization tier.",
+          children: React.createElement(
+            "div",
+            { style: { fontSize: "11px", color: "#64748B" } },
+            [
+              React.createElement(
+                "p",
+                { key: 1 },
+                "Enterprise tier tenants account for 78% of active tenders and 84% of document attachments.",
+              ),
+              React.createElement(
+                "p",
+                { key: 2 },
+                "Average response latency for search and query endpoints is 42ms.",
+              ),
+            ],
+          ),
+        },
+      ],
+    });
 
     const result = await renderToPdf(element, { orientation: "portrait" });
     expect(result.bytes).toBeInstanceOf(Uint8Array);

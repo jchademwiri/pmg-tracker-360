@@ -24,7 +24,9 @@ describe("PDFCN Feature Flags", () => {
   });
 
   it("ignores unknown values gracefully", () => {
-    const list = parsePdfcnAllowlist("purchase-order, invalid-document, foobar");
+    const list = parsePdfcnAllowlist(
+      "purchase-order, invalid-document, foobar",
+    );
     expect(list.size).toBe(1);
     expect(list.has("purchase-order")).toBe(true);
   });

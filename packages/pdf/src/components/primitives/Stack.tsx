@@ -6,7 +6,12 @@ export interface StackProps {
   direction?: "row" | "column";
   gap?: number;
   align?: "flex-start" | "center" | "flex-end" | "stretch";
-  justify?: "flex-start" | "center" | "flex-end" | "space-between" | "space-around";
+  justify?:
+    | "flex-start"
+    | "center"
+    | "flex-end"
+    | "space-between"
+    | "space-around";
   wrap?: boolean;
   style?: CSSProperties;
   className?: string;

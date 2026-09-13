@@ -21,12 +21,15 @@ export function formatZar(amount: number | string | null | undefined): string {
 
 export function formatDateSa(
   date: Date | string | number | null | undefined,
-  fallback = "-"
+  fallback = "-",
 ): string {
   if (!date) return fallback;
 
   try {
-    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    const d =
+      typeof date === "string" || typeof date === "number"
+        ? new Date(date)
+        : date;
     if (isNaN(d.getTime())) return fallback;
 
     return new Intl.DateTimeFormat("en-ZA", {
@@ -44,12 +47,15 @@ export function formatDateSa(
 
 export function formatDateTimeSa(
   date: Date | string | number | null | undefined,
-  fallback = "-"
+  fallback = "-",
 ): string {
   if (!date) return fallback;
 
   try {
-    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    const d =
+      typeof date === "string" || typeof date === "number"
+        ? new Date(date)
+        : date;
     if (isNaN(d.getTime())) return fallback;
 
     return new Intl.DateTimeFormat("en-ZA", {
@@ -70,7 +76,7 @@ export function formatDateTimeSa(
 
 export function formatNumber(
   value: number | string | null | undefined,
-  decimals = 0
+  decimals = 0,
 ): string {
   if (value === null || value === undefined || value === "") {
     return "0";
@@ -89,7 +95,7 @@ export function formatNumber(
 
 export function formatPercent(
   ratio: number | string | null | undefined,
-  decimals = 1
+  decimals = 1,
 ): string {
   if (ratio === null || ratio === undefined || ratio === "") {
     return "0.0%";

@@ -26,5 +26,7 @@ export function Divider({
     ...style,
   };
 
-  return <div style={combinedStyle} className={clsx("pdf-divider", className)} />;
+  return (
+    <div style={combinedStyle} className={clsx("pdf-divider", className)} />
+  );
 }

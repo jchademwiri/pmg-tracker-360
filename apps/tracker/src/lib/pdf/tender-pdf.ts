@@ -290,7 +290,10 @@ export async function generateTenderPdf(
   const orgMeta = parseOrganizationMetadata(org.metadata);
   const logoDataUri = await fetchLogoBase64(org.logo);
 
-  const fileName = `Tender-${row.tenderNumber}.pdf`.replace(/[^a-zA-Z0-9_.-]/g, "-");
+  const fileName = `Tender-${row.tenderNumber}.pdf`.replace(
+    /[^a-zA-Z0-9_.-]/g,
+    "-",
+  );
 
   if (isPdfcnEnabled("tender-detail")) {
     const result = await renderToPdf(
@@ -324,7 +327,7 @@ export async function generateTenderPdf(
           lossDetails: row.lossDetails,
         },
       }),
-      { orientation: "portrait" }
+      { orientation: "portrait" },
     );
 
     return {

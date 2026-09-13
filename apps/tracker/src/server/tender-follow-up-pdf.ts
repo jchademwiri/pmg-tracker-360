@@ -17,7 +17,10 @@ import {
   formatDateTimeSa,
   type TenderFollowUpRowModel,
 } from "@pmg/pdf";
-import { fetchLogoBase64, parseOrganizationMetadata } from "@/lib/pdf/pdf-layout";
+import {
+  fetchLogoBase64,
+  parseOrganizationMetadata,
+} from "@/lib/pdf/pdf-layout";
 import type { DateRangePreset } from "@/lib/date-range-presets";
 
 export interface TenderFollowUpFilterOptions {
@@ -43,7 +46,12 @@ export async function getTenderFollowUpPdf(
   try {
     await validateSessionAndOrg(organizationId);
 
-    const { clientId, startDate, endDate, periodLabel = "All Time" } = filterOptions;
+    const {
+      clientId,
+      startDate,
+      endDate,
+      periodLabel = "All Time",
+    } = filterOptions;
 
     const org = await db.query.organization.findFirst({
       where: eq(organization.id, organizationId),
@@ -124,9 +132,15 @@ export async function getTenderFollowUpPdf(
         }
       }
 
-      const contactName = cleanText(row.tenderContactName || row.clientContactName);
-      const contactEmail = cleanText(row.tenderContactEmail || row.clientContactEmail);
-      const contactPhone = cleanText(row.tenderContactPhone || row.clientContactPhone);
+      const contactName = cleanText(
+        row.tenderContactName || row.clientContactName,
+      );
+      const contactEmail = cleanText(
+        row.tenderContactEmail || row.clientContactEmail,
+      );
+      const contactPhone = cleanText(
+        row.tenderContactPhone || row.clientContactPhone,
+      );
 
       return {
         tenderNumber: row.tenderNumber || "—",
@@ -150,32 +164,48 @@ export async function getTenderFollowUpPdf(
       if (a.isExpiringSoon && !b.isExpiringSoon) return -1;
       if (!a.isExpiringSoon && b.isExpiringSoon) return 1;
       if (a.validityExpiryDate && b.validityExpiryDate) {
-        return new Date(a.validityExpiryDate).getTime() - new Date(b.validityExpiryDate).getTime();
+        return (
+          new Date(a.validityExpiryDate).getTime() -
+          new Date(b.validityExpiryDate).getTime()
+        );
       }
       return 0;
     });
 
     const expiringSoonCount = rows.filter((r) => r.isExpiringSoon).length;
     const expiredCount = rows.filter((r) => r.isExpired).length;
-    const clientCount = new Set(raw.map((r) => r.clientId).filter(Boolean)).size;
+    const clientCount = new Set(raw.map((r) => r.clientId).filter(Boolean))
+      .size;
     const totalPipelineValue = rows.reduce(
       (sum, r) => sum + (Number(r.estimatedValue) || 0),
       0,
     );
 
     const kpiCards = [
-      { label: "TOTAL FOLLOW-UPS", value: String(rows.length), variant: "primary" as const },
+      {
+        label: "TOTAL FOLLOW-UPS",
+        value: String(rows.length),
+        variant: "primary" as const,
+      },
       {
         label: "EXPIRING SOON (<30D)",
         value: String(expiringSoonCount),
-        variant: (expiringSoonCount > 0 ? "warning" : "default") as "warning" | "default",
+        variant: (expiringSoonCount > 0 ? "warning" : "default") as
+          | "warning"
+          | "default",
       },
       {
         label: "EXPIRED / OVERDUE",
         value: String(expiredCount),
-        variant: (expiredCount > 0 ? "destructive" : "default") as "destructive" | "default",
+        variant: (expiredCount > 0 ? "destructive" : "default") as
+          | "destructive"
+          | "default",
       },
-      { label: "CLIENTS TO CONTACT", value: String(clientCount), variant: "default" as const },
+      {
+        label: "CLIENTS TO CONTACT",
+        value: String(clientCount),
+        variant: "default" as const,
+      },
       {
         label: "PIPELINE VALUE",
         value: formatZar(totalPipelineValue),
@@ -184,7 +214,12 @@ export async function getTenderFollowUpPdf(
     ];
 
     const filterPills = [
-      { label: "SCOPE", value: clientId ? cleanText(raw[0]?.clientName) || "CLIENT" : "MANAGEMENT FOLLOW-UP" },
+      {
+        label: "SCOPE",
+        value: clientId
+          ? cleanText(raw[0]?.clientName) || "CLIENT"
+          : "MANAGEMENT FOLLOW-UP",
+      },
       ...(periodLabel && periodLabel !== "All Time"
         ? [{ label: "PERIOD", value: periodLabel.toUpperCase() }]
         : [{ label: "PERIOD", value: "ALL TIME" }]),
@@ -231,7 +266,10 @@ export async function getTenderFollowUpPdf(
     console.error("Tender follow-up PDF generation failed:", error);
     return {
       success: false as const,
-      error: error instanceof Error ? error.message : "Failed to generate follow-up PDF report.",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to generate follow-up PDF report.",
     };
   }
 }

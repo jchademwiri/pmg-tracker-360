@@ -25,7 +25,10 @@ describe("checkR2Connection", () => {
   });
 
   it("returns ok with latency on a successful HeadBucket", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
 
     const result = await checkR2Connection();
 
@@ -46,7 +49,10 @@ describe("checkR2Connection", () => {
   });
 
   it("classifies 401 metadata as unauthorized with remediation hint", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
     sendMock.mockRejectedValue({
       name: "Unauthorized",
       $metadata: { httpStatusCode: 401 },
@@ -61,7 +67,10 @@ describe("checkR2Connection", () => {
   });
 
   it("classifies 403 metadata as forbidden", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
     sendMock.mockRejectedValue({
       name: "Forbidden",
       $metadata: { httpStatusCode: 403 },
@@ -75,7 +84,10 @@ describe("checkR2Connection", () => {
   });
 
   it("classifies 404 as bucket not found with working credentials", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
     sendMock.mockRejectedValue({
       name: "NotFound",
       $metadata: { httpStatusCode: 404 },
@@ -90,7 +102,10 @@ describe("checkR2Connection", () => {
   });
 
   it("classifies CredentialsProviderError as unauthorized", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
     sendMock.mockRejectedValue({
       name: "CredentialsProviderError",
       message: "Could not load credentials from any providers",
@@ -103,7 +118,10 @@ describe("checkR2Connection", () => {
   });
 
   it("classifies network failures as network_error", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
     sendMock.mockRejectedValue({
       name: "NetworkingError",
       message: "fetch failed: ENOTFOUND",
@@ -116,7 +134,10 @@ describe("checkR2Connection", () => {
   });
 
   it("falls back to unknown for unclassified errors", async () => {
-    storageMock.mockReturnValue({ s3: { send: sendMock }, bucket: "test-bucket" });
+    storageMock.mockReturnValue({
+      s3: { send: sendMock },
+      bucket: "test-bucket",
+    });
     sendMock.mockRejectedValue(new Error("something unexpected"));
 
     const result = await checkR2Connection();

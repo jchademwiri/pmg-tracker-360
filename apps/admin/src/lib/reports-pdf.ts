@@ -69,7 +69,8 @@ export async function generatePlatformExecutivePdf(): Promise<Buffer> {
         {
           id: "operations",
           title: "Comprehensive Platform Operations Schedule",
-          description: "Key platform vitals, financial metrics, and operational counts",
+          description:
+            "Key platform vitals, financial metrics, and operational counts",
           table: {
             columns: [
               { id: "metric", header: "Core Metric", width: "35%" },
@@ -129,10 +130,30 @@ export async function generatePlatformExecutivePdf(): Promise<Buffer> {
               { id: "name", header: "Organization Name", width: "28%" },
               { id: "status", header: "Status", width: "12%" },
               { id: "created", header: "Created", width: "14%" },
-              { id: "members", header: "Members", width: "10%", align: "right" },
-              { id: "tenders", header: "Tenders", width: "10%", align: "right" },
-              { id: "projects", header: "Projects", width: "10%", align: "right" },
-              { id: "storage", header: "Storage (MB)", width: "16%", align: "right" },
+              {
+                id: "members",
+                header: "Members",
+                width: "10%",
+                align: "right",
+              },
+              {
+                id: "tenders",
+                header: "Tenders",
+                width: "10%",
+                align: "right",
+              },
+              {
+                id: "projects",
+                header: "Projects",
+                width: "10%",
+                align: "right",
+              },
+              {
+                id: "storage",
+                header: "Storage (MB)",
+                width: "16%",
+                align: "right",
+              },
             ],
             rows: allTenants.map((t) => ({
               name: t.name,
@@ -155,9 +176,24 @@ export async function generatePlatformExecutivePdf(): Promise<Buffer> {
           table: {
             columns: [
               { id: "category", header: "Resource Category", width: "40%" },
-              { id: "count", header: "File Count", width: "20%", align: "right" },
-              { id: "size", header: "Storage (MB)", width: "20%", align: "right" },
-              { id: "share", header: "Share (%)", width: "20%", align: "right" },
+              {
+                id: "count",
+                header: "File Count",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "size",
+                header: "Storage (MB)",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "share",
+                header: "Share (%)",
+                width: "20%",
+                align: "right",
+              },
             ],
             rows: storageData.categories.map((c) => ({
               category: c.category,
@@ -181,7 +217,12 @@ export async function generatePlatformExecutivePdf(): Promise<Buffer> {
               { id: "resource", header: "Resource", width: "25%" },
               { id: "severity", header: "Severity", width: "15%" },
               { id: "ip", header: "IP Address", width: "15%" },
-              { id: "dateTime", header: "Date & Time", width: "20%", align: "right" },
+              {
+                id: "dateTime",
+                header: "Date & Time",
+                width: "20%",
+                align: "right",
+              },
             ],
             rows: security.recentCriticalLogs.map((log) => ({
               action: log.action,
@@ -197,7 +238,9 @@ export async function generatePlatformExecutivePdf(): Promise<Buffer> {
       generatedAt: new Date(),
     };
 
-    const result = await renderToPdf(React.createElement(AdminReportPdf, { data: model }));
+    const result = await renderToPdf(
+      React.createElement(AdminReportPdf, { data: model }),
+    );
     return Buffer.from(result.bytes);
   }
 
@@ -845,7 +888,10 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
           label: "Capacity Utilization",
           value: `${overview.storageUtilizationPct ?? 0}%`,
           subtext: `Status: ${(overview.storageWarningStatus ?? "normal").toUpperCase()} | Buckets: ${storageData.storageOverview?.buckets?.length ?? 0}`,
-          variant: (overview.storageUtilizationPct ?? 0) > 85 ? "destructive" : "success",
+          variant:
+            (overview.storageUtilizationPct ?? 0) > 85
+              ? "destructive"
+              : "success",
         },
       ],
       sections: [
@@ -859,9 +905,24 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
           table: {
             columns: [
               { id: "category", header: "Resource Category", width: "40%" },
-              { id: "count", header: "File Count", width: "20%", align: "right" },
-              { id: "size", header: "Storage (MB)", width: "20%", align: "right" },
-              { id: "share", header: "Share (%)", width: "20%", align: "right" },
+              {
+                id: "count",
+                header: "File Count",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "size",
+                header: "Storage (MB)",
+                width: "20%",
+                align: "right",
+              },
+              {
+                id: "share",
+                header: "Share (%)",
+                width: "20%",
+                align: "right",
+              },
             ],
             rows: storageData.categories.map((c) => ({
               category: c.category,
@@ -874,12 +935,23 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
         {
           id: "tenant-quotas",
           title: "Organization Storage Footprint Schedule",
-          description: "Complete tenant storage consumption and quota allocations",
+          description:
+            "Complete tenant storage consumption and quota allocations",
           table: {
             columns: [
               { id: "name", header: "Organization Name", width: "50%" },
-              { id: "count", header: "Files Uploaded", width: "25%", align: "right" },
-              { id: "storage", header: "Storage (MB)", width: "25%", align: "right" },
+              {
+                id: "count",
+                header: "Files Uploaded",
+                width: "25%",
+                align: "right",
+              },
+              {
+                id: "storage",
+                header: "Storage (MB)",
+                width: "25%",
+                align: "right",
+              },
             ],
             rows: allTenants.map((t) => ({
               name: t.name,
@@ -893,7 +965,9 @@ export async function generateStorageAuditPdf(): Promise<Buffer> {
       generatedAt: new Date(),
     };
 
-    const result = await renderToPdf(React.createElement(AdminReportPdf, { data: model }));
+    const result = await renderToPdf(
+      React.createElement(AdminReportPdf, { data: model }),
+    );
     return Buffer.from(result.bytes);
   }
 
@@ -1165,14 +1239,20 @@ export async function generateSecurityAuditPdf(): Promise<Buffer> {
         {
           id: "critical-events",
           title: "Critical Security Audit Events Log",
-          description: "Chronological security forensics and anomalous access events",
+          description:
+            "Chronological security forensics and anomalous access events",
           table: {
             columns: [
               { id: "action", header: "Action", width: "25%" },
               { id: "resource", header: "Resource", width: "25%" },
               { id: "severity", header: "Severity", width: "15%" },
               { id: "ip", header: "IP Address", width: "15%" },
-              { id: "dateTime", header: "Date & Time", width: "20%", align: "right" },
+              {
+                id: "dateTime",
+                header: "Date & Time",
+                width: "20%",
+                align: "right",
+              },
             ],
             rows: security.recentCriticalLogs.map((log) => ({
               action: log.action,
@@ -1188,7 +1268,9 @@ export async function generateSecurityAuditPdf(): Promise<Buffer> {
       generatedAt: new Date(),
     };
 
-    const result = await renderToPdf(React.createElement(AdminReportPdf, { data: model }));
+    const result = await renderToPdf(
+      React.createElement(AdminReportPdf, { data: model }),
+    );
     return Buffer.from(result.bytes);
   }
 

@@ -46,7 +46,14 @@ export function EmptyState({
       >
         {title}
       </div>
-      <div style={{ fontSize: "10px", color: theme.colors.mutedForeground, maxWidth: "340px", textTransform: "uppercase" }}>
+      <div
+        style={{
+          fontSize: "10px",
+          color: theme.colors.mutedForeground,
+          maxWidth: "340px",
+          textTransform: "uppercase",
+        }}
+      >
         {description}
       </div>
     </div>

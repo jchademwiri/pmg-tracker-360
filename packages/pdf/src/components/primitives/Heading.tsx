@@ -20,7 +20,13 @@ export function Heading({
     1: { fontSize: "24px", lineHeight: "30px", fontWeight: 700 },
     2: { fontSize: "18px", lineHeight: "24px", fontWeight: 700 },
     3: { fontSize: "15px", lineHeight: "20px", fontWeight: 600 },
-    4: { fontSize: "13px", lineHeight: "18px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" },
+    4: {
+      fontSize: "13px",
+      lineHeight: "18px",
+      fontWeight: 600,
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+    },
   };
 
   const combinedStyle: CSSProperties = {
@@ -31,7 +37,10 @@ export function Heading({
   };
 
   return (
-    <div style={combinedStyle} className={clsx(`pdf-heading-h${level}`, className)}>
+    <div
+      style={combinedStyle}
+      className={clsx(`pdf-heading-h${level}`, className)}
+    >
       {children}
     </div>
   );

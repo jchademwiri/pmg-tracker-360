@@ -59,7 +59,9 @@ export function KeyValueCard({
           <div
             key={idx}
             style={{
-              gridColumn: item.colSpan ? `span ${item.colSpan} / span ${item.colSpan}` : undefined,
+              gridColumn: item.colSpan
+                ? `span ${item.colSpan} / span ${item.colSpan}`
+                : undefined,
               display: "flex",
               flexDirection: "column",
               gap: "2px",

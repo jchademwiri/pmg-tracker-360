@@ -24,7 +24,9 @@ async function downloadReport(url: string, fallbackFilename: string) {
   const response = await fetch(url);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error || `Export failed with status ${response.status}`);
+    throw new Error(
+      body?.error || `Export failed with status ${response.status}`,
+    );
   }
   const blob = await response.blob();
   const disposition = response.headers.get("content-disposition");
@@ -65,7 +67,9 @@ export function TenderRegisterButtons() {
 
   const handleExport = async (requestedFormat: "xlsx" | "pdf") => {
     if (preset === "custom" && !startDate && !endDate) {
-      toast.error("Please pick at least a start date or end date for custom range.");
+      toast.error(
+        "Please pick at least a start date or end date for custom range.",
+      );
       return;
     }
 
@@ -74,10 +78,17 @@ export function TenderRegisterButtons() {
     const toastId = toast.loading("Preparing " + label + " tender register...");
     try {
       const dateQs = buildDateQueryParams(preset, startDate, endDate);
-      const url = "/api/reports/tenders/register/" + requestedFormat + "?" + dateQs.replace(/^&/, "");
+      const url =
+        "/api/reports/tenders/register/" +
+        requestedFormat +
+        "?" +
+        dateQs.replace(/^&/, "");
       await downloadReport(
         url,
-        "tender-register-" + new Date().toISOString().slice(0, 10) + "." + requestedFormat,
+        "tender-register-" +
+          new Date().toISOString().slice(0, 10) +
+          "." +
+          requestedFormat,
       );
       toast.success(label + " tender register downloaded", { id: toastId });
     } catch (error) {
@@ -191,7 +202,9 @@ export function ClientTenderReportButtons({
       return;
     }
     if (preset === "custom" && !startDate && !endDate) {
-      toast.error("Please pick at least a start date or end date for custom range.");
+      toast.error(
+        "Please pick at least a start date or end date for custom range.",
+      );
       return;
     }
 
@@ -213,9 +226,12 @@ export function ClientTenderReportButtons({
         url,
         (client?.name || "client") + "-tenders." + requestedFormat,
       );
-      toast.success((client?.name || "Client") + " " + label + " report downloaded", {
-        id: toastId,
-      });
+      toast.success(
+        (client?.name || "Client") + " " + label + " report downloaded",
+        {
+          id: toastId,
+        },
+      );
     } catch (error) {
       console.error("Client tender " + label + " export failed:", error);
       toast.error(

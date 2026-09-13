@@ -20,7 +20,7 @@ export interface DataTableProps<T> {
 function resolveColWidth<T>(
   col: DataTableColumn<T>,
   columns: DataTableColumn<T>[],
-  isLandscape: boolean
+  isLandscape: boolean,
 ): string | undefined {
   if (!col.width) return undefined;
 
@@ -63,10 +63,13 @@ export function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   if (!data || data.length === 0) {
-    return <EmptyState theme={theme} title="No Data" description={emptyMessage} />;
+    return (
+      <EmptyState theme={theme} title="No Data" description={emptyMessage} />
+    );
   }
 
-  const isLandscape = orientation === "landscape" || (!orientation && columns.length >= 5);
+  const isLandscape =
+    orientation === "landscape" || (!orientation && columns.length >= 5);
   const paddingY = dense ? "6px" : "8px";
   const paddingX = dense ? "8px" : "10px";
   const fontSize = dense ? "9.5px" : "10.5px";
@@ -102,7 +105,10 @@ export function DataTable<T>({
     };
   };
 
-  const tdStyle = (col: DataTableColumn<T>, rowIndex: number): CSSProperties => {
+  const tdStyle = (
+    col: DataTableColumn<T>,
+    rowIndex: number,
+  ): CSSProperties => {
     const isEven = rowIndex % 2 === 0;
     const bg = striped
       ? isEven
@@ -132,7 +138,9 @@ export function DataTable<T>({
       style={{
         width: "100%",
         overflow: "hidden",
-        ...(bordered ? { border: `1px solid ${theme.colors.border}`, borderRadius: "4px" } : {}),
+        ...(bordered
+          ? { border: `1px solid ${theme.colors.border}`, borderRadius: "4px" }
+          : {}),
       }}
       className={clsx("pdf-table-container", className)}
     >
@@ -149,7 +157,10 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {data.map((row, rowIndex) => (
-            <tr key={rowIndex} style={{ pageBreakInside: "avoid", breakInside: "avoid" }}>
+            <tr
+              key={rowIndex}
+              style={{ pageBreakInside: "avoid", breakInside: "avoid" }}
+            >
               {columns.map((col) => {
                 const cellContent = col.render
                   ? col.render(row, rowIndex)

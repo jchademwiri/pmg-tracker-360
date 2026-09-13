@@ -23,7 +23,9 @@ export const env = createEnv({
     R2_SECRET_ACCESS_KEY:
       process.env.VERCEL_ENV === "preview"
         ? z.string().default("preview-r2-secret-key")
-        : z.string().min(1, "R2_SECRET_ACCESS_KEY is required for file uploads"),
+        : z
+            .string()
+            .min(1, "R2_SECRET_ACCESS_KEY is required for file uploads"),
     R2_BUCKET_NAME:
       process.env.VERCEL_ENV === "preview"
         ? z.string().default("preview-r2-bucket")

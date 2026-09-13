@@ -188,7 +188,10 @@ function renderPdf(data: TenderWinLossReportData, logoDataUri: string | null) {
 export async function generateTenderWinLossPdf(organizationId: string) {
   const result = await getTenderWinLossReport(organizationId);
   if (!result.success) {
-    return { success: false as const, error: result.error || "Failed to build win/loss report data." };
+    return {
+      success: false as const,
+      error: result.error || "Failed to build win/loss report data.",
+    };
   }
 
   const logoDataUri = await fetchLogoBase64(result.data.org.logo);
@@ -196,7 +199,10 @@ export async function generateTenderWinLossPdf(organizationId: string) {
   const fileName = `Tender-Win-Loss-Summary-${new Date().toISOString().split("T")[0]}.pdf`;
 
   if (isPdfcnEnabled("tender-win-loss")) {
-    const totalLostReasonCount = result.data.lossReasons.reduce((acc, r) => acc + r.count, 0);
+    const totalLostReasonCount = result.data.lossReasons.reduce(
+      (acc, r) => acc + r.count,
+      0,
+    );
 
     const pdfResult = await renderToPdf(
       React.createElement(TenderWinLossPdf, {
@@ -209,12 +215,15 @@ export async function generateTenderWinLossPdf(organizationId: string) {
             website: orgMeta.website,
           },
           periodLabel: `As at ${formatDate(new Date())}`,
-          totalSubmissions: result.data.summary.wonCount + result.data.summary.lostCount,
+          totalSubmissions:
+            result.data.summary.wonCount + result.data.summary.lostCount,
           awardedCount: result.data.summary.wonCount,
           lostCount: result.data.summary.lostCount,
           winRate: parseFloat(String(result.data.summary.winRate)) || 0,
-          awardedValueTotal: parseFloat(String(result.data.summary.totalWonValue)) || 0,
-          lostValueTotal: parseFloat(String(result.data.summary.totalLostValue)) || 0,
+          awardedValueTotal:
+            parseFloat(String(result.data.summary.totalWonValue)) || 0,
+          lostValueTotal:
+            parseFloat(String(result.data.summary.totalLostValue)) || 0,
           awardedTenders: result.data.awarded.map((t) => ({
             tenderNumber: t.tenderNumber,
             client: t.clientName || "—",
@@ -233,7 +242,10 @@ export async function generateTenderWinLossPdf(organizationId: string) {
             reason: r.reason,
             count: r.count,
             value: 0,
-            percentage: totalLostReasonCount > 0 ? (r.count / totalLostReasonCount) * 100 : 0,
+            percentage:
+              totalLostReasonCount > 0
+                ? (r.count / totalLostReasonCount) * 100
+                : 0,
           })),
         },
       }),
@@ -247,7 +259,7 @@ export async function generateTenderWinLossPdf(organizationId: string) {
           confidential: false,
           generatedAtText: formatDateTimeSa(new Date()),
         }),
-      }
+      },
     );
 
     return {

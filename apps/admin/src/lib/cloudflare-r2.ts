@@ -156,7 +156,9 @@ export async function getCloudflareR2StorageStats(
       bucketsData.result?.buckets || [];
 
     if (rawBuckets.length === 0) {
-      console.warn("No buckets found in Cloudflare account. Falling back to DB-tracked storage metrics.");
+      console.warn(
+        "No buckets found in Cloudflare account. Falling back to DB-tracked storage metrics.",
+      );
       return makeFallbackStats();
     }
 

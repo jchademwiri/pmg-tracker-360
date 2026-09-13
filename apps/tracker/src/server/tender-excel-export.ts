@@ -265,15 +265,20 @@ export async function getTendersExportExcel(
 
     const buffer = await workbook.xlsx.writeBuffer();
     const date = new Date().toISOString().slice(0, 10);
-    const periodSlug = filterOptions.preset && filterOptions.preset !== "all"
-      ? `-${filterOptions.preset}`
-      : "";
+    const periodSlug =
+      filterOptions.preset && filterOptions.preset !== "all"
+        ? `-${filterOptions.preset}`
+        : "";
     const slug =
       (clientId ? rows[0]?.clientName : "tender-register")
         ?.toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "") || "tender-register";
-    return { success: true as const, buffer, filename: `${slug}${periodSlug}-${date}.xlsx` };
+    return {
+      success: true as const,
+      buffer,
+      filename: `${slug}${periodSlug}-${date}.xlsx`,
+    };
   } catch (error: unknown) {
     console.error("Error exporting tenders Excel:", error);
     return {

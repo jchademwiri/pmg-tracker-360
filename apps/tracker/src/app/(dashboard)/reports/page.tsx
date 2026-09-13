@@ -6,10 +6,7 @@ import { getReportStats, getTenderSubmissionTrend } from "@/server/reports";
 import { ReportStatsCards } from "@/components/reports/stats-cards";
 import { TenderPerformanceChart } from "@/components/reports/tender-performance-chart";
 import { TenderSubmissionTrendChart } from "@/components/reports/tender-submission-trend-chart";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -79,10 +76,14 @@ export default async function ReportsPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <FileDown className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold text-lg">Looking for Downloadable Reports?</h3>
+              <h3 className="font-semibold text-lg">
+                Looking for Downloadable Reports?
+              </h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Official Master Tender Registers, Management Follow-Up Reports, Client Dossiers, and Win/Loss Summaries have moved to the dedicated Download Center.
+              Official Master Tender Registers, Management Follow-Up Reports,
+              Client Dossiers, and Win/Loss Summaries have moved to the
+              dedicated Download Center.
             </p>
           </div>
           <Button asChild className="gap-2 shrink-0">

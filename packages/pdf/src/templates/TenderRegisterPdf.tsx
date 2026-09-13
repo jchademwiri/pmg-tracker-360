@@ -10,11 +10,15 @@ import { formatDateSa } from "../formatters/index";
 
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();
-  if (s === "awarded" || s === "won") return <Badge variant="success">AWARDED</Badge>;
+  if (s === "awarded" || s === "won")
+    return <Badge variant="success">AWARDED</Badge>;
   if (s === "submitted") return <Badge variant="primary">SUBMITTED</Badge>;
-  if (s === "evaluation" || s === "evaluated") return <Badge variant="primary">EVALUATION</Badge>;
-  if (s === "preparation" || s === "draft") return <Badge variant="warning">PREPARATION</Badge>;
-  if (s === "lost" || s === "cancelled") return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
+  if (s === "evaluation" || s === "evaluated")
+    return <Badge variant="primary">EVALUATION</Badge>;
+  if (s === "preparation" || s === "draft")
+    return <Badge variant="warning">PREPARATION</Badge>;
+  if (s === "lost" || s === "cancelled")
+    return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
   return <Badge variant="outline">{status.toUpperCase()}</Badge>;
 }
 
@@ -33,7 +37,13 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "TENDER #",
       width: "14%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+        <span
+          style={{
+            fontWeight: 700,
+            color: trackerTheme.colors.primary,
+            letterSpacing: "0.2px",
+          }}
+        >
           {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
         </span>
       ),
@@ -43,7 +53,9 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "CLIENT",
       width: "20%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 600, textTransform: "uppercase" }}>{row.client || "—"}</span>
+        <span style={{ fontWeight: 600, textTransform: "uppercase" }}>
+          {row.client || "—"}
+        </span>
       ),
     },
     {
@@ -51,7 +63,9 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "DESCRIPTION",
       width: "32%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ textTransform: "uppercase" }}>{row.description || "—"}</span>
+        <span style={{ textTransform: "uppercase" }}>
+          {row.description || "—"}
+        </span>
       ),
     },
     {
@@ -80,7 +94,13 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "TENDER #",
       width: "16%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+        <span
+          style={{
+            fontWeight: 700,
+            color: trackerTheme.colors.primary,
+            letterSpacing: "0.2px",
+          }}
+        >
           {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
         </span>
       ),
@@ -90,7 +110,9 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "DESCRIPTION",
       width: "38%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ textTransform: "uppercase" }}>{row.description || "—"}</span>
+        <span style={{ textTransform: "uppercase" }}>
+          {row.description || "—"}
+        </span>
       ),
     },
     {
@@ -98,7 +120,9 @@ export function TenderRegisterPdf({ data }: { data: TenderRegisterPdfModel }) {
       header: "CONTACT PERSON",
       width: "20%",
       render: (row: TenderRegisterRowModel) => (
-        <span style={{ textTransform: "uppercase" }}>{row.contactPerson || "—"}</span>
+        <span style={{ textTransform: "uppercase" }}>
+          {row.contactPerson || "—"}
+        </span>
       ),
     },
     {

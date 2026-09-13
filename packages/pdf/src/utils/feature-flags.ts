@@ -14,7 +14,7 @@ const VALID_DOCUMENT_KINDS: ReadonlySet<string> = new Set<PdfDocumentKind>([
 const warnedUnknownKinds = new Set<string>();
 
 export function parsePdfcnAllowlist(
-  rawEnv: string | undefined = process.env.PDFCN_DOCUMENTS
+  rawEnv: string | undefined = process.env.PDFCN_DOCUMENTS,
 ): Set<PdfDocumentKind> {
   if (!rawEnv || typeof rawEnv !== "string") {
     return new Set<PdfDocumentKind>();
@@ -43,7 +43,7 @@ export function parsePdfcnAllowlist(
     } else if (!warnedUnknownKinds.has(token)) {
       warnedUnknownKinds.add(token);
       console.warn(
-        `[PDFCN] Unknown document kind "${token}" in PDFCN_DOCUMENTS allowlist. Valid values: ${Array.from(VALID_DOCUMENT_KINDS).join(", ")}`
+        `[PDFCN] Unknown document kind "${token}" in PDFCN_DOCUMENTS allowlist. Valid values: ${Array.from(VALID_DOCUMENT_KINDS).join(", ")}`,
       );
     }
   }
@@ -53,7 +53,7 @@ export function parsePdfcnAllowlist(
 
 export function isPdfcnEnabled(
   kind: PdfDocumentKind,
-  rawEnv?: string
+  rawEnv?: string,
 ): boolean {
   const allowlist = parsePdfcnAllowlist(rawEnv);
   return allowlist.has(kind);

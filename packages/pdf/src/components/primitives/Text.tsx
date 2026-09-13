@@ -28,7 +28,8 @@ export function Text({
     mono: {
       fontSize: "12px",
       lineHeight: "16px",
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      fontFamily:
+        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
     },
   };
 

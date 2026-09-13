@@ -43,7 +43,14 @@ export function PageHeader({
   return (
     <div style={containerStyle} className={clsx("pdf-page-header", className)}>
       {/* Left: Organization Branding */}
-      <div style={{ maxWidth: "55%", display: "flex", flexDirection: "column", gap: "6px" }}>
+      <div
+        style={{
+          maxWidth: "55%",
+          display: "flex",
+          flexDirection: "column",
+          gap: "6px",
+        }}
+      >
         {branding?.logoDataUri ? (
           <img
             src={branding.logoDataUri}
@@ -69,12 +76,24 @@ export function PageHeader({
         )}
 
         {branding?.organizationName && branding.logoDataUri && (
-          <div style={{ fontSize: "12px", fontWeight: 700, color: theme.colors.foreground }}>
+          <div
+            style={{
+              fontSize: "12px",
+              fontWeight: 700,
+              color: theme.colors.foreground,
+            }}
+          >
             {branding.organizationName}
           </div>
         )}
 
-        <div style={{ fontSize: "10px", lineHeight: "14px", color: theme.colors.mutedForeground }}>
+        <div
+          style={{
+            fontSize: "10px",
+            lineHeight: "14px",
+            color: theme.colors.mutedForeground,
+          }}
+        >
           {branding?.address && <div>{branding.address}</div>}
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             {branding?.phone && <span>Tel: {branding.phone}</span>}
@@ -83,8 +102,12 @@ export function PageHeader({
           </div>
           {(branding?.taxNumber || branding?.registrationNumber) && (
             <div style={{ display: "flex", gap: "10px", marginTop: "2px" }}>
-              {branding?.taxNumber && <span>VAT/Tax: {branding.taxNumber}</span>}
-              {branding?.registrationNumber && <span>Reg: {branding.registrationNumber}</span>}
+              {branding?.taxNumber && (
+                <span>VAT/Tax: {branding.taxNumber}</span>
+              )}
+              {branding?.registrationNumber && (
+                <span>Reg: {branding.registrationNumber}</span>
+              )}
             </div>
           )}
         </div>
@@ -138,8 +161,12 @@ export function PageHeader({
                   lineHeight: "14px",
                 }}
               >
-                <span style={{ color: theme.colors.mutedForeground }}>{item.label}:</span>
-                <span style={{ fontWeight: 600, color: theme.colors.foreground }}>
+                <span style={{ color: theme.colors.mutedForeground }}>
+                  {item.label}:
+                </span>
+                <span
+                  style={{ fontWeight: 600, color: theme.colors.foreground }}
+                >
                   {item.value}
                 </span>
               </div>

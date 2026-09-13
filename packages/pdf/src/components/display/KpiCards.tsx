@@ -28,7 +28,10 @@ export function KpiCards({
   };
 
   return (
-    <div style={containerStyle} className={clsx("pdf-kpi-cards-grid", className)}>
+    <div
+      style={containerStyle}
+      className={clsx("pdf-kpi-cards-grid", className)}
+    >
       {items.map((item, idx) => {
         let borderTopColor = theme.colors.accent;
         let valueColor = theme.colors.foreground;

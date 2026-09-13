@@ -61,7 +61,8 @@ export default async function DownloadsPage() {
             </h1>
           </div>
           <p className="mt-1.5 text-muted-foreground">
-            Generate and export official tender registers, management follow-ups, and client reports in PDF and Excel.
+            Generate and export official tender registers, management
+            follow-ups, and client reports in PDF and Excel.
           </p>
         </div>
 
@@ -91,8 +92,8 @@ export default async function DownloadsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <CardDescription className="text-sm leading-relaxed">
-              Full portfolio master register with structured summary KPIs, submission
-              timing, and dedicated sheets for every active client.
+              Full portfolio master register with structured summary KPIs,
+              submission timing, and dedicated sheets for every active client.
             </CardDescription>
             <TenderRegisterButtons />
           </CardContent>
@@ -106,7 +107,9 @@ export default async function DownloadsPage() {
                 <CalendarClock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <CardTitle className="text-lg">Management Follow-Up Report</CardTitle>
+                <CardTitle className="text-lg">
+                  Management Follow-Up Report
+                </CardTitle>
                 <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
                   Executive PDF
                 </span>
@@ -115,8 +118,9 @@ export default async function DownloadsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <CardDescription className="text-sm leading-relaxed">
-              Executive summary with tender numbers, descriptions, closing dates, direct client
-              contact details, and offer validity expiry tracking for management action.
+              Executive summary with tender numbers, descriptions, closing
+              dates, direct client contact details, and offer validity expiry
+              tracking for management action.
             </CardDescription>
             <TenderFollowUpButton />
           </CardContent>
@@ -139,8 +143,9 @@ export default async function DownloadsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <CardDescription className="text-sm leading-relaxed">
-              Select a specific client to download their filtered tender dossier including dates,
-              client contacts, submission timing, and estimated values.
+              Select a specific client to download their filtered tender dossier
+              including dates, client contacts, submission timing, and estimated
+              values.
             </CardDescription>
             <ClientTenderReportButtons clients={clients} />
           </CardContent>
@@ -163,8 +168,9 @@ export default async function DownloadsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <CardDescription className="text-sm leading-relaxed">
-              Win rate analysis, won and lost tenders, and categorized loss reasons —
-              a clean document prepared for stakeholder reviews and strategy meetings.
+              Win rate analysis, won and lost tenders, and categorized loss
+              reasons — a clean document prepared for stakeholder reviews and
+              strategy meetings.
             </CardDescription>
             <TenderWinLossPdfButton />
           </CardContent>
@@ -173,9 +179,12 @@ export default async function DownloadsPage() {
 
       <div className="rounded-xl border border-white/10 bg-muted/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="font-semibold text-foreground">Need interactive analytics and charts?</h3>
+          <h3 className="font-semibold text-foreground">
+            Need interactive analytics and charts?
+          </h3>
           <p className="text-sm text-muted-foreground mt-0.5">
-            View live win/loss rates, monthly submission trends, and pipeline metrics on the Reports & Insights dashboard.
+            View live win/loss rates, monthly submission trends, and pipeline
+            metrics on the Reports & Insights dashboard.
           </p>
         </div>
         <Button variant="secondary" asChild className="shrink-0 gap-2">

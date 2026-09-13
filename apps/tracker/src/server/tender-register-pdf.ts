@@ -19,7 +19,10 @@ import {
   formatZar,
   formatDateTimeSa,
 } from "@pmg/pdf";
-import { fetchLogoBase64, parseOrganizationMetadata } from "@/lib/pdf/pdf-layout";
+import {
+  fetchLogoBase64,
+  parseOrganizationMetadata,
+} from "@/lib/pdf/pdf-layout";
 import type { DateRangePreset } from "@/lib/date-range-presets";
 
 export interface TenderReportFilterOptions {
@@ -499,112 +502,123 @@ export async function getTenderRegisterPdf(
         error: "Client not found or has no tenders in selected period.",
       };
 
-  const periodSlug = filterOptions.preset && filterOptions.preset !== "all"
-    ? `-${filterOptions.preset}`
-    : "";
-  const slug =
-    (clientId ? rows[0]?.clientName : "tender-register")
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "tender-register";
-  const filename = `${slug}${periodSlug}-${new Date().toISOString().slice(0, 10)}.pdf`;
+    const periodSlug =
+      filterOptions.preset && filterOptions.preset !== "all"
+        ? `-${filterOptions.preset}`
+        : "";
+    const slug =
+      (clientId ? rows[0]?.clientName : "tender-register")
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "tender-register";
+    const filename = `${slug}${periodSlug}-${new Date().toISOString().slice(0, 10)}.pdf`;
 
-  if (isPdfcnEnabled("tender-register")) {
-    const orgMeta = parseOrganizationMetadata(org?.metadata);
-    const logoDataUri = await fetchLogoBase64(org?.logo ?? null);
+    if (isPdfcnEnabled("tender-register")) {
+      const orgMeta = parseOrganizationMetadata(org?.metadata);
+      const logoDataUri = await fetchLogoBase64(org?.logo ?? null);
 
-    const submitted = rows.filter(
-      (row) => timing(row.submissionDate) === "Submitted",
-    ).length;
-    const due = rows.length - submitted;
+      const submitted = rows.filter(
+        (row) => timing(row.submissionDate) === "Submitted",
+      ).length;
+      const due = rows.length - submitted;
 
-    let kpiCards: any[] = [];
-    if (clientId) {
-      const estimated = rows.reduce(
-        (sum, row) => sum + (Number(row.value) || 0),
-        0,
+      let kpiCards: any[] = [];
+      if (clientId) {
+        const estimated = rows.reduce(
+          (sum, row) => sum + (Number(row.value) || 0),
+          0,
+        );
+        kpiCards = [
+          { label: "Total Tenders", value: String(rows.length) },
+          { label: "Submitted", value: String(submitted), variant: "primary" },
+          { label: "Not Yet Due", value: String(due), variant: "warning" },
+          {
+            label: "Estimated Value",
+            value: formatZar(estimated),
+            variant: "success",
+          },
+        ];
+      } else {
+        const clients = new Set(rows.map((row) => row.clientId).filter(Boolean))
+          .size;
+        const pipeline = rows
+          .filter((row) => timing(row.submissionDate) === "Not Yet Due")
+          .reduce((sum, row) => sum + (Number(row.value) || 0), 0);
+        kpiCards = [
+          { label: "Total Tenders", value: String(rows.length) },
+          { label: "Submitted", value: String(submitted), variant: "primary" },
+          { label: "Not Yet Due", value: String(due), variant: "warning" },
+          { label: "Number of Clients", value: String(clients) },
+          {
+            label: "Pipeline Value",
+            value: formatZar(pipeline),
+            variant: "success",
+          },
+        ];
+      }
+
+      const filterPills = [
+        ...(clientId
+          ? [{ label: "Client", value: text(rows[0]?.clientName) || "Client" }]
+          : [{ label: "Scope", value: "Master Register" }]),
+        ...(filterOptions.periodLabel &&
+        filterOptions.periodLabel !== "All Time"
+          ? [{ label: "Period", value: filterOptions.periodLabel }]
+          : []),
+      ];
+
+      const reportTitle = clientId
+        ? `CLIENT TENDER REPORT: ${text(rows[0]?.clientName) || "Client"}`
+        : "TENDER REGISTER REPORT";
+
+      const pdfResult = await renderToPdf(
+        React.createElement(TenderRegisterPdf, {
+          data: {
+            branding: {
+              organizationName: orgName,
+              logoDataUri,
+              phone: orgMeta.phone,
+              address: orgMeta.address,
+              website: orgMeta.website,
+            },
+            variant: clientId ? "client" : "portfolio",
+            clientName: clientId ? text(rows[0]?.clientName) || "Client" : null,
+            filterPills,
+            kpiCards,
+            rows: rows.map((r) => ({
+              tenderNumber: r.tenderNumber || "—",
+              client: r.clientName || "—",
+              description: r.description || "—",
+              status: r.status,
+              priority: r.priority,
+              submissionDate: r.submissionDate,
+              validityDate: r.validityDate,
+              contactPerson: contact(r),
+            })),
+          },
+        }),
+        {
+          orientation: "landscape",
+          footer: React.createElement(RunningFooter, {
+            theme: trackerTheme,
+            branding: { organizationName: orgName },
+            documentTitle: reportTitle,
+            confidential: false,
+            generatedAtText: formatDateTimeSa(new Date()),
+          }),
+        },
       );
-      kpiCards = [
-        { label: "Total Tenders", value: String(rows.length) },
-        { label: "Submitted", value: String(submitted), variant: "primary" },
-        { label: "Not Yet Due", value: String(due), variant: "warning" },
-        { label: "Estimated Value", value: formatZar(estimated), variant: "success" },
-      ];
-    } else {
-      const clients = new Set(rows.map((row) => row.clientId).filter(Boolean)).size;
-      const pipeline = rows
-        .filter((row) => timing(row.submissionDate) === "Not Yet Due")
-        .reduce((sum, row) => sum + (Number(row.value) || 0), 0);
-      kpiCards = [
-        { label: "Total Tenders", value: String(rows.length) },
-        { label: "Submitted", value: String(submitted), variant: "primary" },
-        { label: "Not Yet Due", value: String(due), variant: "warning" },
-        { label: "Number of Clients", value: String(clients) },
-        { label: "Pipeline Value", value: formatZar(pipeline), variant: "success" },
-      ];
+
+      return {
+        success: true as const,
+        buffer: Buffer.from(pdfResult.bytes),
+        filename,
+      };
     }
 
-    const filterPills = [
-      ...(clientId
-        ? [{ label: "Client", value: text(rows[0]?.clientName) || "Client" }]
-        : [{ label: "Scope", value: "Master Register" }]),
-      ...(filterOptions.periodLabel && filterOptions.periodLabel !== "All Time"
-        ? [{ label: "Period", value: filterOptions.periodLabel }]
-        : []),
-    ];
-
-    const reportTitle = clientId
-      ? `CLIENT TENDER REPORT: ${text(rows[0]?.clientName) || "Client"}`
-      : "TENDER REGISTER REPORT";
-
-    const pdfResult = await renderToPdf(
-      React.createElement(TenderRegisterPdf, {
-        data: {
-          branding: {
-            organizationName: orgName,
-            logoDataUri,
-            phone: orgMeta.phone,
-            address: orgMeta.address,
-            website: orgMeta.website,
-          },
-          variant: clientId ? "client" : "portfolio",
-          clientName: clientId ? (text(rows[0]?.clientName) || "Client") : null,
-          filterPills,
-          kpiCards,
-          rows: rows.map((r) => ({
-            tenderNumber: r.tenderNumber || "—",
-            client: r.clientName || "—",
-            description: r.description || "—",
-            status: r.status,
-            priority: r.priority,
-            submissionDate: r.submissionDate,
-            validityDate: r.validityDate,
-            contactPerson: contact(r),
-          })),
-        },
-      }),
-      {
-        orientation: "landscape",
-        footer: React.createElement(RunningFooter, {
-          theme: trackerTheme,
-          branding: { organizationName: orgName },
-          documentTitle: reportTitle,
-          confidential: false,
-          generatedAtText: formatDateTimeSa(new Date()),
-        }),
-      }
-    );
-
-    return {
-      success: true as const,
-      buffer: Buffer.from(pdfResult.bytes),
-      filename,
-    };
-  }
-
-  const buffer = clientId
-    ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
-    : renderPortfolio(rows, orgName);
+    const buffer = clientId
+      ? renderClient(text(rows[0]?.clientName) || "Client", rows, orgName)
+      : renderPortfolio(rows, orgName);
 
     return {
       success: true as const,
@@ -615,7 +629,10 @@ export async function getTenderRegisterPdf(
     console.error("Error generating tender register PDF:", error);
     return {
       success: false as const,
-      error: error instanceof Error ? error.message : "Failed to generate tender register PDF.",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to generate tender register PDF.",
     };
   }
 }

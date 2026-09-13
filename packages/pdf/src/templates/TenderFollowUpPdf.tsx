@@ -11,14 +11,24 @@ import { formatDateSa } from "../formatters/index";
 function getValidityBadge(row: TenderFollowUpRowModel) {
   const formatted = formatDateSa(row.validityExpiryDate);
   if (!row.validityExpiryDate || formatted === "—") {
-    return <span style={{ color: trackerTheme.colors.mutedForeground }}>—</span>;
+    return (
+      <span style={{ color: trackerTheme.colors.mutedForeground }}>—</span>
+    );
   }
 
   if (row.isExpired) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.destructive }}>{formatted}</span>
-        <Badge variant="destructive" dot={false} style={{ fontSize: "7.5px", padding: "1px 4px" }}>
+        <span
+          style={{ fontWeight: 700, color: trackerTheme.colors.destructive }}
+        >
+          {formatted}
+        </span>
+        <Badge
+          variant="destructive"
+          dot={false}
+          style={{ fontSize: "7.5px", padding: "1px 4px" }}
+        >
           EXPIRED
         </Badge>
       </div>
@@ -29,8 +39,14 @@ function getValidityBadge(row: TenderFollowUpRowModel) {
     const days = row.validityDaysRemaining ?? 0;
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.warning }}>{formatted}</span>
-        <Badge variant="warning" dot={false} style={{ fontSize: "7.5px", padding: "1px 4px" }}>
+        <span style={{ fontWeight: 700, color: trackerTheme.colors.warning }}>
+          {formatted}
+        </span>
+        <Badge
+          variant="warning"
+          dot={false}
+          style={{ fontSize: "7.5px", padding: "1px 4px" }}
+        >
           {days}D LEFT
         </Badge>
       </div>
@@ -46,17 +62,22 @@ function getValidityBadge(row: TenderFollowUpRowModel) {
 
 function getStatusBadge(status: string) {
   const s = status.toLowerCase();
-  if (s === "awarded" || s === "won") return <Badge variant="success">AWARDED</Badge>;
+  if (s === "awarded" || s === "won")
+    return <Badge variant="success">AWARDED</Badge>;
   if (s === "submitted") return <Badge variant="primary">SUBMITTED</Badge>;
-  if (s === "evaluation" || s === "evaluated") return <Badge variant="primary">EVALUATION</Badge>;
-  if (s === "preparation" || s === "draft") return <Badge variant="warning">PREPARATION</Badge>;
-  if (s === "lost" || s === "cancelled") return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
+  if (s === "evaluation" || s === "evaluated")
+    return <Badge variant="primary">EVALUATION</Badge>;
+  if (s === "preparation" || s === "draft")
+    return <Badge variant="warning">PREPARATION</Badge>;
+  if (s === "lost" || s === "cancelled")
+    return <Badge variant="destructive">{status.toUpperCase()}</Badge>;
   return <Badge variant="outline">{status.toUpperCase()}</Badge>;
 }
 
 export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
   const title = "MANAGEMENT TENDER FOLLOW-UP REPORT";
-  const subtitle = "PIPELINE TRACKING, CLIENT CONTACT DETAILS, AND OFFER VALIDITY EXPIRY FOR MANAGEMENT ACTION";
+  const subtitle =
+    "PIPELINE TRACKING, CLIENT CONTACT DETAILS, AND OFFER VALIDITY EXPIRY FOR MANAGEMENT ACTION";
 
   const columns = [
     {
@@ -65,12 +86,16 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       width: "14%",
       render: (row: TenderFollowUpRowModel) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+          <span
+            style={{
+              fontWeight: 700,
+              color: trackerTheme.colors.primary,
+              letterSpacing: "0.2px",
+            }}
+          >
             {row.tenderNumber ? row.tenderNumber.toUpperCase() : "—"}
           </span>
-          <div style={{ marginTop: "1px" }}>
-            {getStatusBadge(row.status)}
-          </div>
+          <div style={{ marginTop: "1px" }}>{getStatusBadge(row.status)}</div>
         </div>
       ),
     },
@@ -79,7 +104,13 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       header: "CLIENT",
       width: "18%",
       render: (row: TenderFollowUpRowModel) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground, textTransform: "uppercase" }}>
+        <span
+          style={{
+            fontWeight: 700,
+            color: trackerTheme.colors.foreground,
+            textTransform: "uppercase",
+          }}
+        >
           {row.client || "—"}
         </span>
       ),
@@ -89,7 +120,14 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       header: "DESCRIPTION",
       width: "26%",
       render: (row: TenderFollowUpRowModel) => (
-        <div style={{ fontSize: "9px", lineHeight: "13px", color: trackerTheme.colors.foreground, textTransform: "uppercase" }}>
+        <div
+          style={{
+            fontSize: "9px",
+            lineHeight: "13px",
+            color: trackerTheme.colors.foreground,
+            textTransform: "uppercase",
+          }}
+        >
           {row.description || "—"}
         </div>
       ),
@@ -99,20 +137,44 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       header: "CONTACT DETAILS",
       width: "18%",
       render: (row: TenderFollowUpRowModel) => {
-        const hasContact = row.contactName || row.contactEmail || row.contactPhone;
+        const hasContact =
+          row.contactName || row.contactEmail || row.contactPhone;
         if (!hasContact) {
-          return <span style={{ color: trackerTheme.colors.mutedForeground }}>NOT SPECIFIED</span>;
+          return (
+            <span style={{ color: trackerTheme.colors.mutedForeground }}>
+              NOT SPECIFIED
+            </span>
+          );
         }
 
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px", fontSize: "9px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+              fontSize: "9px",
+            }}
+          >
             {row.contactName && (
-              <span style={{ fontWeight: 700, color: trackerTheme.colors.foreground, textTransform: "uppercase" }}>
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: trackerTheme.colors.foreground,
+                  textTransform: "uppercase",
+                }}
+              >
                 {row.contactName}
               </span>
             )}
             {row.contactEmail && (
-              <span style={{ color: trackerTheme.colors.accent, wordBreak: "break-all", textTransform: "uppercase" }}>
+              <span
+                style={{
+                  color: trackerTheme.colors.accent,
+                  wordBreak: "break-all",
+                  textTransform: "uppercase",
+                }}
+              >
                 {row.contactEmail}
               </span>
             )}
@@ -130,7 +192,9 @@ export function TenderFollowUpPdf({ data }: { data: TenderFollowUpPdfModel }) {
       header: "CLOSING DATE",
       width: "11%",
       render: (row: TenderFollowUpRowModel) => (
-        <span style={{ fontWeight: 600, color: trackerTheme.colors.foreground }}>
+        <span
+          style={{ fontWeight: 600, color: trackerTheme.colors.foreground }}
+        >
           {formatDateSa(row.closingDate)}
         </span>
       ),

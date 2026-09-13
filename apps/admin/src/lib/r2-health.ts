@@ -41,8 +41,14 @@ function classifyError(err: unknown): R2HealthResult {
   const name = error?.name ?? "";
   const detail = error?.message ?? "Unknown error";
 
-  if (status === 401 || status === 403 || name === "Unauthorized" || name === "Forbidden") {
-    const reason = status === 401 || name === "Unauthorized" ? "unauthorized" : "forbidden";
+  if (
+    status === 401 ||
+    status === 403 ||
+    name === "Unauthorized" ||
+    name === "Forbidden"
+  ) {
+    const reason =
+      status === 401 || name === "Unauthorized" ? "unauthorized" : "forbidden";
     return {
       ok: false,
       reason,
@@ -61,10 +67,7 @@ function classifyError(err: unknown): R2HealthResult {
         `Check R2_BUCKET_NAME. Detail: ${detail}`,
     };
   }
-  if (
-    name === "CredentialsProviderError" ||
-    /credential/i.test(detail)
-  ) {
+  if (name === "CredentialsProviderError" || /credential/i.test(detail)) {
     return {
       ok: false,
       reason: "unauthorized",

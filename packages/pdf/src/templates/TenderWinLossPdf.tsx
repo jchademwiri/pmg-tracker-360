@@ -1,11 +1,15 @@
 import type { TenderWinLossPdfModel } from "../types/documents";
 import { trackerTheme } from "../themes/tracker";
-import { AnalyticalLayout, type AnalyticalSection } from "../layouts/AnalyticalLayout";
+import {
+  AnalyticalLayout,
+  type AnalyticalSection,
+} from "../layouts/AnalyticalLayout";
 import { DataTable } from "../components/table/DataTable";
 import { formatPercent } from "../formatters/index";
 
 export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
-  const totalDecided = data.totalSubmissions || (data.awardedCount + data.lostCount);
+  const totalDecided =
+    data.totalSubmissions || data.awardedCount + data.lostCount;
 
   const kpiCards = [
     {
@@ -21,12 +25,16 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
     {
       label: "LOST TENDERS",
       value: data.lostCount.toString(),
-      variant: (data.lostCount > 0 ? "destructive" : "default") as "destructive" | "default",
+      variant: (data.lostCount > 0 ? "destructive" : "default") as
+        | "destructive"
+        | "default",
     },
     {
       label: "WIN RATE",
       value: formatPercent(data.winRate / 100),
-      variant: (data.winRate >= 50 ? "success" : "warning") as "success" | "warning",
+      variant: (data.winRate >= 50 ? "success" : "warning") as
+        | "success"
+        | "warning",
     },
   ];
 
@@ -40,7 +48,13 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       header: "TENDER #",
       width: "20%",
       render: (row: AwardedRow) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+        <span
+          style={{
+            fontWeight: 700,
+            color: trackerTheme.colors.primary,
+            letterSpacing: "0.2px",
+          }}
+        >
           {row.tenderNumber ? String(row.tenderNumber).toUpperCase() : "—"}
         </span>
       ),
@@ -73,7 +87,13 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       header: "TENDER #",
       width: "20%",
       render: (row: LostRow) => (
-        <span style={{ fontWeight: 700, color: trackerTheme.colors.primary, letterSpacing: "0.2px" }}>
+        <span
+          style={{
+            fontWeight: 700,
+            color: trackerTheme.colors.primary,
+            letterSpacing: "0.2px",
+          }}
+        >
           {row.tenderNumber ? String(row.tenderNumber).toUpperCase() : "—"}
         </span>
       ),
@@ -103,7 +123,12 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
       header: "LOSS REASON",
       width: "25%",
       render: (row: LostRow) => (
-        <span style={{ textTransform: "uppercase", color: trackerTheme.colors.mutedForeground }}>
+        <span
+          style={{
+            textTransform: "uppercase",
+            color: trackerTheme.colors.mutedForeground,
+          }}
+        >
           {row.lossReason || "NOT SPECIFIED"}
         </span>
       ),
@@ -171,7 +196,8 @@ export function TenderWinLossPdf({ data }: { data: TenderWinLossPdfModel }) {
     {
       id: "loss-reasons",
       title: "LOSS REASON FREQUENCY ANALYSIS",
-      description: "DISTRIBUTION OF REASONS RECORDED DURING POST-SUBMISSION REVIEWS.",
+      description:
+        "DISTRIBUTION OF REASONS RECORDED DURING POST-SUBMISSION REVIEWS.",
       children: (
         <DataTable
           theme={trackerTheme}

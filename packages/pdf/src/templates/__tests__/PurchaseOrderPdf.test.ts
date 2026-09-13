@@ -53,7 +53,9 @@ describe("PurchaseOrderPdf Template", () => {
   };
 
   it("renders a typical purchase order successfully", async () => {
-    const element = React.createElement(PurchaseOrderPdf, { data: mockBaseData });
+    const element = React.createElement(PurchaseOrderPdf, {
+      data: mockBaseData,
+    });
     const result = await renderToPdf(element, { orientation: "portrait" });
 
     expect(result.bytes).toBeInstanceOf(Uint8Array);
@@ -88,7 +90,10 @@ describe("PurchaseOrderPdf Template", () => {
       subtotal: (i + 1) * 1250,
     }));
 
-    const subtotal = multiLineItems.reduce((acc, item) => acc + item.subtotal, 0);
+    const subtotal = multiLineItems.reduce(
+      (acc, item) => acc + item.subtotal,
+      0,
+    );
     const vat = subtotal * 0.15;
 
     const largePo: PurchaseOrderPdfModel = {

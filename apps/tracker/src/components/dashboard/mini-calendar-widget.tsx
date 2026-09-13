@@ -2,7 +2,11 @@
 
 import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 import FullCalendar from "@fullcalendar/react";
-import type { DatesSetArg, EventClickArg, EventInput } from "@fullcalendar/core";
+import type {
+  DatesSetArg,
+  EventClickArg,
+  EventInput,
+} from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -36,7 +40,9 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
   const [isPending, startTransition] = useTransition();
   const [events, setEvents] = useState<EventInput[]>([]);
-  const [activeView, setActiveView] = useState<"dayGridMonth" | "timeGridWeek" | "timeGridDay">("dayGridMonth");
+  const [activeView, setActiveView] = useState<
+    "dayGridMonth" | "timeGridWeek" | "timeGridDay"
+  >("dayGridMonth");
   const [selectedTypes, setSelectedTypes] = useState<CalendarType[]>([
     "tender_submission",
     "po_expected_delivery",
@@ -171,7 +177,9 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
     calendarRef.current?.getApi().today();
   };
 
-  const handleViewChange = (view: "dayGridMonth" | "timeGridWeek" | "timeGridDay") => {
+  const handleViewChange = (
+    view: "dayGridMonth" | "timeGridWeek" | "timeGridDay",
+  ) => {
     setActiveView(view);
     calendarRef.current?.getApi().changeView(view);
   };
@@ -211,7 +219,11 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const getDaysUntil = (dateStr: string) => {
@@ -421,7 +433,10 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                 dayCellClassNames={(arg) => {
                   const dayStr = arg.date.toISOString().split("T")[0];
                   const localDayStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, "0")}-${String(arg.date.getDate()).padStart(2, "0")}`;
-                  if (selectedDate && (dayStr === selectedDate || localDayStr === selectedDate)) {
+                  if (
+                    selectedDate &&
+                    (dayStr === selectedDate || localDayStr === selectedDate)
+                  ) {
                     return ["fc-day-selected"];
                   }
                   return [];
@@ -494,7 +509,10 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
                   margin-bottom: 2px;
                   border: none;
                   cursor: pointer !important;
-                  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+                  transition:
+                    transform 0.15s ease,
+                    opacity 0.15s ease,
+                    box-shadow 0.15s ease;
                 }
                 .mini-calendar .fc-event:hover {
                   transform: translateY(-1px);
@@ -527,9 +545,14 @@ export function MiniCalendarWidget({ className }: MiniCalendarWidgetProps) {
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-primary" />
                 <CardTitle className="text-sm font-semibold tracking-tight text-foreground/95">
-                  {selectedDate ? `Events for ${formatDate(selectedDate)}` : "Upcoming Events"}
+                  {selectedDate
+                    ? `Events for ${formatDate(selectedDate)}`
+                    : "Upcoming Events"}
                 </CardTitle>
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 font-semibold">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 h-4 font-semibold"
+                >
                   {displayedList.length}
                 </Badge>
               </div>

@@ -48,7 +48,10 @@ export async function GET(request: Request) {
       },
     );
     if (!result.success)
-      return NextResponse.json({ error: result.error || "Failed to generate Excel." }, { status: 500 });
+      return NextResponse.json(
+        { error: result.error || "Failed to generate Excel." },
+        { status: 500 },
+      );
 
     return new NextResponse(new Uint8Array(result.buffer), {
       headers: {

@@ -24,7 +24,9 @@ export function DocumentFrame({
   className,
 }: DocumentFrameProps) {
   const isLandscape = orientation === "landscape";
-  const margins = isLandscape ? theme.margins.landscape : theme.margins.portrait;
+  const margins = isLandscape
+    ? theme.margins.landscape
+    : theme.margins.portrait;
 
   const containerStyle: CSSProperties = {
     fontFamily: theme.fontFamily,
@@ -41,7 +43,10 @@ export function DocumentFrame({
   };
 
   return (
-    <div style={containerStyle} className={clsx("pdf-document-frame", className)}>
+    <div
+      style={containerStyle}
+      className={clsx("pdf-document-frame", className)}
+    >
       {children}
     </div>
   );
@@ -65,7 +70,9 @@ export function RunningFooter({
   documentTitle,
 }: RunningFooterProps) {
   const isLandscape = orientation === "landscape";
-  const margins = isLandscape ? theme.margins.landscape : theme.margins.portrait;
+  const margins = isLandscape
+    ? theme.margins.landscape
+    : theme.margins.portrait;
 
   return (
     <div
@@ -108,7 +115,13 @@ export function RunningFooter({
             </>
           )}
           {confidential && (
-            <span style={{ color: theme.colors.destructive, fontWeight: 700, marginLeft: "6px" }}>
+            <span
+              style={{
+                color: theme.colors.destructive,
+                fontWeight: 700,
+                marginLeft: "6px",
+              }}
+            >
               CONFIDENTIAL
             </span>
           )}
@@ -141,7 +154,9 @@ export function RunningHeader({
   documentNumber,
 }: RunningHeaderProps) {
   const isLandscape = orientation === "landscape";
-  const margins = isLandscape ? theme.margins.landscape : theme.margins.portrait;
+  const margins = isLandscape
+    ? theme.margins.landscape
+    : theme.margins.portrait;
 
   return (
     <div

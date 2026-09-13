@@ -31,7 +31,9 @@ export async function validateSessionAndOrg(organizationId: string) {
     .limit(1);
 
   if (membership.length === 0) {
-    throw new Error("Access denied: User is not an active member of this organization");
+    throw new Error(
+      "Access denied: User is not an active member of this organization",
+    );
   }
 
   return {

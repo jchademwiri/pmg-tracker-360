@@ -10,16 +10,33 @@ import { DataTable } from "../components/table/DataTable";
 import { Badge } from "../components/primitives/Badge";
 import { Text } from "../components/primitives/Text";
 
-function getStatusBadgeVariant(status?: string): "success" | "warning" | "destructive" | "primary" | "secondary" {
+function getStatusBadgeVariant(
+  status?: string,
+): "success" | "warning" | "destructive" | "primary" | "secondary" {
   if (!status) return "secondary";
   const s = status.toLowerCase();
-  if (s.includes("healthy") || s.includes("normal") || s.includes("active") || s.includes("optimal") || s.includes("secure")) {
+  if (
+    s.includes("healthy") ||
+    s.includes("normal") ||
+    s.includes("active") ||
+    s.includes("optimal") ||
+    s.includes("secure")
+  ) {
     return "success";
   }
-  if (s.includes("warn") || s.includes("elevated") || s.includes("suspicious")) {
+  if (
+    s.includes("warn") ||
+    s.includes("elevated") ||
+    s.includes("suspicious")
+  ) {
     return "warning";
   }
-  if (s.includes("crit") || s.includes("alert") || s.includes("error") || s.includes("fail")) {
+  if (
+    s.includes("crit") ||
+    s.includes("alert") ||
+    s.includes("error") ||
+    s.includes("fail")
+  ) {
     return "destructive";
   }
   return "primary";
@@ -27,9 +44,7 @@ function getStatusBadgeVariant(status?: string): "success" | "warning" | "destru
 
 export function AdminReportPdf({ data }: { data: AdminReportPdfModel }) {
   const statusBadge = data.systemStatus ? (
-    <Badge
-      variant={getStatusBadgeVariant(data.systemStatus)}
-    >
+    <Badge variant={getStatusBadgeVariant(data.systemStatus)}>
       {data.systemStatus.toUpperCase()}
     </Badge>
   ) : undefined;
@@ -42,7 +57,9 @@ export function AdminReportPdf({ data }: { data: AdminReportPdfModel }) {
   }));
 
   const sections: AnalyticalSection[] = data.sections.map((sec, idx) => {
-    const columns: DataTableColumn<Record<string, unknown>>[] = (sec.table?.columns ?? []).map((col) => ({
+    const columns: DataTableColumn<Record<string, unknown>>[] = (
+      sec.table?.columns ?? []
+    ).map((col) => ({
       id: col.id,
       header: col.header,
       width: col.width,
@@ -99,7 +116,9 @@ export function AdminReportPdf({ data }: { data: AdminReportPdfModel }) {
               <KpiCards
                 theme={adminTheme}
                 items={sec.metrics}
-                columns={sec.metrics.length > 3 ? 4 : (sec.metrics.length as 2 | 3)}
+                columns={
+                  sec.metrics.length > 3 ? 4 : (sec.metrics.length as 2 | 3)
+                }
               />
             </div>
           )}
