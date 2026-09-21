@@ -16,6 +16,7 @@ import {
 interface TenderFollowUpReminderProps {
   recipientName: string;
   tenderNumber: string;
+  tenderDescription?: string | null;
   clientName: string;
   followUpDate: string;
   stageLabel: string;
@@ -27,6 +28,7 @@ const TenderFollowUpReminder = (props: TenderFollowUpReminderProps) => {
   const {
     recipientName,
     tenderNumber,
+    tenderDescription,
     clientName,
     followUpDate,
     stageLabel,
@@ -34,11 +36,18 @@ const TenderFollowUpReminder = (props: TenderFollowUpReminderProps) => {
     tenderLink,
   } = props;
 
+  const upperTenderNumber = tenderNumber ? tenderNumber.toUpperCase() : '';
+  const upperClientName = clientName ? clientName.toUpperCase() : '';
+  const upperTenderDescription = tenderDescription ? tenderDescription.toUpperCase() : undefined;
+  const tenderDisplay = upperTenderDescription
+    ? `${upperTenderNumber} - ${upperTenderDescription}`
+    : upperTenderNumber;
+
   return (
     <Html lang="en" dir="ltr">
       <Head />
       <Preview>
-        {stageLabel}: follow-up for tender {tenderNumber}
+        {stageLabel}: follow-up for tender {tenderDisplay}
       </Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans py-[40px]">
@@ -48,7 +57,7 @@ const TenderFollowUpReminder = (props: TenderFollowUpReminderProps) => {
                 {stageLabel}
               </Heading>
               <Text className="text-[16px] text-gray-600 m-0">
-                Follow-up for tender {tenderNumber}
+                Follow-up for tender {tenderDisplay}
               </Text>
             </Section>
 
@@ -57,16 +66,21 @@ const TenderFollowUpReminder = (props: TenderFollowUpReminderProps) => {
                 Hi {recipientName},
               </Text>
               <Text className="text-[16px] text-gray-700 leading-[24px] m-0 mb-[16px]">
-                A follow-up is scheduled for tender <strong>{tenderNumber}</strong>{' '}
-                ({clientName}) on <strong>{followUpDate}</strong>.
+                A follow-up is scheduled for tender <strong>{tenderDisplay}</strong>{' '}
+                ({upperClientName}) on <strong>{followUpDate}</strong>.
               </Text>
 
               <Section className="bg-gray-50 rounded-[8px] p-[24px] mb-[24px]">
                 <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
-                  <strong>Tender:</strong> {tenderNumber}
+                  <strong>Tender:</strong> {tenderDisplay}
                 </Text>
+                {upperTenderDescription ? (
+                  <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
+                    <strong>Description:</strong> {upperTenderDescription}
+                  </Text>
+                ) : null}
                 <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
-                  <strong>Client:</strong> {clientName}
+                  <strong>Client:</strong> {upperClientName}
                 </Text>
                 <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
                   <strong>Follow-up date:</strong> {followUpDate}
@@ -115,7 +129,8 @@ const TenderFollowUpReminder = (props: TenderFollowUpReminderProps) => {
 TenderFollowUpReminder.PreviewProps = {
   recipientName: 'Jane Doe',
   tenderNumber: 'TND-2026-014',
-  clientName: 'Acme Corporation',
+  tenderDescription: 'SUPPLY AND DELIVERY OF SPARE PARTS',
+  clientName: 'ACME CORPORATION',
   followUpDate: '28 August 2026',
   stageLabel: 'Due tomorrow',
   notes: 'Confirm receipt of revised BOQ.',

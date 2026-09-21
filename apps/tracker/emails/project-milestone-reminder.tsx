@@ -16,6 +16,7 @@ import {
 interface ProjectMilestoneReminderProps {
   recipientName: string;
   projectNumber: string;
+  projectDescription?: string | null;
   clientName: string;
   milestoneLabel: 'Contract End' | 'Close-Out';
   milestoneDate: string;
@@ -27,6 +28,7 @@ const ProjectMilestoneReminder = (props: ProjectMilestoneReminderProps) => {
   const {
     recipientName,
     projectNumber,
+    projectDescription,
     clientName,
     milestoneLabel,
     milestoneDate,
@@ -34,11 +36,18 @@ const ProjectMilestoneReminder = (props: ProjectMilestoneReminderProps) => {
     projectLink,
   } = props;
 
+  const upperProjectNumber = projectNumber ? projectNumber.toUpperCase() : '';
+  const upperClientName = clientName ? clientName.toUpperCase() : '';
+  const upperProjectDescription = projectDescription ? projectDescription.toUpperCase() : undefined;
+  const projectDisplay = upperProjectDescription
+    ? `${upperProjectNumber} - ${upperProjectDescription}`
+    : upperProjectNumber;
+
   return (
     <Html lang="en" dir="ltr">
       <Head />
       <Preview>
-        {stageLabel}: {milestoneLabel} for project {projectNumber}
+        {stageLabel}: {milestoneLabel} for project {projectDisplay}
       </Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans py-[40px]">
@@ -48,7 +57,7 @@ const ProjectMilestoneReminder = (props: ProjectMilestoneReminderProps) => {
                 {stageLabel}
               </Heading>
               <Text className="text-[16px] text-gray-600 m-0">
-                {milestoneLabel} for project {projectNumber}
+                {milestoneLabel} for project {projectDisplay}
               </Text>
             </Section>
 
@@ -58,16 +67,21 @@ const ProjectMilestoneReminder = (props: ProjectMilestoneReminderProps) => {
               </Text>
               <Text className="text-[16px] text-gray-700 leading-[24px] m-0 mb-[16px]">
                 The <strong>{milestoneLabel.toLowerCase()}</strong> date for
-                project <strong>{projectNumber}</strong> ({clientName}) is{' '}
+                project <strong>{projectDisplay}</strong> ({upperClientName}) is{' '}
                 <strong>{milestoneDate}</strong>.
               </Text>
 
               <Section className="bg-gray-50 rounded-[8px] p-[24px] mb-[24px]">
                 <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
-                  <strong>Project:</strong> {projectNumber}
+                  <strong>Project:</strong> {projectDisplay}
                 </Text>
+                {upperProjectDescription ? (
+                  <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
+                    <strong>Description:</strong> {upperProjectDescription}
+                  </Text>
+                ) : null}
                 <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
-                  <strong>Client:</strong> {clientName}
+                  <strong>Client:</strong> {upperClientName}
                 </Text>
                 <Text className="text-[14px] text-gray-700 m-0">
                   <strong>{milestoneLabel} date:</strong> {milestoneDate}
@@ -111,7 +125,8 @@ const ProjectMilestoneReminder = (props: ProjectMilestoneReminderProps) => {
 ProjectMilestoneReminder.PreviewProps = {
   recipientName: 'Jane Doe',
   projectNumber: 'PRJ-2026-009',
-  clientName: 'Acme Corporation',
+  projectDescription: 'SUBSTATION AUTOMATION RETROFIT',
+  clientName: 'ACME CORPORATION',
   milestoneLabel: 'Contract End',
   milestoneDate: '28 August 2026',
   stageLabel: 'Due in 7 days',

@@ -37,6 +37,12 @@
       "skillPath": "skills/analytics/SKILL.md",
       "computedHash": "c68a6b09f9d15c67c2130c99ced243814ca46ed95ae9e3ef458d69ddac40a84f"
     },
+    "architect": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/architect/SKILL.md",
+      "computedHash": "66856595ec9fd2477534954ff9ee1f0b91c537eabbce0b4b9a19f69329c02f72"
+    },
     "aso": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -49,6 +55,12 @@
       "skillPath": "skills/attribution/SKILL.md",
       "computedHash": "4e39f858ac85befe82cdff5b0844869cd61adc58f6ca4c602bfcff40fe89b8f2"
     },
+    "audit": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/audit/SKILL.md",
+      "computedHash": "f388e74b95dcfea40615dcce28223b9166e9213867ac35e9971b549b7cda1eae"
+    },
     "better-auth-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
@@ -60,6 +72,12 @@
       "sourceType": "github",
       "skillPath": "security/SKILL.md",
       "computedHash": "ed38caef4b297cc399d717258d6ea4e6ecb8894c453c83450064c7e7c6e5cc02"
+    },
+    "check": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/check/SKILL.md",
+      "computedHash": "59055fb74dd47dc1443cbdf970152d614e81372dd51aa636159eb3246a627dd8"
     },
     "churn-prevention": {
       "source": "coreyhaines31/marketingskills",
@@ -145,11 +163,23 @@
       "skillPath": "skills/customer-research/SKILL.md",
       "computedHash": "fe1206af3520f39f23cd44c727e3981f92d5e965b4370f9543ca502c5e52523b"
     },
+    "debug": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/debug/SKILL.md",
+      "computedHash": "fa8f950ff8f78b45b5f665d889bc0df9f93b9784deca6dfc588ab08e23152f0e"
+    },
     "debugging-and-error-recovery": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/debugging-and-error-recovery/SKILL.md",
       "computedHash": "1a119d27e8f1d27ed6317adf3115826336491346780dcb7d7a7a7f79fe3ffe10"
+    },
+    "develop": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/develop/SKILL.md",
+      "computedHash": "151812557fd511f80196653d0dae0efc878558cc96e962857f2710ed98789573"
     },
     "diagnosing-bugs": {
       "source": "mattpocock/skills",
@@ -162,6 +192,12 @@
       "sourceType": "github",
       "skillPath": "skills/directory-submissions/SKILL.md",
       "computedHash": "c35a0f39c1fb25a56241cb9f59d0eae9bad33d1c3e55c76ec51ebea9e79a788a"
+    },
+    "document": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/document/SKILL.md",
+      "computedHash": "a47c5d29a1263d987c2fa05dbc993a5276aaf6c4ddc54fbd329463a5f3a1aa77"
     },
     "email-and-password-best-practices": {
       "source": "better-auth/skills",
@@ -373,6 +409,12 @@
       "skillPath": "skills/schema/SKILL.md",
       "computedHash": "13693bae311fd444da31a82b3aa46003e12a21220aae98c77ee479fe34116067"
     },
+    "scope": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/scope/SKILL.md",
+      "computedHash": "737c19451b3d0e08edf9560b195a864d1a4006e4f70760339ddc3b2d9b6b6447"
+    },
     "seo-audit": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -415,11 +457,23 @@
       "skillPath": "skills/social/SKILL.md",
       "computedHash": "97ec8a7e9f1865b2c6a052df7b46864e3c9e0cda82207a7223adb5248c6c9703"
     },
+    "sync": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/sync/SKILL.md",
+      "computedHash": "5986c38a23bbb14f82c018862ff0a601f3f20b4a8a1f429e9731b4da6742a765"
+    },
     "systematic-debugging": {
       "source": "obra/superpowers",
       "sourceType": "github",
       "skillPath": "skills/systematic-debugging/SKILL.md",
       "computedHash": "a2750dfbaed1690da73b120254892c4f926b4576cb82eb16fc877783941fe39b"
+    },
+    "test": {
+      "source": "JavaScript-Mastery-Pro/skills",
+      "sourceType": "github",
+      "skillPath": "skills/test/SKILL.md",
+      "computedHash": "6b742c465b3e9cec898bf3621ec555faefb41fdcc0cbbf43ec0a6041fbdcb6be"
     },
     "turborepo": {
       "source": "vercel/turborepo",
