@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bun run db:migrate && turbo run build",
+  "buildCommand": "bun run db:migrate && turbo run build --filter=admin...",
   "crons": [
     {
       "path": "/api/cron/backup",
