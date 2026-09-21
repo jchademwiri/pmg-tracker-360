@@ -16,6 +16,7 @@ import {
 interface PoDeliveryReminderProps {
   recipientName: string;
   poNumber: string;
+  poDescription?: string | null;
   supplierName: string;
   expectedDeliveryDate: string;
   stageLabel: string;
@@ -26,17 +27,25 @@ const PoDeliveryReminder = (props: PoDeliveryReminderProps) => {
   const {
     recipientName,
     poNumber,
+    poDescription,
     supplierName,
     expectedDeliveryDate,
     stageLabel,
     poLink,
   } = props;
 
+  const upperPoNumber = poNumber ? poNumber.toUpperCase() : '';
+  const upperSupplierName = supplierName ? supplierName.toUpperCase() : '';
+  const upperPoDescription = poDescription ? poDescription.toUpperCase() : undefined;
+  const poDisplay = upperPoDescription
+    ? `${upperPoNumber} - ${upperPoDescription}`
+    : upperPoNumber;
+
   return (
     <Html lang="en" dir="ltr">
       <Head />
       <Preview>
-        {stageLabel}: delivery for PO {poNumber}
+        {stageLabel}: delivery for PO {poDisplay}
       </Preview>
       <Tailwind>
         <Body className="bg-gray-100 font-sans py-[40px]">
@@ -46,7 +55,7 @@ const PoDeliveryReminder = (props: PoDeliveryReminderProps) => {
                 {stageLabel}
               </Heading>
               <Text className="text-[16px] text-gray-600 m-0">
-                Expected delivery for purchase order {poNumber}
+                Expected delivery for purchase order {poDisplay}
               </Text>
             </Section>
 
@@ -56,11 +65,11 @@ const PoDeliveryReminder = (props: PoDeliveryReminderProps) => {
               </Text>
               <Text className="text-[16px] text-gray-700 leading-[24px] m-0 mb-[16px]">
                 The expected delivery date for purchase order{' '}
-                <strong>{poNumber}</strong>
-                {supplierName ? (
+                <strong>{poDisplay}</strong>
+                {upperSupplierName ? (
                   <>
                     {' '}
-                    from <strong>{supplierName}</strong>
+                    from <strong>{upperSupplierName}</strong>
                   </>
                 ) : null}{' '}
                 is <strong>{expectedDeliveryDate}</strong>.
@@ -68,11 +77,16 @@ const PoDeliveryReminder = (props: PoDeliveryReminderProps) => {
 
               <Section className="bg-gray-50 rounded-[8px] p-[24px] mb-[24px]">
                 <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
-                  <strong>PO Number:</strong> {poNumber}
+                  <strong>PO Number:</strong> {poDisplay}
                 </Text>
-                {supplierName ? (
+                {upperPoDescription ? (
                   <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
-                    <strong>Supplier:</strong> {supplierName}
+                    <strong>Description:</strong> {upperPoDescription}
+                  </Text>
+                ) : null}
+                {upperSupplierName ? (
+                  <Text className="text-[14px] text-gray-700 m-0 mb-[4px]">
+                    <strong>Supplier:</strong> {upperSupplierName}
                   </Text>
                 ) : null}
                 <Text className="text-[14px] text-gray-700 m-0">
@@ -117,7 +131,8 @@ const PoDeliveryReminder = (props: PoDeliveryReminderProps) => {
 PoDeliveryReminder.PreviewProps = {
   recipientName: 'Jane Doe',
   poNumber: 'PO-2026-102',
-  supplierName: 'Steel Supplies Ltd',
+  poDescription: 'FABRICATION AND DELIVERY OF STRUCTURAL BEAMS',
+  supplierName: 'STEEL SUPPLIES LTD',
   expectedDeliveryDate: '28 August 2026',
   stageLabel: 'Due tomorrow',
   poLink: 'https://tendertrack360.co.za/projects/purchase-orders/abc123',

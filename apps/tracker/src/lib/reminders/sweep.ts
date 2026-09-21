@@ -102,6 +102,7 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
       id: tender.id,
       organizationId: tender.organizationId,
       tenderNumber: tender.tenderNumber,
+      description: tender.description,
       status: tender.status,
       submissionDate: tender.submissionDate,
       evaluationDate: tender.evaluationDate,
@@ -139,6 +140,14 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
 
   for (const t of tenders) {
     const tenderLink = `${APP_BASE_URL}/tenders/${t.id}`;
+    const upperTenderNumber = t.tenderNumber.toUpperCase();
+    const upperClientName = t.clientName.toUpperCase();
+    const upperTenderDescription = t.description
+      ? t.description.toUpperCase()
+      : undefined;
+    const tenderDisplay = upperTenderDescription
+      ? `${upperTenderNumber} - ${upperTenderDescription}`
+      : upperTenderNumber;
 
     if (t.submissionDate && t.status !== "submitted") {
       const stage = matchStage(t.submissionDate, now);
@@ -150,11 +159,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
           targetDate: t.submissionDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Submission deadline for tender ${t.tenderNumber}`,
+            subject: `${stageLabel(stage)}: Submission deadline for tender ${tenderDisplay}`,
             react: TenderDeadlineReminder({
               recipientName,
-              tenderNumber: t.tenderNumber,
-              clientName: t.clientName,
+              tenderNumber: upperTenderNumber,
+              tenderDescription: upperTenderDescription,
+              clientName: upperClientName,
               deadlineLabel: "Submission",
               deadlineDate: formatDate(t.submissionDate!),
               stageLabel: stageLabel(stage),
@@ -177,11 +187,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
           targetDate: effectiveEvaluationDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Evaluation deadline for tender ${t.tenderNumber}`,
+            subject: `${stageLabel(stage)}: Evaluation deadline for tender ${tenderDisplay}`,
             react: TenderDeadlineReminder({
               recipientName,
-              tenderNumber: t.tenderNumber,
-              clientName: t.clientName,
+              tenderNumber: upperTenderNumber,
+              tenderDescription: upperTenderDescription,
+              clientName: upperClientName,
               deadlineLabel: "Evaluation",
               deadlineDate: formatDate(effectiveEvaluationDate),
               stageLabel: stageLabel(stage),
@@ -202,11 +213,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
           targetDate: t.briefingDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Briefing for tender ${t.tenderNumber}`,
+            subject: `${stageLabel(stage)}: Briefing for tender ${tenderDisplay}`,
             react: TenderDeadlineReminder({
               recipientName,
-              tenderNumber: t.tenderNumber,
-              clientName: t.clientName,
+              tenderNumber: upperTenderNumber,
+              tenderDescription: upperTenderDescription,
+              clientName: upperClientName,
               deadlineLabel: "Briefing",
               deadlineDate: formatDate(t.briefingDate!),
               stageLabel: stageLabel(stage),
@@ -241,6 +253,15 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
     if (!stage) continue;
 
     const tenderLink = `${APP_BASE_URL}/tenders/${f.tenderId}`;
+    const upperTenderNumber = parentTender.tenderNumber.toUpperCase();
+    const upperClientName = parentTender.clientName.toUpperCase();
+    const upperTenderDescription = parentTender.description
+      ? parentTender.description.toUpperCase()
+      : undefined;
+    const tenderDisplay = upperTenderDescription
+      ? `${upperTenderNumber} - ${upperTenderDescription}`
+      : upperTenderNumber;
+
     candidates.push({
       entityType: "tender_follow_up",
       entityId: f.id,
@@ -248,11 +269,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
       targetDate: f.nextFollowUpDate,
       stage,
       render: (recipientName) => ({
-        subject: `${stageLabel(stage)}: Follow-up for tender ${parentTender.tenderNumber}`,
+        subject: `${stageLabel(stage)}: Follow-up for tender ${tenderDisplay}`,
         react: TenderFollowUpReminder({
           recipientName,
-          tenderNumber: parentTender.tenderNumber,
-          clientName: parentTender.clientName,
+          tenderNumber: upperTenderNumber,
+          tenderDescription: upperTenderDescription,
+          clientName: upperClientName,
           followUpDate: formatDate(f.nextFollowUpDate!),
           stageLabel: stageLabel(stage),
           notes: f.notes ?? undefined,
@@ -273,6 +295,7 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
       id: project.id,
       organizationId: project.organizationId,
       projectNumber: project.projectNumber,
+      description: project.description,
       status: project.status,
       contractEndDate: project.contractEndDate,
       closeOutDate: project.closeOutDate,
@@ -289,7 +312,14 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
 
   for (const p of projects) {
     const projectLink = `${APP_BASE_URL}/projects/${p.id}`;
-    const clientName = p.clientName ?? "—";
+    const upperProjectNumber = p.projectNumber.toUpperCase();
+    const upperClientName = (p.clientName ?? "—").toUpperCase();
+    const upperProjectDescription = p.description
+      ? p.description.toUpperCase()
+      : undefined;
+    const projectDisplay = upperProjectDescription
+      ? `${upperProjectNumber} - ${upperProjectDescription}`
+      : upperProjectNumber;
 
     if (p.contractEndDate) {
       const stage = matchStage(p.contractEndDate, now);
@@ -301,11 +331,12 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
           targetDate: p.contractEndDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Contract end for project ${p.projectNumber}`,
+            subject: `${stageLabel(stage)}: Contract end for project ${projectDisplay}`,
             react: ProjectMilestoneReminder({
               recipientName,
-              projectNumber: p.projectNumber,
-              clientName,
+              projectNumber: upperProjectNumber,
+              projectDescription: upperProjectDescription,
+              clientName: upperClientName,
               milestoneLabel: "Contract End",
               milestoneDate: formatDate(p.contractEndDate!),
               stageLabel: stageLabel(stage),
@@ -326,11 +357,12 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
           targetDate: p.closeOutDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Close-out for project ${p.projectNumber}`,
+            subject: `${stageLabel(stage)}: Close-out for project ${projectDisplay}`,
             react: ProjectMilestoneReminder({
               recipientName,
-              projectNumber: p.projectNumber,
-              clientName,
+              projectNumber: upperProjectNumber,
+              projectDescription: upperProjectDescription,
+              clientName: upperClientName,
               milestoneLabel: "Close-Out",
               milestoneDate: formatDate(p.closeOutDate!),
               stageLabel: stageLabel(stage),
@@ -353,6 +385,7 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
       id: purchaseOrder.id,
       organizationId: purchaseOrder.organizationId,
       poNumber: purchaseOrder.poNumber,
+      description: purchaseOrder.description,
       supplierName: purchaseOrder.supplierName,
       status: purchaseOrder.status,
       expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
@@ -371,6 +404,17 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
     if (!stage) continue;
 
     const poLink = `${APP_BASE_URL}/projects/purchase-orders/${po.id}`;
+    const upperPoNumber = po.poNumber.toUpperCase();
+    const upperSupplierName = po.supplierName
+      ? po.supplierName.toUpperCase()
+      : "";
+    const upperPoDescription = po.description
+      ? po.description.toUpperCase()
+      : undefined;
+    const poDisplay = upperPoDescription
+      ? `${upperPoNumber} - ${upperPoDescription}`
+      : upperPoNumber;
+
     candidates.push({
       entityType: "po_expected_delivery",
       entityId: po.id,
@@ -378,11 +422,12 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
       targetDate: po.expectedDeliveryDate,
       stage,
       render: (recipientName) => ({
-        subject: `${stageLabel(stage)}: Expected delivery for PO ${po.poNumber}`,
+        subject: `${stageLabel(stage)}: Expected delivery for PO ${poDisplay}`,
         react: PoDeliveryReminder({
           recipientName,
-          poNumber: po.poNumber,
-          supplierName: po.supplierName ?? "",
+          poNumber: upperPoNumber,
+          poDescription: upperPoDescription,
+          supplierName: upperSupplierName,
           expectedDeliveryDate: formatDate(po.expectedDeliveryDate!),
           stageLabel: stageLabel(stage),
           poLink,
