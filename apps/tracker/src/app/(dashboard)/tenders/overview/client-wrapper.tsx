@@ -89,7 +89,7 @@ export function TendersOverviewClient({
         scroll: false,
       });
     },
-    [router],
+    [router, basePath],
   );
 
   const handleFiltersChange = useCallback(
@@ -144,7 +144,7 @@ export function TendersOverviewClient({
         setLoading(false);
       }
     },
-    [organizationId, filters],
+    [organizationId, filters, syncUrl],
   );
 
   const handleViewTender = useCallback(

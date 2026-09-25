@@ -22,7 +22,7 @@ import {
   rememberActiveOrganization,
 } from "@/server/organizations";
 import { toast } from "sonner";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader, Check, X, AlertCircle, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -128,8 +128,7 @@ export function CreateOrganizationForm({
   const [slugEditable, setSlugEditable] = useState(false);
   const [slugValidation, setSlugValidation] =
     useState<SlugValidationState>("idle");
-  const [slugCheckTimeout, setSlugCheckTimeout] =
-    useState<NodeJS.Timeout | null>(null);
+  const slugCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
   const form = useForm<z.infer<typeof createOrganizationFormSchema>>({
@@ -144,21 +143,6 @@ export function CreateOrganizationForm({
 
   const watchedName = form.watch("name");
   const debouncedName = useDebounce(watchedName, 500);
-
-  useEffect(() => {
-    if (debouncedName) {
-      form.trigger("name");
-      if (!slugManuallyChanged) {
-        const newSlug = slugify(debouncedName);
-        form.setValue("slug", newSlug, {
-          shouldValidate: true,
-        });
-        if (newSlug) {
-          debouncedSlugCheck(newSlug);
-        }
-      }
-    }
-  }, [debouncedName, form, slugManuallyChanged]);
 
   // Slugify helper
   function slugify(text: string) {
@@ -197,27 +181,40 @@ export function CreateOrganizationForm({
   // Debounce slug checking
   const debouncedSlugCheck = useCallback(
     (slug: string) => {
-      if (slugCheckTimeout) {
-        clearTimeout(slugCheckTimeout);
+      if (slugCheckTimeoutRef.current) {
+        clearTimeout(slugCheckTimeoutRef.current);
       }
 
-      const timeout = setTimeout(() => {
+      slugCheckTimeoutRef.current = setTimeout(() => {
         checkSlugAvailability(slug);
       }, 500);
-
-      setSlugCheckTimeout(timeout);
     },
-    [checkSlugAvailability, slugCheckTimeout],
+    [checkSlugAvailability],
   );
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (slugCheckTimeout) {
-        clearTimeout(slugCheckTimeout);
+      if (slugCheckTimeoutRef.current) {
+        clearTimeout(slugCheckTimeoutRef.current);
       }
     };
-  }, [slugCheckTimeout]);
+  }, []);
+
+  useEffect(() => {
+    if (debouncedName) {
+      form.trigger("name");
+      if (!slugManuallyChanged) {
+        const newSlug = slugify(debouncedName);
+        form.setValue("slug", newSlug, {
+          shouldValidate: true,
+        });
+        if (newSlug) {
+          debouncedSlugCheck(newSlug);
+        }
+      }
+    }
+  }, [debouncedName, form, slugManuallyChanged, debouncedSlugCheck]);
 
   async function onSubmit(
     values: z.infer<typeof createOrganizationFormSchema>,

@@ -56,7 +56,7 @@ export function FeedbackDetailDrawer({ feedback, open, onOpenChange }: Props) {
       setResult(null);
       setReplyMessage("");
     }
-  }, [feedback?.id, feedback?.type]);
+  }, [feedback]);
 
   if (!feedback) return null;
 
