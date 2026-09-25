@@ -16,6 +16,7 @@ import {
   Building2,
   LifeBuoy,
   Truck,
+  FileDown,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const secondaryItems: NavItem[] = [
   { label: "Purchase Orders", href: "/projects/purchase-orders", icon: Truck },
   { label: "Calendar", href: "/calendar", icon: Calendar },
   { label: "Reports", href: "/reports", icon: BarChart3 },
+  { label: "Downloads", href: "/downloads", icon: FileDown },
   { label: "Organizations", href: "/organization", icon: Building2 },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Support", href: "/support", icon: LifeBuoy },

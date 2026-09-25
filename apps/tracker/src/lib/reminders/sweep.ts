@@ -1,4 +1,5 @@
 import { db } from "@pmg/db";
+import { createHash } from "node:crypto";
 import {
   tender,
   tenderExtension,
@@ -61,17 +62,18 @@ function sastDayDiff(fieldDate: Date, now: Date): number {
 }
 
 /** Which stage (if any) a given date currently falls into, relative to now. */
-function matchStage(fieldDate: Date, now: Date): ReminderStageValue | null {
+export function matchStage(
+  fieldDate: Date,
+  now: Date,
+): ReminderStageValue | null {
   const diff = sastDayDiff(fieldDate, now);
-  if (diff < 0) return "overdue";
   for (const stage of REMINDER_STAGES) {
-    if (stage === "overdue") continue;
     if (REMINDER_STAGE_OFFSETS[stage] === diff) return stage;
   }
   return null;
 }
 
-interface Candidate {
+export interface Candidate {
   entityType: ReminderTypeValue;
   entityId: string;
   organizationId: string;
@@ -100,6 +102,7 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
       id: tender.id,
       organizationId: tender.organizationId,
       tenderNumber: tender.tenderNumber,
+      description: tender.description,
       status: tender.status,
       submissionDate: tender.submissionDate,
       evaluationDate: tender.evaluationDate,
@@ -137,6 +140,14 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
 
   for (const t of tenders) {
     const tenderLink = `${APP_BASE_URL}/tenders/${t.id}`;
+    const upperTenderNumber = t.tenderNumber.toUpperCase();
+    const upperClientName = t.clientName.toUpperCase();
+    const upperTenderDescription = t.description
+      ? t.description.toUpperCase()
+      : undefined;
+    const tenderDisplay = upperTenderDescription
+      ? `${upperTenderNumber} - ${upperTenderDescription}`
+      : upperTenderNumber;
 
     if (t.submissionDate && t.status !== "submitted") {
       const stage = matchStage(t.submissionDate, now);
@@ -148,11 +159,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
           targetDate: t.submissionDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Submission deadline for tender ${t.tenderNumber}`,
+            subject: `${stageLabel(stage)}: Submission deadline for tender ${tenderDisplay}`,
             react: TenderDeadlineReminder({
               recipientName,
-              tenderNumber: t.tenderNumber,
-              clientName: t.clientName,
+              tenderNumber: upperTenderNumber,
+              tenderDescription: upperTenderDescription,
+              clientName: upperClientName,
               deadlineLabel: "Submission",
               deadlineDate: formatDate(t.submissionDate!),
               stageLabel: stageLabel(stage),
@@ -175,11 +187,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
           targetDate: effectiveEvaluationDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Evaluation deadline for tender ${t.tenderNumber}`,
+            subject: `${stageLabel(stage)}: Evaluation deadline for tender ${tenderDisplay}`,
             react: TenderDeadlineReminder({
               recipientName,
-              tenderNumber: t.tenderNumber,
-              clientName: t.clientName,
+              tenderNumber: upperTenderNumber,
+              tenderDescription: upperTenderDescription,
+              clientName: upperClientName,
               deadlineLabel: "Evaluation",
               deadlineDate: formatDate(effectiveEvaluationDate),
               stageLabel: stageLabel(stage),
@@ -200,11 +213,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
           targetDate: t.briefingDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Briefing for tender ${t.tenderNumber}`,
+            subject: `${stageLabel(stage)}: Briefing for tender ${tenderDisplay}`,
             react: TenderDeadlineReminder({
               recipientName,
-              tenderNumber: t.tenderNumber,
-              clientName: t.clientName,
+              tenderNumber: upperTenderNumber,
+              tenderDescription: upperTenderDescription,
+              clientName: upperClientName,
               deadlineLabel: "Briefing",
               deadlineDate: formatDate(t.briefingDate!),
               stageLabel: stageLabel(stage),
@@ -239,6 +253,15 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
     if (!stage) continue;
 
     const tenderLink = `${APP_BASE_URL}/tenders/${f.tenderId}`;
+    const upperTenderNumber = parentTender.tenderNumber.toUpperCase();
+    const upperClientName = parentTender.clientName.toUpperCase();
+    const upperTenderDescription = parentTender.description
+      ? parentTender.description.toUpperCase()
+      : undefined;
+    const tenderDisplay = upperTenderDescription
+      ? `${upperTenderNumber} - ${upperTenderDescription}`
+      : upperTenderNumber;
+
     candidates.push({
       entityType: "tender_follow_up",
       entityId: f.id,
@@ -246,11 +269,12 @@ async function collectTenderCandidates(now: Date): Promise<Candidate[]> {
       targetDate: f.nextFollowUpDate,
       stage,
       render: (recipientName) => ({
-        subject: `${stageLabel(stage)}: Follow-up for tender ${parentTender.tenderNumber}`,
+        subject: `${stageLabel(stage)}: Follow-up for tender ${tenderDisplay}`,
         react: TenderFollowUpReminder({
           recipientName,
-          tenderNumber: parentTender.tenderNumber,
-          clientName: parentTender.clientName,
+          tenderNumber: upperTenderNumber,
+          tenderDescription: upperTenderDescription,
+          clientName: upperClientName,
           followUpDate: formatDate(f.nextFollowUpDate!),
           stageLabel: stageLabel(stage),
           notes: f.notes ?? undefined,
@@ -271,6 +295,7 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
       id: project.id,
       organizationId: project.organizationId,
       projectNumber: project.projectNumber,
+      description: project.description,
       status: project.status,
       contractEndDate: project.contractEndDate,
       closeOutDate: project.closeOutDate,
@@ -287,7 +312,14 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
 
   for (const p of projects) {
     const projectLink = `${APP_BASE_URL}/projects/${p.id}`;
-    const clientName = p.clientName ?? "—";
+    const upperProjectNumber = p.projectNumber.toUpperCase();
+    const upperClientName = (p.clientName ?? "—").toUpperCase();
+    const upperProjectDescription = p.description
+      ? p.description.toUpperCase()
+      : undefined;
+    const projectDisplay = upperProjectDescription
+      ? `${upperProjectNumber} - ${upperProjectDescription}`
+      : upperProjectNumber;
 
     if (p.contractEndDate) {
       const stage = matchStage(p.contractEndDate, now);
@@ -299,11 +331,12 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
           targetDate: p.contractEndDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Contract end for project ${p.projectNumber}`,
+            subject: `${stageLabel(stage)}: Contract end for project ${projectDisplay}`,
             react: ProjectMilestoneReminder({
               recipientName,
-              projectNumber: p.projectNumber,
-              clientName,
+              projectNumber: upperProjectNumber,
+              projectDescription: upperProjectDescription,
+              clientName: upperClientName,
               milestoneLabel: "Contract End",
               milestoneDate: formatDate(p.contractEndDate!),
               stageLabel: stageLabel(stage),
@@ -324,11 +357,12 @@ async function collectProjectCandidates(now: Date): Promise<Candidate[]> {
           targetDate: p.closeOutDate,
           stage,
           render: (recipientName) => ({
-            subject: `${stageLabel(stage)}: Close-out for project ${p.projectNumber}`,
+            subject: `${stageLabel(stage)}: Close-out for project ${projectDisplay}`,
             react: ProjectMilestoneReminder({
               recipientName,
-              projectNumber: p.projectNumber,
-              clientName,
+              projectNumber: upperProjectNumber,
+              projectDescription: upperProjectDescription,
+              clientName: upperClientName,
               milestoneLabel: "Close-Out",
               milestoneDate: formatDate(p.closeOutDate!),
               stageLabel: stageLabel(stage),
@@ -351,6 +385,7 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
       id: purchaseOrder.id,
       organizationId: purchaseOrder.organizationId,
       poNumber: purchaseOrder.poNumber,
+      description: purchaseOrder.description,
       supplierName: purchaseOrder.supplierName,
       status: purchaseOrder.status,
       expectedDeliveryDate: purchaseOrder.expectedDeliveryDate,
@@ -369,6 +404,17 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
     if (!stage) continue;
 
     const poLink = `${APP_BASE_URL}/projects/purchase-orders/${po.id}`;
+    const upperPoNumber = po.poNumber.toUpperCase();
+    const upperSupplierName = po.supplierName
+      ? po.supplierName.toUpperCase()
+      : "";
+    const upperPoDescription = po.description
+      ? po.description.toUpperCase()
+      : undefined;
+    const poDisplay = upperPoDescription
+      ? `${upperPoNumber} - ${upperPoDescription}`
+      : upperPoNumber;
+
     candidates.push({
       entityType: "po_expected_delivery",
       entityId: po.id,
@@ -376,11 +422,12 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
       targetDate: po.expectedDeliveryDate,
       stage,
       render: (recipientName) => ({
-        subject: `${stageLabel(stage)}: Expected delivery for PO ${po.poNumber}`,
+        subject: `${stageLabel(stage)}: Expected delivery for PO ${poDisplay}`,
         react: PoDeliveryReminder({
           recipientName,
-          poNumber: po.poNumber,
-          supplierName: po.supplierName ?? "",
+          poNumber: upperPoNumber,
+          poDescription: upperPoDescription,
+          supplierName: upperSupplierName,
           expectedDeliveryDate: formatDate(po.expectedDeliveryDate!),
           stageLabel: stageLabel(stage),
           poLink,
@@ -392,10 +439,59 @@ async function collectPurchaseOrderCandidates(now: Date): Promise<Candidate[]> {
   return candidates;
 }
 
-async function alreadySent(candidate: Candidate): Promise<boolean> {
-  const [existing] = await db
-    .select({ id: reminderLog.id })
-    .from(reminderLog)
+/**
+ * Atomically claim the reminder slot for this candidate BEFORE dispatching
+ * any emails.
+ *
+ * The `reminder_log_dedup_unique` constraint on
+ * (entity_type, entity_id, stage, target_date) is the source of truth: the
+ * first sweep to insert the row wins the right to send, and any concurrent
+ * or later sweep — including one running the same day — gets zero rows back
+ * and skips. This prevents the duplicate-overdue-email flood where a sweep
+ * died after sending but before logging, causing the same reminder to
+ * re-send every day while the stage kept matching.
+ *
+ * Returns true if this call claimed the slot (caller should send), false if
+ * another run already claimed it or sent it previously.
+ *
+ * Exported for tests; not intended for use outside the sweep.
+ */
+export async function claimReminderSlot(
+  candidate: Candidate,
+): Promise<boolean> {
+  const inserted = await db
+    .insert(reminderLog)
+    .values({
+      id: nanoid(),
+      organizationId: candidate.organizationId,
+      entityType: candidate.entityType,
+      entityId: candidate.entityId,
+      stage: candidate.stage,
+      targetDate: candidate.targetDate,
+      recipientCount: 0,
+    })
+    .onConflictDoNothing({
+      target: [
+        reminderLog.entityType,
+        reminderLog.entityId,
+        reminderLog.stage,
+        reminderLog.targetDate,
+      ],
+    })
+    .returning({ id: reminderLog.id });
+
+  return inserted.length > 0;
+}
+
+/**
+ * Best-effort rollback if dispatch fails after claiming, so the next sweep
+ * can retry the send instead of silently dropping the reminder forever.
+ *
+ * Exported for tests; not intended for use outside the sweep.
+ */
+export async function releaseReminderSlot(candidate: Candidate): Promise<void> {
+  await db
+    .delete(reminderLog)
     .where(
       and(
         eq(reminderLog.entityType, candidate.entityType),
@@ -403,9 +499,150 @@ async function alreadySent(candidate: Candidate): Promise<boolean> {
         eq(reminderLog.stage, candidate.stage),
         eq(reminderLog.targetDate, candidate.targetDate),
       ),
-    )
-    .limit(1);
-  return !!existing;
+    );
+}
+
+export type ReminderCandidateOutcome =
+  | { status: "skipped" }
+  | { status: "sent" }
+  | { status: "partial"; error: string }
+  | { status: "failed"; error: string };
+
+function redactEmails(text: string): string {
+  return text.replace(
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
+    "[REDACTED]",
+  );
+}
+
+function errorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return redactEmails(message);
+}
+
+function reminderIdempotencyKey(
+  candidate: Candidate,
+  recipientUserId: string,
+): string {
+  const identity = [
+    candidate.organizationId,
+    candidate.entityType,
+    candidate.entityId,
+    candidate.stage,
+    candidate.targetDate.toISOString(),
+    recipientUserId,
+  ].join(":");
+  const digest = createHash("sha256").update(identity).digest("hex");
+  return `reminder/${digest}`;
+}
+
+/**
+ * Process one reminder candidate with at-most-once external side effects.
+ * Once an email or notification has been attempted, an ambiguous failure
+ * keeps the claim so a retry cannot duplicate a delivery that may have
+ * succeeded outside this process.
+ *
+ * Exported for focused regression tests; the sweep remains the production
+ * entry point.
+ */
+export async function processReminderCandidate(
+  candidate: Candidate,
+): Promise<ReminderCandidateOutcome> {
+  let claimed = false;
+  let deliveryAttempted = false;
+
+  try {
+    claimed = await claimReminderSlot(candidate);
+    if (!claimed) return { status: "skipped" };
+
+    const recipients = await recipientsForOrg(candidate.organizationId);
+    const preferenceKey = REMINDER_PREFERENCE_GATE[candidate.entityType];
+
+    let recipientCount = 0;
+    let failure: unknown = null;
+    for (const recipient of recipients) {
+      try {
+        const prefs = await getReminderPreferences(recipient.userId);
+        if (!prefs[preferenceKey]) continue;
+
+        const { subject, react } = candidate.render(recipient.name);
+
+        if (prefs.emailNotifications) {
+          deliveryAttempted = true;
+          await sendReminderEmail({
+            to: recipient.email,
+            subject,
+            react,
+            idempotencyKey: reminderIdempotencyKey(candidate, recipient.userId),
+          });
+        }
+
+        deliveryAttempted = true;
+        await createNotification({
+          userId: recipient.userId,
+          organizationId: candidate.organizationId,
+          title: subject,
+          message: subject,
+          type: candidate.stage === "overdue" ? "warning" : "info",
+        });
+
+        recipientCount++;
+      } catch (error) {
+        // Avoid logging recipient email addresses. The internal user ID is
+        // sufficient to correlate the failure without exposing PII.
+        console.error(
+          `Reminder dispatch failed for user ${recipient.userId} (${candidate.entityType}:${candidate.entityId}:${candidate.stage})`,
+          error,
+        );
+        failure = error;
+      }
+    }
+
+    if (recipientCount > 0) {
+      await db
+        .update(reminderLog)
+        .set({ recipientCount })
+        .where(
+          and(
+            eq(reminderLog.entityType, candidate.entityType),
+            eq(reminderLog.entityId, candidate.entityId),
+            eq(reminderLog.stage, candidate.stage),
+            eq(reminderLog.targetDate, candidate.targetDate),
+          ),
+        );
+
+      return failure
+        ? { status: "partial", error: errorMessage(failure) }
+        : { status: "sent" };
+    }
+
+    if (failure) {
+      // A provider timeout can occur after it accepted the message. Once a
+      // delivery was attempted, retain the claim rather than risk a resend.
+      if (!deliveryAttempted) await releaseReminderSlot(candidate);
+      return { status: "failed", error: errorMessage(failure) };
+    }
+
+    // Nobody was eligible for either delivery channel, so no external side
+    // effect occurred and the unused claim can be released safely.
+    await releaseReminderSlot(candidate);
+    return { status: "skipped" };
+  } catch (error) {
+    // Release only when failure is known to have happened before an external
+    // side effect. After any attempt, the outcome may be ambiguous.
+    if (claimed && !deliveryAttempted) {
+      try {
+        await releaseReminderSlot(candidate);
+      } catch (releaseError) {
+        console.error(
+          `Failed to release reminder slot for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}`,
+          releaseError,
+        );
+      }
+    }
+
+    return { status: "failed", error: errorMessage(error) };
+  }
 }
 
 export async function runReminderSweep(): Promise<{
@@ -424,52 +661,23 @@ export async function runReminderSweep(): Promise<{
   ];
 
   for (const candidate of candidates) {
-    try {
-      if (await alreadySent(candidate)) continue;
-
-      const recipients = await recipientsForOrg(candidate.organizationId);
-      const preferenceKey = REMINDER_PREFERENCE_GATE[candidate.entityType];
-
-      let recipientCount = 0;
-      for (const recipient of recipients) {
-        const prefs = await getReminderPreferences(recipient.userId);
-        if (!prefs[preferenceKey]) continue;
-
-        const { subject, react } = candidate.render(recipient.name);
-
-        if (prefs.emailNotifications) {
-          await sendReminderEmail({ to: recipient.email, subject, react });
-        }
-
-        await createNotification({
-          userId: recipient.userId,
-          organizationId: candidate.organizationId,
-          title: subject,
-          message: subject,
-          type: candidate.stage === "overdue" ? "warning" : "info",
-        });
-
-        recipientCount++;
-      }
-
-      await db.insert(reminderLog).values({
-        id: nanoid(),
-        organizationId: candidate.organizationId,
-        entityType: candidate.entityType,
-        entityId: candidate.entityId,
-        stage: candidate.stage,
-        targetDate: candidate.targetDate,
-        recipientCount,
-      });
-
+    const outcome = await processReminderCandidate(candidate);
+    if (outcome.status === "sent") {
       sent++;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(
-        `Reminder sweep failed for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}`,
-        err,
+    } else if (outcome.status === "partial") {
+      sent++;
+      const safeError = redactEmails(outcome.error);
+      errors.push(
+        `${candidate.entityType}:${candidate.entityId}: partial — ${safeError}`,
       );
-      errors.push(`${candidate.entityType}:${candidate.entityId}: ${message}`);
+    } else if (outcome.status === "failed") {
+      const safeError = redactEmails(outcome.error);
+      console.error(
+        `Reminder sweep failed for ${candidate.entityType}:${candidate.entityId}:${candidate.stage}: ${safeError}`,
+      );
+      errors.push(
+        `${candidate.entityType}:${candidate.entityId}: ${safeError}`,
+      );
     }
   }
 

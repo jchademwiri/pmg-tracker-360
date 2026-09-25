@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@t3-oss/env-core", "@t3-oss/env-nextjs", "better-auth"],
+  transpilePackages: ["@pmg/pdf", "@t3-oss/env-core", "@t3-oss/env-nextjs", "better-auth"],
+  serverExternalPackages: ["takumi-pdf"],
   images: {
     remotePatterns: [],
   },

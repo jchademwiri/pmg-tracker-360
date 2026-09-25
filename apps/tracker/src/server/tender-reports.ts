@@ -19,12 +19,14 @@ export type TenderWinLossReportData = {
   awarded: Array<{
     tenderNumber: string;
     clientName: string | null;
+    description: string | null;
     submissionDate: Date | null;
     awardValue: string | null;
   }>;
   lost: Array<{
     tenderNumber: string;
     clientName: string | null;
+    description: string | null;
     submissionDate: Date | null;
     value: string | null;
     lossReason: string | null;
@@ -47,6 +49,7 @@ export async function getTenderWinLossReport(organizationId: string) {
       .select({
         tenderNumber: tender.tenderNumber,
         clientName: client.name,
+        description: tender.description,
         submissionDate: tender.submissionDate,
         value: tender.value,
         awardValue: tender.awardValue,
@@ -69,6 +72,7 @@ export async function getTenderWinLossReport(organizationId: string) {
       .map((row) => ({
         tenderNumber: row.tenderNumber,
         clientName: row.clientName,
+        description: row.description,
         submissionDate: row.submissionDate,
         awardValue: row.awardValue,
       }));
@@ -78,6 +82,7 @@ export async function getTenderWinLossReport(organizationId: string) {
       .map((row) => ({
         tenderNumber: row.tenderNumber,
         clientName: row.clientName,
+        description: row.description,
         submissionDate: row.submissionDate,
         value: row.value,
         lossReason: row.lossReason,
