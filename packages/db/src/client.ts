@@ -12,8 +12,10 @@ const isLocal =
   process.env.DATABASE_URL.includes("sslmode=disable");
 
 export const client = postgres(process.env.DATABASE_URL, {
-  max: 20,
-  idle_timeout: 20,
+  // In Vercel serverless environments, each invocation is single-threaded;
+  // keep max connections low (1) and idle timeout short (3s) to prevent connection pool exhaustion and reduce active CPU.
+  max: process.env.VERCEL ? 1 : 20,
+  idle_timeout: process.env.VERCEL ? 3 : 20,
   connect_timeout: 10,
   ssl: isLocal ? false : "require",
   // Connection retry settings
