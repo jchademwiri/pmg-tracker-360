@@ -157,22 +157,34 @@ export function POList({
     [searchParams, router, pathname],
   );
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    applyFilters({ search: query || null });
-  };
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      applyFilters({ search: query || null });
+    },
+    [applyFilters],
+  );
 
-  const handleStatusFilter = (status: string) => {
-    applyFilters({ status: status === "all" ? null : status });
-  };
+  const handleStatusFilter = useCallback(
+    (status: string) => {
+      applyFilters({ status: status === "all" ? null : status });
+    },
+    [applyFilters],
+  );
 
-  const handleSupplierFilter = (supplier: string) => {
-    applyFilters({ supplier: supplier === "all" ? null : supplier });
-  };
+  const handleSupplierFilter = useCallback(
+    (supplier: string) => {
+      applyFilters({ supplier: supplier === "all" ? null : supplier });
+    },
+    [applyFilters],
+  );
 
-  const handleProjectFilter = (projId: string) => {
-    applyFilters({ projectId: projId === "all" ? null : projId });
-  };
+  const handleProjectFilter = useCallback(
+    (projId: string) => {
+      applyFilters({ projectId: projId === "all" ? null : projId });
+    },
+    [applyFilters],
+  );
 
   const handlePageChange = (page: number) => {
     applyFilters({ page: page.toString() });
@@ -252,6 +264,10 @@ export function POList({
     searchQuery,
     projects,
     applyFilters,
+    handleStatusFilter,
+    handleSupplierFilter,
+    handleProjectFilter,
+    handleSearch,
   ]);
 
   const facetedFilters = useMemo(() => {
@@ -290,7 +306,15 @@ export function POList({
       });
     }
     return filtersList;
-  }, [projectId, projects, projectFilter, suppliers, supplierFilter]);
+  }, [
+    projectId,
+    projects,
+    projectFilter,
+    suppliers,
+    supplierFilter,
+    handleProjectFilter,
+    handleSupplierFilter,
+  ]);
 
   const hasActiveFilters = activeFilterChips.length > 0;
 

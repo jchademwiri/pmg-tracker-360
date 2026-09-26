@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   LifeBuoy,
@@ -106,38 +106,40 @@ export default function SupportClient() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadTickets();
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      if (user.name && !createName) setCreateName(user.name);
-      if (user.email && !createEmail) setCreateEmail(user.email);
-    }
-  }, [user]);
-
-  // Sync ticket when url param changes
-  useEffect(() => {
-    if (urlTicketId && tickets.length > 0) {
-      const match = tickets.find(
-        (t) =>
-          t.id.toLowerCase() === urlTicketId.toLowerCase() ||
-          (t.ticketCode &&
-            t.ticketCode.toLowerCase() === urlTicketId.toLowerCase()) ||
-          (t.ticketNumber && String(t.ticketNumber) === urlTicketId),
-      );
-      if (match && selectedTicketId !== match.id) {
-        openThread(match.id, false);
+  const openThread = useCallback(
+    async (ticketId: string, updateUrl: boolean = true) => {
+      setSelectedTicketId(ticketId);
+      if (updateUrl && typeof window !== "undefined") {
+        window.history.replaceState(null, "", `/support?ticket=${ticketId}`);
       }
-    } else if (!urlTicketId && selectedTicketId) {
-      setSelectedTicketId(null);
-      setActiveTicket(null);
-      setMessages([]);
-    }
-  }, [urlTicketId, tickets]);
+      setThreadLoading(true);
+      const res = await getUserTicketThread(ticketId);
+      setThreadLoading(false);
+      if (res.success && res.ticket) {
+        setActiveTicket(res.ticket as unknown as UserTicket);
+        setMessages((res.messages || []) as ChatMessage[]);
+        // Clear unread indicator locally
+        setTickets((prev) =>
+          prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t)),
+        );
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("support-count-updated"));
+        }
+        scrollToBottom();
+      } else {
+        toast.error(res.error || "Failed to load conversation thread.");
+      }
+    },
+    [scrollToBottom],
+  );
 
-  const loadTickets = async () => {
+  const loadTickets = useCallback(async () => {
     setLoading(true);
     const res = await getUserSupportTickets();
     setLoading(false);
@@ -161,37 +163,38 @@ export default function SupportClient() {
         }
       }
     }
-  };
+  }, [searchParams, openThread]);
 
-  const openThread = async (ticketId: string, updateUrl: boolean = true) => {
-    setSelectedTicketId(ticketId);
-    if (updateUrl && typeof window !== "undefined") {
-      window.history.replaceState(null, "", `/support?ticket=${ticketId}`);
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  useEffect(() => {
+    if (user) {
+      if (user.name) setCreateName((prev) => prev || user.name || "");
+      if (user.email) setCreateEmail((prev) => prev || user.email || "");
     }
-    setThreadLoading(true);
-    const res = await getUserTicketThread(ticketId);
-    setThreadLoading(false);
-    if (res.success && res.ticket) {
-      setActiveTicket(res.ticket as unknown as UserTicket);
-      setMessages((res.messages || []) as ChatMessage[]);
-      // Clear unread indicator locally
-      setTickets((prev) =>
-        prev.map((t) => (t.id === ticketId ? { ...t, unreadCount: 0 } : t)),
+  }, [user]);
+
+  // Sync ticket when url param changes
+  useEffect(() => {
+    if (urlTicketId && tickets.length > 0) {
+      const match = tickets.find(
+        (t) =>
+          t.id.toLowerCase() === urlTicketId.toLowerCase() ||
+          (t.ticketCode &&
+            t.ticketCode.toLowerCase() === urlTicketId.toLowerCase()) ||
+          (t.ticketNumber && String(t.ticketNumber) === urlTicketId),
       );
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("support-count-updated"));
+      if (match && selectedTicketId !== match.id) {
+        openThread(match.id, false);
       }
-      scrollToBottom();
-    } else {
-      toast.error(res.error || "Failed to load conversation thread.");
+    } else if (!urlTicketId && selectedTicketId) {
+      setSelectedTicketId(null);
+      setActiveTicket(null);
+      setMessages([]);
     }
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
+  }, [urlTicketId, tickets, selectedTicketId, openThread]);
 
   const handleSendReply = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

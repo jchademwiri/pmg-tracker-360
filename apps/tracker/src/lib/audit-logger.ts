@@ -311,10 +311,24 @@ class AuditLogger {
         .limit(filters.limit || 10)
         .offset(filters.offset || 0);
 
-      return results.map((entry) => ({
-        ...entry,
-        details: entry.details ? JSON.parse(String(entry.details)) : null,
-      }));
+      return results.map((entry) => {
+        let details: unknown = null;
+        if (entry.details) {
+          if (typeof entry.details === "object") {
+            details = entry.details;
+          } else {
+            try {
+              details = JSON.parse(String(entry.details));
+            } catch {
+              details = entry.details;
+            }
+          }
+        }
+        return {
+          ...entry,
+          details,
+        };
+      });
     } catch (error) {
       console.error("Failed to retrieve audit log:", error);
       return [];

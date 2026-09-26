@@ -18,7 +18,7 @@ function resolveWasmBinaryPath(): string {
   const candidatePaths: string[] = [
     // 1. Current working directory node_modules (e.g. apps/tracker/node_modules/takumi-pdf/...)
     path.join(
-      process.cwd(),
+      /*turbopackIgnore: true*/ process.cwd(),
       "node_modules",
       "takumi-pdf",
       "pkg",
@@ -26,7 +26,7 @@ function resolveWasmBinaryPath(): string {
     ),
     // 2. Monorepo root node_modules when running from an app folder
     path.join(
-      process.cwd(),
+      /*turbopackIgnore: true*/ process.cwd(),
       "..",
       "..",
       "node_modules",
@@ -36,7 +36,7 @@ function resolveWasmBinaryPath(): string {
     ),
     // 3. One level up node_modules
     path.join(
-      process.cwd(),
+      /*turbopackIgnore: true*/ process.cwd(),
       "..",
       "node_modules",
       "takumi-pdf",
@@ -55,7 +55,7 @@ function resolveWasmBinaryPath(): string {
       .replace(/\)$/, "");
     candidatePaths.push(
       path.join(
-        path.dirname(cleanEntry),
+        /*turbopackIgnore: true*/ path.dirname(cleanEntry),
         "..",
         "pkg",
         "takumi_pdf_wasm_bg.wasm",
@@ -63,7 +63,7 @@ function resolveWasmBinaryPath(): string {
     );
     candidatePaths.push(
       path.join(
-        path.dirname(noInitEntry),
+        /*turbopackIgnore: true*/ path.dirname(noInitEntry),
         "..",
         "pkg",
         "takumi_pdf_wasm_bg.wasm",
