@@ -2,14 +2,16 @@
 
 ## 📊 Summary of Findings
 - **Branch Audited**: `fix/bug-hunter-remediations` against `dev`
-- **Total Files Inspected**: 10
-- **Issues Found**: 0 Critical | 4 Medium | 6 Advisory
+- **Total Files Inspected**: 12
+- **Issues Found**: 0 Critical | 6 Medium | 6 Advisory
 - **Status**: 🟢 Verified & Remediated
 
 ## 🔍 Detailed Triage Table
 
 | Severity | File / Symbol | Issue Description | Root Cause | Remediation Status |
 |---|---|---|---|---|
+| 🟡 Medium | `apps/tracker/.../tender-form.tsx` | Synchronous `localStorage.setItem` on every keystroke | `form.watch()` re-triggered effect continuously without debounce, risking UI thread stalls & quota exceptions | Fixed — added 500ms debounce timer and storage error boundary |
+| 🟡 Medium | `apps/tracker/.../audit-logger.ts` | Potential crash when retrieving audit logs | `entry.details ? JSON.parse(String(entry.details)) : null` in map would throw on non-JSON strings, aborting log fetch | Fixed — wrapped in safe parser with fallback to raw value |
 | 🟡 Medium | `apps/tracker/.../create-organization-form.tsx` | Stale closure & unnecessary re-renders in slug check | Timeout stored in `useState` causing `debouncedSlugCheck` to mutate every render | Fixed — converted to `useRef` and added `debouncedSlugCheck` to `useEffect` dependencies |
 | 🟡 Medium | `apps/tracker/.../SupportClient.tsx` | Missing `loadTickets`, `openThread`, `createEmail`, `createName` dependencies in `useEffect` | Inline function definitions causing recreation without memoization and stale state reads | Fixed — memoized with `useCallback` and applied functional state updaters |
 | 🟡 Medium | `apps/tracker/.../project-list.tsx` | Unstable filter and client dependencies triggering re-render cascades | `initialClients` computed on every render; filter callbacks not memoized with `useCallback` | Fixed — wrapped `initialClients` in `useMemo` and filter handlers in `useCallback` |
@@ -29,4 +31,4 @@
 - [x] Production Build Verification (`bun run build`): 🟢 Passed (docs, admin, tracker)
 
 ## 🚀 Next Steps
-Branch `fix/bug-hunter-remediations` is hardened, verified, and ready to be committed and shipped via `/done`.
+Commit these additional defensive patches to `fix/bug-hunter-remediations` and push to update PR #103.

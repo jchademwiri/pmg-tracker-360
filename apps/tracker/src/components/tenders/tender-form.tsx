@@ -260,18 +260,26 @@ export function TenderForm({ organizationId, tender, mode }: TenderFormProps) {
     }
   }, [mode, organizationId]);
 
-  // Draft autosaving logic
+  // Draft autosaving logic (debounced)
   const formValues = form.watch();
   useEffect(() => {
     if (mode === "create") {
-      const draftData = {
-        values: formValues,
-        validityType,
-      };
-      localStorage.setItem(
-        `tender_draft_${organizationId}`,
-        JSON.stringify(draftData),
-      );
+      const timer = setTimeout(() => {
+        const draftData = {
+          values: formValues,
+          validityType,
+        };
+        try {
+          localStorage.setItem(
+            `tender_draft_${organizationId}`,
+            JSON.stringify(draftData),
+          );
+        } catch {
+          // Ignore storage quota / access errors
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
   }, [formValues, validityType, mode, organizationId]);
 
