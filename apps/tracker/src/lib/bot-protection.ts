@@ -253,21 +253,6 @@ export async function verifyBotProtection({
  */
 const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
 
-// Periodic garbage collection to prevent memory leaks
-if (typeof setInterval !== "undefined") {
-  setInterval(
-    () => {
-      const now = Date.now();
-      for (const [key, record] of rateLimitMap.entries()) {
-        if (record.expiresAt < now) {
-          rateLimitMap.delete(key);
-        }
-      }
-    },
-    5 * 60 * 1000,
-  ).unref?.();
-}
-
 /**
  * Checks if an IP or identifier has exceeded the allowed number of requests in a given window.
  */
@@ -277,6 +262,16 @@ export function checkRateLimit(
   windowMs: number = 10 * 60 * 1000,
 ): { allowed: boolean; retryAfterSeconds?: number } {
   const now = Date.now();
+
+  // Lazy cleanup to avoid persistent background timers in serverless environments
+  if (rateLimitMap.size > 100) {
+    for (const [key, record] of rateLimitMap.entries()) {
+      if (record.expiresAt < now) {
+        rateLimitMap.delete(key);
+      }
+    }
+  }
+
   const existing = rateLimitMap.get(identifier);
 
   if (!existing || existing.expiresAt < now) {

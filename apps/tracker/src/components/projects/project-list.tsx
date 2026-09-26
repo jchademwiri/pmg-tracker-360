@@ -153,7 +153,10 @@ export function ProjectList({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const initialClients = initialClientsProp || clientsProp || [];
+  const initialClients = useMemo(
+    () => initialClientsProp || clientsProp || [],
+    [initialClientsProp, clientsProp],
+  );
 
   const [projects, setProjects] =
     useState<ProjectWithRelations[]>(initialProjects);
@@ -207,23 +210,32 @@ export function ProjectList({
     }
   }, [organizationId, fetchProjects]);
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
-    fetchProjects(value, 1, statusFilter, clientFilter);
-  };
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      setCurrentPage(1);
+      fetchProjects(value, 1, statusFilter, clientFilter);
+    },
+    [fetchProjects, statusFilter, clientFilter],
+  );
 
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
-    setCurrentPage(1);
-    fetchProjects(searchQuery, 1, status, clientFilter);
-  };
+  const handleStatusFilter = useCallback(
+    (status: string) => {
+      setStatusFilter(status);
+      setCurrentPage(1);
+      fetchProjects(searchQuery, 1, status, clientFilter);
+    },
+    [fetchProjects, searchQuery, clientFilter],
+  );
 
-  const handleClientFilter = (clientId: string) => {
-    setClientFilter(clientId);
-    setCurrentPage(1);
-    fetchProjects(searchQuery, 1, statusFilter, clientId);
-  };
+  const handleClientFilter = useCallback(
+    (clientId: string) => {
+      setClientFilter(clientId);
+      setCurrentPage(1);
+      fetchProjects(searchQuery, 1, statusFilter, clientId);
+    },
+    [fetchProjects, searchQuery, statusFilter],
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -284,7 +296,15 @@ export function ProjectList({
       });
     }
     return chips;
-  }, [statusFilter, clientFilter, searchQuery, initialClients, fetchProjects]);
+  }, [
+    statusFilter,
+    clientFilter,
+    searchQuery,
+    initialClients,
+    fetchProjects,
+    handleStatusFilter,
+    handleClientFilter,
+  ]);
 
   const clientOptions = useMemo(() => {
     return [

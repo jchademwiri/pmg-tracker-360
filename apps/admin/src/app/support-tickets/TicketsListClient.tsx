@@ -161,7 +161,7 @@ export default function TicketsListClient({ tickets: initialTickets }: Props) {
       setActiveTicket(null);
       setMessages([]);
     }
-  }, [urlTicketId, initialTickets]);
+  }, [urlTicketId, initialTickets, selectedTicketId]);
 
   const showNotification = useCallback(
     (type: "success" | "error", message: string) => {

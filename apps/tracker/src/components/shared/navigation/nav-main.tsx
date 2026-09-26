@@ -108,7 +108,9 @@ export function NavMain({
       let changed = false;
       items.forEach((item) => {
         if (item.items && item.items.length > 0) {
-          const shouldOpen = item.items.some((sub) => isPathMatching(sub.url));
+          const shouldOpen = item.items.some((sub) =>
+            isPathInSection(pathname, sub.url),
+          );
           next[item.title] = shouldOpen;
           if (shouldOpen !== prev[item.title]) changed = true;
         }

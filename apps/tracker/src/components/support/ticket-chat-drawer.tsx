@@ -110,9 +110,9 @@ export function TicketChatModal({
 
   // Sync user details to form
   useEffect(() => {
-    if (user) {
-      if (user.name && !createName) setCreateName(user.name);
-      if (user.email && !createEmail) setCreateEmail(user.email);
+    if (user && open) {
+      if (user.name) setCreateName((prev) => prev || user.name || "");
+      if (user.email) setCreateEmail((prev) => prev || user.email || "");
     }
   }, [user, open]);
 
