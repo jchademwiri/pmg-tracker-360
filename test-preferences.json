@@ -1,0 +1,9 @@
+{
+  "tool": "jest",
+  "gate": null,
+  "additionalTools": ["vitest", "@testing-library/react"],
+  "e2eTool": "playwright",
+  "testDir": "__tests__",
+  "filePattern": "*.test.{ts,tsx}",
+  "packageManager": "bun"
+}

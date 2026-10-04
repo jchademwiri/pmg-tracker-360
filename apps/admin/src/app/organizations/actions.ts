@@ -5,8 +5,9 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@pmg/db";
 import { organization, member, user, invitation } from "@pmg/db/schema";
-import { eq, and, inArray, ne } from "drizzle-orm";
+import { eq, and, inArray, ne, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { resend, SENDER, REPLY_TO } from "@/lib/email-config";
 
 /* ─── Return Types ─────────────────────────────────────────────────────── */
 
@@ -612,3 +613,212 @@ export async function bulkPurgeOrgs(orgIds: string[]) {
     return { success: false, error: e.message || "Failed bulk org purge." };
   }
 }
+
+/* ─── Invitation Management Server Actions ─────────────────────────────── */
+
+/**
+ * Resends an organization invitation by updating its status to 'pending',
+ * extending expiration by 7 days, and sending the invite email.
+ */
+export async function resendOrgInvitation(invitationId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const [inv] = await db
+      .select({
+        id: invitation.id,
+        email: invitation.email,
+        organizationId: invitation.organizationId,
+        organizationName: organization.name,
+      })
+      .from(invitation)
+      .innerJoin(organization, eq(invitation.organizationId, organization.id))
+      .where(eq(invitation.id, invitationId));
+
+    if (!inv) {
+      return { success: false, error: "Invitation not found." };
+    }
+
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await db
+      .update(invitation)
+      .set({
+        status: "pending",
+        expiresAt: newExpiry,
+      })
+      .where(eq(invitation.id, invitationId));
+
+    const appBase =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_URL ||
+      "https://tendertrack360.co.za";
+    const inviteLink = `${appBase}/invite/accept/${invitationId}`;
+
+    try {
+      await resend.emails.send({
+        from: SENDER,
+        to: inv.email,
+        subject: `Invitation to join ${inv.organizationName || "workspace"} on Tender Track 360`,
+        replyTo: REPLY_TO,
+        html: `
+          <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #111;">You're Invited!</h2>
+            <p>You have been invited to join <strong>${inv.organizationName || "workspace"}</strong> on Tender Track 360.</p>
+            <div style="margin: 28px 0;">
+              <a href="${inviteLink}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Accept Invitation</a>
+            </div>
+            <p style="color: #666; font-size: 13px;">Or copy and paste this link into your browser:<br/><a href="${inviteLink}" style="color: #4f46e5;">${inviteLink}</a></p>
+            <p style="color: #888; font-size: 12px; margin-top: 24px;">This invitation link will expire in 7 days.</p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("Email send failed during resendOrgInvitation:", emailErr);
+    }
+
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: `Invitation resent to ${inv.email}.`,
+    };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || "Failed to resend invitation." };
+  }
+}
+
+/**
+ * Extends the expiration date of an invitation (defaults to +7 days).
+ */
+export async function extendOrgInvitation(invitationId: string, days = 7) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const [inv] = await db
+      .select({
+        id: invitation.id,
+        email: invitation.email,
+        expiresAt: invitation.expiresAt,
+      })
+      .from(invitation)
+      .where(eq(invitation.id, invitationId));
+
+    if (!inv) {
+      return { success: false, error: "Invitation not found." };
+    }
+
+    const currentExpiry = new Date(inv.expiresAt);
+    const baseTime = currentExpiry.getTime() > Date.now() ? currentExpiry.getTime() : Date.now();
+    const newExpiry = new Date(baseTime + days * 24 * 60 * 60 * 1000);
+
+    await db
+      .update(invitation)
+      .set({
+        status: "pending",
+        expiresAt: newExpiry,
+      })
+      .where(eq(invitation.id, invitationId));
+
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: `Invitation for ${inv.email} extended by ${days} days.`,
+    };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || "Failed to extend invitation." };
+  }
+}
+
+/**
+ * Revokes / cancels an individual organization invitation.
+ */
+export async function revokeOrgInvitation(invitationId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await db
+      .update(invitation)
+      .set({ status: "cancelled" })
+      .where(eq(invitation.id, invitationId));
+
+    revalidatePath("/organizations");
+    return { success: true, message: "Invitation cancelled." };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || "Failed to cancel invitation." };
+  }
+}
+
+/**
+ * Bulk revokes multiple organization invitations.
+ */
+export async function bulkRevokeOrgInvitations(invitationIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
+  }
+  if (!invitationIds || invitationIds.length === 0) {
+    return { success: false, error: "No invitations selected." };
+  }
+
+  try {
+    await db
+      .update(invitation)
+      .set({ status: "cancelled" })
+      .where(inArray(invitation.id, invitationIds));
+
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: `Cancelled ${invitationIds.length} invitation(s).`,
+    };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || "Failed bulk invitation cancellation." };
+  }
+}
+
+/**
+ * Bulk purges / cancels all invitations that have passed their expiration date
+ * and remain in 'pending' status.
+ */
+export async function bulkPurgeExpiredInvitations() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || (session.user as any).role !== "admin") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const now = new Date();
+    const result = await db
+      .update(invitation)
+      .set({ status: "cancelled" })
+      .where(
+        and(
+          eq(invitation.status, "pending"),
+          lte(invitation.expiresAt, now),
+        ),
+      );
+
+    revalidatePath("/organizations");
+    return {
+      success: true,
+      message: "Expired pending invitations have been cancelled.",
+    };
+  } catch (err) {
+    const e = err as Error;
+    return { success: false, error: e.message || "Failed to clean up expired invitations." };
+  }
+}
+

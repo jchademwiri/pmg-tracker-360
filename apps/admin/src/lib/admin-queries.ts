@@ -20,7 +20,7 @@ import {
   feedback,
   waitlist,
 } from "@pmg/db/schema";
-import { eq, and, lt, gt, isNull, sql, count, desc, asc } from "drizzle-orm";
+import { eq, and, lt, lte, gt, isNull, sql, count, desc, asc } from "drizzle-orm";
 import { PLATFORM_ORG_ID } from "./constants";
 
 /* =============================================================================
@@ -53,9 +53,26 @@ export type AlertCounts = {
   suspiciousSessions: number;
   unverifiedRecentUsers: number;
   expiringInvitations: number;
+  expiredInvitations: number;
   expiringTransfers: number;
   pendingPurgeOrgs: number;
   openTickets: number;
+};
+
+export type AdminInvitationItem = {
+  id: string;
+  email: string;
+  role: string | null;
+  status: string;
+  expiresAt: Date;
+  isExpired: boolean;
+  isExpiringSoon: boolean;
+  organizationId: string;
+  organizationName: string;
+  organizationSlug: string | null;
+  inviterId: string;
+  inviterName: string | null;
+  inviterEmail: string | null;
 };
 
 export type ActivityEntry = {
@@ -334,6 +351,7 @@ export async function getAlertCounts(): Promise<AlertCounts> {
     suspiciousResult,
     unverifiedResult,
     expiringInvitationsResult,
+    expiredInvitationsResult,
     expiringTransfersResult,
     pendingPurgeResult,
     openTicketsResult,
@@ -355,21 +373,33 @@ export async function getAlertCounts(): Promise<AlertCounts> {
       .where(
         and(eq(user.emailVerified, false), gt(user.createdAt, sevenDaysAgo)),
       ),
-    // expiringInvitations: status='pending' AND expiresAt < NOW()+48h
+    // expiringInvitations: status='pending' AND expiresAt > NOW() AND expiresAt <= NOW()+48h
     db
       .select({ value: count() })
       .from(invitation)
       .where(
-        and(eq(invitation.status, "pending"), lt(invitation.expiresAt, in48h)),
+        and(
+          eq(invitation.status, "pending"),
+          gt(invitation.expiresAt, now),
+          lte(invitation.expiresAt, in48h),
+        ),
       ),
-    // expiringTransfers: status='pending' AND expiresAt < NOW()+24h
+    // expiredInvitations: status='pending' AND expiresAt <= NOW()
+    db
+      .select({ value: count() })
+      .from(invitation)
+      .where(
+        and(eq(invitation.status, "pending"), lte(invitation.expiresAt, now)),
+      ),
+    // expiringTransfers: status='pending' AND expiresAt > NOW() AND expiresAt <= NOW()+24h
     db
       .select({ value: count() })
       .from(ownershipTransfer)
       .where(
         and(
           eq(ownershipTransfer.status, "pending"),
-          lt(ownershipTransfer.expiresAt, in24h),
+          gt(ownershipTransfer.expiresAt, now),
+          lte(ownershipTransfer.expiresAt, in24h),
         ),
       ),
     // pendingPurgeOrgs: permanentDeletionScheduledAt < NOW()+72h (and not null)
@@ -393,6 +423,7 @@ export async function getAlertCounts(): Promise<AlertCounts> {
     suspiciousSessions: Number(suspiciousResult[0]?.value ?? 0),
     unverifiedRecentUsers: Number(unverifiedResult[0]?.value ?? 0),
     expiringInvitations: Number(expiringInvitationsResult[0]?.value ?? 0),
+    expiredInvitations: Number(expiredInvitationsResult[0]?.value ?? 0),
     expiringTransfers: Number(expiringTransfersResult[0]?.value ?? 0),
     pendingPurgeOrgs: Number(pendingPurgeResult[0]?.value ?? 0),
     openTickets: Number(openTicketsResult[0]?.value ?? 0),
@@ -797,4 +828,56 @@ export async function getFeedback(
     userId: row.userId,
     userName: row.userName ?? null,
   }));
+}
+
+/**
+ * getInvitationsWithDetails — fetch all invitations across organizations with org and inviter details
+ */
+export async function getInvitationsWithDetails(): Promise<AdminInvitationItem[]> {
+  const now = new Date();
+  const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+  const rows = await db
+    .select({
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      status: invitation.status,
+      expiresAt: invitation.expiresAt,
+      organizationId: invitation.organizationId,
+      organizationName: organization.name,
+      organizationSlug: organization.slug,
+      inviterId: invitation.inviterId,
+      inviterName: user.name,
+      inviterEmail: user.email,
+    })
+    .from(invitation)
+    .innerJoin(organization, eq(invitation.organizationId, organization.id))
+    .leftJoin(user, eq(invitation.inviterId, user.id))
+    .orderBy(desc(invitation.expiresAt));
+
+  return rows.map((row) => {
+    const isExpired =
+      row.status === "pending" && new Date(row.expiresAt) <= now;
+    const isExpiringSoon =
+      row.status === "pending" &&
+      new Date(row.expiresAt) > now &&
+      new Date(row.expiresAt) <= in48h;
+
+    return {
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      status: row.status,
+      expiresAt: row.expiresAt,
+      isExpired,
+      isExpiringSoon,
+      organizationId: row.organizationId,
+      organizationName: row.organizationName,
+      organizationSlug: row.organizationSlug,
+      inviterId: row.inviterId,
+      inviterName: row.inviterName,
+      inviterEmail: row.inviterEmail,
+    };
+  });
 }

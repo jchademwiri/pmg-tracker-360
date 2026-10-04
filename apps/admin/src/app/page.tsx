@@ -115,14 +115,21 @@ export default async function AdminDashboardPage() {
       label: `${alertCounts.expiringInvitations} invitation(s) expiring within 48 hours`,
       count: alertCounts.expiringInvitations,
       severity: "medium" as const,
-      href: "/organizations",
+      href: "/organizations?tab=invitations&filter=expiring",
+    },
+    {
+      id: "expired_invitations",
+      label: `${alertCounts.expiredInvitations} expired invitation(s) pending resolution`,
+      count: alertCounts.expiredInvitations,
+      severity: "medium" as const,
+      href: "/organizations?tab=invitations&filter=expired",
     },
     {
       id: "transfers",
       label: `${alertCounts.expiringTransfers} ownership transfer(s) expiring within 24 hours`,
       count: alertCounts.expiringTransfers,
       severity: "medium" as const,
-      href: "/",
+      href: "/organizations",
     },
     {
       id: "tickets",
